@@ -90,6 +90,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seeds", default="0-9", help="예: 0-49 또는 1,3,5")
     p.add_argument("--graph", default="traced-v1")
     p.add_argument("--rewired-seed", type=int, default=0)
+    p.add_argument("--workers", type=int, default=1, help="씨앗을 나눠 돌릴 자식 프로세스 수")
+    p.add_argument("--threads", type=int, default=0, help="일꾼마다 torch 스레드 수(0 = 기본)")
     p.set_defaults(func=_cmd_collect)
 
     p = sub.add_parser("mcp", help="MCP 도구 서버(stdio)")
@@ -102,6 +104,9 @@ def main(argv: list[str] | None = None) -> int:
 
     from .bench import cli as bench_cli  # 무거운 의존을 필요할 때만 불러온다
     bench_cli.register(sub)
+    from .loop import scorecard, train_cli
+    train_cli.register(sub)
+    scorecard.register(sub)
 
     args = parser.parse_args(argv)
     return int(args.func(args) or 0)

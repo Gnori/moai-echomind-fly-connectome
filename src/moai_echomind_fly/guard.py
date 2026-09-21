@@ -68,12 +68,14 @@ def _pid_alive(pid: int) -> bool:
 
 
 @contextmanager
-def heavy(kind: str, *, extra_gb: float = 0.0) -> Generator[GuardReport]:
+def heavy(kind: str, *, extra_gb: float = 0.0,
+          min_free_percent: int | None = None) -> Generator[GuardReport]:
     """무거운 실행을 감싼다.
 
     Args:
         kind: 실행 종류(기록용 — "run" · "bench" · "qwen" …).
         extra_gb: 이 실행이 새로 올릴 메모리(GB). 여유에서 이만큼 빼고도 문턱을 넘어야 한다.
+        min_free_percent: 문턱을 바꿀 때만(투영기 학습 — guard.yaml `training_min_free_percent`).
 
     Yields:
         검사 결과.
@@ -82,7 +84,7 @@ def heavy(kind: str, *, extra_gb: float = 0.0) -> Generator[GuardReport]:
         GuardRefused: 메모리 부족(low_memory) 또는 다른 무거운 실행 중(busy).
     """
     cfg = config.load("guard")
-    threshold = int(cfg["min_free_percent"])
+    threshold = int(min_free_percent if min_free_percent is not None else cfg["min_free_percent"])
     free = memory_free_percent()
     after = free - (extra_gb / _total_memory_gb() * 100 if extra_gb else 0)
     if after < threshold:
