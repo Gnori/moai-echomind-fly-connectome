@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "moai-echomind-fly-connectome"
+version = "0.0.1"
+description = "초파리 커넥톰(MaleCNS v1.0) LIF 시뮬레이터 → MCP 도구 서버 → Qwen 닫힌 고리 (R-3340)"
+readme = "README.md"
+# moai-echomind 형제 저장소 규약과 같다 — 조용히 3.12 로 내려가지 않게 여기 적는다.
+requires-python = ">=3.14"
+dependencies = [
+    "numpy>=2.2",
+    "pyarrow>=19",
+    "pyyaml>=6.0",
+    "torch>=2.14,<2.15",
+    "mcp>=1.27",
+    "httpx>=0.28",
+]
+
+[project.optional-dependencies]
+# C 단계(닫힌 고리)에서만 필요하다 — 몸(MuJoCo)은 무거워서 따로 둔다.
+body = ["flygym==2.1.0"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+    # Shiu 모델의 원래 구현(Brian2)과 우리 엔진을 맞춰 보는 시험에만 쓴다(F-003).
+    "brian2>=2.10",
+]
+
+[project.scripts]
+fly-connectome = "moai_echomind_fly.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/moai_echomind_fly"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "data: 공식 파일(data/raw)과 컴파일된 그래프가 있어야 도는 시험",
+    "heavy: 뇌 전체를 돌리는 시험 — 가드를 지난다",
+]

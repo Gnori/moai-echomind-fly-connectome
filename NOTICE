@@ -1,0 +1,29 @@
+moai-echomind-fly-connectome — 출처 표기
+
+데이터
+------
+MaleCNS v1.0 connectome (male Drosophila central nervous system)
+  FlyEM (HHMI Janelia), University of Cambridge (Department of Zoology),
+  MRC Laboratory of Molecular Biology, Google Research.
+  License: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+  Source:  https://male-cns.janelia.org/download/
+  Paper:   Cell 2026, doi:10.1016/j.cell.2026.08.015
+  이 저장소가 데이터에 한 변경: Traced 뉴런 고르기 · 인덱스 다시 매기기 ·
+  consensus_nt 로 부호 붙이기 · LIF 방정식 붙이기. 원 저작자의 승인이나 보증을 뜻하지 않는다.
+
+모델
+----
+LIF 방정식과 매개변수: Shiu et al. 2024, Nature 634:210-219
+  "A Drosophila computational brain model reveals sensorimotor processing"
+  Reference code: https://github.com/philshiu/Drosophila_brain_model
+  License: MIT — Copyright (c) 2023 Philip Shiu and Nico Spiller
+  이 저장소는 그 코드를 복사하지 않고 같은 방정식을 PyTorch 로 다시 구현했다.
+  Brian2 판은 시험에서 대조 기준으로만 쓴다.
+
+인용한 수치 (코드는 쓰지 않음)
+------------------------------
+- 도망 반사 채점 기준: von Reyn et al. 2014 (Nat Neurosci 17:962) 등 —
+  IONOFIELD/FLYCNS RESULTS.md v0.8 (2026-09-11)이 정리한 생리 기준을 원 출처와 함께 인용.
+  FLYCNS 저장소에는 라이선스가 없어 코드를 쓰지 않았다.
+- 다가옴 자극의 LC/LPLC 상대 세기: Turner, Krieger, Pang & Clandinin 2022, eLife 11:e82587
+  (Dryad doi:10.5061/dryad.h44j0zpp8). 값의 추출은 FLYCNS(data/loom_tuning_measured.json).

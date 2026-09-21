@@ -1,0 +1,27 @@
+# 다가옴(loom) 자극 규약 (R-3340 F-004)
+# 상대 세기: Turner, Krieger, Pang & Clandinin 2022, eLife 11:e82587 (Dryad doi:10.5061/dryad.h44j0zpp8)
+#   의 칼슘 영상에서 다가옴에 대한 사구체별 최대 dF/F 를 가장 큰 사구체로 나눈 값(파리 21 마리 · 다가옴 1,510 시행 · 전 시행).
+#   추출은 IONOFIELD/FLYCNS 의 data/loom_tuning_measured.json(코드는 쓰지 않았다 — NOTICE).
+#   ⚠️ 행동 상태(걷기/정지)로 나눈 값은 그 파일에 없어 **전 시행 값**을 쓴다.
+# 시행 구조(FLYCNS 와 같음): 쉼 gap_ms → 폭발 burst_ms 동안 종류별 포아송 발화 → … 마지막에 쉼.
+# 발화율 = amplitude × peak_hz × 시행 게인(로그정규 σ = gain_sigma).
+# peak_hz 는 dF/F → Hz 척도로 **선언된 자유 매개변수 하나**다 — F-004 규칙으로만 정한다.
+version: loom-v1   # 2026-09-22 잠금 — peak_hz 는 FLYCNS 가 선언한 5 Hz 그대로(맞추지 않음)
+gap_ms: 300
+burst_ms: 60
+peak_hz: 5.0
+gain_sigma: 0.3687
+amplitude:
+  LC17: 1.0
+  LC12: 0.9416
+  LPLC2: 0.8695
+  LC26: 0.8051
+  LC15: 0.6731
+  LC4: 0.5948
+  LPLC1: 0.5639
+  LC16: 0.537
+  LC6: 0.448
+  LC21: 0.4218
+  LC18: 0.4135
+  LC9: 0.3532
+  LC11: 0.307

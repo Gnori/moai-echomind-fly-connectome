@@ -1,0 +1,8 @@
+# 공식 파일(1.1 GB)·컴파일된 그래프·실행 기록은 커밋하지 않는다 (R-3340 I §5)
+/data/
+/runs/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/

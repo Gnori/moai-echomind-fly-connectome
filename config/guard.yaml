@@ -1,0 +1,6 @@
+# 무거운 실행 가드 (R-3340 2.3 · I §2.3)
+# 맥 한 대의 GPU·통합 메모리를 요구자 화면·다른 세션과 같이 쓴다(2026-09-06 커널 패닉 전례).
+version: guard-v1
+min_free_percent: 40        # memory_pressure 의 "System-wide memory free percentage"
+qwen_weights_gb: 28         # Qwen 을 올릴 때는 이만큼을 더 빼고도 문턱을 넘어야 한다
+lock_file: runs/.heavy.lock # 무거운 실행은 한 번에 하나
