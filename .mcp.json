@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "fly-connectome": {
+      "command": "uv",
+      "args": ["run", "fly-connectome", "mcp"]
+    }
+  }
+}

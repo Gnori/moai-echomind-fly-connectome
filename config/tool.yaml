@@ -1,0 +1,25 @@
+# MCP 도구 서버 상한 (R-3340 F-008 · I §2) — 지침이 아니라 **코드로** 막는다.
+version: tool-v1
+graph: traced-v1
+# 자극할 수 있는 뉴런 = 이 superclass 에 속한 종류. 빈 칸('')·'_tbc'(확인 대기)는 막는다.
+allowed_superclasses:
+  - cb_sensory
+  - vnc_sensory
+  - ol_sensory
+  - sensory_ascending
+  - visual_projection
+  - visual_centrifugal
+  - cb_intrinsic
+  - vnc_intrinsic
+  - ol_intrinsic
+  - ascending_neuron
+  - descending_neuron
+  - cb_motor
+  - vnc_motor
+max_duration_ms: 1000      # 뇌 전체 1,000 ms ≈ CPU 4 s (W core 3.3)
+max_stim_neurons: 3000
+max_silence_neurons: 5000
+max_rate_hz: 300
+top_types: 20
+max_descending: 50
+max_motor: 50

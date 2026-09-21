@@ -31,4 +31,6 @@ def graph_dir() -> Path:
 
 
 def runs_dir() -> Path:
-    return root() / "runs"
+    """실행 기록 자리. `FLY_RUNS_DIR` 로 바꿀 수 있다(시험)."""
+    env = os.environ.get("FLY_RUNS_DIR")
+    return Path(env).resolve() if env else root() / "runs"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import secrets
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -37,7 +38,8 @@ class RunRecorder:
         return path
 
     def log(self, line: str) -> None:
-        print(line, flush=True)
+        # 표준 에러로 — MCP stdio 서버에서는 표준 출력이 프로토콜 통로다
+        print(line, file=sys.stderr, flush=True)
         self._log.append(line)
         (self.dir / "stdout.log").write_text("\n".join(self._log) + "\n", encoding="utf-8")
 
