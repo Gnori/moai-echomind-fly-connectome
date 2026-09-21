@@ -107,6 +107,8 @@ def main(argv: list[str] | None = None) -> int:
     from .loop import scorecard, train_cli
     train_cli.register(sub)
     scorecard.register(sub)
+    from . import datasets
+    datasets.register(sub)
 
     args = parser.parse_args(argv)
     return int(args.func(args) or 0)

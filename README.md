@@ -32,6 +32,12 @@ uv run fly-connectome download      # 공식 파일 3개(1.1 GB) · 공식 MD5 �
 uv run fly-connectome graph         # data/graph/traced-v1 (+ --rewired-seed 0)
 uv run fly-connectome bench escape  # 도망 반사 채점 — 무거움(가드: 메모리 40 % · 한 번에 하나)
 uv run pytest                       # 시험
+uv run fly-connectome collect --name main --seeds 0-59 --workers 3   # C: 학습 자료 모으기
+uv run fly-connectome dataset pack --name fly-loop-v1               # 오래 둘 자리에 묶기(docs/datasets.md)
+uv run fly-connectome train --brain real                            # 투영기 학습(Qwen 얼림 · 최대 약 90 GB)
+bin/run_full.sh                                                     # 학습 둘 → 캡션 평가 → 성적표
 ```
+
+학습 자료는 `data/datasets/<이름>/` 에 묶어 둔다 — [docs/datasets.md](docs/datasets.md).
 
 `data/` 와 `runs/` 는 커밋하지 않는다. 출처는 [NOTICE](NOTICE).
