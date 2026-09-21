@@ -1,0 +1,14 @@
+[project]
+name = "moai-echomind-fly-body"
+version = "0.0.1"
+description = "몸 프로세스 — FlyGym 1.x(NeuroMechFly v2) · 보행 제어기 · 냄새 원 (R-3340 1.3-8)"
+# FlyGym 1.x 는 파이썬 3.10~3.12 · mujoco 3.2.7 만 된다 — 뇌·Qwen(3.14)과 따로 돈다.
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "flygym-gymnasium==1.3.2",
+    # flygym_gymnasium.examples.locomotion 이 불러오는데 1.3.2 의존 목록에 빠져 있다(2026-09-22 실측)
+    "networkx>=3",
+]
+
+[tool.uv]
+package = false

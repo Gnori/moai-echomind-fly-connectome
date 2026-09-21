@@ -51,6 +51,12 @@ def _cmd_experiment(args: argparse.Namespace) -> int:
     return 0 if "error" not in result else 2
 
 
+def _cmd_collect(args: argparse.Namespace) -> int:
+    from .loop import collect
+
+    return collect.main(args)
+
+
 def _cmd_mcp(args: argparse.Namespace) -> int:
     from . import mcp_server
 
@@ -78,6 +84,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--silence", default="", help="침묵시킬 종류(쉼표)")
     p.add_argument("--seed", type=int, default=0)
     p.set_defaults(func=_cmd_run)
+
+    p = sub.add_parser("collect", help="F-017 학습 자료 모으기 — 교사가 몸을 몬다(무거움)")
+    p.add_argument("--name", required=True)
+    p.add_argument("--seeds", default="0-9", help="예: 0-49 또는 1,3,5")
+    p.add_argument("--graph", default="traced-v1")
+    p.add_argument("--rewired-seed", type=int, default=0)
+    p.set_defaults(func=_cmd_collect)
 
     p = sub.add_parser("mcp", help="MCP 도구 서버(stdio)")
     p.set_defaults(func=_cmd_mcp)

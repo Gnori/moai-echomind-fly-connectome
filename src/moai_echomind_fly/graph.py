@@ -32,7 +32,7 @@ MISSING_NT = "missing"
 # 주석에서 가져오는 칸 — 채널 표·대응표·요약이 이 칸들로 뉴런을 고른다.
 ANNOTATION_COLUMNS = [
     "bodyId", "status", "type", "instance", "class", "subclass", "superclass", "somaSide",
-    "entryNerve", "exitNerve", "somaNeuromere", "dimorphism", "fruDsx", "receptorType",
+    "rootSide", "entryNerve", "exitNerve", "somaNeuromere", "dimorphism", "fruDsx", "receptorType",
     "flywireType",
 ]
 
