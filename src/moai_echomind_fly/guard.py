@@ -92,11 +92,31 @@ def heavy(kind: str, *, extra_gb: float = 0.0) -> Generator[GuardReport]:
         )
     lock = paths.root() / cfg["lock_file"]
     lock.parent.mkdir(parents=True, exist_ok=True)
+    report = GuardReport(kind=kind, free_percent=free, threshold=threshold, lock_file=str(lock))
+    if _held_by_owner(lock):
+        # 부모(FLY_GUARD_OWNER)가 쥔 잠금 안의 실행 — 예: Qwen 실험자가 띄운 MCP 서버의 실험.
+        # 한 번에 하나라는 뜻은 그대로다(같은 무거운 작업의 일부). 잠금은 부모가 푼다.
+        yield report
+        return
     _acquire(lock, kind)
     try:
-        yield GuardReport(kind=kind, free_percent=free, threshold=threshold, lock_file=str(lock))
+        yield report
     finally:
         lock.unlink(missing_ok=True)
+
+
+OWNER_ENV = "FLY_GUARD_OWNER"
+
+
+def _held_by_owner(lock: Path) -> bool:
+    owner = int(os.environ.get(OWNER_ENV, "0") or 0)
+    if not owner or not lock.exists():
+        return False
+    try:
+        held = json.loads(lock.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return int(held.get("pid", 0)) == owner and _pid_alive(owner)
 
 
 def _acquire(lock: Path, kind: str) -> None:

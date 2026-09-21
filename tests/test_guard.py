@@ -61,3 +61,21 @@ def test_stale_lock_is_cleared_and_released(repo):
         assert json.loads(lock.read_text())["pid"] == os.getpid()
         assert report.free_percent == 80
     assert not lock.exists()
+
+
+def test_child_runs_inside_owner_lock(repo, monkeypatch):
+    """Qwen 실험자(부모)가 쥔 잠금 안에서 MCP 서버(자식)의 실험은 막히지 않는다.
+
+    잠금은 부모 것 그대로 남는다.
+    """
+    lock = paths.root() / "runs" / ".heavy.lock"
+    lock.parent.mkdir(parents=True)
+    proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        lock.write_text(json.dumps({"pid": proc.pid, "kind": "qwen"}))
+        monkeypatch.setenv(guard.OWNER_ENV, str(proc.pid))
+        with guard.heavy("tool-run"):
+            pass
+        assert json.loads(lock.read_text())["pid"] == proc.pid
+    finally:
+        proc.kill()

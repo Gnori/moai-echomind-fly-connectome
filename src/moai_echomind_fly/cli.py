@@ -43,6 +43,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_experiment(args: argparse.Namespace) -> int:
+    from . import experimenter
+
+    result = experimenter.run(args.question)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if "error" not in result else 2
+
+
 def _cmd_mcp(args: argparse.Namespace) -> int:
     from . import mcp_server
 
@@ -73,6 +81,11 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("mcp", help="MCP 도구 서버(stdio)")
     p.set_defaults(func=_cmd_mcp)
+
+    p = sub.add_parser("experiment",
+                       help="F-009 Qwen 실험자 — Qwen 이 MCP 로 실험을 부른다(무거움)")
+    p.add_argument("question")
+    p.set_defaults(func=_cmd_experiment)
 
     from .bench import cli as bench_cli  # 무거운 의존을 필요할 때만 불러온다
     bench_cli.register(sub)

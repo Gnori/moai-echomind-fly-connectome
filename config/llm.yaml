@@ -1,0 +1,9 @@
+# 언어 모델 — 가중치를 우리 프로세스에서 직접 읽는다(서버 없음 · R-3340 1.3-7 · 요구자 선택 2026-09-21)
+version: llm-v1
+weights: ~/.omlx/models/orcarouter/Qwen3.8-27B-Uncensored-MLX-8bit
+# 결과에 적는 이름 — 공식판이 아니라 파생판이다(R-3340 1.3-7)
+label: "Qwen3.8-27B (orcarouter Uncensored MLX 8bit 파생판)"
+weights_gb: 28.6          # 2026-09-22 실측(mx.get_peak_memory)
+enable_thinking: false    # 06 §6.2 — 생각 모드 끔
+max_tokens: 1024        # 실험자 마지막 답이 512 에서 잘렸다(2026-09-22)
+experimenter_max_turns: 8

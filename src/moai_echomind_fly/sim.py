@@ -119,6 +119,7 @@ class Engine:
         self.stim_idx = torch.zeros(0, dtype=torch.int64, device=self.dev)
         self.stim_rate = np.zeros(0)
         self.rec_idx = torch.zeros(0, dtype=torch.int64, device=self.dev)
+        self.acc_idx = torch.zeros(0, dtype=torch.int64, device=self.dev)
         self.reset()
 
     # ------------------------------------------------------------------ 설정
@@ -136,6 +137,8 @@ class Engine:
         self._spk_steps: list[np.ndarray] = []
         self._spk_neurons: list[np.ndarray] = []
         self._volt: list[torch.Tensor] = []
+        self.acc_sum = torch.zeros(self.acc_idx.numel(), dtype=torch.float64, device=self.dev)
+        self.acc_steps = 0
 
     def set_poisson(self, idx: np.ndarray, rate_hz: np.ndarray | float) -> None:
         """포아송 자극. 자극 뉴런은 불응기 0(Shiu). 빈 배열이면 자극을 끈다."""
@@ -160,6 +163,31 @@ class Engine:
         for i in np.asarray(idx, dtype=np.int64):
             self.w[int(self.graph.row_ptr[i]) : int(self.graph.row_ptr[i + 1])] = 0
 
+    def accumulate_voltage(self, idx: np.ndarray) -> None:
+        """이 뉴런들의 막전위를 스텝마다 더해 둔다(문턱 아래 신호 — C 단계 채널 벡터)."""
+        self.acc_idx = torch.as_tensor(np.asarray(idx, dtype=np.int64), device=self.dev)
+        self.acc_sum = torch.zeros(self.acc_idx.numel(), dtype=torch.float64, device=self.dev)
+        self.acc_steps = 0
+
+    def take_voltage_mean(self) -> np.ndarray:
+        """지난 `take` 이후 평균 막전위(mV)를 돌려주고 비운다."""
+        mean = (self.acc_sum / max(self.acc_steps, 1)).cpu().numpy()
+        self.acc_sum.zero_()
+        self.acc_steps = 0
+        return mean
+
+    def spikes_since(self, step: int) -> tuple[np.ndarray, np.ndarray]:
+        """스텝 `step` 이후의 발화(창 단위로 읽기)."""
+        steps, neurons = [], []
+        for s_arr, n_arr in zip(reversed(self._spk_steps), reversed(self._spk_neurons)):
+            if s_arr[0] < step:
+                break
+            steps.append(s_arr)
+            neurons.append(n_arr)
+        if not steps:
+            return np.zeros(0, np.int32), np.zeros(0, np.int32)
+        return np.concatenate(steps[::-1]), np.concatenate(neurons[::-1])
+
     def record_voltage(self, idx: np.ndarray) -> None:
         self.rec_idx = torch.as_tensor(np.asarray(idx, dtype=np.int64), device=self.dev)
 
@@ -181,6 +209,7 @@ class Engine:
         kick_t = torch.as_tensor(kicks, device=self.dev)
         kick_mv = self.p.poisson_kick_mV
         rec = self.rec_idx.numel() > 0
+        acc = self.acc_idx.numel() > 0
         volt = (torch.empty((steps, self.rec_idx.numel()), dtype=self.dtype, device=self.dev)
                 if rec else None)
         p = self.p
@@ -221,6 +250,9 @@ class Engine:
                 self._spk_neurons.append(spiked.to("cpu").numpy().astype(np.int32))
             if rec:
                 volt[t] = self.v[self.rec_idx]
+            if acc:
+                self.acc_sum += self.v[self.acc_idx].to(torch.float64)
+                self.acc_steps += 1
             self.step += 1
         if rec:
             self._volt.append(volt.to("cpu"))
