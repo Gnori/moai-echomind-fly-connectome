@@ -230,16 +230,12 @@ def probe(args: argparse.Namespace) -> int:
                                     k=rule["k"], kind=rule["kind"], width=rule["width"],
                                     target_rms=float(mx.sqrt(mx.mean(emb * emb))))
             mx.eval(proj.parameters())
-            cache = None if args.no_fix else float(gcfg["training_cache_limit_gb"])
+            cache = float(gcfg["training_cache_limit_gb"])
             trainer = Trainer(q, proj, lr=rule["lr"], cache_limit_gb=cache)
-            if args.no_fix:
-                trainer.step = _step_without_clear(trainer)
             setup = _Setup(q, names, rule["k"])
             watchdog = Watchdog()
             rng = random.Random(1)
-            fix = "없음" if args.no_fix else "있음"
-            print(f"[probe] {args.steps} 걸음 · 고침 {fix} · "
-                  f"캐시 상한 {cache} GB · 기록 {out}", flush=True)
+            print(f"[probe] {args.steps} 걸음 · 캐시 상한 {cache} GB · 기록 {out}", flush=True)
             for step in range(1, args.steps + 1):
                 # 입력 길이가 번갈아 바뀐다(지난번 가장 나빴던 조건)
                 task = "act" if step % 2 else "cap"
@@ -265,20 +261,6 @@ def probe(args: argparse.Namespace) -> int:
     finally:
         rec.close()
     return 0
-
-
-def _step_without_clear(trainer):
-    """(측정용) 고치기 전 동작 — 캐시를 비우지 않는 걸음."""
-    import mlx.core as mx
-
-    def step(s):
-        trainer.qwen.model.train()
-        loss, grads = trainer._step(s)
-        trainer.opt.update(trainer.proj, grads)
-        mx.eval(trainer.proj.parameters(), trainer.opt.state, loss)
-        return float(loss)
-
-    return step
 
 
 # ---------------------------------------------------------------------- 캡션 평가
@@ -342,7 +324,7 @@ def eval_caption(args: argparse.Namespace) -> int:
                                     width=meta["rule"]["width"], target_rms=pm["target_rms"])
             proj.load_weights(str(pdir / f"{args.checkpoint}.safetensors"))
             mx.eval(proj.parameters())
-            trainer = Trainer(q, proj, checkpoint=False)
+            trainer = Trainer(q, proj)
             setup = _Setup(q, names, pm["k"])
             n = len(vrows) if not args.limit else min(args.limit, len(vrows))
             truth_sub, pred_sub, examples = [], [], []
@@ -383,7 +365,6 @@ def register(sub) -> None:
     pr.add_argument("--brain", choices=["real", "rewired"], default="real")
     pr.add_argument("--dataset", default="main")
     pr.add_argument("--steps", type=int, default=50)
-    pr.add_argument("--no-fix", action="store_true", help="캐시 상한 · 비우기 없이(비교용)")
     pr.set_defaults(func=probe)
     e = sub.add_parser("eval-caption", help="F-017 캡션 칸별 정확도(학습에 안 쓴 씨앗)")
     e.add_argument("--brain", choices=["real", "rewired"], required=True)

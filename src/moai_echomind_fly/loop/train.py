@@ -4,7 +4,13 @@
 기울기는 Qwen 을 거꾸로 지나 투영기로만 간다.
 Qwen3.8 의 선형 어텐션 층(GatedDeltaNet)은 `training` 이면 전용 커널 대신
 미분 가능한 연산 경로를 탄다
-(mlx-lm `qwen3_5.py`: `use_kernel=not self.training`) — 그래서 학습 중에는 모델을 학습 모드로 둔다.
+(mlx-lm `qwen3_5.py`: `use_kernel=not self.training`) — 그래서 역전파 때는 모델을 학습 모드로 둔다.
+
+그 경로는 토큰마다 상태(층당 3 MB)를 남겨 한 번에 미분하면 **토큰당 약 0.32 GB** 가 든다
+(2026-09-22 실측: 226 토큰 → 최대 102 GB · 191 토큰 → 90 GB).
+mlx-lm 의 층별 재계산(`grad_checkpoint`)은 전체를 한 번에 평가하는 지연 평가에서 듣지 않았다
+(켜도 끄도 90~100 GB).
+그래서 **한 층씩 거꾸로** 미분하고 층마다 평가해 끊는다 — 한 번에 한 층 몫만 든다.
 """
 
 from __future__ import annotations
@@ -15,6 +21,7 @@ from typing import Any
 import mlx.core as mx
 import mlx.nn as nn
 import mlx.optimizers as optim
+from mlx_lm.models.base import create_attention_mask, create_ssm_mask
 
 from .fly_prompt import SLOT
 from .projector import ChannelProjector
@@ -30,38 +37,60 @@ class Sample:
 
 class Trainer:
     def __init__(self, qwen: QwenLM, projector: ChannelProjector, lr: float = 1e-4,
-                 checkpoint: bool = True, cache_limit_gb: float | None = None) -> None:
+                 cache_limit_gb: float | None = None) -> None:
         self.qwen = qwen
         if cache_limit_gb is not None:
             # 캐시 상한 — 두지 않으면 걸음마다 쌓여 13 시간 뒤 103 GB 가 됐다(2026-09-22)
             mx.set_cache_limit(int(cache_limit_gb * 1e9))
-        if checkpoint:
-            # 층마다 역전파 때 다시 계산해 저장을 줄인다
-            # — mlx-lm 이 자체 LoRA 학습에서 쓰는 공개 함수.
-            # 끄면 최대 메모리 92.9 GB(2026-09-22 실측 · 128 GB 맥에서 위험).
-            from mlx_lm.tuner.trainer import grad_checkpoint
-
-            grad_checkpoint(qwen.lm.model.layers[0])
         self.proj = projector
         self.slot = qwen.tok.convert_tokens_to_ids(SLOT)
         self.opt = optim.AdamW(learning_rate=lr, weight_decay=0.01)
-        self._step = nn.value_and_grad(self.proj, self._loss)
+        self._pull = nn.value_and_grad(self.proj, self._pulled)
 
-    def _hidden(self, emb: mx.array) -> mx.array:
-        return self.qwen.lm.model(None, input_embeddings=emb[None])[0]
-
-    def _loss(self, s: Sample) -> mx.array:
+    def _embeddings(self, s: Sample) -> mx.array:
         soft = self.proj({k: mx.array(v) for k, v in s.feats.items()})
         prompt_emb = self.qwen.splice(s.prompt, self.slot, soft)
         tgt_emb = self.qwen.embed(mx.array(s.target[:-1]))
-        h = self._hidden(mx.concatenate([prompt_emb, tgt_emb], axis=0))
-        h = h[len(s.prompt) - 1:]                      # 정답 토큰을 맞히는 자리만
+        return mx.concatenate([prompt_emb, tgt_emb], axis=0)
+
+    def _head_loss(self, h: mx.array, s: Sample) -> mx.array:
+        h = self.qwen.lm.model.norm(h)[0][len(s.prompt) - 1:]   # 정답 토큰을 맞히는 자리만
         logits = self.qwen.lm.lm_head(h)
         return nn.losses.cross_entropy(logits, mx.array(s.target), reduction="mean")
 
+    def _loss(self, s: Sample) -> mx.array:
+        h = self.qwen.lm.model(None, input_embeddings=self._embeddings(s)[None])
+        h = h[0][len(s.prompt) - 1:]
+        logits = self.qwen.lm.lm_head(h)
+        return nn.losses.cross_entropy(logits, mx.array(s.target), reduction="mean")
+
+    def _pulled(self, s: Sample, cot: mx.array) -> mx.array:
+        # ⟨임베딩(투영기), 임베딩 쪽 기울기⟩ 의 기울기 = 투영기 기울기
+        return (self._embeddings(s).astype(mx.float32) * cot).sum()
+
+    def grads(self, s: Sample) -> tuple[mx.array, Any]:
+        """손실과 투영기 기울기 — 층마다 평가해 끊는 역전파(모듈 설명)."""
+        m = self.qwen.lm.model
+        x = mx.stop_gradient(self._embeddings(s))[None]
+        fa, ssm = create_attention_mask(x, None), create_ssm_mask(x, None)
+        masks = [ssm if layer.is_linear else fa for layer in m.layers]
+        self.qwen.model.eval()                         # 앞으로는 전용 커널(빠르다)
+        inputs = []
+        for layer, mask in zip(m.layers, masks):
+            inputs.append(x)
+            x = layer(x, mask=mask)
+            mx.eval(x)
+        loss, cot = mx.value_and_grad(lambda h: self._head_loss(h, s))(x)
+        mx.eval(loss, cot)
+        self.qwen.model.train()                        # 거꾸로는 미분 가능한 경로
+        for layer, mask, xi in zip(reversed(m.layers), reversed(masks), reversed(inputs)):
+            _, (cot,) = mx.vjp(lambda h: layer(h, mask=mask), [xi], [cot])
+            mx.eval(cot)
+        _, grads = self._pull(s, cot[0].astype(mx.float32))
+        return loss, grads
+
     def step(self, s: Sample) -> float:
-        self.qwen.model.train()                        # 미분 가능한 경로(모듈 설명)
-        loss, grads = self._step(s)
+        loss, grads = self.grads(s)
         self.opt.update(self.proj, grads)
         mx.eval(self.proj.parameters(), self.opt.state, loss)
         mx.clear_cache()                               # 걸음마다 비운다(위 캐시 상한 설명)
