@@ -241,7 +241,8 @@ def probe(args: argparse.Namespace) -> int:
             print(f"[probe] {args.steps} 걸음 · 고침 {fix} · "
                   f"캐시 상한 {cache} GB · 기록 {out}", flush=True)
             for step in range(1, args.steps + 1):
-                task = "act" if step % 2 else "cap"          # 입력 길이가 번갈아 바뀐다(지난번 최악)
+                # 입력 길이가 번갈아 바뀐다(지난번 가장 나빴던 조건)
+                task = "act" if step % 2 else "cap"
                 i = rng.randrange(len(rows))
                 mx.reset_peak_memory()
                 t0 = time.time()
