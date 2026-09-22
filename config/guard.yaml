@@ -4,7 +4,7 @@ version: guard-v1
 min_free_percent: 40        # memory_pressure 의 "System-wide memory free percentage"
 qwen_weights_gb: 28         # Qwen 을 올릴 때는 이만큼을 더 빼고도 문턱을 넘어야 한다
 lock_file: runs/.heavy.lock # 무거운 실행은 한 번에 하나
-# 투영기 학습(Qwen 역전파)은 한 걸음 최대 약 90 GB 라 위 규칙(여유 40 %)을 지킬 수 없다.
+# 투영기 학습(Qwen 역전파)은 처음에 한 걸음 최대 약 90 GB 였다(층별 역전파 59b9b29 뒤 약 32 GB).
 # 요구자 2026-09-22 "이 학습에만 풀고 지금 돌림" — 학습만 **시작 전 여유 80 % 이상**이면 돌고,
 # 도는 동안은 잠금으로 다른 무거운 실행을 막는다.
 training_min_free_percent: 80
@@ -13,4 +13,4 @@ training_min_free_percent: 80
 training_cache_limit_gb: 2
 training_check_every: 5            # 몇 걸음마다 시스템 여유 · 프로세스 메모리를 보나
 training_abort_free_percent: 25    # 시스템 여유가 이 아래면 멈춤
-training_abort_footprint_gb: 100   # 프로세스 전체(phys_footprint)가 이 위면 멈춤
+training_abort_footprint_gb: 50    # 프로세스 전체(phys_footprint)가 이 위면 멈춤(정상 28 GB)

@@ -34,7 +34,7 @@ uv run fly-connectome bench escape  # 도망 반사 채점 — 무거움(가드:
 uv run pytest                       # 시험
 uv run fly-connectome collect --name main --seeds 0-59 --workers 3   # C: 학습 자료 모으기
 uv run fly-connectome dataset pack --name fly-loop-v1               # 오래 둘 자리에 묶기(docs/datasets.md)
-uv run fly-connectome train --brain real                            # 투영기 학습(Qwen 얼림 · 최대 약 90 GB)
+uv run fly-connectome train --brain real                            # 투영기 학습(Qwen 얼림 · 최대 약 32 GB)
 bin/run_full.sh                                                     # 학습 둘 → 캡션 평가 → 성적표
 ```
 

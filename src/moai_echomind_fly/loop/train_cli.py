@@ -356,7 +356,7 @@ def eval_caption(args: argparse.Namespace) -> int:
 
 def register(sub) -> None:
     p = sub.add_parser("train",
-                       help="F-017 투영기 학습(Qwen 얼림 · 최대 약 90 GB · 학습 전용 문턱)")
+                       help="F-017 투영기 학습(Qwen 얼림 · 최대 약 32 GB · 학습 전용 문턱)")
     p.add_argument("--brain", choices=["real", "rewired"], required=True)
     p.add_argument("--dataset", default="main")
     p.add_argument("--val", default="eval")
