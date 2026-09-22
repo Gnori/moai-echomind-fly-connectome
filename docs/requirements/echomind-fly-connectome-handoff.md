@@ -13,7 +13,11 @@
 > ⚠️ **2026-09-23: 이 세션의 문서는 전부 이 저장소(`moai-echomind-fly-connectome`)로 왔다.**
 > 요구자 *"초파리 연구는 에코마인드에 지금 직접 적용이 아니야 — 저 모델이 완성되면 적용 시험 할거야"*.
 > 연구 노트 = `docs/research/fly-connectome/` · 요구사항 산출물 = `docs/requirements/` · 인수인계 = 이 파일.
-> moai-echomind 에는 이 프로젝트 문서가 없다(대시보드·규약 검사도 안 본다).
+> moai-echomind 에는 이 프로젝트 문서가 없다.
+> **프로세스도 여기 있다**(2026-09-23 요구자 *"요구사항 스킬 CLAUDE.md, 개발 프로세스 MD도 그 프로젝트에 맞춰 넣어줘"*):
+> `CLAUDE.md`(이 저장소 지침) · `DEV_PROCESS.md`(v1.1-fly · 모듈 = core·tool·loop) ·
+> `.claude/skills/{dev,dev-req}`(사본 — `/dev status`·`validate` 가 여기서 돈다 · 위반 0건) ·
+> `docs/requirements/{README.md,active_development.md,templates/}`.
 > **적용 시험은 모델이 완성된 뒤** — 그때 에코마인드 쪽과 잇는다.
 
 ## ① 내 경계
