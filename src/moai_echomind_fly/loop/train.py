@@ -30,8 +30,11 @@ class Sample:
 
 class Trainer:
     def __init__(self, qwen: QwenLM, projector: ChannelProjector, lr: float = 1e-4,
-                 checkpoint: bool = True) -> None:
+                 checkpoint: bool = True, cache_limit_gb: float | None = None) -> None:
         self.qwen = qwen
+        if cache_limit_gb is not None:
+            # 캐시 상한 — 두지 않으면 걸음마다 쌓여 13 시간 뒤 103 GB 가 됐다(2026-09-22)
+            mx.set_cache_limit(int(cache_limit_gb * 1e9))
         if checkpoint:
             # 층마다 역전파 때 다시 계산해 저장을 줄인다
             # — mlx-lm 이 자체 LoRA 학습에서 쓰는 공개 함수.
@@ -61,6 +64,7 @@ class Trainer:
         loss, grads = self._step(s)
         self.opt.update(self.proj, grads)
         mx.eval(self.proj.parameters(), self.opt.state, loss)
+        mx.clear_cache()                               # 걸음마다 비운다(위 캐시 상한 설명)
         return float(loss)
 
     def loss_only(self, s: Sample) -> float:

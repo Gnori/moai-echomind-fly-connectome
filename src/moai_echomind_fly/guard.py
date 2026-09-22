@@ -50,6 +50,42 @@ def memory_free_percent() -> int:
     return int(match.group(1))
 
 
+_FOOT_RE = re.compile(r"phys_footprint:\s*([\d.]+)\s*([KMG])B")
+
+
+def process_footprint_gb(pid: int | None = None) -> float:
+    """프로세스 전체 메모리(phys_footprint · MLX 통합 메모리 포함) GB — `footprint` 명령."""
+    out = subprocess.run(["footprint", "-p", str(pid or os.getpid())], capture_output=True,
+                         text=True, timeout=60).stdout
+    m = _FOOT_RE.search(out)
+    if not m:
+        raise RuntimeError(f"footprint 출력에서 phys_footprint 를 못 찾았다: {out[-200:]!r}")
+    return float(m.group(1)) * {"K": 1e-6, "M": 1e-3, "G": 1.0}[m.group(2)]
+
+
+class Watchdog:
+    """긴 실행 중 감시 — 문턱을 넘으면 까닭을 돌려준다(부르는 쪽이 저장하고 멈춘다)."""
+
+    def __init__(self) -> None:
+        cfg = config.load("guard")
+        self.every = int(cfg["training_check_every"])
+        self.min_free = int(cfg["training_abort_free_percent"])
+        self.max_gb = float(cfg["training_abort_footprint_gb"])
+        self.last: dict[str, float] = {}
+
+    def check(self, step: int) -> str | None:
+        if step % self.every:
+            return None
+        free = memory_free_percent()
+        foot = process_footprint_gb()
+        self.last = {"step": step, "sys_free_percent": free, "footprint_gb": round(foot, 1)}
+        if free < self.min_free:
+            return f"시스템 메모리 여유 {free}% < {self.min_free}%"
+        if foot > self.max_gb:
+            return f"프로세스 메모리 {foot:.1f} GB > {self.max_gb} GB"
+        return None
+
+
 def _total_memory_gb() -> float:
     out = subprocess.run(
         ["sysctl", "-n", "hw.memsize"], capture_output=True, text=True, check=True, timeout=10

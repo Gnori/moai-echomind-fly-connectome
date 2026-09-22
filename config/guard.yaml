@@ -8,3 +8,9 @@ lock_file: runs/.heavy.lock # 무거운 실행은 한 번에 하나
 # 요구자 2026-09-22 "이 학습에만 풀고 지금 돌림" — 학습만 **시작 전 여유 80 % 이상**이면 돌고,
 # 도는 동안은 잠금으로 다른 무거운 실행을 막는다.
 training_min_free_percent: 80
+# 학습 중 감시(2026-09-22 — 13 시간 뒤 103 GB · 스왑 42 GB 까지 불어난 뒤 넣음).
+# 캐시가 걸음마다 쌓였다 → 상한을 두고 걸음마다 비운다. 넘치면 저장하고 멈춘다.
+training_cache_limit_gb: 2
+training_check_every: 5            # 몇 걸음마다 시스템 여유 · 프로세스 메모리를 보나
+training_abort_free_percent: 25    # 시스템 여유가 이 아래면 멈춤
+training_abort_footprint_gb: 100   # 프로세스 전체(phys_footprint)가 이 위면 멈춤

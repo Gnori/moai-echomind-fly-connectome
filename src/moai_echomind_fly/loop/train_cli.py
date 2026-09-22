@@ -19,7 +19,7 @@ from collections import Counter
 import numpy as np
 
 from .. import config, paths
-from ..guard import GuardRefused, heavy
+from ..guard import GuardRefused, Watchdog, heavy
 from . import fly_prompt as fp
 
 TRAIN_RULE = {
@@ -74,6 +74,18 @@ def _sample(setup: _Setup, feats, rows, i: int, task: str):
     return Sample(setup.act_prompt, setup.target(fp.action_text(rows[i]["teacher_action"])), f)
 
 
+class TrainingAborted(RuntimeError):
+    """감시가 멈춘 학습(메모리) — 그때까지의 투영기는 저장된다."""
+
+
+def _mem() -> dict[str, float]:
+    import mlx.core as mx
+
+    return {"active_gb": round(mx.get_active_memory() / 1e9, 2),
+            "cache_gb": round(mx.get_cache_memory() / 1e9, 2),
+            "peak_gb": round(mx.get_peak_memory() / 1e9, 2)}
+
+
 def qwen_fingerprint(qwen) -> str:
     """Qwen 전체 가중치의 지문 — 학습 전후가 같아야 한다(파인튜닝이 아니다 · R F-013)."""
     import hashlib
@@ -123,7 +135,10 @@ def train(args: argparse.Namespace) -> int:
                                     k=rule["k"], kind=rule["kind"], width=rule["width"],
                                     target_rms=rms)
             mx.eval(proj.parameters())
-            trainer = Trainer(q, proj, lr=rule["lr"])
+            trainer = Trainer(q, proj, lr=rule["lr"],
+                              cache_limit_gb=float(gcfg["training_cache_limit_gb"]))
+            watchdog = Watchdog()
+            total = [0]
             setup = _Setup(q, names, rule["k"])
             rng = random.Random(rule["seed"])
             n, nv = len(rows), min(rule["val_samples"], len(vrows))
@@ -144,7 +159,16 @@ def train(args: argparse.Namespace) -> int:
                     for i, task in order:
                         losses.append(trainer.step(_sample(setup, feats, rows, i, task)))
                         step += 1
+                        total[0] += 1
+                        why = watchdog.check(total[0])
+                        if why:
+                            mx.save_safetensors(str(out / f"aborted-{stage}.safetensors"),
+                                                dict(tree_flatten(proj.parameters())))
+                            say(f"[watchdog] 멈춤 — {why} · {watchdog.last} · {_mem()} · "
+                                f"저장 aborted-{stage}.safetensors")
+                            raise TrainingAborted(why)
                         if step % 25 == 0:
+                            say(f"[mem] {_mem()} · {watchdog.last}")
                             say(f"[{stage}] ep {ep} step {step} "
                                 f"loss {np.mean(losses[-25:]):.3f} · "
                                 f"{(time.time() - t0) / len(losses):.1f} s/걸음")
@@ -175,9 +199,85 @@ def train(args: argparse.Namespace) -> int:
     except GuardRefused as err:
         say(f"[guard] 막음 — {err}")
         return 2
+    except TrainingAborted:
+        return 3
     finally:
         log.close()
     return 0
+
+
+def probe(args: argparse.Namespace) -> int:
+    """짧게 돌리며 걸음마다 메모리를 잰다 — 긴 학습 전에 평탄한지 본다(저장 없음)."""
+    import mlx.core as mx
+
+    from .projector import ChannelProjector
+    from .qwen import QwenLM
+    from .train import Trainer
+
+    rule = dict(TRAIN_RULE)
+    gcfg = config.load("guard")
+    out = paths.runs_dir() / f"train-probe-{time.strftime('%Y%m%d-%H%M%S')}.jsonl"
+    rec = out.open("w", encoding="utf-8")
+    try:
+        with heavy("train-probe",
+                   min_free_percent=int(gcfg["training_min_free_percent"])) as guard:
+            print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
+            feats, rows = load_datasets(expand(args.dataset), args.brain)
+            names = list(feats)
+            q = QwenLM()
+            emb = q.embed(mx.arange(1000, 3000)).astype(mx.float32)
+            proj = ChannelProjector({n: feats[n].shape[1] for n in names}, hidden=q.hidden,
+                                    k=rule["k"], kind=rule["kind"], width=rule["width"],
+                                    target_rms=float(mx.sqrt(mx.mean(emb * emb))))
+            mx.eval(proj.parameters())
+            cache = None if args.no_fix else float(gcfg["training_cache_limit_gb"])
+            trainer = Trainer(q, proj, lr=rule["lr"], cache_limit_gb=cache)
+            if args.no_fix:
+                trainer.step = _step_without_clear(trainer)
+            setup = _Setup(q, names, rule["k"])
+            watchdog = Watchdog()
+            rng = random.Random(1)
+            fix = "없음" if args.no_fix else "있음"
+            print(f"[probe] {args.steps} 걸음 · 고침 {fix} · "
+                  f"캐시 상한 {cache} GB · 기록 {out}", flush=True)
+            for step in range(1, args.steps + 1):
+                task = "act" if step % 2 else "cap"          # 입력 길이가 번갈아 바뀐다(지난번 최악)
+                i = rng.randrange(len(rows))
+                mx.reset_peak_memory()
+                t0 = time.time()
+                loss = trainer.step(_sample(setup, feats, rows, i, task))
+                row = {"step": step, "task": task, "sec": round(time.time() - t0, 2),
+                       "loss": round(loss, 3), **_mem()}
+                why = watchdog.check(step)
+                if step % watchdog.every == 0:
+                    row.update(watchdog.last)
+                rec.write(json.dumps(row) + "\n")
+                rec.flush()
+                if step % watchdog.every == 0 or step <= 2:
+                    print(f"[probe] {row}", flush=True)
+                if why:
+                    print(f"[watchdog] 멈춤 — {why}", flush=True)
+                    return 3
+    except GuardRefused as err:
+        print(f"[guard] 막음 — {err}")
+        return 2
+    finally:
+        rec.close()
+    return 0
+
+
+def _step_without_clear(trainer):
+    """(측정용) 고치기 전 동작 — 캐시를 비우지 않는 걸음."""
+    import mlx.core as mx
+
+    def step(s):
+        trainer.qwen.model.train()
+        loss, grads = trainer._step(s)
+        trainer.opt.update(trainer.proj, grads)
+        mx.eval(trainer.proj.parameters(), trainer.opt.state, loss)
+        return float(loss)
+
+    return step
 
 
 # ---------------------------------------------------------------------- 캡션 평가
@@ -278,6 +378,12 @@ def register(sub) -> None:
     p.add_argument("--dataset", default="main")
     p.add_argument("--val", default="eval")
     p.set_defaults(func=train)
+    pr = sub.add_parser("train-probe", help="짧게 돌리며 걸음마다 메모리를 잰다(저장 없음)")
+    pr.add_argument("--brain", choices=["real", "rewired"], default="real")
+    pr.add_argument("--dataset", default="main")
+    pr.add_argument("--steps", type=int, default=50)
+    pr.add_argument("--no-fix", action="store_true", help="캐시 상한 · 비우기 없이(비교용)")
+    pr.set_defaults(func=probe)
     e = sub.add_parser("eval-caption", help="F-017 캡션 칸별 정확도(학습에 안 쓴 씨앗)")
     e.add_argument("--brain", choices=["real", "rewired"], required=True)
     e.add_argument("--checkpoint", default="stage1-caption", choices=["stage1-caption", "final"])
