@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 640" role="img" aria-label="권장 파이프라인 상세: 사람의 질문이 언어 모델, 도구 서버, 시뮬레이터, 요약기를 거쳐 요약만 언어 모델로 돌아오고 원본은 파일로 남는다">
+<style>
+  svg { font-family: "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; color:#414A4F; }
+  .bx { fill:#FAFBFB; stroke:#414A4F; stroke-width:1.2; }
+  .bx-a { fill:#F7E3EF; stroke:#AB2A79; stroke-width:1.4; }
+  .ln { stroke:#414A4F; stroke-width:1.2; fill:none; }
+  .ln-a { stroke:#AB2A79; stroke-width:1.4; fill:none; }
+  text { font-size:12px; fill:#12171A; }
+  text.lbl { font-family:Menlo,ui-monospace,monospace; font-size:11px; fill:#6B757A; }
+  text.lane { font-family:Menlo,ui-monospace,monospace; font-size:11px; fill:#0E7C86; }
+  text.acc { fill:#AB2A79; }
+</style>
+<rect x="0" y="0" width="760" height="640" fill="#FFFFFF"/>
+      <defs>
+        <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" fill="#414A4F"/>
+        </marker>
+      </defs>
+
+      <!-- 1 사람 -->
+      <rect class="bx" x="140" y="14" width="480" height="40" rx="3"/>
+      <text x="380" y="39" text-anchor="middle">사람 — 「DNp01 을 켜면 다리 운동뉴런까지 반응하나?」</text>
+      <line class="ln" x1="380" y1="54" x2="380" y2="84" marker-end="url(#ar3)"/>
+      <text class="lbl" x="392" y="73">질문</text>
+      <line class="ln" x1="200" y1="86" x2="200" y2="56" marker-end="url(#ar3)"/>
+      <text class="lbl" x="188" y="73" text-anchor="end">보고</text>
+
+      <!-- 2 언어 모델 -->
+      <rect class="bx" x="140" y="86" width="480" height="66" rx="3"/>
+      <text x="380" y="108" text-anchor="middle">언어 모델 — Qwen3 8B(4비트 ≈ 5GB, Ollama · MLX · LM Studio) 또는 클라우드</text>
+      <text class="lbl" x="380" y="128" text-anchor="middle">실험 계획 → 도구 호출 JSON 생성 → 결과 해석 → 다음 실험 제안</text>
+      <text class="lbl" x="380" y="143" text-anchor="middle">학습 없음 — 이미 학습된 가중치를 그대로 씀</text>
+      <line class="ln" x1="380" y1="152" x2="380" y2="182" marker-end="url(#ar3)"/>
+      <text class="lbl" x="392" y="171">{"stimulus":"DNp01","steps":100}</text>
+
+      <!-- 3 도구 서버 -->
+      <rect class="bx" x="140" y="184" width="480" height="92" rx="3"/>
+      <text x="380" y="205" text-anchor="middle">도구 서버 (MCP 또는 HTTP) — 지침이 아니라 코드로 막는 자리</text>
+      <rect class="bx" x="152" y="216" width="146" height="48" rx="2"/>
+      <text x="225" y="235" text-anchor="middle">허용 목록 검사</text>
+      <text class="lbl" x="225" y="252" text-anchor="middle">뉴런 이름 화이트리스트</text>
+      <rect class="bx" x="308" y="216" width="146" height="48" rx="2"/>
+      <text x="381" y="235" text-anchor="middle">상한</text>
+      <text class="lbl" x="381" y="252" text-anchor="middle">스텝 ≤ 500 · 시간 제한</text>
+      <rect class="bx" x="464" y="216" width="146" height="48" rx="2"/>
+      <text x="537" y="235" text-anchor="middle">실행 큐</text>
+      <text class="lbl" x="537" y="252" text-anchor="middle">한 번에 하나 · run_id 발급</text>
+      <line class="ln" x1="380" y1="276" x2="380" y2="306" marker-end="url(#ar3)"/>
+      <text class="lbl" x="392" y="295">검증된 요청</text>
+
+      <!-- 4 시뮬레이터 -->
+      <rect class="bx-a" x="140" y="308" width="480" height="150" rx="3"/>
+      <text x="380" y="329" text-anchor="middle">시뮬레이터 프로세스 — Python · PyTorch MPS (맥 GPU)</text>
+      <rect class="bx" x="152" y="340" width="106" height="62" rx="2"/>
+      <text x="205" y="358" text-anchor="middle">데이터 준비</text>
+      <text class="lbl" x="205" y="374" text-anchor="middle">feather 3개 1.1GB</text>
+      <text class="lbl" x="205" y="388" text-anchor="middle">→ graph.npz · SHA 확인</text>
+      <line class="ln" x1="258" y1="371" x2="264" y2="371" marker-end="url(#ar3)"/>
+      <rect class="bx" x="266" y="340" width="106" height="62" rx="2"/>
+      <text x="319" y="358" text-anchor="middle">자극 인코딩</text>
+      <text class="lbl" x="319" y="374" text-anchor="middle">이름 → 인덱스</text>
+      <text class="lbl" x="319" y="388" text-anchor="middle">입력 전류 지정</text>
+      <line class="ln" x1="372" y1="371" x2="378" y2="371" marker-end="url(#ar3)"/>
+      <rect class="bx" x="380" y="340" width="106" height="62" rx="2"/>
+      <text x="433" y="358" text-anchor="middle">LIF 루프</text>
+      <text class="lbl" x="433" y="374" text-anchor="middle">전압 갱신 · 발화</text>
+      <text class="lbl" x="433" y="388" text-anchor="middle">시냅스 합산 100만씩</text>
+      <line class="ln" x1="486" y1="371" x2="492" y2="371" marker-end="url(#ar3)"/>
+      <rect class="bx" x="494" y="340" width="114" height="62" rx="2"/>
+      <text x="551" y="358" text-anchor="middle">원본 출력</text>
+      <text class="lbl" x="551" y="374" text-anchor="middle">spike_counts · voltage</text>
+      <text class="lbl" x="551" y="388" text-anchor="middle">summary.json</text>
+      <text class="lbl" x="380" y="424" text-anchor="middle">데이터 준비는 처음 한 번 · 이후 실행마다 자극 → 루프 → 출력</text>
+      <text class="lbl" x="380" y="440" text-anchor="middle">GPU 연결 배열 ≈ 512MB + 상태·임시 배열 (저장소 README 기준)</text>
+
+      <!-- 분기: 원본 → 기록 / 요약기 -->
+      <path class="ln" d="M380 458 L380 478 L240 478 L240 492" marker-end="url(#ar3)"/>
+      <path class="ln" d="M380 478 L500 478 L500 492" marker-end="url(#ar3)"/>
+      <text class="lbl" x="392" y="474">원본 (수십만 뉴런 배열)</text>
+
+      <!-- 5 기록 / 요약기 -->
+      <rect class="bx" x="140" y="494" width="200" height="64" rx="3"/>
+      <text x="240" y="516" text-anchor="middle">기록 저장</text>
+      <text class="lbl" x="240" y="533" text-anchor="middle">outputs/&lt;run_id&gt;/</text>
+      <text class="lbl" x="240" y="548" text-anchor="middle">원본 배열 · 요청 원문 · 요약</text>
+      <rect class="bx" x="380" y="494" width="240" height="64" rx="3"/>
+      <text x="500" y="516" text-anchor="middle">요약기 (코드)</text>
+      <text class="lbl" x="500" y="533" text-anchor="middle">발화 뉴런 수 · 상위 20 · 하강뉴런 반응</text>
+      <text class="lbl" x="500" y="548" text-anchor="middle">무자극 대비 차이 · run_id</text>
+
+      <!-- 요약이 언어 모델로 돌아감 (오른쪽) -->
+      <path class="ln-a" d="M620 526 L700 526 L700 119 L622 119" marker-end="url(#ar3)"/>
+      <text class="lbl acc" x="708" y="330" text-anchor="middle" transform="rotate(90 708 330)">요약 JSON 수 KB — 원본 배열은 넘기지 않음</text>
+
+      <!-- 메모리 주석 -->
+      <rect class="bx" x="140" y="580" width="480" height="48" rx="3"/>
+      <text class="lbl" x="380" y="599" text-anchor="middle">맥 통합 메모리: 언어 모델 ≈ 5GB + 시뮬레이터 ≈ 1~2GB + 시스템 → 16GB 빠듯 · 32GB 여유</text>
+      <text class="lbl" x="380" y="616" text-anchor="middle">둘 다 GPU 를 쓰면 서로 느려짐 — 언어 모델을 클라우드에 두면 맥은 시뮬레이션만</text>
+    </svg>

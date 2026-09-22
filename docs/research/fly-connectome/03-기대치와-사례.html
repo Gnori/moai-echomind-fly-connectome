@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>기대치와 사례</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html" class="cur">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="03-기대치와-사례.md">03-기대치와-사례.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="03-기대치와-사례">03. 기대치와 사례</h1>
+<blockquote>
+<p>화제가 된 데모들이 실제로 무엇을 보였는지 — 각 저장소가 <strong>스스로 밝힌</strong> 결과 기준.</p>
+</blockquote>
+<h2 id="되는-것">되는 것</h2>
+<ul>
+<li>뉴런을 켜고 꺼서 신호가 어디로 퍼지는지 예측</li>
+<li>회로 분석 — 경로 찾기, 암수 차이 비교, 세포 종류별 연결</li>
+<li>스파이킹 신경망·신경형 칩 실험의 실제 배선 재료</li>
+<li>보여 주기 좋은 데모</li>
+</ul>
+<h2 id="안-되는-것">안 되는 것</h2>
+<ul>
+<li>언어 모델처럼 「지능」을 앱에 가져다 붙이기</li>
+<li>배선도만으로 행동을 재현하기 — 시냅스 세기는 시냅스 수로 근사하고, 흥분·억제는 예측값이며, <strong>신경조절물질과 학습 규칙은 들어 있지 않다</strong></li>
+<li>시뮬레이션 결과를 「초파리가 실제로 그렇게 한다」로 읽기 — 방정식은 프로젝트마다의 가정</li>
+</ul>
+<h2 id="사례--입출력-대응은-사람이-학습은-출력층만">사례 — 입출력 대응은 사람이, 학습은 출력층만</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>사례</th>
+<th>한 것</th>
+<th>저장소가 밝힌 결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/nftechie/doomfly">DOOMFLY</a></td>
+<td>게임 화면을 광수용체 입력(R1–R6 밝기 3,335 + R8 색 811)으로 넣고, 16.67만 뉴런·2,558만 연결로 전파. DNp20 좌우 차를 회전, DNpe017 을 이동·발사에 대응. 손상 시 도파민 뉴런(PPL101)에 200ms 혐오 입력, KC→MBON11 연결 4,184개에 가소성 규칙</td>
+<td>「학습된 생존을 보이지 못했다」고 명시. v6 후보가 시각·조건화·생존 검증 관문을 통과 못 함. 음성 결과와 대조군을 함께 공개</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nftechie/stonkfly">Stonkfly</a></td>
+<td>시세 차트를 입력으로 넣은 모의 거래</td>
+<td>수익이 나는 학습은 입증되지 않았다고 명시</td>
+</tr>
+<tr>
+<td><a href="https://github.com/cobanov/flyjump">Fly Dino</a></td>
+<td>80뉴런 회로 + 243개 매개변수 출력층만 학습(교차 엔트로피 방법)</td>
+<td>회로 자체는 고정. 회로 절단 대조군 포함</td>
+</tr>
+<tr>
+<td>FLYT3</td>
+<td>같은 회로로 위성 영상 분류</td>
+<td>초파리 회로 60.8%, 같은 입력을 쓴 평범한 신경망(MLP) 85.7% — <strong>스스로 불리한 대조 결과를 공개</strong></td>
+</tr>
+<tr>
+<td><a href="https://github.com/tolatolatop/fly-chess">Fly Chess</a> · <a href="https://github.com/jonatasperaza/FlyPong">FlyPong</a> 등</td>
+<td>회로 일부만 골라 쓴 게임</td>
+<td>「circuit subset」 — 부분 회로</td>
+</tr>
+</tbody>
+</table></div>
+<p>새로 나온 사례(F1 모나코 · Fly.exe 열두 마리 · 브라우저 전체 중추신경계 · FLYCNS 수치 시험 · ConnecTorch · 마인크래프트 · Strandbeest 로봇)와 <strong>각각 어떻게 이었는지</strong>는 <a href="10-적용-사례-상세.html">10 적용 사례 상세</a>에 있다.</p>
+<h2 id="데모를-볼-때-확인할-세-가지">데모를 볼 때 확인할 세 가지</h2>
+<ol>
+<li>배선도를 <strong>통째로</strong> 썼나, 일부 회로만 골랐나</li>
+<li>감각 입력과 운동 출력의 대응을 <strong>누가 정했나</strong></li>
+<li>학습이 있었다면 <strong>무엇이 학습됐나</strong> — 배선인가, 출력층인가</li>
+</ol>
+<p>셋을 밝히지 않은 데모는 「초파리 뇌가 게임을 했다」는 말로 읽히기 쉽다.</p>
+<h2 id="doomfly-실행-요건-참고">DOOMFLY 실행 요건 (참고)</h2>
+<p>Python 3.11, C++ 컴파일러, 수 GB 메모리. MaleCNS 입력 파일 3개를 <code>doom/datasets.json</code> 등록명대로 받고 <code>source.lock.json</code> 의 SHA-256 으로 검증한 뒤 <code>doom.connectome → prepare → audit_data → build_kernel → server</code> 순서. 「소프트웨어 시험 통과는 생물학적 타당성의 증거가 아니다」라고 README 가 적어 두었다.</p>
+<div class="pager"><a href="02-받아-쓰는-길.html">← 02 · 받아 쓰는 길</a><a href="04-감각과-회로.html">04 · 감각과 회로 →</a></div>
+<footer>이 HTML 은 <code>03-기대치와-사례.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>

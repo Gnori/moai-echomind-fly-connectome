@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>데이터 실측 — 주석 파일과 신경전달물질 파일을 직접 열어 본 것</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html" class="cur">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="08-데이터-실측.md">08-데이터-실측.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="08-데이터-실측--주석-파일과-신경전달물질-파일을-직접-열어-본-것">08. 데이터 실측 — 주석 파일과 신경전달물질 파일을 직접 열어 본 것</h1>
+<blockquote>
+<p>2026-09-16. 공식 저장소에서 <code>body-annotations-male-cns-v1.0-minconf-0.5.feather</code>(14MB)와 <code>body-neurotransmitters-male-cns-v1.0.feather</code>(43MB)를 내려받아 pandas 로 센 값이다. README 나 논문의 요약이 아니라 <strong>파일 그대로의 숫자</strong>다. FlyGym 겹눈 수는 저장소의 자산 파일(<code>compound_eye.npz</code>)에서 셌다.</p>
+</blockquote>
+<h2 id="1-뉴런-수--166700-과-165122-가-왜-다른가">1. 뉴런 수 — 166,700 과 165,122 가 왜 다른가</h2>
+<p>주석 파일은 <strong>211,577 행</strong>이다. 뉴런만이 아니라 신경아교세포·고아 조각·중요하지 않은 조각까지 들어 있다. 시뮬레이션이 쓰는 「뉴런」은 이 중 <code>status</code> 로 고른다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>status</th>
+<th>행 수</th>
+<th>뜻</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Traced</strong></td>
+<td><strong>165,122</strong></td>
+<td>추적이 끝난 뉴런 — Fly.exe·Lulzx 가 「165,122」라 부르는 집합</td>
+</tr>
+<tr>
+<td>Orphan</td>
+<td>15,925</td>
+<td>세포체와 이어지지 않은 조각</td>
+</tr>
+<tr>
+<td>Glia</td>
+<td>11,864</td>
+<td>신경아교세포</td>
+</tr>
+<tr>
+<td>Unimportant</td>
+<td>10,751</td>
+<td>작은 조각</td>
+</tr>
+<tr>
+<td>None</td>
+<td>5,472</td>
+<td>상태 없음</td>
+</tr>
+<tr>
+<td>Assign</td>
+<td>1,832</td>
+<td>배정 대기</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>611</td>
+<td>앵커</td>
+</tr>
+</tbody>
+</table></div>
+<p>논문·DOOMFLY·NeuroCraft 가 말하는 <strong>166,700(또는 166,691)</strong> 은 「주석된 뉴런」이고, Traced 165,122 에 Assign·Anchor 등을 얼마나 더 넣느냐로 갈린다. Fly.exe 의 결정 기록에는 「Traced+Assign+Anchor 로 넓히면 2,443 개(1.48%)·연결 60,281 개(0.24%)가 더해진다」고 적혀 있다. <strong>어느 집합을 썼는지 적지 않은 숫자는 비교할 수 없다.</strong></p>
+<h2 id="2-주석-파일의-칸--대응표를-만들-재료">2. 주석 파일의 칸 — 대응표를 만들 재료</h2>
+<p>36 개 칸. 설계(<a href="06-설계-초파리-회로에-Qwen-뇌.html">06</a>)의 대응표에 바로 쓰이는 것은 다음이다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>무엇</th>
+<th>예</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bodyId</code></td>
+<td>뉴런 고유 번호</td>
+<td>10001 (DNp01)</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>세포 종류 이름 — <strong>11,751 종류</strong>(Traced)</td>
+<td><code>DNp01</code>, <code>R1-R6</code>, <code>R7y</code>, <code>LC4</code></td>
+</tr>
+<tr>
+<td><code>instance</code></td>
+<td>종류 + 좌우</td>
+<td><code>DNp01(GF)_R</code></td>
+</tr>
+<tr>
+<td><code>superclass</code></td>
+<td>큰 부류(아래 3절)</td>
+<td><code>descending_neuron</code></td>
+</tr>
+<tr>
+<td><code>class</code></td>
+<td>기능 부류</td>
+<td><code>Kenyon_Cell</code>, <code>MBON</code>, <code>DAN</code>, <code>CX</code>, <code>olfactory</code>, <code>gustatory</code></td>
+</tr>
+<tr>
+<td><code>subclass</code></td>
+<td>세부 — 감각 뉴런의 기관·털 종류</td>
+<td><code>mechanosensory bristle</code>, <code>leg bristle</code>, <code>auditory</code>, <code>taste peg</code></td>
+</tr>
+<tr>
+<td><code>somaSide</code></td>
+<td>세포체 좌우</td>
+<td>R 74,430 · L 74,220 · M 392 · 없음 16,080</td>
+</tr>
+<tr>
+<td><code>somaLocation</code></td>
+<td>세포체 좌표(8nm 복셀)</td>
+<td><code>[37124, 22258, 36274]</code></td>
+</tr>
+<tr>
+<td><code>assignedOlHex1/2</code></td>
+<td><strong>시각엽 육각 격자 좌표</strong> — 낱눈 ↔ 광수용체 대응표의 열쇠</td>
+<td></td>
+</tr>
+<tr>
+<td><code>entryNerve</code> / <code>exitNerve</code></td>
+<td>어느 신경으로 들어오나·나가나 — 감각·운동 뉴런의 몸 쪽 위치</td>
+<td><code>AN</code>(더듬이 신경) 3,332 · <code>MetaLN</code>(뒷다리) 1,522</td>
+</tr>
+<tr>
+<td><code>somaNeuromere</code></td>
+<td>신경삭 분절(T1·T2·T3 다리 분절, A1~A10 배)</td>
+<td>T2 5,076</td>
+</tr>
+<tr>
+<td><code>dimorphism</code></td>
+<td>암수 차이 표시</td>
+<td>아래 5절</td>
+</tr>
+<tr>
+<td><code>fruDsx</code></td>
+<td>구애 관련 유전자 발현 추정</td>
+<td>fru_high 2,611</td>
+</tr>
+<tr>
+<td><code>flywireType</code> / <code>hemibrainType</code> / <code>mancType</code></td>
+<td>다른 데이터셋의 같은 종류 이름 — 8,199 종류가 FlyWire 와 짝지어짐</td>
+<td></td>
+</tr>
+<tr>
+<td><code>itoleeHl</code> / <code>trumanHl</code></td>
+<td>발달 계보</td>
+<td></td>
+</tr>
+<tr>
+<td><code>receptorType</code></td>
+<td>일부 미각 수용체 추정</td>
+<td><code>putative_ppk23</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-traced-뉴런-165122-개는-어디에-있나-superclass">3. Traced 뉴런 165,122 개는 어디에 있나 (<code>superclass</code>)</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>superclass</th>
+<th>수</th>
+<th>비율</th>
+<th>뜻</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ol_intrinsic</td>
+<td>89,390</td>
+<td>54.1%</td>
+<td>시각엽 안에서만 잇는 뉴런 — <strong>뇌의 절반 넘게가 시각</strong></td>
+</tr>
+<tr>
+<td>cb_intrinsic</td>
+<td>32,160</td>
+<td>19.5%</td>
+<td>중심뇌 안</td>
+</tr>
+<tr>
+<td>vnc_intrinsic</td>
+<td>13,151</td>
+<td>8.0%</td>
+<td>신경삭 안</td>
+</tr>
+<tr>
+<td>visual_projection</td>
+<td>9,201</td>
+<td>5.6%</td>
+<td>시각엽 → 중심뇌</td>
+</tr>
+<tr>
+<td>vnc_sensory</td>
+<td>6,365</td>
+<td>3.9%</td>
+<td>신경삭으로 들어오는 감각(다리·날개)</td>
+</tr>
+<tr>
+<td>cb_sensory</td>
+<td>4,868</td>
+<td>2.9%</td>
+<td>뇌로 들어오는 감각(후각·미각·청각 등)</td>
+</tr>
+<tr>
+<td>ol_sensory</td>
+<td>4,114</td>
+<td>2.5%</td>
+<td><strong>광수용체</strong></td>
+</tr>
+<tr>
+<td>ascending_neuron</td>
+<td>1,846</td>
+<td>1.1%</td>
+<td>신경삭 → 뇌</td>
+</tr>
+<tr>
+<td><strong>descending_neuron</strong></td>
+<td><strong>1,314</strong></td>
+<td>0.8%</td>
+<td>뇌 → 신경삭. <strong>종류는 484</strong></td>
+</tr>
+<tr>
+<td>vnc_motor</td>
+<td>708</td>
+<td>0.4%</td>
+<td>신경삭 운동뉴런</td>
+</tr>
+<tr>
+<td>visual_centrifugal</td>
+<td>563</td>
+<td></td>
+<td>중심뇌 → 시각엽</td>
+</tr>
+<tr>
+<td>sensory_ascending</td>
+<td>537</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>cb_motor</td>
+<td>107</td>
+<td></td>
+<td>뇌의 운동뉴런(주둥이 등)</td>
+</tr>
+<tr>
+<td>그 밖</td>
+<td>798</td>
+<td>0.5%</td>
+<td>원심성·내분비·장 신경계(ENS)·<code>_tbc</code> · <strong>superclass 빈 칸 516</strong> 포함 (2026-09-22 다시 셈 — 처음 적은 「약 300」은 틀렸다)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-설계에서-이름으로-부르는-집단의-실제-크기">4. 설계에서 이름으로 부르는 집단의 실제 크기</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>집단</th>
+<th>세는 법</th>
+<th>수</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>광수용체 R1–R6</td>
+<td><code>type == "R1-R6"</code></td>
+<td>1,394</td>
+</tr>
+<tr>
+<td>광수용체 R7</td>
+<td><code>type</code> 이 <code>R7</code> 로 시작 (R7y 481 · R7p 332 · R7d 82 · 미정 404 …)</td>
+<td>1,384</td>
+</tr>
+<tr>
+<td>광수용체 R8</td>
+<td><code>type</code> 이 <code>R8</code> 로 시작 (R8y 481 · R8p 330 · R8d 76 · 미정 442 …)</td>
+<td>1,329</td>
+</tr>
+<tr>
+<td><strong>광수용체 합</strong></td>
+<td></td>
+<td><strong>4,107</strong></td>
+</tr>
+<tr>
+<td>움직임 감지 T4·T5</td>
+<td><code>type</code> 이 T4/T5 로 시작</td>
+<td>13,585</td>
+</tr>
+<tr>
+<td>시각 투사 LC·LPLC</td>
+<td><code>type</code> 이 LC/LPLC 로 시작</td>
+<td>4,669</td>
+</tr>
+<tr>
+<td>후각 감각 뉴런</td>
+<td><code>class == olfactory</code></td>
+<td>2,639</td>
+</tr>
+<tr>
+<td>후각 투사 뉴런</td>
+<td><code>class == ALPN</code></td>
+<td>686</td>
+</tr>
+<tr>
+<td>미각 감각 뉴런</td>
+<td><code>class == gustatory</code></td>
+<td>1,428</td>
+</tr>
+<tr>
+<td>기계감각 뉴런</td>
+<td><code>class</code> 가 mechanosensory*</td>
+<td>5,756</td>
+</tr>
+<tr>
+<td>케니언 세포</td>
+<td><code>class == Kenyon_Cell</code></td>
+<td>4,064</td>
+</tr>
+<tr>
+<td>버섯체 출력 MBON</td>
+<td><code>class == MBON</code></td>
+<td>97</td>
+</tr>
+<tr>
+<td>도파민 뉴런 DAN</td>
+<td><code>class == DAN</code></td>
+<td>340</td>
+</tr>
+<tr>
+<td>중심복합체</td>
+<td><code>class == CX</code></td>
+<td>2,950</td>
+</tr>
+<tr>
+<td>하강 뉴런</td>
+<td><code>superclass == descending_neuron</code></td>
+<td>1,314 (484 종류)</td>
+</tr>
+</tbody>
+</table></div>
+<p>DOOMFLY 가 말한 「R1–R6 3,335 + R8 811」과 위 숫자가 다른 것은 세는 기준(종류 이름·상태·판)이 다르기 때문이다. <strong>숫자를 인용할 때는 세는 법을 함께 적는다.</strong></p>
+<h2 id="5-암수-차이-표시-traced">5. 암수 차이 표시 (Traced)</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>dimorphism</th>
+<th>수</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>male-specific (수컷에만)</td>
+<td>1,258</td>
+</tr>
+<tr>
+<td>sexually dimorphic (암수 다름)</td>
+<td>771</td>
+</tr>
+<tr>
+<td>potentially sexually dimorphic</td>
+<td>177</td>
+</tr>
+<tr>
+<td>potentially male-specific</td>
+<td>162</td>
+</tr>
+<tr>
+<td>표시 없음</td>
+<td>162,754</td>
+</tr>
+</tbody>
+</table></div>
+<p>수컷 데이터의 핵심 강점이 여기 있다 — 약 2,400 개 뉴런에 암수 차이 표시가 붙어 있어, 구애·성행동 회로를 이름으로 골라 낼 수 있다.</p>
+<h2 id="6-신경전달물질-파일--예측근거합의">6. 신경전달물질 파일 — 예측·근거·합의</h2>
+<p>파일은 <strong>1,835,518 행</strong>이다. Traced 뉴런만이 아니라 모든 조각에 예측이 붙어 있어 행이 많다. 칸은 열 개다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>뜻</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>predicted_nt</code></td>
+<td>그 뉴런의 시냅스 이미지들에서 예측한 주된 물질</td>
+</tr>
+<tr>
+<td><code>predicted_nt_confidence</code></td>
+<td>그 예측의 확신</td>
+</tr>
+<tr>
+<td><code>total_nt_predictions</code></td>
+<td>예측에 쓴 시냅스 수</td>
+</tr>
+<tr>
+<td><code>ground_truth</code></td>
+<td>문헌에서 알려진 물질(있을 때만)</td>
+</tr>
+<tr>
+<td><code>celltype_predicted_nt</code></td>
+<td>같은 세포 종류 전체를 모아 낸 예측</td>
+</tr>
+<tr>
+<td><strong><code>consensus_nt</code></strong></td>
+<td><strong>뉴런 예측·종류 예측·문헌을 합친 최종값 — 시뮬레이션에 이것을 쓴다</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="traced-뉴런-165122-개의-물질-분포">Traced 뉴런 165,122 개의 물질 분포</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>물질</th>
+<th>뉴런 예측(<code>predicted_nt</code>)</th>
+<th>합의(<code>consensus_nt</code>)</th>
+<th>부호</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>아세틸콜린</td>
+<td>94,946</td>
+<td><strong>103,718</strong></td>
+<td>+</td>
+</tr>
+<tr>
+<td>글루탐산</td>
+<td>28,055</td>
+<td>29,296</td>
+<td>− (초파리에서 대개)</td>
+</tr>
+<tr>
+<td>GABA</td>
+<td>20,218</td>
+<td>22,055</td>
+<td>−</td>
+</tr>
+<tr>
+<td><strong>히스타민</strong></td>
+<td>2,026</td>
+<td><strong>5,910</strong></td>
+<td>− — <strong>광수용체의 물질</strong></td>
+</tr>
+<tr>
+<td>도파민</td>
+<td>4,443</td>
+<td><strong>392</strong></td>
+<td>조절</td>
+</tr>
+<tr>
+<td>세로토닌</td>
+<td>465</td>
+<td>48</td>
+<td>조절</td>
+</tr>
+<tr>
+<td>옥토파민</td>
+<td>102</td>
+<td>101</td>
+<td>조절</td>
+</tr>
+<tr>
+<td>미정(unclear)</td>
+<td>14,365</td>
+<td>3,100</td>
+<td>?</td>
+</tr>
+</tbody>
+</table></div>
+<p>앞 문서에서 「여섯 가지」라고 한 것은 틀렸다 — <strong>히스타민을 포함해 일곱 가지</strong>다. 히스타민은 광수용체가 쓰는 물질이고 시각엽 첫 단에서 억제로 작용한다.</p>
+<h3 id="뉴런-예측과-합의가-다른-곳--18743-개">뉴런 예측과 합의가 다른 곳 — 18,743 개</h3>
+<ul>
+<li>12,343 개는 뉴런 예측이 「미정」이었다가 종류 예측으로 채워진 것.</li>
+<li><strong>케니언 세포 4,058 개가 뉴런 예측에서는 「도파민」, 합의에서는 「아세틸콜린」이다.</strong> 실제 케니언 세포는 아세틸콜린이다 — 이미지 기반 분류기가 이 세포에서 체계적으로 틀리는 알려진 현상이고, 합의 칸이 그것을 바로잡는다. 뉴런 예측을 그대로 쓰면 <strong>버섯체 입력 4,000 개가 「조절 = 0」으로 꺼진다.</strong></li>
+<li>광수용체 2,164 개는 뉴런 예측 「미정」 → 합의 「히스타민」.</li>
+<li>글루탐산 → GABA 375 개(둘 다 −라 부호는 같음), 아세틸콜린 → 글루탐산 108 개(<strong>부호가 뒤집힘</strong>).</li>
+</ul>
+<blockquote>
+<p><strong>결론: 부호는 <code>predicted_nt</code> 가 아니라 <code>consensus_nt</code> 로 붙인다.</strong> 그래도 미정 3,100 개와 조절 541 개, 그리고 <strong>신경전달물질 파일에 행이 없는 Traced 뉴런 502 개</strong>가 남는다(위 분포표 합이 164,620 인 까닭 · 아래 「?」 3,602 = 3,100 + 502 — 2026-09-22 다시 셈) — 0 으로 두든 빼든, 무엇으로 했는지 적는다.</p>
+</blockquote>
+<h3 id="예측이-얼마나-맞나--문헌-근거와-대조">예측이 얼마나 맞나 — 문헌 근거와 대조</h3>
+<p>문헌 근거(<code>ground_truth</code>)가 있는 Traced 뉴런 83,496 개에서:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>일치율</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>미정 포함</td>
+<td>90.6%</td>
+</tr>
+<tr>
+<td>미정 제외 (76,245 개)</td>
+<td><strong>99.2%</strong></td>
+</tr>
+<tr>
+<td>아세틸콜린 (49,396)</td>
+<td>99.9%</td>
+</tr>
+<tr>
+<td>GABA (11,890)</td>
+<td>96.5%</td>
+</tr>
+<tr>
+<td>글루탐산 (13,556)</td>
+<td>99.2%</td>
+</tr>
+<tr>
+<td>히스타민 (939)</td>
+<td>99.9%</td>
+</tr>
+<tr>
+<td>도파민·옥토파민·세로토닌 (464)</td>
+<td>100%</td>
+</tr>
+</tbody>
+</table></div>
+<p>확신값은 평균 0.891, 중앙값 0.937, 94.3% 가 0.7 이상이다. 단, <strong>문헌 근거가 있는 뉴런은 이미 잘 알려진 종류</strong>라 이 일치율이 전체를 대표하지는 않는다. 근거 없는 8만 개의 오류율은 이보다 높을 수 있다.</p>
+<h3 id="부호로-본-뇌-합의-기준">부호로 본 뇌 (합의 기준)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>부호</th>
+<th>뉴런 수</th>
+<th>비율</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+ (아세틸콜린)</td>
+<td>103,718</td>
+<td>62.8%</td>
+</tr>
+<tr>
+<td>− (GABA · 글루탐산 · 히스타민)</td>
+<td>57,261</td>
+<td>34.7%</td>
+</tr>
+<tr>
+<td>? (미정)</td>
+<td>3,602</td>
+<td>2.2%</td>
+</tr>
+<tr>
+<td>조절 (도파민 · 세로토닌 · 옥토파민)</td>
+<td>541</td>
+<td>0.3%</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-몸-쪽--flygym-겹눈">7. 몸 쪽 — FlyGym 겹눈</h2>
+<p><code>flygym/assets/model/neuromechfly/compound_eye.npz</code> 와 <code>vision.yaml</code> 에서 직접 확인:</p>
+<ul>
+<li>눈당 낱눈 <strong>721 개</strong> — 창백형(pale, 자외선 R7·청색 R8) 216 · 노랑형(yellow) 505</li>
+<li>눈 하나의 원시 렌더 512 × 450 픽셀, 시야각 157°, 어안 왜곡 계수 3.8</li>
+<li>낱눈 하나 = 픽셀 묶음 평균. 낱눈 아이디 지도(<code>ommatidia_id_map</code>)로 어느 픽셀이 어느 낱눈인지 정해져 있다</li>
+</ul>
+<p>MaleCNS 광수용체 4,107 개(한 눈에 약 2,050)와 FlyGym 낱눈 721 개는 <strong>수가 다르다</strong>. 실제 초파리는 눈당 약 750~800 낱눈이고 낱눈마다 R1–R8 여덟 개가 있으니, MaleCNS 는 재구성에서 광수용체 일부만 잡힌 것이다. 대응표는 「FlyGym 낱눈 → MaleCNS 의 <code>assignedOlHex</code> 격자 좌표」로 맞추고, 짝이 없는 낱눈은 비운다(<a href="06-설계-초파리-회로에-Qwen-뇌.html#22-시각-입력의-상세--프레임-한-장이-광수용체-발화가-되기까지">06 의 2.2</a>).</p>
+<h2 id="8-이-실측이-설계에-주는-것">8. 이 실측이 설계에 주는 것</h2>
+<ol>
+<li><strong>부호는 <code>consensus_nt</code></strong> — 케니언 세포 4,058 개가 걸려 있다.</li>
+<li><strong>광수용체는 히스타민(−)</strong> — 빛이 들어오면 첫 단이 억제된다. 인코더는 「밝음 = 광수용체 발화 ↑」로 넣되, 다음 단이 억제로 반응하는 것이 맞는 동작이다. Fly.exe 는 부호 미정 정책 때문에 광수용체 출력 66,533 개를 0 으로 두고 한 단 아래에서 빛을 넣었다 — 합의 칸을 쓰면 그럴 필요가 없다.</li>
+<li><strong>하강 뉴런 484 종류 1,314 개</strong> — 행동 카탈로그의 후보 크기.</li>
+<li><strong>낱눈 ↔ 광수용체 대응은 <code>assignedOlHex1/2</code></strong> 로 만든다.</li>
+<li><strong>암수 차이 표시 약 2,400 개</strong> — 수컷 데이터로만 할 수 있는 실험의 재료.</li>
+</ol>
+<h2 id="다시-세어-보는-법">다시 세어 보는 법</h2>
+<pre><code class="language-python"># pip install pyarrow pandas
+import pyarrow.feather as f
+a  = f.read_feather(&quot;body-annotations-male-cns-v1.0-minconf-0.5.feather&quot;)
+nt = f.read_feather(&quot;body-neurotransmitters-male-cns-v1.0.feather&quot;)
+tr = a[a[&quot;status&quot;] == &quot;Traced&quot;]                       # 165,122
+tr[&quot;superclass&quot;].value_counts()
+m  = tr.merge(nt, left_on=&quot;bodyId&quot;, right_on=&quot;body&quot;, how=&quot;left&quot;)
+m[&quot;consensus_nt&quot;].value_counts()
+m[m[&quot;class&quot;] == &quot;Kenyon_Cell&quot;][[&quot;predicted_nt&quot;, &quot;consensus_nt&quot;]].value_counts()
+</code></pre>
+<div class="pager"><a href="06-설계-초파리-회로에-Qwen-뇌.html">← 06 · 설계 — Qwen 뇌 잇기</a><a href="09-LIF-모델.html">09 · 발화 모델(LIF) →</a></div>
+<footer>이 HTML 은 <code>08-데이터-실측.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 230" role="img" aria-label="시간축: 초파리 회로는 1밀리초 스텝으로 계속 돌고, 300밀리초 창마다 감각 요약이 만들어지며, 언어 모델은 약 1.5초마다 한 번 판단해 다음 창까지 명령을 유지한다. 반사는 회로 안에서 즉시 처리된다">
+<style>
+  svg { font-family: "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; color:#414A4F; }
+  .bx { fill:#FAFBFB; stroke:#414A4F; stroke-width:1.2; }
+  .bx-s { fill:#DCEFF1; stroke:#0E7C86; stroke-width:1.4; }
+  .bx-b { fill:#F7E3EF; stroke:#AB2A79; stroke-width:1.4; }
+  .bx-a { fill:#ECE6F8; stroke:#6B4FBB; stroke-width:1.4; }
+  .ln { stroke:#414A4F; stroke-width:1.2; fill:none; }
+  .ln-d { stroke:#414A4F; stroke-width:1.2; fill:none; stroke-dasharray:4 3; }
+  text { font-size:12px; fill:#12171A; }
+  text.lbl { font-family:Menlo,ui-monospace,monospace; font-size:11px; fill:#6B757A; }
+  text.t-s { fill:#0E7C86; } text.t-b { fill:#AB2A79; } text.t-a { fill:#6B4FBB; }
+</style>
+<rect x="0" y="0" width="760" height="230" fill="#FFFFFF"/>
+      <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0,1 9,5 0,9" fill="#414A4F"/></marker></defs>
+      <text class="lbl" x="0" y="20">시간 →</text>
+      <line class="ln" x1="80" y1="16" x2="750" y2="16" marker-end="url(#a2)"/>
+      <text class="lbl" x="80" y="34" text-anchor="middle">0s</text>
+      <text class="lbl" x="300" y="34" text-anchor="middle">1s</text>
+      <text class="lbl" x="520" y="34" text-anchor="middle">2s</text>
+      <text class="lbl" x="740" y="34" text-anchor="middle">3s</text>
+
+      <!-- 회로 -->
+      <text class="t-s" x="0" y="66">회로 (1ms)</text>
+      <rect class="bx-s" x="80" y="52" width="660" height="18" rx="2"/>
+      <text class="lbl" x="410" y="65" text-anchor="middle">쉬지 않고 돎 — 감각 자극이 매 스텝 들어감</text>
+
+      <!-- 창 -->
+      <text x="0" y="106">감각 창 (300ms)</text>
+      <rect class="bx" x="80" y="92" width="66" height="18" rx="2"/><rect class="bx" x="146" y="92" width="66" height="18" rx="2"/><rect class="bx" x="212" y="92" width="66" height="18" rx="2"/><rect class="bx" x="278" y="92" width="66" height="18" rx="2"/><rect class="bx" x="344" y="92" width="66" height="18" rx="2"/><rect class="bx" x="410" y="92" width="66" height="18" rx="2"/><rect class="bx" x="476" y="92" width="66" height="18" rx="2"/><rect class="bx" x="542" y="92" width="66" height="18" rx="2"/><rect class="bx" x="608" y="92" width="66" height="18" rx="2"/><rect class="bx" x="674" y="92" width="66" height="18" rx="2"/>
+      <text class="lbl" x="750" y="106" text-anchor="start"></text>
+
+      <!-- 판단 -->
+      <text class="t-b" x="0" y="146">판단 (수 초)</text>
+      <rect class="bx-b" x="80" y="132" width="20" height="18" rx="2"/>
+      <rect class="bx-b" x="410" y="132" width="20" height="18" rx="2"/>
+      <path class="ln" d="M212 110 L212 122 L90 122 L90 130" marker-end="url(#a2)"/>
+      <text class="lbl" x="150" y="128" text-anchor="middle">최근 창 요약 →</text>
+      <path class="ln" d="M542 110 L542 122 L420 122 L420 130" marker-end="url(#a2)"/>
+
+      <!-- 명령 유지 -->
+      <text class="t-a" x="0" y="186">명령 (유지)</text>
+      <rect class="bx-a" x="100" y="172" width="310" height="18" rx="2"/>
+      <text class="lbl" x="255" y="185" text-anchor="middle">명령 A 유지 · 100ms 에 걸쳐 전환</text>
+      <rect class="bx-a" x="430" y="172" width="310" height="18" rx="2"/>
+      <text class="lbl" x="585" y="185" text-anchor="middle">명령 B 유지</text>
+
+      <!-- 반사 -->
+      <path class="ln-d" d="M330 70 L330 172"/>
+      <text class="lbl t-s" x="336" y="160">반사(DNp01): 회로가 즉시 — 판단을 기다리지 않음</text>
+      <text class="lbl" x="80" y="218">0단계는 실시간이 아니어도 됨: 회로 300ms → 멈춤 → 판단 → 다시 300ms</text>
+    </svg>

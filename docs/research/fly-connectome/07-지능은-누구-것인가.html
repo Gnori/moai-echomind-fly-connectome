@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지능은 누구 것인가</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html" class="cur">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="07-지능은-누구-것인가.md">07-지능은-누구-것인가.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="07-지능은-누구-것인가">07. 지능은 누구 것인가</h1>
+<blockquote>
+<p><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 설계</a>를 두고 나온 다섯 질문 — 가중치가 있나 · LLM 과 같은 것인가 · 이 설계의 지능은 누구 것인가 · LLM 에 잇는 게 맞나 · 그래서 의미가 있는가.</p>
+</blockquote>
+<h2 id="1-가중치가-있나--있다-그런데-뜻이-다르다">1. 가중치가 있나 — 있다. 그런데 뜻이 다르다</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>초파리 커넥톰</th>
+<th>Qwen3.8-27B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>가중치가 무엇인가</td>
+<td>두 뉴런 사이 <strong>시냅스 개수</strong>(정수). 전자현미경 사진에서 <strong>세어서</strong> 얻음</td>
+<td>실수 행렬. <strong>경사하강으로 텍스트 예측을 위해 맞춘</strong> 값</td>
+</tr>
+<tr>
+<td>개수</td>
+<td>연결 2,558만(시냅스 1.25억)</td>
+<td>매개변수 270억</td>
+</tr>
+<tr>
+<td>부호(흥분·억제)</td>
+<td>신경전달물질을 <strong>예측</strong>해서 붙임 — 틀릴 수 있음</td>
+<td>부호도 학습된 값</td>
+</tr>
+<tr>
+<td>어떻게 생겼나</td>
+<td><strong>진화 + 발달 + 그 개체의 경험</strong>이 만든 결과의 스냅샷</td>
+<td>학습 데이터로 만든 결과</td>
+</tr>
+<tr>
+<td>다시 학습시킬 수 있나</td>
+<td><strong>없음.</strong> 학습 규칙(도파민 가소성 등)이 데이터에 없음</td>
+<td>있음(미세조정)</td>
+</tr>
+</tbody>
+</table></div>
+<p>정확히 말하면 — <strong>초파리 입장에서는 학습된 가중치가 맞다.</strong> 수억 년 진화와 그 개체의 삶이 만든 것이다. 다만 <strong>우리는 그 학습 과정을 손에 넣지 못했고, 결과인 배선만</strong> 받았다. 시냅스 「개수」가 곧 「세기」인지도 근사다.</p>
+<h2 id="2-llm-과-같은-것인가--부류는-같고-종류는-다르다">2. LLM 과 같은 것인가 — 부류는 같고 종류는 다르다</h2>
+<p>둘 다 「연결된 단위들이 신호를 주고받는 망」이다. 거기까지가 같다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>초파리 뇌</th>
+<th>LLM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>하는 일</td>
+<td><strong>몸을 살리는 제어기</strong> — 감각→운동의 닫힌 고리</td>
+<td><strong>다음 글자 맞히기</strong> — 입력→출력 함수</td>
+</tr>
+<tr>
+<td>시간</td>
+<td>본질. 항상 돌고 있고, 스파이크의 <strong>타이밍</strong>이 정보</td>
+<td>없음. 토큰 순서만</td>
+</tr>
+<tr>
+<td>구조</td>
+<td>희소(밀도 약 0.1%), 되먹임 고리투성이, 뉴런 종류마다 성질이 다름</td>
+<td>밀집 행렬, 층을 차례로 통과</td>
+</tr>
+<tr>
+<td>학습</td>
+<td>내장(도파민 뉴런이 특정 시냅스를 바꿈) — 데이터에는 빠짐</td>
+<td>밖에서 한 번</td>
+</tr>
+<tr>
+<td>잘하는 것</td>
+<td>항법·회피·냄새 추적·구애·냄새-보상 연합 학습</td>
+<td>언어·지식·계획</td>
+</tr>
+<tr>
+<td>언어</td>
+<td><strong>없음</strong></td>
+<td>전부</td>
+</tr>
+</tbody>
+</table></div>
+<p>「초파리 뇌 = 작은 LLM」은 아니다. 초파리가 잘하는 지능은 LLM 이 못 하고, 그 반대도 마찬가지다.</p>
+<h2 id="3-이-설계에서-지능은-누구-것인가--llm-의-것">3. 이 설계에서 지능은 누구 것인가 — LLM 의 것</h2>
+<p><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 설계</a>에서 초파리 회로가 하는 일은 <strong>감각 전처리</strong>(보는 것·냄새 맡는 것을 요약)와 <strong>타고난 반사</strong>(도망)뿐이다. 「어디로 갈까」「피할까 먹을까」는 전부 Qwen 이 정한다.</p>
+<p>초파리 회로에는 학습 규칙이 없으니 회로 혼자 낼 수 있는 행동은 타고난 반사 수준이다. 그 위에 얹은 판단은 LLM 것이므로, 이 구성은 정직하게 말하면 <strong>「초파리 감각·반사 위에 얹은 LLM 지능」</strong>이다.</p>
+<h2 id="4-llm-에-잇는-게-맞나--목적에-따라-다르고-의문이-맞다">4. LLM 에 잇는 게 맞나 — 목적에 따라 다르고, 의문이 맞다</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>목적</th>
+<th>LLM 연동이 맞나</th>
+<th>맞는 길</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>초파리 뇌를 이해</strong>하고 싶다</td>
+<td><strong>아니오.</strong> LLM 이 판단을 가로채면 무엇이 회로 덕인지 흐려진다</td>
+<td>회로만 돌리고 실험 기록과 비교. Shiu 모델·flyvis 가 하는 일</td>
+</tr>
+<tr>
+<td><strong>초파리의 지능</strong>을 보고 싶다</td>
+<td><strong>아니오.</strong></td>
+<td>LLM 을 빼고 <strong>학습 규칙</strong>(버섯체 가소성)을 넣어, 몸을 붙인 채 행동이 스스로 생기는지 보는 실험. 아직 아무도 제대로 못 한 어려운 과제</td>
+</tr>
+<tr>
+<td>초파리 회로를 <strong>재료로 무언가를 만들고</strong> 싶다(에이전트·게임·데모)</td>
+<td>가능. 초파리의 기여는 작고 대체 가능할 수 있음</td>
+<td><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 설계</a>. 섞은 그래프 대조군(9장 대조 2)을 못 이기면 「초파리 뇌」라 부르지 않기</td>
+</tr>
+<tr>
+<td>LLM 을 초파리 <strong>연구 도구</strong>로 쓰고 싶다</td>
+<td><strong>예.</strong></td>
+<td><a href="05-LLM-연동-방식.html">05 의 도구 호출 구성</a> — LLM 이 실험자, 초파리가 피험체</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>판단</strong>: 「초파리 회로에 Qwen 뇌 얹기」는 만들 수 있고 재미있는 데모가 되지만, 거기서 나오는 지능은 Qwen 의 것이다. 초파리의 지능이 보고 싶다면 방향이 반대다 — <strong>LLM 을 빼고, 빠져 있는 학습 규칙을 채우는 쪽</strong>이다.</p>
+<h2 id="5-그래서-llm-과-연동하는-게-의미가-있는가--판정">5. 그래서 LLM 과 연동하는 게 의미가 있는가 — 판정</h2>
+<p><strong>「초파리 회로를 LLM 에 붙여서 지능을 얻는다」는 뜻이라면 없다.</strong> 이유는 둘이다.</p>
+<ul>
+<li>초파리 회로에는 학습 규칙이 없어서 혼자 낼 수 있는 것은 타고난 반사뿐이고, 판단은 전부 LLM 이 한다. 결과는 LLM 지능에 초파리 감각 전처리를 얹은 것이다.</li>
+<li>공개된 사례가 증거다. FLYT3 는 같은 입력을 준 평범한 신경망이 85.7%, 초파리 회로가 60.8% 였다고 스스로 밝혔다. DOOMFLY 도 학습된 생존을 보이지 못했다(<a href="03-기대치와-사례.html">03</a>).</li>
+</ul>
+<p><strong>의미가 있는 연동은 두 가지, 그리고 연구 방향 하나다.</strong></p>
+<ol>
+<li><strong>LLM 을 실험자로 쓰기</strong> — 실험을 설계하고, 시뮬레이터를 돌리고, 결과를 요약·보고하게 한다. 초파리는 피험체이고, LLM 은 사람 연구자의 손을 덜어 준다. <a href="05-LLM-연동-방식.html">05 의 도구 호출 구성</a>이 이것이다.</li>
+<li><strong>검증된 부품만 빌려 쓰기</strong> — flyvis 처럼 실험 기록으로 검증된 시각 전처리 모델을 다른 시스템의 부품으로 쓴다. 「초파리 뇌」가 아니라 「초파리 눈에서 나온 필터」로 쓰는 셈이다.</li>
+<li><strong>LLM 을 보상 판정자로 쓰기 (연구 방향)</strong> — LLM 이 행동을 대신 정하지 않고, 결과를 보고 「잘했다 / 위험했다」만 판정해 <strong>도파민 뉴런을 켠다.</strong> 행동은 회로가 스스로 내고, 회로가 바뀌는 것도 회로 안의 조절 규칙이 한다(<a href="06-설계-초파리-회로에-Qwen-뇌.html#26-신경물질을-주입해야-하나--아니다-발화를-넣는다">06 의 2.6</a>). 판단의 주인이 회로 쪽으로 넘어가므로 「초파리가 배운다」에 가장 가깝다. 조건: 조절 규칙(도파민이 시냅스를 어떻게 바꾸나)을 문헌에서 가져와 가정으로 명시하고, 「무작위 보상」「규칙 없음」 대조군을 같이 돌린다. 아직 아무도 성공하지 못했다.</li>
+</ol>
+<p><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 의 「초파리 회로에 Qwen 뇌 얹기」</a>는 만들 수 있고 데모로는 재미있지만, <strong>초파리의 지능을 보려는 목적이라면 답이 아니다.</strong> 그때는 LLM 을 빼고, 데이터에 빠져 있는 <strong>학습 규칙(버섯체 가소성)을 채워서 몸을 붙인 채 행동이 저절로 생기는지</strong> 보는 실험이 맞다. 아직 아무도 제대로 성공하지 못한 문제이고, 그래서 연구 가치가 있는 쪽도 그쪽이다.</p>
+<p>EchoMind 관점에서 하나를 고른다면 1번이다 — 「계산은 코드가, 말은 언어 모델이」라는 원칙과 같은 구조라서, 초파리 시뮬레이터를 도구로 붙이는 실험이 그 원칙을 시험해 보는 작은 본보기가 된다.</p>
+<h2 id="echomind-에-주는-뜻">EchoMind 에 주는 뜻</h2>
+<p>EchoMind 의 캐릭터도 같은 구조를 가진다 — 감정·기억·자율의지 <strong>계산은 코드가 정본</strong>이고, 언어 모델은 그 위에서 말하고 계획한다. 초파리 사례는 「고정된 회로 + 학습 규칙 없음」이 어디까지 가고 어디서 멈추는지를 보여 주는 대조군이다. 계산값을 언어 모델이 덮지 못하게 하는 원칙(형제 저장소 <code>moai-echomind/docs/domains/</code> 의 감정·기억 정본)이 여기서도 그대로 맞는다.</p>
+<div class="pager"><a href="10-적용-사례-상세.html">← 10 · 적용 사례 상세</a><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나 →</a></div>
+<footer>이 HTML 은 <code>07-지능은-누구-것인가.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>

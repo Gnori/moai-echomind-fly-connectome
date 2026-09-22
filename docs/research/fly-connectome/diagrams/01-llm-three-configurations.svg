@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-label="세 가지 연결 구성에서 초파리 회로가 놓이는 자리 비교: 말에서 자극으로, 어댑터, 도구 호출">
+<style>
+  svg { font-family: "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; color:#414A4F; }
+  .bx { fill:#FAFBFB; stroke:#414A4F; stroke-width:1.2; }
+  .bx-a { fill:#F7E3EF; stroke:#AB2A79; stroke-width:1.4; }
+  .ln { stroke:#414A4F; stroke-width:1.2; fill:none; }
+  .ln-a { stroke:#AB2A79; stroke-width:1.4; fill:none; }
+  text { font-size:12px; fill:#12171A; }
+  text.lbl { font-family:Menlo,ui-monospace,monospace; font-size:11px; fill:#6B757A; }
+  text.lane { font-family:Menlo,ui-monospace,monospace; font-size:11px; fill:#0E7C86; }
+  text.acc { fill:#AB2A79; }
+</style>
+<rect x="0" y="0" width="720" height="300" fill="#FFFFFF"/>
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" fill="#414A4F"/>
+        </marker>
+        <marker id="ar-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" fill="#AB2A79"/>
+        </marker>
+      </defs>
+
+      <!-- 레인 1: 말 → 자극 -->
+      <text class="lane" x="0" y="34">말 → 자극</text>
+      <rect class="bx" x="0" y="46" width="120" height="34" rx="3"/>
+      <text x="60" y="68" text-anchor="middle">사람 말</text>
+      <line class="ln" x1="120" y1="63" x2="168" y2="63" marker-end="url(#ar)"/>
+      <text class="lbl" x="144" y="56" text-anchor="middle">해석</text>
+      <rect class="bx" x="170" y="46" width="130" height="34" rx="3"/>
+      <text x="235" y="68" text-anchor="middle">언어 모델</text>
+      <line class="ln" x1="300" y1="63" x2="348" y2="63" marker-end="url(#ar)"/>
+      <text class="lbl" x="324" y="56" text-anchor="middle">자극</text>
+      <rect class="bx-a" x="350" y="46" width="150" height="34" rx="3"/>
+      <text x="425" y="68" text-anchor="middle">초파리 회로</text>
+      <line class="ln" x1="500" y1="63" x2="548" y2="63" marker-end="url(#ar)"/>
+      <text class="lbl" x="524" y="56" text-anchor="middle">활동</text>
+      <rect class="bx" x="550" y="46" width="150" height="34" rx="3"/>
+      <text x="625" y="68" text-anchor="middle">행동 설명</text>
+
+      <!-- 레인 2: 어댑터 -->
+      <text class="lane" x="0" y="130">어댑터 (FLM)</text>
+      <rect class="bx" x="0" y="142" width="120" height="34" rx="3"/>
+      <text x="60" y="164" text-anchor="middle">글자</text>
+      <line class="ln" x1="120" y1="159" x2="168" y2="159" marker-end="url(#ar)"/>
+      <rect class="bx" x="170" y="142" width="130" height="34" rx="3"/>
+      <text x="235" y="164" text-anchor="middle">언어 모델</text>
+      <line class="ln" x1="300" y1="159" x2="348" y2="159" marker-end="url(#ar)"/>
+      <text class="lbl" x="324" y="152" text-anchor="middle">임베딩</text>
+      <rect class="bx-a" x="350" y="142" width="150" height="34" rx="3"/>
+      <text x="425" y="164" text-anchor="middle">초파리 그래프</text>
+      <line class="ln" x1="500" y1="159" x2="548" y2="159" marker-end="url(#ar)"/>
+      <text class="lbl" x="524" y="152" text-anchor="middle">상태</text>
+      <rect class="bx" x="550" y="142" width="150" height="34" rx="3"/>
+      <text x="625" y="164" text-anchor="middle">어댑터</text>
+      <path class="ln" d="M625 176 L625 200 L235 200 L235 178" marker-end="url(#ar)"/>
+      <text class="lbl" x="430" y="214" text-anchor="middle">다음 토큰 점수 조정 — 언어 능력은 언어 모델의 것</text>
+
+      <!-- 레인 3: 도구 호출 -->
+      <text class="lane" x="0" y="248">도구 호출 (권장)</text>
+      <rect class="bx" x="0" y="260" width="120" height="34" rx="3"/>
+      <text x="60" y="282" text-anchor="middle">언어 모델</text>
+      <line class="ln-a" x1="120" y1="277" x2="168" y2="277" marker-end="url(#ar-a)"/>
+      <text class="lbl" x="144" y="270" text-anchor="middle">실험 설계</text>
+      <rect class="bx" x="170" y="260" width="130" height="34" rx="3"/>
+      <text x="235" y="282" text-anchor="middle">도구 서버</text>
+      <line class="ln-a" x1="300" y1="277" x2="348" y2="277" marker-end="url(#ar-a)"/>
+      <text class="lbl" x="324" y="270" text-anchor="middle">허용 검사</text>
+      <rect class="bx-a" x="350" y="260" width="150" height="34" rx="3"/>
+      <text x="425" y="282" text-anchor="middle">초파리 시뮬레이터</text>
+      <line class="ln-a" x1="500" y1="277" x2="548" y2="277" marker-end="url(#ar-a)"/>
+      <text class="lbl" x="524" y="270" text-anchor="middle">요약</text>
+      <rect class="bx" x="550" y="260" width="150" height="34" rx="3"/>
+      <text x="625" y="282" text-anchor="middle">해석·보고</text>
+    </svg>

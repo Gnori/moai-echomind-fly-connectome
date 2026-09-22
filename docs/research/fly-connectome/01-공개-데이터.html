@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>무엇이 공개됐나</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html" class="cur">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="01-공개-데이터.md">01-공개-데이터.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="01-무엇이-공개됐나">01. 무엇이 공개됐나</h1>
+<blockquote>
+<p>사실 확인: 구글 리서치 블로그 · MaleCNS 공식 다운로드 페이지 · FlyWire Codex 첫 화면 (2026-09-15 ~ 16)</p>
+</blockquote>
+<h2 id="malecns-v10">MaleCNS v1.0</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>무엇</td>
+<td>수컷 초파리의 <strong>뇌 + 양쪽 시각엽 + 복측신경삭</strong>, 목 연결부까지 한 개체로 이어진 연결 지도</td>
+</tr>
+<tr>
+<td>공개</td>
+<td>2026-09-03, Cell (프로젝트 v1.0 은 2026-06-08)</td>
+</tr>
+<tr>
+<td>규모</td>
+<td>뉴런 약 166,000 — 주석된 뉴런 166,700, 추적 완료(<code>status=Traced</code>) 165,122 (<a href="08-데이터-실측.html">08</a>에서 직접 셈) · 시냅스 약 1.25억 · 방향 있는 연결 약 2,558만</td>
+</tr>
+<tr>
+<td>만든 곳</td>
+<td>HHMI 자넬리아 FlyEM · 케임브리지 · MRC 분자생물학연구소 · 구글 리서치</td>
+</tr>
+<tr>
+<td>라이선스</td>
+<td><strong>CC BY 4.0</strong> — 출처 표기와 논문 인용이 필요하고, 상업 이용 가능</td>
+</tr>
+<tr>
+<td>동반 논문</td>
+<td>시각계 · 미각 · 사회 행동 세 편이 같이 나옴</td>
+</tr>
+</tbody>
+</table></div>
+<p>첫 수컷 커넥톰이고, 뇌만이 아니라 중추신경계 전체가 한 개체에서 이어진 첫 사례이며, 이미 있던 암컷 데이터와 세포 단위로 비교할 수 있는 첫 사례다.</p>
+<h3 id="가장-먼저-알아야-할-것">가장 먼저 알아야 할 것</h3>
+<p><strong>이것은 「배선도」이지 학습된 인공지능이 아니다.</strong> 파일 안에 든 것은</p>
+<ul>
+<li>어떤 뉴런이 어떤 뉴런에 <strong>시냅스 몇 개</strong>로 이어지는지</li>
+<li>뉴런의 <strong>종류·이름·위치</strong>(세포체 좌표, 형태)</li>
+<li><strong>예측된</strong> 신경전달물질(흥분·억제의 근거 — 예측값이라 틀릴 수 있음. 일곱 가지: 아세틸콜린 · GABA · 글루탐산 · 히스타민 · 도파민 · 세로토닌 · 옥토파민. 실측은 <a href="08-데이터-실측.html">08</a>)</li>
+</ul>
+<p>이다. 받아서 바로 「생각」을 시킬 수 있는 모델 파일은 없다. 발화를 보려면 <strong>시뮬레이션 방정식을 직접 붙여야</strong> 한다(<a href="02-받아-쓰는-길.html">02</a>).</p>
+<h2 id="같이-쓰이는-데이터셋--flywire-codex-에-다섯-개">같이 쓰이는 데이터셋 — FlyWire Codex 에 다섯 개</h2>
+<p><strong>이름 주의</strong>: 아래 「Codex」는 프린스턴 신경과학연구소가 만든 <strong>커넥톰 탐색기 FlyWire Codex</strong>(<code>codex.flywire.ai</code>)이고, OpenAI 의 Codex 와는 이름만 같다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>데이터셋</th>
+<th>무엇</th>
+<th>뉴런</th>
+<th>라이선스</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://codex.flywire.ai/?dataset=fafb">FAFB v783</a></td>
+<td>암컷 뇌 (<a href="https://flywire.ai/">FlyWire</a>, <a href="https://doi.org/10.1038/s41586-024-07558-y">Dorkenwald 등 2024 Nature</a>)</td>
+<td>139,255</td>
+<td><strong>CC BY-NC 4.0 — 비상업만</strong></td>
+</tr>
+<tr>
+<td><a href="https://codex.flywire.ai/?dataset=banc">BANC v888</a></td>
+<td>암컷 뇌 + 신경삭 (<a href="https://github.com/htem/BANC-project">BANC 프로젝트 저장소</a>)</td>
+<td>158,262</td>
+<td>(FlyWire 계열)</td>
+</tr>
+<tr>
+<td><a href="https://codex.flywire.ai/?dataset=manc">MANC v1.2.1</a></td>
+<td>수컷 신경삭 (<a href="https://www.janelia.org/project-team/flyem/manc-connectome">자넬리아 MANC 페이지</a>)</td>
+<td>23,665</td>
+<td>(자넬리아)</td>
+</tr>
+<tr>
+<td>MAOL v1.1</td>
+<td>수컷 오른쪽 시각엽 (<a href="https://github.com/reiserlab/male-drosophila-visual-system-connectome-code">시각계 논문 코드 저장소</a>)</td>
+<td>52,445</td>
+<td>(자넬리아)</td>
+</tr>
+<tr>
+<td><strong>MCNS v1.0</strong></td>
+<td><strong>수컷 뇌 + 신경삭 = 이번에 공개된 MaleCNS</strong> (<a href="https://male-cns.janelia.org/">공식 사이트</a>)</td>
+<td>166,700</td>
+<td>CC BY 4.0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>FlyWire Codex 는 서버에서 계산하는 기능에 <strong>구글 계정 로그인</strong>이 필요하다.</li>
+<li>수컷 데이터는 자넬리아 쪽 도구로도 본다: <a href="https://male-cns.janelia.org/explore/">male-cns 탐색 페이지</a>에 neuPrint · Neuroglancer · <strong>암수 차이 탐색기</strong> · 세포 종류 탐색기가 있다. Neuroglancer 장면에는 FlyWire·hemibrain 뉴런을 같은 공간으로 옮겨 <strong>겹쳐 보는 층</strong>이 들어 있다.</li>
+<li><strong>도구가 같아도 라이선스는 데이터마다 다르다.</strong> 한 화면에서 암컷(비상업)과 수컷(상업 가능)을 같이 보더라도 조건은 각각 따른다. 시뮬레이션 코드 상당수가 FlyWire 기준으로 만들어졌으므로, 상업 용도라면 <strong>어느 데이터에서 나온 결과물인지</strong>를 먼저 갈라 둔다.</li>
+</ul>
+<h2 id="통째로-받을-수-있는-파일-인증-없음">통째로 받을 수 있는 파일 (인증 없음)</h2>
+<p><code>gs://flyem-male-cns/v1.0/connectome-data/flat-connectome/</code> — 크기는 직접 조회해 확인한 값.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>파일</th>
+<th>내용</th>
+<th>크기</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/body-annotations-male-cns-v1.0-minconf-0.5.feather"><code>body-annotations-male-cns-v1.0-minconf-0.5.feather</code></a></td>
+<td>뉴런 주석(종류·이름 등)</td>
+<td>14 MB</td>
+</tr>
+<tr>
+<td><a href="https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/body-neurotransmitters-male-cns-v1.0.feather"><code>body-neurotransmitters-male-cns-v1.0.feather</code></a></td>
+<td>예측 신경전달물질</td>
+<td>43 MB</td>
+</tr>
+<tr>
+<td><a href="https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/connectome-weights-male-cns-v1.0-minconf-0.5.feather"><code>connectome-weights-male-cns-v1.0-minconf-0.5.feather</code></a></td>
+<td><strong>연결 가중치 — 시뮬레이션의 핵심</strong></td>
+<td>1.05 GB</td>
+</tr>
+<tr>
+<td><a href="https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/syn-points-male-cns-v1.0-minconf-0.5.feather"><code>syn-points-male-cns-v1.0-minconf-0.5.feather</code></a></td>
+<td>시냅스 좌표 하나하나</td>
+<td>13 GB</td>
+</tr>
+</tbody>
+</table></div>
+<p>같은 표에 없는 파일 3개(<code>body-stats</code>, <code>syn-partners</code>, <code>tbar-neurotransmitters</code>)와 원본 전자현미경 볼륨(N5, 8nm), 분할, 뼈대(SWC · Neuroglancer precomputed · JRC2018 템플릿 공간으로 옮긴 것), neuPrint 용 neo4j 데이터베이스가 같은 저장소(<code>gs://flyem-male-cns/</code>)에 있다. 목록과 형식 설명은 <a href="https://male-cns.janelia.org/download/">공식 다운로드 페이지</a> 「Download raw data」에 있고, 볼륨은 <a href="https://google.github.io/tensorstore/index.html">tensorstore</a>·<a href="https://github.com/seung-lab/cloud-volume">cloud-volume</a> 으로 읽는다.</p>
+<h2 id="공식-자리와-깃-소스-위치">공식 자리와 깃 소스 위치</h2>
+<h3 id="malecns-자넬리아--구글">MaleCNS (자넬리아 · 구글)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>무엇</th>
+<th>위치</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>프로젝트 사이트</td>
+<td><a href="https://male-cns.janelia.org/">male-cns.janelia.org</a> — <a href="https://male-cns.janelia.org/explore/">탐색</a> · <a href="https://male-cns.janelia.org/build/dimorphism_overview/">암수 차이</a> · <a href="https://male-cns.janelia.org/download/">다운로드</a> · <a href="https://male-cns.janelia.org/release/">릴리스 노트</a></td>
+</tr>
+<tr>
+<td>자넬리아 FlyEM 프로젝트 페이지</td>
+<td><a href="https://www.janelia.org/project-team/flyem/male-cns-connectome">janelia.org/project-team/flyem/male-cns-connectome</a></td>
+</tr>
+<tr>
+<td>논문</td>
+<td><a href="https://doi.org/10.1016/j.cell.2026.08.015">Cell 2026, doi:10.1016/j.cell.2026.08.015</a> — 「수컷 중추신경계 완전 커넥톰의 성적 이형」</td>
+</tr>
+<tr>
+<td>구글 쪽 소개</td>
+<td><a href="https://research.google/blog/a-connectomics-milestone-mapping-the-complete-male-fruit-fly-brain/">구글 리서치 블로그</a> · <a href="https://blog.google/innovation-and-ai/technology/research/male-fruit-fly-brain-map/">구글 키워드 블로그</a> · <a href="https://sites.research.google/gr/neural-mapping/">신경 지도 프로젝트</a></td>
+</tr>
+<tr>
+<td>데이터 저장소</td>
+<td><code>gs://flyem-male-cns/</code> (구글 클라우드 스토리지, 인증 없음)</td>
+</tr>
+<tr>
+<td>사이트·암수 차이 탐색기 소스</td>
+<td><a href="https://github.com/janelia-flyem/male-cns">github.com/janelia-flyem/male-cns</a></td>
+</tr>
+<tr>
+<td>세포 종류 탐색기</td>
+<td><a href="https://reiserlab.github.io/celltype-explorer-drosophila-male-cns">사이트</a> · <a href="https://github.com/reiserlab/celltype-explorer-drosophila-male-cns">소스 github.com/reiserlab/celltype-explorer-drosophila-male-cns</a></td>
+</tr>
+<tr>
+<td>논문 보조 데이터·분석 노트북</td>
+<td><a href="https://github.com/flyconnectome/2025malecns">github.com/flyconnectome/2025malecns</a></td>
+</tr>
+<tr>
+<td>수컷 시각계 논문 코드</td>
+<td><a href="https://github.com/reiserlab/male-drosophila-visual-system-connectome-code">github.com/reiserlab/male-drosophila-visual-system-connectome-code</a></td>
+</tr>
+<tr>
+<td>데이터 스냅샷 도구</td>
+<td><a href="https://github.com/janelia-flyem/flyem-snapshot">github.com/janelia-flyem/flyem-snapshot</a> — 공개 파일을 만든 도구</td>
+</tr>
+<tr>
+<td>뷰어</td>
+<td><a href="https://github.com/google/neuroglancer">Neuroglancer github.com/google/neuroglancer</a> — 오픈소스 3D 뷰어</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="flywire-프린스턴">FlyWire (프린스턴)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>무엇</th>
+<th>위치</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>홈</td>
+<td><a href="https://flywire.ai/">flywire.ai</a></td>
+</tr>
+<tr>
+<td>탐색기</td>
+<td><a href="https://codex.flywire.ai/">FlyWire Codex</a> — <a href="https://codex.flywire.ai/?dataset=fafb">FAFB</a> · <a href="https://codex.flywire.ai/?dataset=banc">BANC</a> · <a href="https://codex.flywire.ai/?dataset=manc">MANC</a> 등. 소스 <a href="https://github.com/murthylab/codex">github.com/murthylab/codex</a></td>
+</tr>
+<tr>
+<td>논문</td>
+<td><a href="https://doi.org/10.1038/s41586-024-07558-y">Dorkenwald 등 2024 Nature — 배선도</a> · <a href="https://doi.org/10.1038/s41586-024-07686-5">Schlegel 등 2024 Nature — 주석·세포 종류</a></td>
+</tr>
+<tr>
+<td>주석 데이터</td>
+<td><a href="https://github.com/flyconnectome/flywire_annotations">github.com/flyconnectome/flywire_annotations</a></td>
+</tr>
+<tr>
+<td>BANC</td>
+<td><a href="https://github.com/htem/BANC-project">github.com/htem/BANC-project</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="데이터를-다루는-라이브러리">데이터를 다루는 라이브러리</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>언어</th>
+<th>저장소</th>
+<th>무엇</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td><a href="https://github.com/connectome-neuprint/neuprint-python">connectome-neuprint/neuprint-python</a></td>
+<td>neuPrint 질의 (공식 권장)</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><a href="https://github.com/navis-org/navis">navis-org/navis</a> · <a href="https://github.com/navis-org/navis-flybrains">navis-flybrains</a></td>
+<td>형태 분석·시각화 · 데이터셋 사이 좌표 변환</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><a href="https://github.com/navis-org/fafbseg-py">navis-org/fafbseg-py</a> · <a href="https://github.com/CAVEconnectome/CAVEclient">CAVEconnectome/CAVEclient</a></td>
+<td>FlyWire 분할·주석·연결</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><a href="https://github.com/YijieYin/connectome_interpreter">YijieYin/connectome_interpreter</a> · <a href="https://github.com/YijieYin/connectome_data_prep">connectome_data_prep</a></td>
+<td>경로 찾기·미분 가능 모델 · MaleCNS 포함 연결 행렬 준비</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><a href="https://github.com/flyconnectome/cocoa">flyconnectome/cocoa</a> · <a href="https://github.com/schlegelp/connecto">schlegelp/connecto</a></td>
+<td>데이터셋 사이 비교 · CAVE·neuPrint 통합 인터페이스</td>
+</tr>
+<tr>
+<td>R</td>
+<td><a href="https://github.com/natverse/malecns">natverse/malecns</a> · <a href="https://github.com/natverse/neuprintr">neuprintr</a> · <a href="https://github.com/natverse/coconatfly">coconatfly</a></td>
+<td>MaleCNS 접근 · neuPrint · 비교</td>
+</tr>
+</tbody>
+</table></div>
+<p>시뮬레이션·응용 저장소(Shiu 모델, Eon fly-brain, mps-malecns-model, DOOMFLY, FlyGym, flyvis 등)는 <a href="02-받아-쓰는-길.html">02</a>·<a href="03-기대치와-사례.html">03</a>·<a href="05-LLM-연동-방식.html">05</a> 에 있고, 전체 목록은 <a href="https://github.com/cobanov/awesome-fly">cobanov/awesome-fly</a> 다.</p>
+<h2 id="라이선스와-인용">라이선스와 인용</h2>
+<ul>
+<li><strong>MaleCNS</strong>: CC BY 4.0. 표기 대상은 FlyEM/HHMI 자넬리아, 케임브리지 대학, MRC 분자생물학연구소, 구글 리서치.</li>
+<li><strong>FlyWire</strong>: CC BY-NC 4.0. 파생 프로젝트의 라이선스 문서 기준이므로 상업 용도면 약관 원문을 확인.</li>
+<li><strong>코드는 저장소마다 다르다.</strong> Shiu 모델·DOOMFLY 는 MIT, 출처 표기를 요구하는 자체 라이선스도 있다.</li>
+<li><strong>데이터와 코드의 라이선스는 별개다.</strong> MIT 코드로 FlyWire 데이터를 처리한 결과물은 여전히 비상업 조건을 따른다.</li>
+</ul>
+<h2 id="출처">출처</h2>
+<ul>
+<li><a href="https://research.google/blog/a-connectomics-milestone-mapping-the-complete-male-fruit-fly-brain/">구글 리서치 — 수컷 초파리 뇌 지도</a></li>
+<li><a href="https://male-cns.janelia.org/download/">MaleCNS 공식 다운로드</a> · <a href="https://male-cns.janelia.org/explore/">탐색</a></li>
+<li><a href="https://codex.flywire.ai/">FlyWire Codex</a></li>
+<li><a href="https://github.com/DenisSergeevitch/desktop-fly/blob/master/data/DATA_LICENSE.html">desktop-fly 데이터 라이선스 문서</a> — FlyWire CC BY-NC · 인용 문헌</li>
+</ul>
+<div class="pager"><a href="index.html">← 시작 — 목차와 요약</a><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길 →</a></div>
+<footer>이 HTML 은 <code>01-공개-데이터.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>

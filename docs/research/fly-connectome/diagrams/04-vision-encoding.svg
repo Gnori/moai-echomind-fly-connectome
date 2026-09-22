@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" role="img" aria-label="시각 인코딩 단계: 환경 프레임을 겹눈 격자로 재샘플링하고, 낱눈별 밝기와 색을 로그 압축해 광수용체 발화율로 바꾼 뒤, 커넥톰의 광수용체 뉴런 인덱스에 포아송 발화로 넣는다">
+<style>
+  svg { font-family: "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; color:#414A4F; }
+  .bx { fill:#FAFBFB; stroke:#414A4F; stroke-width:1.2; }
+  .bx-s { fill:#DCEFF1; stroke:#0E7C86; stroke-width:1.4; }
+  .bx-b { fill:#F7E3EF; stroke:#AB2A79; stroke-width:1.4; }
+  .bx-a { fill:#ECE6F8; stroke:#6B4FBB; stroke-width:1.4; }
+  .ln { stroke:#414A4F; stroke-width:1.2; fill:none; }
+  .ln-d { stroke:#414A4F; stroke-width:1.2; fill:none; stroke-dasharray:4 3; }
+  text { font-size:12px; fill:#12171A; }
+  text.lbl { font-family:Menlo,ui-monospace,monospace; font-size:11px; fill:#6B757A; }
+  text.t-s { fill:#0E7C86; } text.t-b { fill:#AB2A79; } text.t-a { fill:#6B4FBB; }
+</style>
+<rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
+      <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0,1 9,5 0,9" fill="#414A4F"/></marker></defs>
+      <rect class="bx" x="0" y="40" width="130" height="70" rx="3"/>
+      <text x="65" y="62" text-anchor="middle">환경 프레임</text>
+      <text class="lbl" x="65" y="80" text-anchor="middle">FlyGym 카메라</text>
+      <text class="lbl" x="65" y="94" text-anchor="middle">양쪽 눈 시점</text>
+      <line class="ln" x1="130" y1="75" x2="158" y2="75" marker-end="url(#a1)"/>
+      <rect class="bx" x="160" y="40" width="130" height="70" rx="3"/>
+      <text x="225" y="62" text-anchor="middle">겹눈 재샘플링</text>
+      <text class="lbl" x="225" y="80" text-anchor="middle">육각 격자 · 눈당 700여 낱눈</text>
+      <text class="lbl" x="225" y="94" text-anchor="middle">낱눈 = 픽셀 묶음 평균</text>
+      <line class="ln" x1="290" y1="75" x2="318" y2="75" marker-end="url(#a1)"/>
+      <rect class="bx" x="320" y="40" width="130" height="70" rx="3"/>
+      <text x="385" y="62" text-anchor="middle">채널 분리</text>
+      <text class="lbl" x="385" y="80" text-anchor="middle">R1–R6: 넓은 밝기</text>
+      <text class="lbl" x="385" y="94" text-anchor="middle">R7: 자외선 · R8: 청/녹</text>
+      <line class="ln" x1="450" y1="75" x2="478" y2="75" marker-end="url(#a1)"/>
+      <rect class="bx" x="480" y="40" width="130" height="70" rx="3"/>
+      <text x="545" y="62" text-anchor="middle">압축 · 적응</text>
+      <text class="lbl" x="545" y="80" text-anchor="middle">log(1 + I/I₀)</text>
+      <text class="lbl" x="545" y="94" text-anchor="middle">최근 평균 빼기(순응)</text>
+      <line class="ln" x1="610" y1="75" x2="638" y2="75" marker-end="url(#a1)"/>
+      <rect class="bx-s" x="640" y="40" width="120" height="70" rx="3"/>
+      <text class="t-s" x="700" y="62" text-anchor="middle">발화율 → 자극</text>
+      <text class="lbl" x="700" y="80" text-anchor="middle">0~200Hz 포아송</text>
+      <text class="lbl" x="700" y="94" text-anchor="middle">광수용체 인덱스에</text>
+
+      <rect class="bx" x="0" y="150" width="760" height="80" rx="3"/>
+      <text x="380" y="172" text-anchor="middle">낱눈 ↔ 커넥톰 광수용체 대응표 (한 번 만들어 고정)</text>
+      <text class="lbl" x="380" y="192" text-anchor="middle">MaleCNS 주석의 광수용체 뉴런에는 눈의 위치(라미나 열·행)가 있음 → 격자 좌표와 짝지음</text>
+      <text class="lbl" x="380" y="208" text-anchor="middle">재구성에서 빠진 낱눈은 이웃 값으로 채우거나 비워 둠 — 채운 곳은 표에 표시</text>
+      <text class="lbl" x="380" y="222" text-anchor="middle">검증: 왼쪽에 밝은 점 → 왼쪽 시각엽 라미나·메둘라가 먼저 발화하는지</text>
+    </svg>

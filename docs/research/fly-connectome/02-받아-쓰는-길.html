@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>받아 쓰는 길 네 가지</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html" class="cur">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="02-받아-쓰는-길.md">02-받아-쓰는-길.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="02-받아-쓰는-길-네-가지">02. 받아 쓰는 길 네 가지</h1>
+<blockquote>
+<p>쉬운 순서. 아래로 갈수록 준비가 늘어난다. 명령은 각 저장소 README 와 공식 페이지에서 옮겼고, 직접 돌려 보지는 않았다.</p>
+</blockquote>
+<h2 id="01-눈으로-보기--설치-없음--5분">01 눈으로 보기 — 설치 없음 · 5분</h2>
+<ul>
+<li><a href="https://male-cns.janelia.org/">male-cns.janelia.org</a> — 공식 프로젝트. 3D 뷰어(Neuroglancer)와 세포 종류 탐색.</li>
+<li><a href="https://neuprint.janelia.org/">neuPrint</a> — 계정을 만들면 연결을 질의할 수 있다.</li>
+<li><a href="https://codex.flywire.ai/">FlyWire Codex</a> — 다섯 데이터셋을 같은 화면에서(<a href="01-공개-데이터.html">01</a>). 구글 계정 로그인 필요.</li>
+</ul>
+<h2 id="02-데이터로-받기--python--조회는-수-분-통째로는-113gb">02 데이터로 받기 — Python · 조회는 수 분, 통째로는 1~13GB</h2>
+<p>공식 예제(neuPrint):</p>
+<pre><code class="language-python"># pip install neuprint-python   (neuPrint 에서 계정과 API 토큰 발급)
+from neuprint import Client, fetch_neurons, fetch_adjacencies
+
+client = Client(&quot;https://neuprint.janelia.org&quot;, dataset='male-cns:v1.0', token=token)
+
+neurons, syndist = fetch_neurons(&quot;DNge104&quot;)           # 주석 · 신경망 분포
+outgoing_edges, info = fetch_adjacencies(&quot;DNge104&quot;)    # 나가는 연결
+incoming_edges, info2 = fetch_adjacencies(None, &quot;DNge104&quot;)
+</code></pre>
+<p>형태(뼈대·메시)가 필요하면 <code>navis</code> 가 neuPrint 위에 얹혀 동작한다(<code>pip install navis[all]</code>). 통째로 받는 파일과 크기는 <a href="01-공개-데이터.html">01</a> 참고.</p>
+<h2 id="03-시뮬레이션-돌리기--배선도에-발화-방정식-붙이기--30분--두어-시간">03 시뮬레이션 돌리기 — 배선도에 발화 방정식 붙이기 · 30분 ~ 두어 시간</h2>
+<p>널리 쓰이는 방식은 <strong>누적·발화(LIF) 모델</strong>이다. 뉴런을 「전압이 쌓이다 문턱을 넘으면 한 번 발화하고 초기화되는 것」으로 단순화하고, 특정 뉴런을 켜거나 끄고 신호가 어디로 퍼지는지 본다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>저장소</th>
+<th>무엇</th>
+<th>알아 둘 것</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/philshiu/Drosophila_brain_model">philshiu/Drosophila_brain_model</a></td>
+<td>2024 Nature 논문 모델. FlyWire 기준, MIT. 정해진 주파수의 포아송 발화로 뉴런을 켜고, 연결을 0 으로 만들어 끈다</td>
+<td>Colab 버튼으로 설치 없이 시작. 로컬 설치 10분(README). 결과 원본은 수 GB 라 외부 아카이브에</td>
+</tr>
+<tr>
+<td><a href="https://github.com/eonsystemspbc/fly-brain">eonsystemspbc/fly-brain</a></td>
+<td>같은 모델을 Brian2·Brian2CUDA·PyTorch·NEST GPU·GeNN 으로 돌리고 속도를 비교</td>
+<td>뇌 모델만 있고 몸과 붙인 데모는 없다. 3월에 「초파리 뇌를 복제해 가상 몸을 움직였다」고 보도된 회사</td>
+</tr>
+<tr>
+<td><a href="https://github.com/seohyunjun/mps-malecns-model">seohyunjun/mps-malecns-model</a></td>
+<td><strong>맥(Apple Silicon)에서 MaleCNS 를 맥 GPU(MPS)로</strong>. 공식 feather 3개(약 1.1GB)를 받아 씀</td>
+<td>개인 실험 저장소. LIF 방정식·연결 부호·정규화는 이 프로젝트의 가정이라고 스스로 명시</td>
+</tr>
+</tbody>
+</table></div>
+<p>맥에서 MaleCNS 돌려 보기(저장소 README 절차):</p>
+<pre><code class="language-sh">git clone https://github.com/seohyunjun/mps-malecns-model.git
+cd mps-malecns-model
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-lock.txt
+.venv/bin/python -m malecns download      # 공식 feather 3개, 약 1.1GB, SHA-256 검증
+.venv/bin/python -m malecns prepare       # graph.npz
+.venv/bin/python -m malecns doctor
+.venv/bin/python -m malecns run --device mps --steps 100 --stimulus-type DNp01
+</code></pre>
+<ul>
+<li><code>DNp01</code> 은 도망 반응에 관여하는 하강뉴런. 이 예제는 그 두 뉴런에 자극을 넣어 신호가 퍼지는지 보는 <strong>동작 확인</strong>이지 행동 재현이 아니다.</li>
+<li>결과: <code>outputs/latest/summary.json</code>, <code>activity.npz</code> (<code>body_ids</code>, <code>spike_counts</code>, <code>population_spikes</code>, <code>final_voltage</code>).</li>
+<li>GPU 연결 배열만 약 512MB. 메모리가 모자라면 <code>--chunk-size 250000</code>.</li>
+</ul>
+<h3 id="mps-malecns-model-이-받는-입력과-내는-출력--소스malecnspy에서-읽은-것">mps-malecns-model 이 받는 입력과 내는 출력 — 소스(<code>malecns/*.py</code>)에서 읽은 것</h3>
+<blockquote>
+<p>「어떤 신호를 줄 수 있고, 어떤 신호를 돌려받나」. README 가 아니라 <code>cli.py</code>·<code>model.py</code>·<code>recording.py</code>·<code>rl.py</code>·<code>data.py</code> 코드 기준이다.</p>
+</blockquote>
+<p><strong>뉴런 하나의 방정식</strong>(<code>model.py</code>) — Shiu 모델(<a href="09-LIF-모델.html">09</a>)보다 더 단순하다.</p>
+<pre><code>v[t+1] = exp(−dt/tau) · v[t] + gain · (들어온 발화 × 연결 세기 합) + drive[t]
+발화:  v ≥ 1.0  →  v = 0 으로 초기화        # 문턱 1.0 고정, 단위 없는 값(mV 아님)
+전달 지연 한 스텝 · 불응기 없음 · 가소성 없음
+</code></pre>
+<p><strong>줄 수 있는 신호(입력)</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>자리</th>
+<th>명령 인자</th>
+<th>무엇</th>
+<th>한계</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>자극 대상</td>
+<td><code>--stimulus-type DNp01</code></td>
+<td>주석의 <code>type</code> 이름과 <strong>정확히 같은</strong> 뉴런 전부(예: DNp01 두 개)</td>
+<td>한 번에 <strong>한 종류</strong>. 세포 ID 지정 없음. 종류가 없으면 오류</td>
+</tr>
+<tr>
+<td>자극 세기</td>
+<td><code>--stimulus 0.2</code></td>
+<td>그 뉴런들에 <strong>매 스텝 일정하게</strong> 더하는 전압 증분(문턱 1.0 기준 → 배경 0.02 와 합쳐 여섯 스텝째에 발화)</td>
+<td>상수. 시간에 따라 바뀌는 입력·포아송 입력은 명령줄로는 불가</td>
+</tr>
+<tr>
+<td>배경 입력</td>
+<td><code>--drive 0.02</code></td>
+<td><strong>모든</strong> 뉴런에 매 스텝 더하는 값. 기본값이면 정상 상태 전압 ≈ 0.41 이라 저절로 발화하지 않음</td>
+<td>균일값 하나. 종류별 배경 발화(<a href="09-LIF-모델.html">09</a> 의 FLYCNS 문제)는 못 준다</td>
+</tr>
+<tr>
+<td>방정식</td>
+<td><code>--dt-ms 1</code> <code>--tau-ms 20</code> <code>--gain 1</code></td>
+<td>스텝 길이, 막 시간 상수, 시냅스 입력 배율</td>
+<td>문턱은 1.0 고정</td>
+</tr>
+<tr>
+<td>그래프</td>
+<td><code>prepare --max-neurons N</code></td>
+<td>디버그용 부분 그래프(작은 bodyId 순이라 대표성 없음)</td>
+<td></td>
+</tr>
+<tr>
+<td>기록 대상</td>
+<td><code>--record-neurons 256</code></td>
+<td>시간별 기록을 남길 뉴런 수 — 자극 뉴런 먼저, 나머지는 씨앗 0 난수 표본</td>
+<td><code>steps × 기록 수 ≤ 2천만</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>명령줄이 막아 둔 것은 <strong>파이썬으로 부르면 열린다</strong>. <code>ConnectomeLIF.forward(drive)</code> 가 「뉴런 수 길이의 텐서」를 받으므로 <strong>매 스텝 다른 값, 세포마다 다른 값</strong>을 줄 수 있다. 저장소의 <code>rl.py</code> 가 실제로 그렇게 쓴다 — 하강뉴런 네 종류(DNp01 위 · DNp10 아래 · DNa02 왼쪽 · DNge104 오른쪽)에 목표까지의 거리 × 0.16 을 방향별로 넣고, 그 세포와 하류 128개의 활동을 읽는다. 설계(<a href="06-설계-초파리-회로에-Qwen-뇌.html">06</a>) 의 「① 감각 인코딩 → 광수용체 인덱스별 밝기」도 이 길로 넣는다.</p>
+<pre><code class="language-python">from malecns.model import ConnectomeLIF
+import numpy as np, torch
+g = np.load(&quot;data/graph.npz&quot;)
+model = ConnectomeLIF(len(g[&quot;body_ids&quot;]), g[&quot;source&quot;], g[&quot;target&quot;], g[&quot;weight&quot;], device=&quot;mps&quot;)
+drive = torch.zeros(len(g[&quot;body_ids&quot;]), device=&quot;mps&quot;)
+for step in range(1000):
+    drive[my_sensory_indices] = brightness_this_ms      # 세포별·스텝별로 다르게
+    spikes = model(drive)                               # 전체 뉴런 bool 텐서, 이번 스텝 발화
+    dn_activity = spikes[dn_indices]                    # 읽고 싶은 뉴런만 골라 읽기
+</code></pre>
+<p><strong>돌려받는 신호(출력)</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>파일</th>
+<th>배열·항목</th>
+<th>뜻</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>activity.npz</code></td>
+<td><code>spike_counts</code> (뉴런 수)</td>
+<td>뉴런마다 <strong>누적 발화 수</strong> — 전체, 표본 아님</td>
+</tr>
+<tr>
+<td></td>
+<td><code>population_spikes</code> (스텝 수)</td>
+<td>스텝마다 <strong>전체 발화 합</strong></td>
+</tr>
+<tr>
+<td></td>
+<td><code>final_voltage</code> (뉴런 수)</td>
+<td>마지막 스텝의 전압 — 전체</td>
+</tr>
+<tr>
+<td></td>
+<td><code>recorded_indices</code> · <code>recorded_spikes</code> (스텝×기록 수, 0/1) · <code>recorded_voltage</code> (스텝×기록 수)</td>
+<td>고른 뉴런의 <strong>스텝별 발화·전압 시계열</strong></td>
+</tr>
+<tr>
+<td></td>
+<td><code>body_ids</code> · <code>cell_types</code></td>
+<td>인덱스 ↔ bodyId ↔ type 대응</td>
+</tr>
+<tr>
+<td><code>summary.json</code></td>
+<td><code>total_spikes</code> <code>active_neurons</code> <code>stimulated_neurons</code> <code>steps_per_second</code> <code>simulated_ms</code> …</td>
+<td>실행 요약 + 그래프 메타데이터</td>
+</tr>
+<tr>
+<td><code>report.html</code></td>
+<td>3D 위치에 발화 표시 + 활동 상위 64개 래스터</td>
+<td>서버·외부 자원 없는 단일 파일</td>
+</tr>
+<tr>
+<td><code>train-rl</code> 의 <code>neural_features.npz</code> <code>policy.pt</code> <code>training.json</code></td>
+<td>25칸 상태마다 (발화율, 마지막 전압) 특징 · 학습된 읽기층</td>
+<td>커넥톰은 고정, 읽기층(32 은닉)만 학습</td>
+</tr>
+</tbody>
+</table></div>
+<p>파이썬으로 부르면 매 스텝 <code>model.spikes</code>(전체 뉴런의 이번 스텝 발화) 와 <code>model.voltage</code>(전체 전압) 를 그대로 읽는다. 설계의 「③ 읽기·요약」이 쓰는 원재료가 이것이다.</p>
+<p><strong>그래프를 만들 때 정해진 것</strong>(<code>data.py</code>) — 결과 해석에 영향이 크다</p>
+<ul>
+<li>뉴런: <code>superclass</code> 가 있고 glia 가 아닌 것 전부(약 16.5만). <code>graph.npz</code> 에는 <code>type</code> 만 남고 <strong>superclass 는 저장되지 않는다</strong> — 「하강뉴런 전부」처럼 superclass 로 고르려면 주석 feather 를 따로 읽어 인덱스를 만들어야 한다.</li>
+<li>부호: <code>consensus_nt</code> 로 <strong>아세틸콜린 +1 · GABA −1 · 글루탐산 −1, 나머지 전부 0</strong>. 즉 도파민·세로토닌·옥토파민·<strong>히스타민</strong> 출력이 0 이다. 광수용체는 히스타민이라 <strong>광수용체에 자극을 넣어도 다음 단(라미나)으로 퍼지지 않는다</strong> — Fly.exe 와 같은 선택(<a href="10-적용-사례-상세.html">10</a>). 시각 입력은 라미나 L1~L3 에 넣거나, <code>SIGNS</code> 에 <code>histamine: −1</code> 을 더해 다시 <code>prepare</code> 해야 한다.</li>
+<li>세기: 연결의 시냅스 수를 <strong>받는 뉴런의 들어오는 시냅스 총합으로 나눈 비율</strong> × 보내는 뉴런의 부호. 「시냅스 수 × 0.275 mV」(Shiu) 가 아니라 정규화된 값이라 <code>gain</code> 의 뜻이 다르다.</li>
+<li>연결: 공식 <code>minconf-0.5</code> 표 그대로, 시냅스 수 문턱 없음(2,556만 연결 전부).</li>
+</ul>
+<p><strong>설계와 견주면</strong> — 뇌 통째로 맥 GPU 에서 돌리기·세포별 입력·전체 발화 읽기는 된다. 없는 것은 ① 눈(옴마티디아) → 광수용체 대응표, ② 히스타민 부호, ③ 종류별 배경 발화, ④ 하강뉴런 목록(superclass) — 넷 다 바깥에서 만들어 붙이는 것이고, <a href="06-설계-초파리-회로에-Qwen-뇌.html">06 의 2장</a>이 그 자리다.</p>
+<h2 id="04-몸에-붙이거나-응용하기--사람이-설계하는-부분이-커진다">04 몸에 붙이거나 응용하기 — 사람이 설계하는 부분이 커진다</h2>
+<ul>
+<li><strong>몸</strong>: <a href="https://github.com/NeLy-EPFL/flygym">FlyGym / NeuroMechFly v2</a> — 2026년 3월 2.x 로 바뀌어 옛 튜토리얼과 호환되지 않음(1.x 는 <code>flygym-gymnasium</code>). CPU 약 2배 실시간, GPU(Warp) 약 60배 실시간. <a href="https://github.com/TuragaLab/flybody">flybody</a> — 딥마인드·자넬리아의 물리 시뮬레이션 몸.</li>
+<li><strong>시각</strong>: <a href="https://github.com/TuragaLab/flyvis">flyvis</a> — 연결 지도를 제약으로 쓴 시각계 모델, <strong>학습된 모델 포함</strong>, 실험 기록으로 검증(2024 Nature).</li>
+<li><strong>목록</strong>: <a href="https://github.com/cobanov/awesome-fly">awesome-fly</a> — 게임·데스크탑·연구 도구.</li>
+</ul>
+<p>응용의 구조는 대체로 같다. <strong>바깥 입력을 감각 뉴런에 넣고 → 배선도로 신호를 퍼뜨리고 → 특정 뉴런의 활동을 조작 신호로 바꾼다.</strong> 첫 단계와 마지막 단계는 사람이 정한 대응이다.</p>
+<h2 id="맥에서-해-보는-순서">맥에서 해 보는 순서</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>시간</th>
+<th>할 일</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5분</td>
+<td>male-cns.janelia.org 에서 뉴런을 3D 로 돌려 본다</td>
+</tr>
+<tr>
+<td>30분</td>
+<td>Colab 에서 Shiu 모델 <code>example.ipynb</code> — 「뉴런을 켜면 무슨 일이 생기나」</td>
+</tr>
+<tr>
+<td>1~2시간</td>
+<td><code>mps-malecns-model</code> 로 MaleCNS 1.1GB 를 받아 맥 GPU 로 자극 실험</td>
+</tr>
+<tr>
+<td>그다음</td>
+<td>FlyGym 으로 몸을 붙이거나, DOOMFLY 구조(<a href="03-기대치와-사례.html">03</a>)를 따라 입출력 대응을 설계</td>
+</tr>
+</tbody>
+</table></div>
+<div class="pager"><a href="01-공개-데이터.html">← 01 · 공개 데이터</a><a href="03-기대치와-사례.html">03 · 기대치와 사례 →</a></div>
+<footer>이 HTML 은 <code>02-받아-쓰는-길.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>

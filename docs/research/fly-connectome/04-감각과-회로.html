@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이 뇌로 다룰 수 있는 감각과 회로</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html" class="cur">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="04-감각과-회로.md">04-감각과-회로.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="04-이-뇌로-다룰-수-있는-감각과-회로">04. 이 뇌로 다룰 수 있는 감각과 회로</h1>
+<blockquote>
+<p>데이터에 무엇이 들어 있고, 어디까지 시뮬레이션된 사례가 있나.</p>
+</blockquote>
+<p>MaleCNS 는 뇌와 양쪽 시각엽, 복측신경삭이 목 연결부까지 한 개체로 이어져 있어서 <strong>감각 입력에서 운동 출력까지 한 데이터 안에서 경로를 따라갈 수 있다.</strong> FlyWire(암컷)는 뇌만 있고, 뇌로 들어오는 감각 축삭은 포함한다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>감각 · 회로</th>
+<th>데이터에 어떻게 들어 있나</th>
+<th>시뮬레이션·응용 사례</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>시각</strong></td>
+<td>광수용체(R1–R8) → 시각엽(라미나·메둘라·로불라). MaleCNS 는 양쪽 시각엽 포함, 수컷 오른쪽 시각엽은 별도 데이터(MAOL)</td>
+<td><strong>가장 잘 모델링된 영역.</strong> flyvis(연결 지도 제약 시각 모델, 학습된 모델 포함, 실험 검증) · DOOMFLY(화면 → R1–R6 밝기 3,335 + R8 색 811) · FlyGym 겹눈</td>
+</tr>
+<tr>
+<td><strong>후각</strong></td>
+<td>더듬이·아랫입술수염 감각뉴런 → 촉각엽(사구체 약 50종) → 버섯체·측각</td>
+<td>fly-brain 「위험 냄새(지오스민)」 자극 · FlyGym 은 더듬이 위치의 냄새 농도를 계산해 입력</td>
+</tr>
+<tr>
+<td><strong>미각</strong></td>
+<td>주둥이·다리 미각뉴런 → 식도하신경절 → 먹기 운동뉴런</td>
+<td>Shiu 모델의 대표 실험 — 단맛 뉴런을 켜면 주둥이 뻗기, 쓴맛은 거부. MaleCNS 동반 논문 중 하나가 미각</td>
+</tr>
+<tr>
+<td><strong>청각 · 기계감각</strong></td>
+<td>더듬이 존스턴 기관(진동·소리) → 청각 경로. 다리·날개의 기계감각은 신경삭 쪽</td>
+<td>fly-brain 「소리」 자극. 신경삭까지 있는 MaleCNS 에서는 다리 감각 → 운동 경로도 추적 가능</td>
+</tr>
+<tr>
+<td><strong>온도 · 습도</strong></td>
+<td>더듬이 온도·습도 수용기 → 뇌</td>
+<td>데스크탑 초파리류 데모가 온도 입력을 넣음. 정량 검증 사례는 드묾</td>
+</tr>
+<tr>
+<td><strong>도망 반사</strong></td>
+<td>거대섬유(giant fiber) · 하강뉴런 DNp01</td>
+<td>mps-malecns-model 기본 예제(DNp01 자극) · NeuroTerrarium 의 거대섬유 소회로(51 뉴런)</td>
+</tr>
+<tr>
+<td><strong>학습 · 기억</strong></td>
+<td>버섯체 케니언 세포(KC) → 출력뉴런(MBON), 도파민 뉴런(PPL1 등)</td>
+<td>DOOMFLY 가 KC→MBON11 연결 4,184개에 가소성 규칙(학습 입증은 못 함). <strong>연결은 있지만 학습 규칙은 데이터에 없다</strong></td>
+</tr>
+<tr>
+<td><strong>항법 · 방향</strong></td>
+<td>중심복합체(타원체·부채꼴체 등)</td>
+<td>이론 연구는 많으나 공개 데모는 적음</td>
+</tr>
+<tr>
+<td><strong>구애 · 성행동</strong></td>
+<td>수컷 특이 회로(P1 등)와 암수 차이 — <strong>수컷 데이터의 핵심 강점</strong></td>
+<td>MaleCNS 암수 차이 탐색기 · Fruitless 저장소(mAL 출력을 막았을 때 구애 후보 뉴런 활동 변화)</td>
+</tr>
+<tr>
+<td><strong>운동 출력</strong></td>
+<td>하강뉴런(DN, 약 1,300개) → 신경삭 운동뉴런 → 다리·날개</td>
+<td>DOOMFLY: DNp20 좌우 차 → 회전, DNpe017 → 이동·발사 · flybody·FlyGym 이 몸을 맡음</td>
+</tr>
+</tbody>
+</table></div>
+<p>어느 감각이든 <strong>바깥 세계 → 감각 뉴런 자극</strong>으로 바꾸는 단계는 사람이 설계한다. 시각이 유독 앞선 이유는 광수용체 배열이 화면 픽셀과 대응시키기 쉽고, 시각엽 모델(flyvis)이 실험 기록으로 검증됐기 때문이다. 그 설계 방법은 <a href="06-설계-초파리-회로에-Qwen-뇌.html#2-핵심--신경-신호를-초파리에게-어떻게-줄-것인가">06 설계 2장</a>에 있다.</p>
+<h2 id="신경전달물질과-부호--시뮬레이션의-셋째-기둥">신경전달물질과 부호 — 시뮬레이션의 셋째 기둥</h2>
+<p>시뮬레이션은 세 기둥 위에 선다. <strong>배선</strong>(누가 누구와, 2,558만 연결) · <strong>세기</strong>(연결마다 시냅스 개수 — 개수를 세기로 쓰는 것은 근사) · <strong>부호</strong>(흥분 + 인가 억제 − 인가). 신경전달물질이 정하는 것이 이 셋째, 부호다. 배선과 세기가 같아도 부호가 뒤집히면 신호가 퍼지는 대신 꺼지므로 핵심 입력이 맞다 — 그리고 셋 중 가장 불확실하다.</p>
+<h3 id="예측되는-일곱-가지">예측되는 일곱 가지</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>물질</th>
+<th>시뮬레이션에서의 부호</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>아세틸콜린</td>
+<td><strong>+ (흥분)</strong></td>
+<td>초파리 뇌의 주된 흥분성 물질. 뉴런의 절반 넘게</td>
+</tr>
+<tr>
+<td>GABA</td>
+<td><strong>− (억제)</strong></td>
+<td>주된 억제성 물질</td>
+</tr>
+<tr>
+<td>글루탐산</td>
+<td><strong>− (억제, 대개)</strong></td>
+<td>포유류와 반대로 초파리에서는 억제로 작용하는 경우가 많다. Shiu 모델도 − 로 둠</td>
+</tr>
+<tr>
+<td><strong>히스타민</strong></td>
+<td><strong>− (억제)</strong></td>
+<td><strong>광수용체의 물질.</strong> 빛이 들어오면 시각엽 첫 단을 억제한다. 합의 기준 5,910 뉴런</td>
+</tr>
+<tr>
+<td>도파민</td>
+<td>조절</td>
+<td>학습·보상·처벌 신호. 버섯체 가소성의 열쇠</td>
+</tr>
+<tr>
+<td>세로토닌</td>
+<td>조절</td>
+<td>상태·각성 조절</td>
+</tr>
+<tr>
+<td>옥토파민</td>
+<td>조절</td>
+<td>포유류 노르아드레날린에 해당. 각성·움직임</td>
+</tr>
+</tbody>
+</table></div>
+<p>위 넷이 「빠른 전달(+/−)」이고 아래 셋이 「조절」이다. 조절 물질은 단순한 부호가 아니라 다른 시냅스의 세기와 학습을 바꾸므로, LIF 시뮬레이션에서는 대개 0 으로 두거나 뺀다.</p>
+<h3 id="왜-가장-불확실한가">왜 가장 불확실한가</h3>
+<ul>
+<li>전자현미경 사진에는 물질이 보이지 않는다. <strong>시냅스 모양을 보고 기계학습으로 분류한 예측값</strong>이다. 정확도가 높다고 보고돼 있지만 100% 는 아니고, 틀린 뉴런은 부호가 뒤집힌 채 시뮬레이션에 들어간다.</li>
+<li>데이터 위치: <code>body-neurotransmitters</code>(뉴런 하나마다 주된 물질) · <code>tbar-neurotransmitters</code>(시냅스 자리마다). 시뮬레이션은 보통 뉴런 단위 예측을 써서 「이 뉴런이 내는 연결은 전부 +」처럼 부호를 붙인다.</li>
+<li><strong>실측(<a href="08-데이터-실측.html">08</a>)</strong>: 뉴런 예측(<code>predicted_nt</code>)을 그대로 쓰면 <strong>케니언 세포 4,058 개가 「도파민」으로 잘못 붙어</strong> 버섯체 입력이 꺼진다. 종류·문헌을 합친 <code>consensus_nt</code> 칸은 이를 아세틸콜린으로 바로잡는다 — <strong>부호는 <code>consensus_nt</code> 로</strong>. 문헌 근거가 있는 7.6만 뉴런에서 예측 일치율은 99.2%(미정 제외)지만, 근거 없는 8만 뉴런의 오류율은 이보다 높을 수 있다.</li>
+<li>「전달」 과정 자체는 시뮬레이션에서 「발화 → 세기 × 부호를 상대 전압에 더함」 한 줄로 줄어 있다. 수용체 종류·시간 상수·단기 강화가 다 빠졌는데도 Shiu 모델이 실험과 91% 맞았다 — 거친 「어디로 퍼지나」 예측에는 부호와 세기로 충분했다는 뜻이다.</li>
+</ul>
+<h3 id="빠져-있어서-병목인-것">빠져 있어서 병목인 것</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>빠진 것</th>
+<th>왜 중요한가</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>신경조절</strong>(도파민 등)</td>
+<td>회로의 게인을 바꾸고 학습을 켠다 — 「행동이 바뀌는」 부분</td>
+</tr>
+<tr>
+<td><strong>학습 규칙</strong></td>
+<td>버섯체 가소성 등. 연결은 있는데 바뀌는 법이 없다</td>
+</tr>
+<tr>
+<td><strong>전기 시냅스</strong>(갭 결합)</td>
+<td>전자현미경 커넥톰에 안 잡힌다</td>
+</tr>
+<tr>
+<td><strong>신경펩티드·공동 전달</strong></td>
+<td>한 뉴런이 물질을 둘 이상 낸다</td>
+</tr>
+<tr>
+<td><strong>뉴런 고유 성질</strong></td>
+<td>종류마다 다른 시간 상수·문턱 — 다 같은 LIF 로 둔다</td>
+</tr>
+</tbody>
+</table></div>
+<p>한 줄로: <strong>신경전달물질은 부호로서 핵심 입력이고, 예측이 틀린 곳이 시뮬레이션의 첫 번째 오류 원천이다. 그러나 행동과 학습을 못 만드는 진짜 병목은 신경조절과 학습 규칙이 빠진 것이다.</strong> 대조군에 「부호를 무작위로 뒤섞은 그래프」를 하나 더 두면 결과가 배선 덕인지 부호 덕인지 갈라진다(<a href="06-설계-초파리-회로에-Qwen-뇌.html#9-검증--초파리가-정말-기여했나">06 의 9장</a> 에 더할 후보).</p>
+<h2 id="뉴런의-종류--세는-축이-셋">뉴런의 종류 — 세는 축이 셋</h2>
+<h3 id="가-역할로--신호가-어디서-어디로-가나">(가) 역할로 — 신호가 어디서 어디로 가나</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>부류</th>
+<th>무엇</th>
+<th><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 설계</a>에서의 자리</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>감각 뉴런</strong></td>
+<td>바깥 신호를 받아 뇌로 넣음 — 광수용체 4,107 · 후각 2,639 · 미각 1,428 · 기계감각 5,756 (<a href="08-데이터-실측.html">08</a>)</td>
+<td><strong>입구</strong> (신호를 주는 자리)</td>
+</tr>
+<tr>
+<td><strong>중심 뉴런</strong></td>
+<td>뇌 안에서만 잇는 사이 뉴런 — 국소 뉴런, 투사 뉴런</td>
+<td>처리</td>
+</tr>
+<tr>
+<td><strong>시각 투사 뉴런</strong></td>
+<td>시각엽 → 중심뇌 (LC·LPLC 계열 등)</td>
+<td><strong>읽기</strong></td>
+</tr>
+<tr>
+<td><strong>하강 뉴런</strong></td>
+<td>뇌 → 신경삭 — <strong>1,314 개, 484 종류</strong>(실측)</td>
+<td><strong>출구</strong> — 행동 명령</td>
+</tr>
+<tr>
+<td><strong>상행 뉴런</strong></td>
+<td>신경삭 → 뇌</td>
+<td>몸 상태 되먹임</td>
+</tr>
+<tr>
+<td><strong>운동 뉴런</strong></td>
+<td>신경삭 → 근육</td>
+<td>몸</td>
+</tr>
+<tr>
+<td><strong>내분비 뉴런</strong></td>
+<td>호르몬 분비</td>
+<td>느린 상태</td>
+</tr>
+</tbody>
+</table></div>
+<p>주석 파일(<code>body-annotations</code>)에는 이 부류가 상위 분류 칸으로 들어 있어, 대응표를 만들 때 「감각 뉴런만」「하강 뉴런만」으로 걸러 낼 수 있다.</p>
+<h3 id="나-위치로">(나) 위치로</h3>
+<ul>
+<li><strong>시각엽</strong> — 뉴런 수로는 뇌의 절반을 넘는다. 광수용체 R1–R8, 움직임 감지 T4·T5, 컬럼 뉴런 등이 격자처럼 반복된다.</li>
+<li><strong>중심뇌</strong> — 촉각엽(후각), 버섯체(학습), 중심복합체(항법), 측각, 식도하신경절(미각), 하강 뉴런의 출발점.</li>
+<li><strong>복측신경삭</strong> — 다리·날개 운동 회로, 기계감각 입력. MaleCNS 에만 들어 있다.</li>
+</ul>
+<h3 id="다-세포-종류cell-type--형태와-연결이-같은-뉴런-묶음">(다) 세포 종류(cell type) — 형태와 연결이 같은 뉴런 묶음</h3>
+<p>가장 세밀한 단위다. 암컷 FlyWire 에서 <a href="https://doi.org/10.1038/s41586-024-07686-5">8,453 종류</a>로 나뉘었고, MaleCNS 는 추적 완료 뉴런에서 <strong>11,751 종류</strong>(그중 8,199 종류가 FlyWire 이름과 짝지어짐 — <a href="08-데이터-실측.html">08</a>). 대개 좌우 한 쌍이거나 같은 종류가 수십~수천 개 반복된다. 이름이 곧 주소라서 자료·논문·시뮬레이션이 전부 이 이름으로 말한다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>자주 나오는 이름</th>
+<th>무엇</th>
+<th>대략 규모</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1–R8</td>
+<td>광수용체</td>
+<td>낱눈마다 8개 · MaleCNS 에 4,107</td>
+</tr>
+<tr>
+<td>T4 · T5</td>
+<td>움직임 방향 감지</td>
+<td>13,585</td>
+</tr>
+<tr>
+<td>LC · LPLC</td>
+<td>시각 특징(다가옴·작은 물체) 투사</td>
+<td>종류마다 수십 개</td>
+</tr>
+<tr>
+<td>ORN</td>
+<td>후각 수용 뉴런</td>
+<td>약 50 종류</td>
+</tr>
+<tr>
+<td>PN</td>
+<td>후각 투사 뉴런(촉각엽 → 버섯체·측각)</td>
+<td>백여 개</td>
+</tr>
+<tr>
+<td>KC (케니언 세포)</td>
+<td>버섯체의 학습 자리</td>
+<td>4,064</td>
+</tr>
+<tr>
+<td>MBON</td>
+<td>버섯체 출력 뉴런</td>
+<td>97</td>
+</tr>
+<tr>
+<td>DAN (PAM · PPL1)</td>
+<td>도파민 뉴런 — 보상·처벌</td>
+<td>340</td>
+</tr>
+<tr>
+<td>EPG 등</td>
+<td>중심복합체 방향 나침반</td>
+<td>수십</td>
+</tr>
+<tr>
+<td>DN (DNp01 · DNa02 …)</td>
+<td>하강 뉴런</td>
+<td>1,314 (484 종류)</td>
+</tr>
+<tr>
+<td>MN</td>
+<td>운동 뉴런</td>
+<td>신경삭에</td>
+</tr>
+</tbody>
+</table></div>
+<p>그 밖에 <strong>발달 계보(hemilineage)</strong>로도 나눈다 — 같은 줄기세포에서 나온 뉴런 묶음(백여 개)으로, 같은 계보는 신경전달물질이 같은 경향이 있어 예측을 검산하는 데 쓰인다.</p>
+<h3 id="설계와의-관계">설계와의 관계</h3>
+<ul>
+<li><strong>입구</strong> = 감각 뉴런(광수용체·ORN·미각·기계감각) — 06 의 2장 대응표</li>
+<li><strong>읽기</strong> = 시각 투사 뉴런·PN·MBON·상행 뉴런 — 06 의 3장 대응표</li>
+<li><strong>출구</strong> = 하강 뉴런 — 06 의 4장 카탈로그</li>
+<li><strong>학습이 있어야 할 자리</strong> = KC → MBON 연결과 DAN — 데이터에 연결은 있고 규칙은 없는 곳</li>
+</ul>
+<p>위 표의 MaleCNS 숫자는 <a href="08-데이터-실측.html">08</a>에서 파일을 직접 세어 넣었다(추적 완료 뉴런 기준). FlyWire 종류 수 8,453 은 논문 값.</p>
+<h2 id="출처">출처</h2>
+<ul>
+<li><a href="https://doi.org/10.1038/s41586-024-07686-5">Schlegel 등 2024 Nature — 세포 종류 8,453</a> · <a href="https://github.com/philshiu/Drosophila_brain_model">Shiu 등 모델(부호 대응·91%)</a></li>
+<li><a href="https://github.com/TuragaLab/flyvis">flyvis</a> · <a href="https://github.com/NeLy-EPFL/flygym">FlyGym</a> · <a href="https://github.com/nftechie/doomfly">DOOMFLY</a> · <a href="https://github.com/lixiang1076/fly-brain">fly-brain (lixiang1076)</a> · <a href="https://github.com/philshiu/Drosophila_brain_model">Shiu 등 모델</a> · <a href="https://github.com/cobanov/awesome-fly">awesome-fly</a></li>
+</ul>
+<div class="pager"><a href="03-기대치와-사례.html">← 03 · 기대치와 사례</a><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식 →</a></div>
+<footer>이 HTML 은 <code>04-감각과-회로.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>

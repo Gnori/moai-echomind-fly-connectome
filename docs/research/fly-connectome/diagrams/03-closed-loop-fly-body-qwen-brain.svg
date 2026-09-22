@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 310" role="img" aria-label="닫힌 고리: 세계의 신호가 감각 인코딩을 거쳐 초파리 감각 회로로 들어가고, 읽기·요약이 언어 모델로 올라가며, 언어 모델의 행동 명령은 오른쪽으로 내려와 행동 디코딩, 신경삭·운동 회로, 몸을 거쳐 다시 세계를 바꾼다. 감각 인코딩은 들어오는 쪽에서 한 번만 거친다">
+<style>
+  svg { font-family: "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; color:#414A4F; }
+  .bx { fill:#FAFBFB; stroke:#414A4F; stroke-width:1.2; }
+  .bx-s { fill:#DCEFF1; stroke:#0E7C86; stroke-width:1.4; }
+  .bx-b { fill:#F7E3EF; stroke:#AB2A79; stroke-width:1.4; }
+  .bx-a { fill:#ECE6F8; stroke:#6B4FBB; stroke-width:1.4; }
+  .ln { stroke:#414A4F; stroke-width:1.2; fill:none; }
+  .ln-d { stroke:#414A4F; stroke-width:1.2; fill:none; stroke-dasharray:4 3; }
+  text { font-size:12px; fill:#12171A; }
+  text.lbl { font-family:Menlo,ui-monospace,monospace; font-size:11px; fill:#6B757A; }
+  text.t-s { fill:#0E7C86; } text.t-b { fill:#AB2A79; } text.t-a { fill:#6B4FBB; }
+</style>
+<rect x="0" y="0" width="780" height="310" fill="#FFFFFF"/>
+      <defs>
+        <marker id="a0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0,1 9,5 0,9" fill="#414A4F"/></marker>
+      </defs>
+
+      <!-- ④ 언어 모델 (위 가운데) -->
+      <rect class="bx-b" x="270" y="8" width="350" height="70" rx="3"/>
+      <text class="t-b" x="445" y="32" text-anchor="middle">④ Qwen3.8-27B — 판단</text>
+      <text class="lbl" x="445" y="49" text-anchor="middle">감각 요약 + 목표 + 행동 카탈로그 → 행동 명령(JSON)</text>
+      <text class="lbl" x="445" y="64" text-anchor="middle">수 초 단위로 돎 · 학습 없음(얼림)</text>
+
+      <!-- 가운데 줄: 세계 → ① → ② → ③ (오른쪽으로) -->
+      <rect class="bx" x="0" y="120" width="110" height="60" rx="3"/>
+      <text x="55" y="145" text-anchor="middle">세계</text>
+      <text class="lbl" x="55" y="162" text-anchor="middle">시뮬레이션 환경</text>
+      <text class="lbl" x="55" y="175" text-anchor="middle">또는 카메라·센서</text>
+
+      <line class="ln" x1="110" y1="150" x2="158" y2="150" marker-end="url(#a0)"/>
+      <text class="lbl" x="134" y="108" text-anchor="middle">빛·냄새·접촉</text>
+
+      <rect class="bx-s" x="160" y="120" width="150" height="60" rx="3"/>
+      <text class="t-s" x="235" y="142" text-anchor="middle">① 감각 인코딩</text>
+      <text class="lbl" x="235" y="158" text-anchor="middle">신호 → 감각 뉴런 자극</text>
+      <text class="lbl" x="235" y="172" text-anchor="middle">(2장 — 핵심)</text>
+
+      <line class="ln" x1="310" y1="150" x2="358" y2="150" marker-end="url(#a0)"/>
+      <text class="lbl" x="334" y="108" text-anchor="middle">발화율</text>
+
+      <rect class="bx-s" x="360" y="112" width="170" height="76" rx="3"/>
+      <text class="t-s" x="445" y="134" text-anchor="middle">② 초파리 감각 회로</text>
+      <text class="lbl" x="445" y="151" text-anchor="middle">시각엽 · 촉각엽 · 버섯체</text>
+      <text class="lbl" x="445" y="165" text-anchor="middle">MaleCNS 고정 배선 · LIF</text>
+      <text class="lbl" x="445" y="179" text-anchor="middle">ms 단위로 돎</text>
+
+      <line class="ln" x1="530" y1="150" x2="578" y2="150" marker-end="url(#a0)"/>
+      <text class="lbl" x="554" y="104" text-anchor="middle">투사뉴런 상태</text>
+
+      <rect class="bx" x="580" y="120" width="140" height="60" rx="3"/>
+      <text x="650" y="142" text-anchor="middle">③ 읽기·요약</text>
+      <text class="lbl" x="650" y="158" text-anchor="middle">200~500ms 창 누적 →</text>
+      <text class="lbl" x="650" y="172" text-anchor="middle">텍스트 또는 벡터 (3장)</text>
+
+      <!-- ③ → ④ (위로) -->
+      <path class="ln" d="M650 120 L650 96 L600 96 L600 80" marker-end="url(#a0)"/>
+      <text class="lbl" x="662" y="100">감각 요약</text>
+
+      <!-- ④ → ⑤ (오른쪽 바깥으로 내려감) -->
+      <path class="ln" d="M620 43 L745 43 L745 264 L722 264" marker-end="url(#a0)"/>
+      <text class="lbl t-b" x="764" y="160" text-anchor="middle" transform="rotate(90 764 160)">행동 명령(JSON)</text>
+
+      <!-- 아래 줄: ⑤ → ⑥ → ⑦ (왼쪽으로) -->
+      <rect class="bx-a" x="580" y="234" width="140" height="60" rx="3"/>
+      <text class="t-a" x="650" y="256" text-anchor="middle">⑤ 행동 디코딩</text>
+      <text class="lbl" x="650" y="272" text-anchor="middle">명령 → 하강뉴런 자극</text>
+      <text class="lbl" x="650" y="286" text-anchor="middle">(4장)</text>
+
+      <line class="ln" x1="580" y1="264" x2="532" y2="264" marker-end="url(#a0)"/>
+      <text class="lbl" x="556" y="306" text-anchor="middle">하강뉴런 발화</text>
+
+      <rect class="bx-a" x="360" y="234" width="170" height="60" rx="3"/>
+      <text class="t-a" x="445" y="256" text-anchor="middle">⑥ 신경삭 · 운동 회로</text>
+      <text class="lbl" x="445" y="272" text-anchor="middle">하강뉴런 → 운동뉴런</text>
+      <text class="lbl" x="445" y="286" text-anchor="middle">또는 행동 프리미티브</text>
+
+      <line class="ln" x1="360" y1="264" x2="312" y2="264" marker-end="url(#a0)"/>
+      <text class="lbl" x="336" y="306" text-anchor="middle">관절 명령</text>
+
+      <rect class="bx" x="160" y="234" width="150" height="60" rx="3"/>
+      <text x="235" y="256" text-anchor="middle">⑦ 몸</text>
+      <text class="lbl" x="235" y="272" text-anchor="middle">FlyGym · flybody</text>
+      <text class="lbl" x="235" y="286" text-anchor="middle">MuJoCo · 다리·날개 관절</text>
+
+      <!-- ⑦ → 세계 (왼쪽 위로) -->
+      <path class="ln" d="M160 264 L55 264 L55 182" marker-end="url(#a0)"/>
+      <text class="lbl" x="105" y="256" text-anchor="middle">몸이 움직이면</text>
+      <text class="lbl" x="105" y="280" text-anchor="middle">보이는 것이 바뀜</text>
+
+      <!-- 반사 빠른 길 ② → ⑥ -->
+      <path class="ln-d" d="M445 188 L445 232" marker-end="url(#a0)"/>
+      <text class="lbl t-s" x="455" y="214">반사 빠른 길 — 언어 모델 안 거침</text>
+</svg>
