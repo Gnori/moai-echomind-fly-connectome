@@ -10,11 +10,14 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
 import re
+import shutil
 import time
 from collections import Counter
+from pathlib import Path
 
 import numpy as np
 
@@ -23,7 +26,10 @@ from ..guard import GuardRefused, Watchdog, heavy
 from . import fly_prompt as fp
 
 TRAIN_RULE = {
-    "version": "train-v1",
+    # v2(2026-09-22): 행동 단계는 새 옵티마이저로 시작한다 — 캡션 단계 저장본에서 이어 가도
+    # 진짜 · 섞은 배선이 같은 절차가 되게(저장본에는 옵티마이저 상태가 없다).
+    # 캡션 단계는 v1 과 같다.
+    "version": "train-v2",
     "k": 2, "width": 256, "kind": "mlp2", "lr": 2e-4,
     "caption_epochs": 2, "action_epochs": 1, "caption_rehearsal": 0.3,
     "val_samples": 24, "seed": 0,
@@ -150,11 +156,14 @@ def train(args: argparse.Namespace) -> int:
                 return float(np.mean([trainer.loss_only(_sample(setup, vfeats, vrows, i, task))
                                       for i in range(nv)]))
 
-            def run_epochs(plan: list[tuple[int, str]], stage: str, epochs: int) -> None:
+            def run_epochs(plan: list[tuple[int, str]], stage: str, epochs: int,
+                           replay_only: bool = False) -> None:
                 step = 0
                 for ep in range(epochs):
                     order = plan[:]
                     rng.shuffle(order)
+                    if replay_only:   # 이어 가기 — 이 단계가 쓴 난수만 소비해 다음 단계 순서를 같게
+                        continue
                     losses, t0 = [], time.time()
                     for i, task in order:
                         losses.append(trainer.step(_sample(setup, feats, rows, i, task)))
@@ -175,10 +184,24 @@ def train(args: argparse.Namespace) -> int:
                     say(f"[{stage}] ep {ep} 끝 · 학습 {np.mean(losses):.3f} · 검증 캡션 "
                         f"{val('cap'):.3f} · 검증 행동 {val('act'):.3f}")
 
-            say(f"[before] 검증 캡션 {val('cap'):.3f} · 검증 행동 {val('act'):.3f}")
-            run_epochs([(i, "cap") for i in range(n)], "caption", rule["caption_epochs"])
-            mx.save_safetensors(str(out / "stage1-caption.safetensors"),
-                                dict(tree_flatten(proj.parameters())))
+            caption_from = None
+            if args.resume_caption:
+                src = Path(args.resume_caption)
+                caption_from = {"path": str(src),
+                                "sha256": hashlib.sha256(src.read_bytes()).hexdigest()}
+                proj.load_weights(str(src))
+                if src.resolve() != (out / "stage1-caption.safetensors").resolve():
+                    shutil.copyfile(src, out / "stage1-caption.safetensors")
+                run_epochs([(i, "cap") for i in range(n)], "caption", rule["caption_epochs"],
+                           replay_only=True)
+                say(f"[resume] 캡션 단계 = {src} · sha256 {caption_from['sha256'][:16]} · "
+                    f"검증 캡션 {val('cap'):.3f} · 검증 행동 {val('act'):.3f}")
+            else:
+                say(f"[before] 검증 캡션 {val('cap'):.3f} · 검증 행동 {val('act'):.3f}")
+                run_epochs([(i, "cap") for i in range(n)], "caption", rule["caption_epochs"])
+                mx.save_safetensors(str(out / "stage1-caption.safetensors"),
+                                    dict(tree_flatten(proj.parameters())))
+            trainer.reset_optimizer()   # 행동 단계는 새 옵티마이저(TRAIN_RULE v2)
             reh = rng.sample(range(n), int(n * rule["caption_rehearsal"]))
             run_epochs([(i, "act") for i in range(n)] + [(i, "cap") for i in reh], "action",
                        rule["action_epochs"])
@@ -188,8 +211,8 @@ def train(args: argparse.Namespace) -> int:
             say(f"[qwen] 가중치 지문(학습 뒤) {fp_after[:16]} · 같음 {fp_after == fp_before}")
             (out / "meta.json").write_text(json.dumps({
                 "brain": args.brain, "dataset": expand(args.dataset), "val": expand(args.val),
-                "rule": rule, "projector": proj.meta(), "dims": {k: int(feats[k].shape[1])
-                                                                 for k in names},
+                "rule": rule, "caption_stage_from": caption_from, "projector": proj.meta(),
+                "dims": {k: int(feats[k].shape[1]) for k in names},
                 "qwen_fingerprint": {"before": fp_before, "after": fp_after,
                                      "unchanged": fp_after == fp_before},
                 "llm": q.label, "versions": {c: config.load(c)["version"]
@@ -360,6 +383,8 @@ def register(sub) -> None:
     p.add_argument("--brain", choices=["real", "rewired"], required=True)
     p.add_argument("--dataset", default="main")
     p.add_argument("--val", default="eval")
+    p.add_argument("--resume-caption", default="",
+                   help="캡션 단계 저장본(.safetensors)에서 이어 행동 단계만 돈다")
     p.set_defaults(func=train)
     pr = sub.add_parser("train-probe", help="짧게 돌리며 걸음마다 메모리를 잰다(저장 없음)")
     pr.add_argument("--brain", choices=["real", "rewired"], default="real")

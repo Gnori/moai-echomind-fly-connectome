@@ -25,7 +25,10 @@ run() {  # $1 = 문턱 %, 나머지 = fly-connectome 인자
   echo "=== $(date '+%F %T') 끝 코드 $? · $*" | tee -a "$LOG"
 }
 
-run 80 train --brain real
+# 이어 가기: bin/run_full.sh --resume-real <진짜 배선 캡션 단계 저장본> — 진짜 배선은 행동 단계만 돈다
+REAL=()
+[ "${1:-}" = "--resume-real" ] && REAL=(--resume-caption "$2")
+run 80 train --brain real ${REAL[@]+"${REAL[@]}"}
 run 80 train --brain rewired
 run 65 eval-caption --brain real --checkpoint stage1-caption
 run 65 eval-caption --brain rewired --checkpoint stage1-caption

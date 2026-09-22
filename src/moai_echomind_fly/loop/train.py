@@ -44,8 +44,12 @@ class Trainer:
             mx.set_cache_limit(int(cache_limit_gb * 1e9))
         self.proj = projector
         self.slot = qwen.tok.convert_tokens_to_ids(SLOT)
-        self.opt = optim.AdamW(learning_rate=lr, weight_decay=0.01)
+        self.lr = lr
+        self.reset_optimizer()
         self._pull = nn.value_and_grad(self.proj, self._pulled)
+
+    def reset_optimizer(self) -> None:
+        self.opt = optim.AdamW(learning_rate=self.lr, weight_decay=0.01)
 
     def _embeddings(self, s: Sample) -> mx.array:
         soft = self.proj({k: mx.array(v) for k, v in s.feats.items()})
