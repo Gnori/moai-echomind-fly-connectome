@@ -70,3 +70,19 @@ def test_decoder_catalog_and_channel_exclusion():
     in_channels = np.concatenate([c.neurons for c in table.channels.values()])
     assert not np.isin(in_channels, smap.stim_idx).any()      # 직접 자극한 뉴런은 벡터에 없다
     assert not np.isin(in_channels, dec.dn_idx).any()
+
+
+def test_linear_probe_finds_a_planted_signal():
+    """심어 둔 신호는 찾고, 없는 것은 찍기 수준 — 검사 자체가 도는지 본다."""
+    from moai_echomind_fly.loop.linear_probe import probe_field
+
+    rng = np.random.default_rng(0)
+    labels = ["왼쪽", "오른쪽"] * 40
+    x = rng.standard_normal((80, 50))
+    x[::2, 0] += 6.0                                   # 첫 칸에만 신호를 심는다
+    tr, te = slice(0, 60), slice(60, 80)
+    got = probe_field(x[tr], labels[:60], x[te], labels[60:])
+    assert got["accuracy"] > 0.9 >= got["baseline"]
+    noise = probe_field(rng.standard_normal((60, 50)), labels[:60],
+                        rng.standard_normal((20, 50)), labels[60:])
+    assert noise["accuracy"] <= 0.75                   # 신호가 없으면 못 맞힌다
