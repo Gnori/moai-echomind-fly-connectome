@@ -1,0 +1,33 @@
+## 요구사항 관리 프로세스
+
+요구사항과 산출물(R/I/P/W)은 `docs/requirements/`에서 **동일 프리픽스 평면 파일**로 관리됩니다 — `[YYYYMMDD-HHMMSS-코드]_<이름>(-<모듈>)_req|interface-design|dev-plan|walkthrough.md`, 완료 시 프리픽스 세트째 `archive/` 이동. 규모(simple/standard/complex)·유형(feature/enhance/perf/bug) 템플릿을 지원합니다.
+**표준 프로세스(9단계, 게이트 G1~G5)의 정본은 [DEV_PROCESS.md](DEV_PROCESS.md)이며**, 아래 `/dev` 명령 체계는 그 표준의 클로드코드 구현(레퍼런스)입니다.
+(舊 `.claude/requirements/`(구 체계)는 동결(레거시) — 신규 산출물 작성 금지)
+
+### 요구사항 규모 (Scale)
+
+| 규모 | 적합한 작업 | 템플릿 |
+|------|-------------|--------|
+| **simple** (간단) | 버그 수정, 오타 수정, 소규모 변경 | ~50줄 |
+| **standard** (표준) | 일반 기능 개발, API 추가 [기본값] | ~150줄 |
+| **complex** (복잡) | 대규모 기능, 아키텍처 변경, 마이그레이션 | ~400줄 |
+
+### 명령어
+
+```bash
+/dev init                              # 요구사항 관리 구조 초기화
+/dev req <name>                        # 요구사항 생성 (자동 규모 추천)
+/dev req <name> --scale=simple         # 간단한 규모로 생성
+/dev req <name> --scale=standard       # 표준 규모로 생성
+/dev req <name> --scale=complex        # 복잡한 규모로 생성
+/dev req <name> --type=bug             # 유형 지정 (feature|enhance|perf|bug — 1장 가이드 주입)
+/dev artifact <i|p|w> [--module=<모듈>]  # 산출물(I/P/W)을 동일 프리픽스로 생성
+/dev status                            # 진행 상황 리포트 (산출물 현황 포함)
+/dev validate                          # 산출물 규약 검사 (enum·세트 완결성·D↔R 일치)
+/dev archive --req=<ID>                # 완료 세트를 archive/<YYYY>/<MM>/W<N>/로 이동
+```
+
+### AI 어시스턴트 필수 지침 (MANDATORY)
+
+- 규모 선택·게이트 통과 조건·금지 사항의 정본은 [DEV_PROCESS.md](DEV_PROCESS.md)입니다 — **게이트 체크리스트(G1~G5)**, **규모별 적용 표**, **금지 사항(R 없이 코드 작업 착수 금지 등)** 을 반드시 따르십시오.
+- 각 게이트(G1 기능 확정, G2 인터페이스 승인)는 사용자 승인 지점입니다 — 승인 없이 다음 산출물로 넘어가지 마십시오.

@@ -1,0 +1,183 @@
+name: "dev-req"
+display_name: "개발 요구사항 관리자"
+description: "요구사항(R)·산출물(I/P/W) 문서 관리 자동화 (/DEV_PROCESS.md 표준)"
+category: "productivity"
+version: "3.1.0"
+author: "MOAI Team"
+
+# 스킬 타입
+type: "development_management"
+
+# 지원 언어
+supported_languages:
+  - python
+  - nodejs
+  - java
+  - csharp
+  - rust
+  - golang
+  - cpp
+  - c
+  - all
+
+# 사용 가능한 빌트인 도구
+builtin_tools:
+  - run_skill_script
+  - read_skill_resource
+
+# 스크립트 정의
+scripts:
+  - name: "init"
+    file: "init.py"
+    description: "요구사항 관리 구조를 초기화합니다"
+    parameters:
+      - name: "force"
+        type: "boolean"
+        required: false
+        default: false
+        description: "기존 파일 덮어쓰기"
+
+  - name: "create"
+    file: "create_requirement.py"
+    description: "요구사항 명세서 템플릿을 생성합니다 (규모별 템플릿 지원)"
+    parameters:
+      - name: "requirement_name"
+        type: "string"
+        required: true
+        description: "요구사항 명칭 (예: 사용자인증기능)"
+      - name: "priority"
+        type: "string"
+        required: false
+        default: "중간"
+        description: "우선순위 (높음/중간/낮음)"
+      - name: "scale"
+        type: "string"
+        required: false
+        default: null
+        description: "규모 (simple/standard/complex). 생략 시 자동 추천"
+
+  - name: "artifact"
+    file: "create_artifact.py"
+    description: "산출물(I/P/W)을 요구사항과 같은 디렉토리에 동일 프리픽스로 생성합니다"
+    parameters:
+      - name: "artifact_type"
+        type: "string"
+        required: true
+        description: "산출물 유형: i(인터페이스 계약) | p(구현 플랜) | w(검증 보고)"
+      - name: "req"
+        type: "string"
+        required: false
+        description: "요구사항 파일명 일부 (생략 시 최신 요구사항)"
+      - name: "module"
+        type: "string"
+        required: false
+        description: "모듈명 (p/w 필수 — 모듈당 1건)"
+
+  - name: "progress-report"
+    file: "progress_report.py"
+    description: "개발 진행 상황 리포트를 생성합니다"
+    parameters:
+      - name: "requirement_file"
+        type: "string"
+        required: false
+        description: "요구사항 파일명 (비어있으면 활성 요구사항)"
+      - name: "format"
+        type: "string"
+        required: false
+        default: "markdown"
+        description: "리포트 포맷 (markdown/json)"
+
+  - name: "validate"
+    file: "validate.py"
+    description: "산출물 규약 검사 (상태 enum·산출물 세트·D↔R 일치)"
+    parameters:
+      - name: "update-dashboard"
+        type: "boolean"
+        required: false
+        description: "D의 규약 위반 섹션 자동 기입"
+      - name: "format"
+        type: "string"
+        required: false
+        default: "markdown"
+        description: "출력 포맷 (markdown/json)"
+
+  - name: "archive"
+    file: "archive_requirement.py"
+    description: "완료(G5) 요구사항 세트를 archive/<YYYY>/<MM>/W<N>/로 이동"
+    parameters:
+      - name: "req"
+        type: "string"
+        required: false
+        description: "요구사항 파일명 일부 (예: 도메인코드)"
+      - name: "dry-run"
+        type: "boolean"
+        required: false
+        description: "이동 계획만 출력"
+      - name: "reorganize"
+        type: "boolean"
+        required: false
+        description: "평면 아카이브를 주차 구조로 재배치"
+
+# 설정
+settings:
+  # 요구사항 디렉토리
+  requirements_dir: "docs/requirements"
+
+  # 템플릿 디렉토리 (스킬 내부)
+  skill_templates_dir: "templates/requirements"
+
+  # 아카이브 디렉토리
+  archive_dir: "docs/requirements/archive"
+
+  # 활성 개발 파일
+  active_dev_file: "docs/requirements/active_development.md"
+
+  # 파일명 형식 (코드 = 도메인코드: 1xxx=에이전트·핵심 기능, 2xxx=도구·연동(MCP), 3xxx=인증·권한·인프라. --id로 지정)
+  # 동일 프리픽스 평면 관리, 유형 토큰은 파일명 끝: _req | _interface-design | -{모듈}_dev-plan | -{모듈}_walkthrough
+  filename_format: "[YYYYMMDD-HHMMSS-코드]_{name}(-{모듈})_{유형}.md"
+
+# 요구사항 규모 정의
+scales:
+  simple:
+    name: "간단"
+    description: "버그 수정, 소규모 변경"
+    template: "simple.md.template"
+    keywords: ["버그", "수정", "오타", "fix", "bug", "patch"]
+
+  standard:
+    name: "표준"
+    description: "일반적인 기능 개발"
+    template: "standard.md.template"
+    keywords: ["추가", "구현", "개발", "feature", "add", "implement"]
+
+  complex:
+    name: "복잡"
+    description: "대규모 기능, 아키텍처 변경"
+    template: "complex.md.template"
+    keywords: ["아키텍처", "마이그레이션", "리팩토링", "통합"]
+
+# 사용 예시
+examples:
+  - command: "/dev-req init"
+    description: "요구사항 관리 구조 초기화"
+
+  - command: "/dev-req create 사용자인증기능"
+    description: "새 요구사항 명세서 생성 (자동 규모 추천)"
+
+  - command: "/dev-req create 버그수정 --scale=simple"
+    description: "간단한 규모로 요구사항 생성"
+
+  - command: "/dev-req create 마이크로서비스전환 --scale=complex"
+    description: "복잡한 규모로 요구사항 생성"
+
+  - command: "/dev-req progress-report"
+    description: "진행 상황 리포트 생성"
+
+# 단축 명령어 매핑 (/dev dispatcher용)
+shortcuts:
+  init: "init"
+  req: "create"
+  artifact: "artifact"
+  status: "progress-report"
+  validate: "validate"
+  archive: "archive"

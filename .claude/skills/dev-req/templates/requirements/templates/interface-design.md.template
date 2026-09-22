@@ -1,0 +1,80 @@
+# {{REQUIREMENT_NAME}} — 인터페이스 계약 (I)
+
+## 메타데이터
+
+- **요구사항**: {{REQ_ID}} — {{R_LINK}}
+- **작성일**: {{CREATION_DATE}}
+- **상태**: 초안
+  <!-- 허용값(enum): 초안 | 검토 | 승인 — 상태=승인 전 P 작성 금지 (/DEV_PROCESS.md G2) -->
+- **개정 이력**: (승인 후 변경 시 개정 행 추가 + 번복 대상 링크 필수)
+
+> 표준: [/DEV_PROCESS.md](../../DEV_PROCESS.md) §I — 다중 모듈일 때 필수. 단일 모듈이면 이 문서 대신 R 3장에 축약.
+> ※ 2계층 MUST: 신규 API/로직은 관리 API(8030/8050)에, 게이트웨이(8010/8040)는 라우팅/프록시만.
+
+---
+
+## 1. 모듈 간 API 계약
+
+### 1.1 엔드포인트
+
+| 모듈 | Method | Path | 설명 | 인증/권한 |
+|---|---|---|---|---|
+| [API] | POST | /api/... | [설명] | [역할/권한] |
+
+### 1.2 DTO
+
+```json
+// 요청
+{
+}
+// 응답
+{
+}
+```
+
+### 1.3 에러 계약
+
+| HTTP | 조건 | 에러 메시지/코드 |
+|---|---|---|
+| 400 | [조건] | [메시지] |
+
+---
+
+## 2. DB 스키마
+
+```sql
+-- 신규/변경 테이블 DDL (부속 SQL은 docs/requirements/sql/ 또는 docs/sql/에 저장 후 링크)
+```
+
+---
+
+## 3. 모듈 간 시퀀스
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend
+    participant GW as Gateway(8040/8010)
+    participant API as 관리 API(8050/8030)
+    FE->>GW: [요청]
+    GW->>API: [프록시]
+    API-->>FE: [응답]
+```
+
+---
+
+## 4. UI-UX
+
+- 와이어프레임: [./wireframes/ 링크]
+- 준수 표준: [프론트 UI 표준](../seedai-user-frontend-ui-standards.md)
+
+---
+
+## 5. 접근제어
+
+- 인증·접근제어 반영 계획: [게이트웨이 JWT / API 키 등 — 필요 시]
+
+---
+
+## 6. Out of Scope
+
+- [이번 계약에서 제외되는 범위]
