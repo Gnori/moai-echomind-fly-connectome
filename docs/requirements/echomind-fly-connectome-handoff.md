@@ -55,6 +55,10 @@
 > 규칙: 다른 세션은 `docs/requirements/` 를 만지지 않는다(이 세션 소유) · 무거운 실행 금지(잠금은 수집이 쥠) · 자기 파일만 커밋. 일감·결과는 `SendMessage` 로 **일감 한 번 · 결과 한 번**만(요구자 "너무 많이 서로 하면 안되니까").
 > 결과: doc 세션 — 문서 동기화 `22b1ccf` · `bin/run_full_v4.sh` `026ae1b` · 시험 10 + NOTICE `3a3a323`(시험 66 통과). research 세션 — **연구 노트 13**(`2b61bb9` · F-006 · F-007 설계 · **앞뒤 축 확정**: 앞 = hex1 − hex2 큰 쪽 · LC4 → DNp02/DNp11 기울기로 독립 검증).
 > → 이 세션이 **I v2**(§7 F-006 두 단계 CMA-ES → 희소 대리 기울기 · §8 F-007 plasticity-v1 · §9 retino-v2 · 새 판 sim-v3 · physiology-v1 · plasticity-v1 · task-v3)를 썼다. 착수는 F-004 · F-005 판정 뒤 · 무거운 실행은 확인 뒤.
+>
+> ▶ **자료 v2 끝(19:33 · 2,921/376 · 백업 됨) → 판정 8 칸 통과(시각 4 · 다리 4 · `runs/linear-probe-20260923-201422.json`) · 봉우리 없음(EPG 0/3,297) · 관문 v1 실패 → compress-v2(같은 64) 통과 시각 · 촉각 · 미각 · 몸.**
+> ▶ **train-v4 시작(2026-09-23 밤 · 요구자 "B · 1,200 결정 · 뇌 4" · "문턱을 40%로 낮춰 지금 바로")** — `bin/run_full_v4.sh`(compress → train real · rewired-s0..s2 `--train-seeds 0-119` → eval-caption 8 → scorecard 2000-2039 · 7 구성).
+> train-probe 실측 `runs/train-probe-20260923-235846.jsonl`: 걸음당 중앙 5.0 s · 최대 31.4 GB · 캐시 0.02. 추정 뇌당 5.4 h × 4 + 평가 · 성적표 8 h ≈ **30 h**. 로그 `runs/full-v4-*.log` · 감시 30 분 간격. 끝나면 백업 · 10장 대장 · W.
 
 ## ① 내 경계
 
