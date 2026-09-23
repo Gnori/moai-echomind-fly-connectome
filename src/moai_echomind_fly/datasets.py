@@ -98,10 +98,33 @@ def pack(name: str, train: str, eval_: str, generated_with: str = "") -> Path:
     return out
 
 
-def load(name: str, split: str, brain: str) -> tuple[dict[str, np.ndarray], list[dict]]:
-    """묶음에서 불러온다: (채널 → [결정 수, 차원] 특징, 결정마다 참값·캡션·교사 행동)."""
+def _features_file(d: Path, brain: str) -> Path:
+    """뇌 이름 → 특징 파일. v1 의 `features-rewired.npz` 는 재배선 씨앗 0 이다(I-7469 §3.1)."""
+    f = d / f"features-{brain}.npz"
+    if f.exists():
+        return f
+    if brain == "rewired-s0" and (d / "features-rewired.npz").exists():
+        return d / "features-rewired.npz"
+    if brain == "rewired" and (d / "features-rewired-s0.npz").exists():
+        return d / "features-rewired-s0.npz"
+    return f
+
+
+def rewired_brains(name: str, split: str = "eval") -> list[str]:
+    """묶음에 들어 있는 재배선 뇌 이름들 — `rewired`(v1) 또는 `rewired-s<K>`."""
     d = store_dir() / name / split
-    with np.load(d / f"features-{brain}.npz") as z:
+    out = [p.name.removeprefix("features-").removesuffix(".npz")
+           for p in sorted(d.glob("features-rewired*.npz"))]
+    return sorted(out, key=lambda b: (b != "rewired", int(b.rsplit("-s", 1)[1]) if "-s" in b else 0))
+
+
+def load(name: str, split: str, brain: str) -> tuple[dict[str, np.ndarray], list[dict]]:
+    """묶음에서 불러온다: (채널 → [결정 수, 차원] 특징, 결정마다 참값·캡션·교사 행동).
+
+    `brain` = `real` · `rewired`(= 씨앗 0) · `rewired-s<K>`.
+    """
+    d = store_dir() / name / split
+    with np.load(_features_file(d, brain)) as z:
         feats = {ch: z[ch] for ch in z.files}
     rows = [json.loads(line) for line in (d / "samples.jsonl").read_text().splitlines() if line]
     return feats, rows

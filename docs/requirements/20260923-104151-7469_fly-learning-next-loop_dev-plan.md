@@ -16,11 +16,12 @@
 
 ## Task 1: 판정 기준 stats-v1 (F-001)
 
-- [ ] `loop/stats.py` — 에피소드 블록 순열(라벨을 에피소드 단위로 섞음) · Holm · 에피소드 부트스트랩 구간 · 판 상수 `STATS_RULE`
-- [ ] `linear_probe` — 자료의 모든 재배선 뇌 · 셀(채널|칸)마다 I §3.2 형식 · `judge: false` 채널 제외 · `--permutations`
-- [ ] `datasets.load` — `rewired-s<K>` 받기 · v1 의 `rewired` = s0
-- [ ] 시험: 심은 신호는 p 작고 잡음은 크다 · Holm 단조 · 블록 순열이 에피소드를 넘지 않는다
-- [ ] 실행: `fly-loop-v1` 에 돌려 기록(재배선 1 개라 앙상블 순위는 약하다 — 그대로 기록)
+- [x] `loop/stats.py` — 에피소드 블록 순열(라벨을 에피소드 단위로 섞음) · Holm · 에피소드 부트스트랩 구간 · 판 상수 `STATS_RULE`
+- [x] `linear_probe` — 자료의 모든 재배선 뇌 · 셀(채널|칸)마다 I §3.2 형식 · `judge: false` 채널 제외 · `--permutations`
+- [x] `datasets.load` — `rewired-s<K>` 받기 · v1 의 `rewired` = s0
+- [x] 시험(`tests/test_stats.py` 5 개): 심은 신호는 p 작고 잡음은 크다 · Holm 단조 · 블록 순열이 에피소드를 넘지 않는다
+- [x] 실행: `fly-loop-v1` → `runs/linear-probe-20260923-105625.json`(CPU 32 s) — **통과 2 칸**: 시각 → 물체 거리 0.771/0.581 · 움직임 0.781/0.571(Holm p 0.047).
+  시각 → 물체 쪽(p 0.025) · 몸 → 다리(p 0.005)는 Holm 뒤 탈락. ⚠️ 재배선 1 개라 앙상블 순위는 사실상 1:1 비교 — v2 에서 다시.
 
 ## Task 2: 3차원 세계 · 시야 지도 입력 · 채널 v2 (F-008 1~3 · F-003 반영)
 

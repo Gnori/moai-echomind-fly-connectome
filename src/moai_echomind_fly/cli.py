@@ -20,7 +20,14 @@ def _cmd_graph(args: argparse.Namespace) -> int:
     t0 = time.time()
     g = graph.compile_graph(args.name)
     print(f"[graph] 저장: {paths.graph_dir()}/{g.name}.* ({time.time() - t0:.0f} s)")
-    for seed in args.rewired_seed or []:
+    seeds = list(args.rewired_seed or [])
+    for part in (args.rewired_seeds or "").split(","):
+        if "-" in part:
+            lo, hi = part.split("-")
+            seeds += list(range(int(lo), int(hi) + 1))
+        elif part:
+            seeds.append(int(part))
+    for seed in dict.fromkeys(seeds):          # 겹친 씨앗은 한 번만
         r = graph.rewire(g, seed)
         graph.save(r)
         print(f"[graph] 섞은 배선 저장: {r.name}")
@@ -75,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--name", default="traced-v1")
     p.add_argument("--rewired-seed", type=int, action="append",
                    help="섞은 배선도 만든다(여러 번 가능)")
+    p.add_argument("--rewired-seeds", default="",
+                   help="섞은 배선 씨앗 범위(예: 0-19 또는 0,3,5) — 재배선 앙상블(R-7469 F-001)")
     p.set_defaults(func=_cmd_graph)
 
     p = sub.add_parser("run", help="실험 한 번 — MCP run_experiment 와 같은 함수")

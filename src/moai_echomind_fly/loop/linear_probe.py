@@ -62,31 +62,44 @@ def _cv_lambda(x: np.ndarray, labels: list[str], classes: list[str], seed: int =
 
 
 def probe_field(xtr: np.ndarray, ytr: list[str], xte: np.ndarray, yte: list[str]) -> dict[str, Any]:
+    """칸 하나의 선형 검사. 판정 통계를 위해 평가 결정마다 맞혔나(`correct`)도 돌려준다."""
     mean = xtr.mean(0)                     # 중심화 — 안 하면 같은 자료에서도 크게 떨어진다(실측)
     xtr, xte = xtr - mean, xte - mean
     classes = sorted(set(ytr) | set(yte))
+    top = Counter(ytr).most_common(1)[0][0]
+    base = np.array([t == top for t in yte])
     if len(classes) == 1:
-        return {"accuracy": 1.0, "baseline": 1.0, "lambda": None, "classes": 1}
+        return {"accuracy": 1.0, "baseline": 1.0, "lambda": None, "classes": 1,
+                "correct": np.ones(len(yte), bool), "baseline_correct": base}
     lam = _cv_lambda(xtr, ytr, classes)
     pred = _fit_predict(xtr, _onehot(ytr, classes), xte, lam).argmax(1)
-    top = Counter(ytr).most_common(1)[0][0]
-    return {"accuracy": float(np.mean([classes[j] == t for j, t in zip(pred, yte)])),
-            "baseline": float(np.mean([t == top for t in yte])),
-            "lambda": lam, "classes": len(classes)}
+    correct = np.array([classes[j] == t for j, t in zip(pred, yte)])
+    return {"accuracy": float(correct.mean()), "baseline": float(base.mean()),
+            "lambda": lam, "classes": len(classes), "correct": correct, "baseline_correct": base}
 
 
-def run(name: str) -> dict[str, Any]:
+def _public(res: dict[str, Any]) -> dict[str, Any]:
+    return {k: v for k, v in res.items() if k not in ("correct", "baseline_correct")}
+
+
+def run(name: str, rule: dict[str, Any] | None = None) -> dict[str, Any]:
+    """진짜 배선과 묶음에 든 **모든 재배선 뇌**를 같은 방법으로 재고, 칸마다 판정(stats-v1)."""
     from .. import datasets
+    from .stats import STATS_RULE, finalize, judge_cell
     from .train_cli import _sub, caption_fields
 
+    rule = rule or STATS_RULE
+    brains = ["real", *datasets.rewired_brains(name)]
     out: dict[str, Any] = {"dataset": name, "when": time.strftime("%Y-%m-%d %H:%M:%S"),
-                           "method": f"선형(능선 회귀) · 규제 {FOLDS}겹 교차검증", "brains": {}}
-    for brain in ("real", "rewired"):
+                           "method": f"선형(능선 회귀) · 규제 {FOLDS}겹 교차검증",
+                           "stats": rule, "rewired_brains": brains[1:], "brains": {}}
+    raw: dict[str, dict[str, dict[str, Any]]] = {}      # 뇌 → "채널|칸" → 결과(배열 포함)
+    episodes = None
+    for brain in brains:
         ftr, rtr = datasets.load(name, "train", brain)
         fte, rte = datasets.load(name, "eval", brain)
+        episodes = np.array([r["seed"] for r in rte])
         names = list(ftr)
-        xtr = np.concatenate([ftr[n] for n in names], axis=1).astype(np.float64)
-        xte = np.concatenate([fte[n] for n in names], axis=1).astype(np.float64)
         ytr = [_sub(caption_fields(r["caption"])) for r in rtr]
         yte = [_sub(caption_fields(r["caption"])) for r in rte]
 
@@ -94,34 +107,56 @@ def run(name: str) -> dict[str, Any]:
             return {f: probe_field(a, [y[f] for y in ytr], b, [y[f] for y in yte])
                     for f in yte[0]}
 
+        xtr = np.concatenate([ftr[n] for n in names], axis=1).astype(np.float64)
+        xte = np.concatenate([fte[n] for n in names], axis=1).astype(np.float64)
+        per = {"all": fields(xtr, xte)}
+        for n in names:
+            per[n] = fields(ftr[n].astype(np.float64), fte[n].astype(np.float64))
+        raw[brain] = {f"{ch}|{f}": r for ch, fs in per.items() for f, r in fs.items()}
         out["brains"][brain] = {
             "samples": {"train": len(rtr), "eval": len(rte)}, "dims": int(xtr.shape[1]),
-            "fields": fields(xtr, xte),
+            "fields": {f: _public(r) for f, r in per["all"].items()},
             "per_channel": {n: {"dims": int(ftr[n].shape[1]),
-                                "fields": fields(ftr[n].astype(np.float64),
-                                                 fte[n].astype(np.float64))}
+                                "fields": {f: _public(r) for f, r in per[n].items()}}
                             for n in names},
         }
+    excluded = set(rule["exclude_from_judgement"])
+    cells: dict[str, dict[str, Any]] = {}
+    for key, r in raw["real"].items():
+        if r["classes"] == 1:
+            continue
+        ch = key.split("|", 1)[0]
+        cell = judge_cell(r["correct"], [raw[b][key]["correct"] for b in brains[1:]],
+                          r["baseline_correct"], episodes, rule)
+        # 전 채널("all")은 판정에서 뺀 채널(운동)을 품고 있어 판정에 넣지 않는다
+        cell["judge"] = ch not in excluded and ch != "all"
+        cells[key] = cell
+    finalize(cells, rule)
+    out["cells"] = cells
     return out
 
 
 def main(args) -> int:
-    res = run(args.dataset)
+    from .stats import STATS_RULE
+
+    rule = {**STATS_RULE, **({"permutations": args.permutations} if args.permutations else {})}
+    res = run(args.dataset, rule)
     path = paths.runs_dir() / f"linear-probe-{time.strftime('%Y%m%d-%H%M%S')}.json"
     path.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
-    fields = list(res["brains"]["real"]["fields"])
-    print(f"{'채널':<11}{'칸':<14}{'진짜 배선':<12}{'섞은 배선':<12}찍기")
-    real, rew = res["brains"]["real"], res["brains"]["rewired"]
-    for ch in ["(전부)", *real["per_channel"]]:
-        for f in fields:
-            if ch == "(전부)":
-                r, w = real["fields"][f], rew["fields"][f]
-            else:
-                r, w = real["per_channel"][ch]["fields"][f], rew["per_channel"][ch]["fields"][f]
-            if r["classes"] == 1:
-                continue
-            print(f"{ch:<11}{f:<14}{r['accuracy']:<12.3f}{w['accuracy']:<12.3f}"
-                  f"{r['baseline']:.3f}")
+    n_rew = len(res["rewired_brains"])
+    print(f"재배선 {n_rew} 개 · {res['stats']['version']} · 판정 = 앙상블 순위 ≥ "
+          f"{rule['rank_pct']:.0f} % · Holm p < {rule['alpha']} · 찍기보다 높음")
+    print(f"{'채널|칸':<26}{'진짜':>7}{'재배선':>8}{'찍기':>7}{'순위%':>7}"
+          f"{'p':>8}{'Holm':>8}  판정")
+    for key, c in res["cells"].items():
+        if args.judge_only and not c["judge"]:
+            continue
+        holm_p = "-" if c["p_holm"] is None else f"{c['p_holm']:.3f}"
+        verdict = {True: "통과", False: "-", None: "(판정 밖)"}[c["pass"]]
+        print(f"{key:<26}{c['real']:>7.3f}{c['rewired']['mean']:>8.3f}{c['baseline']:>7.3f}"
+              f"{c['rank_pct']:>7.0f}{c['p_block_perm']:>8.3f}{holm_p:>8}  {verdict}")
+    passed = [k for k, c in res["cells"].items() if c["pass"]]
+    print(f"통과 {len(passed)} 칸: {passed}")
     print(f"기록 {path}")
     return 0
 
@@ -130,4 +165,7 @@ def register(sub) -> None:
     p = sub.add_parser("linear-probe",
                        help="Qwen 없이 채널 벡터만으로 캡션 칸 맞히기 — 신호에 정보가 있나(CPU)")
     p.add_argument("--dataset", default="fly-loop-v1")
+    p.add_argument("--judge-only", action="store_true", help="판정 대상 칸만 출력")
+    p.add_argument("--permutations", type=int, default=0,
+                   help="에피소드가 많을 때 몬테카를로 횟수(기본 = stats-v1)")
     p.set_defaults(func=main)
