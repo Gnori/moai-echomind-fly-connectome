@@ -142,6 +142,8 @@ def main(argv: list[str] | None = None) -> int:
     inspect_mod.register(sub)
     from . import retino
     retino.register(sub)
+    from . import dashboard
+    dashboard.register(sub)
 
     args = parser.parse_args(argv)
     return int(args.func(args) or 0)
