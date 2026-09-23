@@ -40,6 +40,7 @@ ORDER = [
     "10-적용-사례-상세.md",
     "07-지능은-누구-것인가.md",
     "11-구현-초파리-신호를-Qwen-에.md",
+    "12-다음-학습-조사.md",
 ]
 SHORT = {
     "README.md": "시작 — 목차와 요약",
@@ -54,6 +55,7 @@ SHORT = {
     "10-적용-사례-상세.md": "10 · 적용 사례 상세",
     "07-지능은-누구-것인가.md": "07 · 지능은 누구 것인가",
     "11-구현-초파리-신호를-Qwen-에.md": "11 · 구현 — 무엇을 학습하나",
+    "12-다음-학습-조사.md": "12 · 다음 학습 — 조사",
 }
 DIAGRAMS = [
     ("diagrams/01-llm-three-configurations.svg", "세 가지 연결 구성"),
@@ -179,7 +181,15 @@ def convert(name: str, md: "markdown.Markdown") -> str:
     raw = (ROOT / name).read_text(encoding="utf-8")
     # 문서 사이 링크 .md → .html (앵커 유지). 바깥 링크(http)는 그대로.
     text = re.sub(r"\]\(README\.md(#[^)]*)?\)", lambda m: f"](index.html{m.group(1) or ''})", raw)
-    text = re.sub(r"\]\(([^)#\s]+)\.md(#[^)]*)?\)", lambda m: f"]({m.group(1)}.html{m.group(2) or ''})", text)
+    # 폴더 밖 문서는 HTML 사본이 있을 때만 바꾼다(요구사항 문서는 마크다운 그대로 연다)
+    def _md(m: re.Match) -> str:
+        path, frag = m.group(1), m.group(2) or ""
+        html = (ROOT / f"{path}.html").resolve()
+        if "/" not in path or html.exists():
+            return f"]({path}.html{frag})"
+        return m.group(0)
+
+    text = re.sub(r"\]\(([^)#\s]+)\.md(#[^)]*)?\)", _md, text)
     md.reset()
     body = md.convert(text).replace("<table>", '<div class="tbl"><table>').replace("</table>", "</table></div>")
 
