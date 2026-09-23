@@ -544,7 +544,30 @@
 </tr>
 </tbody>
 </table></div>
-<p>→ 자료 묶음과 투영기 폴더는 <strong>따로 복사해 두기를 권한다.</strong></p>
+<p>→ <strong>백업한다 — <code>uv run fly-connectome backup</code></strong>(2026-09-23 부터 · 설정 <code>config/backup.yaml</code>):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>자리</th>
+<th>까닭</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/Backups/moai-echomind-fly-connectome/</code></td>
+<td>맥 안 · 늘 있음 — 저장소를 실수로 지웠을 때</td>
+</tr>
+<tr>
+<td><code>/Volumes/JKL-USB/Backups/moai-echomind-fly-connectome/</code></td>
+<td>다른 기기(USB) — 맥 디스크가 고장 났을 때 · 꽂혀 있지 않으면 건너뛴다</td>
+</tr>
+</tbody>
+</table></div>
+<p>대상은 <code>data/datasets</code> 와 <code>runs</code>(공식 파일 · 그래프는 다시 만들 수 있어 뺀다). 복사는 <strong>지우지 않고</strong>(원본에서 지운 파일도 남는다),
+복사 뒤 파일마다 SHA-256 을 원본과 대조해 둘 곳에 <code>MANIFEST.sha256</code> · <code>BACKUP.md</code> 를 남긴다.
+첫 백업 2026-09-23 10:39 — 198 개 · 801 MB · 두 곳 모두 <strong>198/198 같음</strong>(USB 52 s).
+<strong>학습 · 평가 · 성적표를 새로 돌린 뒤에는 한 번 돌린다</strong>(6절).</p>
+<p>되살리기: <code>rsync -rlt &lt;백업&gt;/runs/ runs/</code> · <code>rsync -rlt &lt;백업&gt;/data/datasets/ data/datasets/</code> → 저장소 뿌리에서 <code>shasum -a 256 -c &lt;백업&gt;/MANIFEST.sha256</code>.</p>
 <h2 id="6-이-대장을-쓰는-법">6. 이 대장을 쓰는 법</h2>
 <p>학습을 새로 돌리면:</p>
 <ol>
@@ -552,6 +575,7 @@
 <li>1.2 · 1.3 에 손실과 저장본 sha256(<code>shasum -a 256 runs/projector-*/*.safetensors</code>)</li>
 <li>평가 · 성적표를 돌렸으면 2 절에 — <strong>섞은 배선과 나란히</strong></li>
 <li>연구 노트 11장 8.5 절과 인수인계에도 한 줄(같은 커밋에서 HTML 다시 만들기)</li>
+<li><code>uv run fly-connectome backup</code> — 새 저장본을 두 곳에 복사 · 대조</li>
 </ol>
 <p>이전: <a href="09-평가와-대조군.html">09. 평가와 대조군</a> · 다음: <a href="11-명령-모음과-용어.html">11. 명령 모음과 용어</a></p>
 <div class="pager"><a href="09-평가와-대조군.html">← 09 · 평가와 대조군</a><a href="11-명령-모음과-용어.html">11 · 명령 모음과 용어 →</a></div>

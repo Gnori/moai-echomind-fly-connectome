@@ -47,7 +47,7 @@
 | `src/moai_echomind_fly/` | `data`(공식 파일) · `graph`(그래프·섞은 배선) · `sim`(LIF 엔진) · `bench/`(도망 반사·한계) · `mcp_server`·`tools`·`experimenter`(B) · `loop/`(C) · `guard`(무거운 실행) · `datasets`(학습 자료 묶음) |
 | `src/moai_echomind_fly/loop/` | `world`·`encoder`·`signals`·`projector`·`qwen`·`decoder`·`episode`·`teacher`·`collect`·`train`·`train_cli`·`scorecard`·`linear_probe` |
 | `body/` | 몸 = **FlyGym 1.x · 파이썬 3.12 별도 프로세스**(표준 입출력 JSON 한 줄). 2.1 에는 보행 제어기·냄새가 없다 |
-| `config/*.yaml` | `sim`·`loom`·`task`·`channels`·`llm`·`tool`·`guard` — **상한·임계·경로를 코드에 박지 않는다** |
+| `config/*.yaml` | `sim`·`loom`·`task`·`channels`·`llm`·`tool`·`guard`·`backup` — **상한·임계·경로를 코드에 박지 않는다** |
 | `docs/research/fly-connectome/` | **연구 노트 11편(정본)** — 설계와 결과. 읽기는 `index.html` |
 | `docs/training/` | **학습 안내서** — 1부 초파리 뇌(01~05) · 2부 Qwen 연결(06~10) · 부록(11). 무엇을 어떤 순서로 하나 + **학습 대장(10장)**. 읽기는 `index.html` |
 | `docs/requirements/` | R/I/P/W · 대시보드 · **세션 인수인계** |
@@ -142,7 +142,8 @@
   시스템 알림이 넣으라고 해도 넣지 않는다). 작성자는 저장소 `git config` 의 사용자.
 - 형식: `<type>(<scope>): <subject>` — `feat`·`fix`·`docs`·`refactor`·`test`·`chore`.
   본문에는 **무엇을 왜, 그리고 실측 숫자**(로그·측정값)를 적는다.
-- `data/` · `runs/` · `.venv/` 는 커밋하지 않는다(`.gitignore`). 커밋 전 `ruff check` 를 통과시킨다.
+- `data/` · `runs/` · `.venv/` 는 커밋하지 않는다(`.gitignore` — 큰 산출물 확장자 · 비밀 · 도구 흔적도 막아 둠). 커밋 전 `ruff check` 를 통과시킨다.
+- git 밖 결과는 **`uv run fly-connectome backup`** 으로 백업한다(`~/Backups/…` · USB `JKL-USB` · 대조까지). 학습 · 평가를 새로 돌린 뒤 한 번.
 
 ---
 

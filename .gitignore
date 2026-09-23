@@ -1,10 +1,31 @@
 # 공식 파일(1.1 GB)·컴파일된 그래프·실행 기록은 커밋하지 않는다 (R-3340 I §5)
 /data/
 /runs/
+
+# 가상환경 · 캐시 (본체 .venv · 몸 body/.venv 모두)
 .venv/
 __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+
+# 큰 산출물 — data/ · runs/ 밖에 잘못 떨어져도 들어가지 않게(투영기 · 특징 · 공식 파일 · 그래프)
+*.safetensors
+*.npz
+*.npy
+*.feather
+*.parquet
+*.jsonl
+
+# 비밀 · 개인 설정
+.env
+.env.*
+*.pem
+*.key
+.claude/settings.local.json
+
+# 도구가 남기는 것
 .DS_Store
 .claude/.backup/
+.playwright-mcp/
+*.log
