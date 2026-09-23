@@ -20,8 +20,11 @@ CONFIGS="vector,text,no_circuit,rewired-s0,rewired-s1,rewired-s2,no_llm"
 SEEDS="2000-2039"
 TRAIN_SEEDS="0-119"      # 학습 표본 = 에피소드 120(약 1,200 결정 · 요구자 2026-09-23 B 안 — 전부 쓰면 뇌 하나 약 16 h)
 
-SKIP_TRAIN=0
-[ "${1:-}" = "--skip-train" ] && SKIP_TRAIN=1
+SKIP_TRAIN=0; SKIP_COMPRESS=0
+for a in "$@"; do
+  [ "$a" = "--skip-train" ] && SKIP_TRAIN=1
+  [ "$a" = "--skip-compress" ] && SKIP_COMPRESS=1     # 압축 · 관문 결과가 이미 있을 때(다시 시작)
+done
 
 free_pct() { memory_pressure | sed -n 's/.*free percentage: \([0-9]*\)%.*/\1/p'; }
 
@@ -39,14 +42,22 @@ run() {  # $1 = 문턱 %, 나머지 = fly-connectome 인자
   wait_free "$need"
   echo "=== $(date '+%F %T') 여유 $(free_pct)% · $*" | tee -a "$LOG"
   .venv/bin/fly-connectome "$@" >>"$LOG" 2>&1
-  echo "=== $(date '+%F %T') 끝 코드 $? · $*" | tee -a "$LOG"
+  local rc=$?                      # $(date) 뒤에 $? 를 읽으면 date 의 0 이 된다(2026-09-24 01:15 실제 그랬다)
+  echo "=== $(date '+%F %T') 끝 코드 $rc · $*" | tee -a "$LOG"
+  if [ $rc -ne 0 ]; then           # 멈춘 학습을 두고 다음 뇌로 넘어가지 않는다
+    echo "=== $(date '+%F %T') 중단(끝 코드 $rc) · $* · 로그 $LOG" | tee -a "$LOG"; exit 5
+  fi
 }
 
 echo "=== $(date '+%F %T') 시작 · 자료 $DATASET · 판 $VERSION · 학습 건너뜀 $SKIP_TRAIN · 로그 $LOG" | tee -a "$LOG"
 
 # 1 · 2. 압축(뇌마다 · 채널마다 PCA · 학습 나눔으로만) → 관문(압축 특징으로 stats 판정)
-run 40 compress fit  --dataset "$DATASET"
-run 40 compress gate --dataset "$DATASET"
+if [ $SKIP_COMPRESS -eq 0 ]; then
+  run 40 compress fit  --dataset "$DATASET"
+  run 40 compress gate --dataset "$DATASET"
+else
+  echo "--- 압축 · 관문 건너뜀(--skip-compress)" | tee -a "$LOG"
+fi
 
 # 관문 확인 — gate.json 의 passed_channels 가 비어 있으면 v4 학습을 하지 않는다(jq 없이 python3 로).
 GATE_MSG=$(.venv/bin/python - "$DATASET" <<'PY'

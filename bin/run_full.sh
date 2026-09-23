@@ -22,7 +22,8 @@ run() {  # $1 = 문턱 %, 나머지 = fly-connectome 인자
   wait_free "$need"
   echo "=== $(date '+%F %T') 여유 $(free_pct)% · $*" | tee -a "$LOG"
   .venv/bin/fly-connectome "$@" >>"$LOG" 2>&1
-  echo "=== $(date '+%F %T') 끝 코드 $? · $*" | tee -a "$LOG"
+  local rc=$?                      # $(date) 뒤의 $? 는 date 의 것 — 먼저 받아 둔다
+  echo "=== $(date '+%F %T') 끝 코드 $rc · $*" | tee -a "$LOG"
 }
 
 # 이어 가기: bin/run_full.sh --resume-real <진짜 배선 캡션 단계 저장본> — 진짜 배선은 행동 단계만 돈다
