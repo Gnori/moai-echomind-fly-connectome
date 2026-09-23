@@ -20,14 +20,17 @@ from .. import config, datasets, paths
 
 
 def fit_channel(x: np.ndarray, cfg: dict[str, Any]) -> dict[str, np.ndarray]:
-    """한 채널 PCA — 설명 분산이 `var_target` 이상인 가장 작은 k([k_min, k_max] 안)."""
+    """한 채널 PCA — `k_fixed` 가 있으면 그 차원(v2), 없으면 설명 분산 `var_target` 규칙(v1)."""
     x = x.astype(np.float64)
     mean = x.mean(0) if cfg.get("center", True) else np.zeros(x.shape[1])
     _, sv, vt = np.linalg.svd(x - mean, full_matrices=False)
     var = sv ** 2
     frac = np.cumsum(var) / max(var.sum(), 1e-12)
-    k = int(np.searchsorted(frac, cfg["var_target"]) + 1)
-    k = int(np.clip(k, cfg["k_min"], min(cfg["k_max"], vt.shape[0])))
+    if cfg.get("k_fixed"):                          # compress-v2 — 모든 뇌 · 채널에 같은 차원
+        k = int(min(int(cfg["k_fixed"]), vt.shape[0]))
+    else:                                           # compress-v1 — 설명 분산 규칙
+        k = int(np.searchsorted(frac, cfg["var_target"]) + 1)
+        k = int(np.clip(k, cfg["k_min"], min(cfg["k_max"], vt.shape[0])))
     return {"mean": mean.astype(np.float32), "components": vt[:k].astype(np.float32),
             "explained": np.float32(frac[k - 1])}
 
@@ -38,9 +41,9 @@ def apply(model: dict[str, dict[str, np.ndarray]], feats: dict[str, np.ndarray]
             for ch, m in model.items() if ch in feats}
 
 
-def out_dir(dataset: str, cfg: dict[str, Any] | None = None) -> Path:
-    cfg = cfg or config.load("compress")
-    return paths.runs_dir() / f"compress-{dataset}-{cfg['version']}"
+def out_dir(dataset: str, cfg: dict[str, Any] | None = None, version: str | None = None) -> Path:
+    ver = version or (cfg or config.load("compress"))["version"]
+    return paths.runs_dir() / f"compress-{dataset}-{ver}"
 
 
 def fit(dataset: str) -> dict[str, Any]:
@@ -65,8 +68,8 @@ def fit(dataset: str) -> dict[str, Any]:
     return meta
 
 
-def load(dataset: str, brain: str) -> dict[str, dict[str, np.ndarray]]:
-    z = np.load(out_dir(dataset) / f"{brain}.npz")
+def load(dataset: str, brain: str, version: str | None = None) -> dict[str, dict[str, np.ndarray]]:
+    z = np.load(out_dir(dataset, version=version) / f"{brain}.npz")
     model: dict[str, dict[str, np.ndarray]] = {}
     for key in z.files:
         ch, part = key.rsplit(".", 1)

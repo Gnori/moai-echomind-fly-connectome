@@ -37,7 +37,7 @@ TRAIN_RULE = {
     # 틀을 0 으로 두지 않는 까닭: 시스템 글에 캡션 서식이 없어 서식을 배울 곳이 정답뿐이다
     # (연구 노트 12 §4).
     "version": "train-v4",
-    "input": "compress", "compress": "compress-v1",
+    "input": "compress", "compress": "compress-v2",   # v1 은 두 뇌의 차원이 달라 v2(같은 64)로
     "k": 1, "width": 0, "kind": "linear", "lr": 2e-4,
     "caption_epochs": 2, "action_epochs": 1, "caption_rehearsal": 0.3,
     "val_samples": 24, "seed": 0, "init_seed": 0, "template_weight": 0.1,
@@ -164,8 +164,9 @@ def compress_for(rule: dict, src: dict, brain: str):
     from . import compress
 
     dataset = src["pack"]
-    gate = json.loads((compress.out_dir(dataset) / "gate.json").read_text())
-    model = compress.load(dataset, brain)
+    ver = rule["compress"]                          # 학습 규칙이 정한 압축 판(설정 판이 아니라)
+    gate = json.loads((compress.out_dir(dataset, version=ver) / "gate.json").read_text())
+    model = compress.load(dataset, brain, version=ver)
     passed = gate["passed_channels"]
     if not passed:
         raise GuardRefused("gate", "관문을 통과한 채널이 없다 — train-v4 를 하지 않는다(F-004)")
