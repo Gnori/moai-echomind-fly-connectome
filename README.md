@@ -4,7 +4,8 @@
 요구사항 R-3340(C 단계 결과) · **R-7469(다음 학습 · 진행 중)** · 인터페이스 계약(I) · 인수인계는 이 저장소의 `docs/requirements/` 에 있다(2026-09-23 moai-echomind 에서 옮겨 왔다).
 
 > **지금(2026-09-23)**: C 단계 결과는 진짜 배선이 섞은 배선을 못 이겼다(먹이 도착 0.2 대 0.2 · 신호에는 정보가 있고 전달이 묻는다).
-> 다음 판은 판정 기준(`stats-v2`) · 냄새 좌우(`sim-v2`) · 3차원 입력(`task-v2` · `retino-v1` · `channels-v2`) · 채널별 압축 관문(`compress-v1`) · 작은 투영기(`train-v4`) · 앙상블 성적표(`scorecard-v2`)까지 **코드가 끝났고 자료 v2 를 모으는 중**이다 — [학습 안내서 10장](docs/training/10-학습-기록과-다음.md).
+> 다음 판은 판정 기준(`stats-v2`) · 냄새 좌우(`sim-v2`) · 3차원 입력(`task-v2` · `retino-v1` · `channels-v2`) · 채널별 압축 관문(`compress-v1`) · 작은 투영기(`train-v4`) · 앙상블 성적표(`scorecard-v2`)까지 코드가 끝났고, 자료 v2(2,921 + 376 결정 · 재배선 5)로 **판정(신호 단계 통과 8 칸 · 시각 · 다리) · 관문(시각 · 촉각 · 미각 · 몸) · 나침반 봉우리 검사(없음 · 실패 기록)** 까지 마쳤다.
+> 남은 것은 train-v4 학습 — 작은 측정 뒤 요구자 확인 — [학습 안내서 10장](docs/training/10-학습-기록과-다음.md).
 
 **학습 안내서** — 초파리 뇌를 만들고 · 맞추고 · 검산하는 법(1부)과 Qwen 에 잇는 투영기 학습(2부)을 하는 순서대로:
 [docs/training/](docs/training/README.md)(읽기는 `index.html` · 고친 뒤 `uv run --no-project --with markdown python docs/training/build.py`).

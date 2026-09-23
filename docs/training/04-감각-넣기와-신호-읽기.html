@@ -264,8 +264,11 @@
 </tr>
 </tbody>
 </table></div>
-<p>⚠️ LC17 은 다가옴에 가장 세게 반응하는 종류인데 353 중 9 개만 좌표를 얻었다 — 그래서 missing 을 빼지 않는다(빼면 시각 입력이 크게 약해진다 · I-7469 v1.3).
-대조군 "LC 위치를 뒤섞은 대응표"는 자료 v2 판정 때 만든다.</p>
+<p>⚠️ LC17 은 다가옴에 가장 세게 반응하는 종류인데 353 중 9 개만 좌표를 얻었다 — 그래서 missing 을 빼지 않는다(빼면 시각 입력이 크게 약해진다 · I-7469 v1.3).</p>
+<p><strong>retino-v2(같은 날 오후 · 연구 노트 13 §4 · <code>config/retino.yaml</code> · 옛 판 <code>config/archive/retino-v1.yaml</code>)</strong> — 앞 · 뒤 축을 확정했다: <code>h = hex1 − hex2</code> 가 <strong>앞쪽(+)</strong>. 공개 정의(MaleCNS 시각 경로 논문 방법 "high h = anterior")와
+그래프 독립 검증(LC4 → DNp02(앞쪽 물체) 시냅스 대 h 상관 +0.76/+0.85 · LC4 → DNp11(뒤쪽) −0.73/−0.80 · Dombrovski 2023)이 일치한다. 그래서 뉴런마다 <strong>방위</strong>도 낸다 — 오른눈 h 의 [최소, 최대] → [−170°, +10°] 선형(선언 · 근사 · + = 왼쪽 · 왼눈은 부호 반전).
+고도는 v1 과 같다(뉴런 집합 · 값 완전히 같음 · 4,096 / missing 5,105). 대조군 "뒤섞은 대응표"는 <code>retinotopy build --shuffle azimuth|elevation --seed N</code>(같은 종류 · 같은 눈 안에서만 섞는다).
+⚠️ <strong>자료 v2 는 v1(고도만)로 모았다</strong> — v2 방위는 재주입(replay · 묶음의 감각 입력으로 몸 없이 뇌만 다시)이나 자료 v3 에서.</p>
 <h3 id="32-냄새-좌우--회로에-정보가-남나-fly-connectome-inspect-laterality--r-7469-f-003">3.2 냄새 좌우 — 회로에 정보가 남나 (<code>fly-connectome inspect laterality</code> · R-7469 F-003)</h3>
 <p>C 단계 결과에서 <strong>냄새 쪽</strong> 칸은 두 뇌 모두 찍기 아래였다(09장). 투영기로는 없는 정보를 만들 수 없으니 1부에서 잰다.</p>
 <div class="tbl"><table>
@@ -458,6 +461,7 @@
 구획 1~8 에 45° 간격을 주고 결정마다 발화 가중 벡터 합의 <strong>위상</strong>과 <strong>길이</strong>(한쪽에 몰렸나)를 구한 뒤, 위상과 참값 몸 방향(<code>heading_deg</code>)의 <strong>원형 상관</strong>을 잰다.
 귀무 = 에피소드 단위로 방향 줄을 바꾼다 · 진짜 대 재배선 순위. <strong>자료 v2 가 있어야</strong> 돌 수 있다(06장) — 뇌만 돌리는 방향 회전 검사는 하지 않는다(시각 입구가 다가옴뿐이라 방향 단서가 없다).</p>
 <p>⚠️ 이 모델(쉬는 상태 침묵 · 신경조절 · 전기 시냅스 없음)에서 봉우리가 서리라는 보장은 없다 — <strong>실패도 그대로 기록</strong>하고 F-006(회로 학습)의 목표로 넘긴다. "단서를 끈 뒤 유지"는 자료로 못 잰다.</p>
+<p><strong>결과(2026-09-23 19:53 · <code>runs/bump-check-20260923-195413.json</code>)</strong>: <strong>진짜 배선의 EPG 는 3,297 결정 동안 한 번도 발화하지 않았다 — 봉우리 없음(실패).</strong> 재배선 s0 · s4 만 105 · 793 결정에서 발화했고 방향과 상관이 없다(|r| 0.021 · p 0.58). 표는 <a href="09-평가와-대조군.html">09장 7절</a>. → 회로 학습(F-006)의 space 목표(<code>config/physiology.yaml</code>)로.</p>
 <h2 id="6-결정-하나의-흐름-300-ms--loopepisodepy">6. 결정 하나의 흐름 (300 ms) — <code>loop/episode.py</code></h2>
 <ol>
 <li>행동(직전 결정) → 하강 뉴런 목표 발화율.</li>
@@ -497,7 +501,7 @@
 </tr>
 <tr>
 <td>나침반 봉우리가 방향을 따라가나</td>
-<td>⏳ 자료 v2 뒤 <code>inspect bump</code></td>
+<td>❌ <strong>봉우리 없음</strong> — 진짜 배선 EPG 발화 0/3,297 결정(5.4)</td>
 </tr>
 </tbody>
 </table></div>

@@ -191,14 +191,14 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 <td>10</td>
 <td><code>uv run fly-connectome collect --name v2main --seeds 0-299 --rewired-seeds 0-4 --workers 3 --threads 4</code></td>
 <td>06</td>
-<td>약 6 시간(결정당 17~18 s · 시간당 약 48 에피소드)</td>
+<td>실측 10 · 11 합쳐 <strong>8.2 시간</strong>(11:21 → 19:33 · 일꾼 3 · 결정당 17~18 s)</td>
 <td>여유 40 %</td>
 </tr>
 <tr>
 <td>11</td>
 <td><code>uv run fly-connectome collect --name v2eval --seeds 1000-1039 --rewired-seeds 0-4 --workers 3 --threads 4</code></td>
 <td>06</td>
-<td>약 50 분</td>
+<td>(위에 포함)</td>
 <td>여유 40 %</td>
 </tr>
 <tr>
@@ -212,21 +212,21 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 <td>13</td>
 <td><code>uv run fly-connectome linear-probe --dataset fly-loop-v2</code></td>
 <td>09</td>
-<td>CPU · v1 은 32 s(재배선 1) · v2 는 재배선 5 배</td>
+<td>CPU 약 5 분(재배선 5 · 376 결정)</td>
 <td>—</td>
 </tr>
 <tr>
 <td>14</td>
 <td><code>uv run fly-connectome inspect bump --dataset fly-loop-v2</code></td>
 <td>04 · 09</td>
-<td>CPU</td>
+<td>CPU 수 분</td>
 <td>—</td>
 </tr>
 <tr>
 <td>15</td>
 <td><code>uv run fly-connectome compress fit --dataset fly-loop-v2</code> · <code>compress gate --dataset fly-loop-v2</code></td>
 <td>09</td>
-<td>CPU</td>
+<td>CPU 약 10 분(fit 뇌 6 + gate 판정)</td>
 <td>—</td>
 </tr>
 <tr>
@@ -297,7 +297,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 <tr>
 <td>시야 자리 규칙</td>
-<td><code>config/retino.yaml</code> <strong>retino-v1</strong></td>
+<td><code>config/retino.yaml</code> <strong>retino-v2</strong>(방위 + 고도 · 자료 v2 는 v1 로 모음)</td>
 <td><code>retinotopy build</code> → 06 → 08 → 09</td>
 </tr>
 <tr>
@@ -312,7 +312,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 <tr>
 <td>압축 · 관문 규칙</td>
-<td><code>config/compress.yaml</code> <strong>compress-v1</strong></td>
+<td><code>config/compress.yaml</code> <strong>compress-v2</strong>(64 고정 · v1 은 결과 뒤 고침)</td>
 <td>09 관문 → 08 학습</td>
 </tr>
 <tr>
@@ -332,7 +332,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 </tbody>
 </table></div>
-<p><strong>옛 판은 <code>config/archive/&lt;판&gt;.yaml</code></strong> 에 남긴다(sim-v1 · task-v1 · channels-v1) — <code>config.load(name, version="sim-v1")</code> 로 옛 자료를 다시 돌릴 수 있다.</p>
+<p><strong>옛 판은 <code>config/archive/&lt;판&gt;.yaml</code></strong> 에 남긴다(sim-v1 · task-v1 · channels-v1 · retino-v1 · compress-v1) — <code>config.load(name, version="sim-v1")</code> 로 옛 자료를 다시 돌릴 수 있다.</p>
 <h2 id="4-문서-고치기">4. 문서 고치기</h2>
 <pre><code class="language-bash">uv run --no-project --with markdown python docs/training/build.py                 # 이 안내서 HTML — &quot;깨진 링크 없음&quot;
 uv run --no-project --with markdown python docs/research/fly-connectome/build.py  # 연구 노트 HTML

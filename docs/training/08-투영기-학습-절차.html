@@ -140,7 +140,7 @@ v2 자료(결정 약 3 천)면 걸음 수도 약 5 배가 된다.</p>
 <h2 id="2-학습-규칙--train_rule판-train-v4">2. 학습 규칙 — <code>TRAIN_RULE</code>(판 <code>train-v4</code>)</h2>
 <pre><code class="language-python">TRAIN_RULE = {
     &quot;version&quot;: &quot;train-v4&quot;,
-    &quot;input&quot;: &quot;compress&quot;, &quot;compress&quot;: &quot;compress-v1&quot;,
+    &quot;input&quot;: &quot;compress&quot;, &quot;compress&quot;: &quot;compress-v2&quot;,   # v1 은 두 뇌의 차원이 달라 v2(같은 64)로
     &quot;k&quot;: 1, &quot;width&quot;: 0, &quot;kind&quot;: &quot;linear&quot;, &quot;lr&quot;: 2e-4,
     &quot;caption_epochs&quot;: 2, &quot;action_epochs&quot;: 1, &quot;caption_rehearsal&quot;: 0.3,
     &quot;val_samples&quot;: 24, &quot;seed&quot;: 0, &quot;init_seed&quot;: 0, &quot;template_weight&quot;: 0.1,
@@ -156,7 +156,7 @@ v2 자료(결정 약 3 천)면 걸음 수도 약 5 배가 된다.</p>
 <tbody>
 <tr>
 <td><code>input</code> · <code>compress</code></td>
-<td>입력 = <strong>압축 관문을 통과한 채널의 압축 벡터</strong>(09장 4절 · <code>runs/compress-&lt;자료&gt;-compress-v1/</code>). 통과 채널이 0 이면 학습하지 않는다</td>
+<td>입력 = <strong>압축 관문을 통과한 채널의 압축 벡터</strong>(09장 4절 · <code>runs/compress-&lt;자료&gt;-compress-v2/</code> · 자료 v2 는 시각 · 촉각 · 미각 · 몸 각 64 차원). 통과 채널이 0 이면 학습하지 않는다</td>
 </tr>
 <tr>
 <td><code>kind</code> · <code>k</code> · <code>width</code></td>

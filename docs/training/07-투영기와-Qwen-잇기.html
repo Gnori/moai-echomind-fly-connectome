@@ -264,7 +264,7 @@
 </table></div>
 <p>⚠️ 표본은 581 개다. 매개변수가 표본의 5 만 배를 넘는다 — 10장에서 이것이 막힌 곳으로 드러났다(3.2만 차원을 통째로 넣으면 선형 검사에서도 차이가 사라진다).</p>
 <h3 id="42-train-v4--다음-판-압축-벡터--선형-토큰-하나">4.2 train-v4 — 다음 판: 압축 벡터 → 선형 토큰 하나</h3>
-<pre><code>채널 벡터 (d 차원) ──► [압축기 PCA · k 16~64 · 맞춤(기울기 없음)] ──► Linear(k → 5,120) ──► 토큰 1 개
+<pre><code>채널 벡터 (d 차원) ──► [압축기 PCA · k 64(compress-v2) · 맞춤(기울기 없음)] ──► Linear(64 → 5,120) ──► 토큰 1 개
 관문을 통과한 채널만 · 순서대로 이어 붙여 [통과 채널 수, 5,120]
 </code></pre>
 <div class="tbl"><table>
@@ -278,8 +278,8 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><code>compress</code> · <code>compress-v1</code></td>
-<td>입력은 09장 4절 의 압축기 출력(<code>runs/compress-&lt;자료&gt;-compress-v1/&lt;뇌&gt;.npz</code>)</td>
+<td><code>compress</code> · <strong><code>compress-v2</code></strong>(모든 뇌 · 채널 64 고정 — v1 의 분산 규칙은 두 뇌의 차원을 다르게 만들었다 · 09장 4.1)</td>
+<td>입력은 09장 4절 의 압축기 출력(<code>runs/compress-&lt;자료&gt;-compress-v2/&lt;뇌&gt;.npz</code>)</td>
 </tr>
 <tr>
 <td><code>kind</code></td>
@@ -308,11 +308,11 @@
 <tbody>
 <tr>
 <td>채널 하나</td>
-<td>k_in × 5,120 + 5,120 — k_in 32 면 168,960 · <strong>최대(k_in 64) 332,800</strong></td>
+<td>k_in × 5,120 + 5,120 — compress-v2 는 k_in 64 라 <strong>332,800</strong></td>
 </tr>
 <tr>
-<td>예: 통과 채널 3 · k_in 32</td>
-<td>약 <strong>51 만</strong>(v2 의 1/60)</td>
+<td>자료 v2 관문 통과 채널 4(시각 · 촉각 · 미각 · 몸)</td>
+<td><strong>1,331,200</strong>(약 133 만 · train-v2 의 1/24)</td>
 </tr>
 </tbody>
 </table></div>
@@ -353,7 +353,7 @@ Qwen 은 초파리 뉴런 발화를 본 적이 없으니 당연하다 — <stron
 <ul>
 <li>[ ] <code>config/llm.yaml</code> 의 <code>weights</code> 경로가 있다 · 올리기 전 메모리 여유(40 % + 28 GB)</li>
 <li>[ ] 자리 표시 수 = 채널 수 × k(v2: 18 · v4: 통과 채널 수 × 1) — 다르면 <code>splice</code> 가 오류를 낸다</li>
-<li>[ ] v4: <code>runs/compress-&lt;자료&gt;-compress-v1/gate.json</code> 의 <code>passed_channels</code> 가 비어 있지 않다</li>
+<li>[ ] v4: <code>runs/compress-&lt;자료&gt;-compress-v2/gate.json</code> 의 <code>passed_channels</code> 가 비어 있지 않다(자료 v2: 시각 · 촉각 · 미각 · 몸)</li>
 <li>[ ] 학습 뒤 <code>meta.json</code> → <code>qwen_fingerprint.unchanged: true</code></li>
 </ul>
 <p>이전: <a href="06-학습-자료-모으기.html">06. 학습 자료 모으기</a> · 다음: <a href="08-투영기-학습-절차.html">08. 투영기 학습 절차</a></p>

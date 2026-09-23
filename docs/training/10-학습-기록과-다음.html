@@ -157,11 +157,11 @@
 <td><code>projector-{real,rewired-s0,s1,s2}-train-v4</code></td>
 <td>진짜 + 재배선 3</td>
 <td><strong>train-v4</strong></td>
-<td><strong>fly-loop-v2</strong>(압축 관문 통과 채널)</td>
+<td><strong>fly-loop-v2</strong> · compress-v2 통과 채널 4(시각 · 촉각 · 미각 · 몸 · 각 64 차원)</td>
 <td>—</td>
-<td>약 5 배(결정 약 3 천)</td>
+<td>캡션 2,921 × 2 + 행동 2,921 + 되새김 30 %</td>
 <td><code>train-probe</code> 로 먼저 잰다</td>
-<td>⏳ <strong>자료 v2 → 관문 → 측정 → 요구자 확인 뒤</strong></td>
+<td>⏳ <strong>관문까지 끝남 → 측정 → 요구자 확인 뒤</strong>(<code>bin/run_full_v4.sh</code>)</td>
 </tr>
 </tbody>
 </table></div>
@@ -471,7 +471,7 @@
 <h2 id="4-다음--r-7469-진행-2026-09-23">4. 다음 — R-7469 진행 (2026-09-23)</h2>
 <blockquote>
 <p>다음 학습의 정의는 요구사항 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> — 학습 대상 8 개(판정 · 자료 · 감각 · 압축 · 작은 투영기 · 종류 단위 회로 학습 · 버섯체 · 3차원 공간)마다 왜 · 어떻게 · 대조군 · 성공 기준.
-조사와 근거는 <a href="../research/fly-connectome/12-다음-학습-조사.html">연구 노트 12</a>. 순서(G1 확정): F-001 → F-003 → F-008 1~3 → F-002 → F-004 → F-005 → (판정) → F-006 → F-007 → F-008 4~5.</p>
+조사와 근거는 <a href="../research/fly-connectome/12-다음-학습-조사.html">연구 노트 12</a> · 회로 학습 · 버섯체 · 눈 앞뒤 축은 <a href="../research/fly-connectome/13-회로-학습-설계-조사.html">연구 노트 13</a>. 순서(G1 확정): F-001 → F-003 → F-008 1~3 → F-002 → F-004 → F-005 → (판정) → F-006 → F-007 → F-008 4~5.</p>
 </blockquote>
 <h3 id="41-판정--측정-대장-학습이-아닌-실행--한-줄씩">4.1 판정 · 측정 대장 (학습이 아닌 실행 — 한 줄씩)</h3>
 <div class="tbl"><table>
@@ -535,11 +535,53 @@
 <td><code>runs/collect-probe-20260923-111821.json</code></td>
 </tr>
 <tr>
-<td>09-23 11:21~</td>
-<td><strong>자료 v2 수집</strong>(F-002 · 요구자 "지금 시작")</td>
+<td>09-23 11:21 → 19:33</td>
+<td><strong>자료 v2 수집 · 묶음</strong>(F-002 · 요구자 "지금 시작")</td>
 <td>같음</td>
-<td>300 + 40 에피소드 · 재배선 s0~s4 · 일꾼 3 · 실측 결정당 17~18 s · 14:07 에 147/300 · 18:30 쯤 끝 예상</td>
-<td><code>runs/collect-v2-*.log</code> → <code>data/datasets/fly-loop-v2</code></td>
+<td>학습 <strong>2,921</strong> 결정 / 300 에피소드 · 평가 <strong>376</strong> / 40 · 교사 도착 300/300 · 40/40 · 물체 175 · 23 · 부딪힘 1 · 0 · 재배선 s0~s4 · <code>stim.npz</code> · <strong>1.1 GB</strong> · 체크섬 온전 · <strong>8.2 h</strong>(추정의 2 배 · 일꾼 3 동시 CPU 나눔 + 마지막 일꾼 꼬리)</td>
+<td><code>data/datasets/fly-loop-v2</code> · <code>runs/collect-v2-*.log</code></td>
+</tr>
+<tr>
+<td>09-23 14:55</td>
+<td>앞 · 뒤 축 확정(F-008 2 · 연구 노트 13 §4)</td>
+<td><strong>retino-v2</strong></td>
+<td>h = hex1 − hex2 가 앞쪽 — 공개 정의와 그래프 검증(LC4 → DNp02 +0.76/+0.85 · → DNp11 −0.73/−0.80) 일치 → 뉴런마다 방위 · 뒤섞은 대응표 대조군 · 고도는 v1 과 같음(자료 v2 는 v1)</td>
+<td><code>data/graph/traced-v1.retino-v2.json</code> · <code>runs/lc4-dn-axis-v2-20260923.json</code></td>
+</tr>
+<tr>
+<td>09-23 19:53</td>
+<td><strong>나침반 봉우리 검사</strong>(F-008 3)</td>
+<td>channels-v2</td>
+<td><strong>진짜 배선 EPG 발화 0/3,297 결정 — 봉우리 없음(실패 기록)</strong> · 재배선 s0 105 · s4 793 결정 발화(무작위 ·</td>
+<td>r</td>
+</tr>
+<tr>
+<td>09-23 19:57 · 20:19</td>
+<td>압축 · 관문 v1(F-004)</td>
+<td>compress-v1</td>
+<td>진짜 시각 16 차원 · 재배선 64 — 절차가 달라지고 시각 정보가 잘림(0.851 → 0.737) · 통과 <strong>몸 · 미각뿐</strong></td>
+<td><code>runs/compress-fly-loop-v2-compress-v1/</code></td>
+</tr>
+<tr>
+<td>09-23 20:09</td>
+<td><strong>선형 검사 판정 v2</strong>(F-001) · 재배선 5 · 에피소드 40 · 결정 376 · CPU 5 분</td>
+<td>stats-v2</td>
+<td>판정 칸 45 · <strong>통과 8</strong> — 시각 → 있음 0.851 · 쪽 0.801 · 거리 0.771 · 움직임 0.830(재배선 0.62~0.73 · 찍기 0.726 · Holm 0.004) · 다리 ← 몸 0.622 · 촉각 0.569 · 구애 0.559 · 미각 0.513(재배선 약 0.46 · 찍기 0.362) · 전부 재배선 5 전부보다 위</td>
+<td><code>runs/linear-probe-20260923-201422.json</code></td>
+</tr>
+<tr>
+<td>09-23 20:22 · 20:30</td>
+<td><strong>압축 · 관문 v2</strong>(F-004 · 결과 뒤 규칙 고침 · 까닭 기록)</td>
+<td><strong>compress-v2</strong></td>
+<td>모든 뇌 · 채널 64 → 통과 <strong>시각 · 촉각 · 미각 · 몸</strong>(칸 7 · 시각 0.838/0.793/0.755/0.830 · 재배선 0.62~0.73) · 구애 · 공간 · 후각 · 청각 · 가치 불통</td>
+<td><code>runs/compress-fly-loop-v2-compress-v2/</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td><strong>다음</strong>: <code>train-probe</code>(train-v4 · 압축 입력) → 요구자 확인 → <code>bin/run_full_v4.sh</code></td>
+<td>train-v4</td>
+<td>⏳</td>
+<td><code>runs/train-probe-*.jsonl</code></td>
 </tr>
 </tbody>
 </table></div>
@@ -556,7 +598,7 @@
 <tr>
 <td>F-001 판정 기준</td>
 <td>stats-v1 → v2 · linear-probe 판정 · <code>graph --rewired-seeds</code> · scorecard-v2 앙상블</td>
-<td>✅ 코드 · v1 자료 판정 기록 · v2 재판정 대기</td>
+<td>✅ v1 자료 통과 2 칸 → <strong>v2 자료 통과 8 칸</strong>(재배선 5 · 에피소드 40) · 성적표 앙상블 실행은 F-005 뒤</td>
 </tr>
 <tr>
 <td>F-003 냄새 좌우</td>
@@ -565,37 +607,35 @@
 </tr>
 <tr>
 <td>F-008 1~3 3차원</td>
-<td>task-v2(고도) · retino-v1 · channels-v2(공간) · inspect bump</td>
-<td>✅ 코드 · 봉우리 검사는 자료 v2 뒤 · 지형 미룸</td>
+<td>task-v2(고도) · retino-v1 → <strong>retino-v2</strong>(앞뒤 축 확정 · 방위) · channels-v2(공간) · inspect bump</td>
+<td>✅ 코드 · ❌ <strong>봉우리 없음(실패 기록)</strong> → F-006 space 목표 · 지형 미룸 · v2 방위는 재주입 또는 자료 v3 에서</td>
 </tr>
 <tr>
 <td>F-002 자료 v2</td>
 <td>collect-probe · collect --rewired-seeds · stim.npz</td>
-<td>⏳ <strong>수집 중</strong> → pack · verify · backup</td>
+<td>✅ <strong><code>fly-loop-v2</code></strong> 2,921 + 376 · 8.2 h · 1.1 GB · 백업은 조율 세션이</td>
 </tr>
 <tr>
 <td>F-004 압축 관문</td>
-<td>compress-v1 · fit/gate</td>
-<td>✅ 코드 · 자료 v2 뒤 실행</td>
+<td>compress-v1 → <strong>compress-v2</strong>(64 고정) · fit/gate</td>
+<td>✅ 실행 — 통과 <strong>시각 · 촉각 · 미각 · 몸</strong>(칸 7) · v1 은 두 뇌 차원이 달라져 시각이 잘림(결과 뒤 고침 · 까닭 기록)</td>
 </tr>
 <tr>
 <td>F-005 작은 투영기</td>
-<td>train-v4 · 칸 값 가중 · rewired-s<K></td>
-<td>✅ 코드 · train-probe → 요구자 확인 → 학습 4 · 평가 · 성적표</td>
+<td>train-v4(압축 v2 입력) · 칸 값 가중 · rewired-s<K> · <code>bin/run_full_v4.sh</code></td>
+<td>⏳ <strong><code>train-probe</code> → 요구자 확인 → 학습 4 · 평가 8 · 성적표(씨앗 40 · 7 구성)</strong></td>
 </tr>
 <tr>
 <td>F-006 종류 단위 회로 학습 · F-007 버섯체 · F-008 4~5</td>
-<td>I v2 에서 계약</td>
-<td>⏳ 조사 중(연구 노트 13 예정)</td>
+<td>I v2 계약(sim-v3 · physiology-v1 · plasticity-v1 · task-v3 · retino-v2) · 연구 노트 13</td>
+<td>⏳ 착수는 F-005 판정 뒤</td>
 </tr>
 </tbody>
 </table></div>
-<h3 id="43-자료-v2-가-오면-하는-순서-전부-cpu--qwen-없음--마지막만-qwen">4.3 자료 v2 가 오면 하는 순서 (전부 CPU · Qwen 없음 → 마지막만 Qwen)</h3>
-<pre><code>dataset pack fly-loop-v2 · verify · backup
-linear-probe --dataset fly-loop-v2          # F-001 재판정 — 재배선 5 · 에피소드 40
-inspect bump --dataset fly-loop-v2          # F-008 3 — 봉우리
-compress fit · compress gate                # F-004 — 통과 채널
-train-probe → [요구자 확인] → bin/run_full_v4.sh (compress fit · gate → train ×4 → eval-caption ×8 → scorecard --seeds 2000-2039 --configs …,rewired-s0,s1,s2,…)   # F-004 · F-005
+<h3 id="43-지금부터-하는-순서">4.3 지금부터 하는 순서</h3>
+<pre><code>[끝남] dataset pack fly-loop-v2 · verify → linear-probe(통과 8) → inspect bump(봉우리 없음) → compress fit · gate(v1 → v2 · 통과 4 채널)
+[다음] train-probe --steps 12 → [요구자 확인] → bin/run_full_v4.sh (train ×4 → eval-caption ×8 → scorecard --seeds 2000-2039 · 7 구성) → 10장 1 · 2 절 · backup
+[그다음] F-006(회로 학습 · space 목표 = 봉우리) · F-007 · F-008 4~5 — I v2
 </code></pre>
 <h2 id="5-백업--git-밖에-있는-것">5. 백업 — git 밖에 있는 것</h2>
 <p><code>data/</code> 와 <code>runs/</code> 는 <code>.gitignore</code> 로 빠져 있다 — 커밋되지 않고, <strong>이 맥에만 있다.</strong></p>
