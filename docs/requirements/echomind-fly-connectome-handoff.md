@@ -20,6 +20,11 @@
 > `docs/requirements/{README.md,active_development.md,templates/}`.
 > **적용 시험은 모델이 완성된 뒤** — 그때 에코마인드 쪽과 잇는다.
 
+> 📘 **2026-09-23 요구: 학습 안내서** — 요구자 *"초파리의 뇌를 학습은 무엇들을 어떻게 해야 하는지 아주 자세하게 문서화 · md 로 연결되게 · html 로"*
+> · *"일단 초파리 뇌 학습부터 먼저고 그 다음인 QWEN 연결 부분"*. → **[`docs/training/`](../training/README.md)**(1부 초파리 뇌 01~05 · 2부 Qwen 연결 06~10 · 부록 11) ·
+> HTML 은 `uv run --no-project --with markdown python docs/training/build.py`. 문서만 — 코드·무거운 실행 없음.
+> ⚠️ 1부에 적은 사실: **초파리 회로 자체는 지금 학습하지 않는다**(배선 고정 · w_scale 하나를 규칙으로 맞춤). 회로 학습은 05장의 **후보**일 뿐 R 없음.
+
 ## ① 내 경계
 
 | 내 것 | 남의 것 |

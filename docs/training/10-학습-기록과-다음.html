@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학습 기록 · 결과 · 다음</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code,pre{font-variant-ligatures:none}   /* <|vision_pad|> 같은 글자가 합자로 바뀌지 않게 */
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 뇌 학습 안내서</p>
+  <p class="sub">R-3340 · 2026-09-23</p>
+  <div class="grp">시작</div>
+  <ol><li><a href="index.html">안내서 시작 — 지도와 상태</a></li></ol>
+  <div class="grp">1부 · 초파리 뇌</div>
+  <ol><li><a href="01-뇌-재료-공식-데이터와-그래프.html">01 · 뇌 재료 — 데이터와 그래프</a></li><li><a href="02-뇌-엔진-LIF.html">02 · 뇌 엔진 — LIF</a></li><li><a href="03-뇌-맞추기와-검산.html">03 · 뇌 맞추기와 검산</a></li><li><a href="04-감각-넣기와-신호-읽기.html">04 · 감각 넣기와 신호 읽기</a></li><li><a href="05-회로를-학습시키려면.html">05 · 회로를 학습시키려면(후보)</a></li></ol>
+  <div class="grp">2부 · Qwen 연결</div>
+  <ol><li><a href="06-학습-자료-모으기.html">06 · 학습 자료 모으기</a></li><li><a href="07-투영기와-Qwen-잇기.html">07 · 투영기와 Qwen 잇기</a></li><li><a href="08-투영기-학습-절차.html">08 · 투영기 학습 절차</a></li><li><a href="09-평가와-대조군.html">09 · 평가와 대조군</a></li><li><a href="10-학습-기록과-다음.html" class="cur">10 · 학습 기록 · 결과 · 다음</a></li></ol>
+  <div class="grp">부록</div>
+  <ol><li><a href="11-명령-모음과-용어.html">11 · 명령 모음과 용어</a></li></ol>
+  <div class="grp">관련 문서</div>
+  <ol><li><a href="../research/fly-connectome/index.html">연구 노트(설계 · 배경)</a></li>
+<li><a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">연구 노트 11 · 구현</a></li>
+<li><a href="../datasets.md">학습 자료 형식</a></li>
+<li><a href="../requirements/echomind-fly-connectome-handoff.md">인수인계(진행 상황)</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="10-학습-기록과-다음.md">10-학습-기록과-다음.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="10-학습-기록--결과--다음">10. 학습 기록 · 결과 · 다음</h1>
+<blockquote>
+<p>2부 Qwen 연결 · 마지막 장. 이 장의 대장은 <strong>학습을 새로 돌릴 때마다 한 줄씩 더한다.</strong>
+정본은 각 결과 폴더의 <code>meta.json</code> · <code>train.log</code> · <code>eval-caption-*.json</code> · <code>scorecard.json</code> 이고, 여기는 그것을 한곳에 모은 목록이다.</p>
+</blockquote>
+<h2 id="1-학습-대장">1. 학습 대장</h2>
+<h3 id="11-투영기-학습">1.1 투영기 학습</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>이름</th>
+<th>뇌</th>
+<th>규칙</th>
+<th>자료</th>
+<th>시작 → 끝</th>
+<th>걸음</th>
+<th>걸음당 · 최대 메모리</th>
+<th>상태</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>projector-real-train-v1</code></td>
+<td>진짜</td>
+<td>train-v1</td>
+<td>main(= fly-loop-v1 train)</td>
+<td>09-22 07:05 → 20:0x</td>
+<td>캡션 1,162 + 행동 475/755</td>
+<td>10→14 s(캡션) · 약 60 s(행동) · <strong>103 GB · 스왑 42 GB</strong></td>
+<td>⏸ 요구자 "지금 멈춤" · <strong>캡션 단계만 저장</strong></td>
+</tr>
+<tr>
+<td><code>projector-real-train-v2</code></td>
+<td>진짜</td>
+<td>train-v2</td>
+<td>같음</td>
+<td>09-22 22:07 → 23:37</td>
+<td>행동 755(캡션은 v1 저장본에서)</td>
+<td>약 7 s · 32.5 GB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>projector-rewired-train-v2</code></td>
+<td>섞은</td>
+<td>train-v2</td>
+<td>같음</td>
+<td>09-22 23:37 → 09-23 02:52</td>
+<td>캡션 1,162 + 행동 755</td>
+<td>5.6~7.6 s · 32 GB</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="12-손실검증--eval-앞-24-개--낮을수록-정답-글에-가깝다">1.2 손실(검증 · <code>eval</code> 앞 24 개 · 낮을수록 정답 글에 가깝다)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>학습 전 캡션 / 행동</th>
+<th>캡션 단계 끝</th>
+<th>행동 단계 끝(최종)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>진짜 배선</td>
+<td>3.355 / 0.410</td>
+<td>0.106 / 0.325</td>
+<td>0.132 / <strong>0.111</strong></td>
+</tr>
+<tr>
+<td>섞은 배선</td>
+<td>3.380 / 0.408</td>
+<td>0.107 / 0.359</td>
+<td>0.154 / <strong>0.087</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>→ 손실로는 <strong>섞은 배선이 오히려 낮다.</strong> 손실은 판정 잣대가 아니다(08장 3절).</p>
+<h3 id="13-저장본과-지문">1.3 저장본과 지문</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>파일</th>
+<th>sha256(앞 16자)</th>
+<th>크기</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runs/projector-real-train-v1/stage1-caption.safetensors</code></td>
+<td><code>30d221dc9b87712a</code></td>
+<td>122 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-real-train-v2/stage1-caption.safetensors</code></td>
+<td><code>30d221dc9b87712a</code>(v1 복사)</td>
+<td>122 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-real-train-v2/final.safetensors</code></td>
+<td><code>ff9041b3692311eb</code></td>
+<td>122 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-rewired-train-v2/stage1-caption.safetensors</code></td>
+<td><code>604eb3473fa1505d</code></td>
+<td>122 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-rewired-train-v2/final.safetensors</code></td>
+<td><code>9c558b44c843b349</code></td>
+<td>122 MB</td>
+</tr>
+</tbody>
+</table></div>
+<p>Qwen 가중치 지문: 두 학습 모두 전후 <code>a4cfcb8d…</code> <strong>같음</strong>(파인튜닝 아님). 설정 판: sim-v1 · loom-v1 · task-v1 · channels-v1 · llm-v1.</p>
+<h2 id="2-결과-2026-09-23-0449--전체-순서-끝-코드-0">2. 결과 (2026-09-23 04:49 · 전체 순서 끝 코드 0)</h2>
+<h3 id="21-캡션-평가--학습에-안-쓴-105-결정">2.1 캡션 평가 — 학습에 안 쓴 105 결정</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>진짜-캡션</th>
+<th>섞은-캡션</th>
+<th>진짜-최종</th>
+<th>섞은-최종</th>
+<th>찍기</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>물체 있음</td>
+<td>0.686</td>
+<td>0.667</td>
+<td>0.676</td>
+<td>0.752</td>
+<td>0.667</td>
+</tr>
+<tr>
+<td>물체 쪽</td>
+<td>0.676</td>
+<td>0.667</td>
+<td>0.676</td>
+<td>0.686</td>
+<td>0.667</td>
+</tr>
+<tr>
+<td>냄새 쪽</td>
+<td>0.533</td>
+<td>0.543</td>
+<td>0.238</td>
+<td>0.238</td>
+<td>0.543</td>
+</tr>
+<tr>
+<td>다리 접촉</td>
+<td>0.438</td>
+<td>0.438</td>
+<td>0.324</td>
+<td>0.333</td>
+<td>0.333</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ <strong>넷 다 찍기 수준 · 두 뇌가 구별되지 않는다.</strong> 행동 단계를 거치면 캡션이 오히려 나빠진다.
+예: 정답 <code>먹이 냄새: 왼쪽 · 강함 / 다리 접촉: 6개</code> → 진짜-최종 <code>오른쪽 · 강함 / 5개</code> · 섞은-최종 <code>오른쪽 · 강함 / 4개</code> — 서식은 완벽하고 칸이 틀린다.</p>
+<h3 id="22-성적표--씨앗-20002009--runsscorecard-20260923-031557scorecardjson">2.2 성적표 — 씨앗 2000~2009 · <code>runs/scorecard-20260923-031557/scorecard.json</code></h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>구성</th>
+<th>먹이 도착</th>
+<th>끝 거리</th>
+<th>회피</th>
+<th>형식 위반</th>
+<th>결정 1회</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vector</td>
+<td><strong>0.2</strong></td>
+<td>41.2 mm</td>
+<td>1.0</td>
+<td>0</td>
+<td>1.91 s</td>
+</tr>
+<tr>
+<td>text</td>
+<td>0.0</td>
+<td>52.8 mm</td>
+<td>1.0</td>
+<td>0</td>
+<td>3.04 s</td>
+</tr>
+<tr>
+<td>no_circuit</td>
+<td><strong>0.9</strong></td>
+<td>4.8 mm</td>
+<td>0.75</td>
+<td>0</td>
+<td>1.91 s</td>
+</tr>
+<tr>
+<td>rewired</td>
+<td><strong>0.2</strong></td>
+<td>38.6 mm</td>
+<td>1.0</td>
+<td>0</td>
+<td>1.95 s</td>
+</tr>
+<tr>
+<td>no_llm</td>
+<td>0.0</td>
+<td>26.2 mm</td>
+<td>0.0</td>
+<td>0</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>vector_beats_rewired: false</code> → <strong>"섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다."</strong>
+⚠️ 회피율은 가르는 힘이 없다(가만히 있는 no_llm 만 0 · 움직이면 전부 1.0).</p>
+<h3 id="23-원인-가르기--선형-검사">2.3 원인 가르기 — 선형 검사</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>신호 → 칸</th>
+<th>진짜 배선</th>
+<th>섞은 배선</th>
+<th>찍기</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>9 채널 전부 → 물체 있음 / 물체 쪽 / 다리</td>
+<td>0.714 / 0.600 / 0.543</td>
+<td>0.733 / 0.610 / 0.419</td>
+<td>0.667 / 0.667 / 0.333</td>
+</tr>
+<tr>
+<td><strong>시각만 → 물체 있음</strong></td>
+<td><strong>0.810</strong></td>
+<td>0.743</td>
+<td>0.667</td>
+</tr>
+<tr>
+<td><strong>시각만 → 물체 쪽</strong></td>
+<td><strong>0.743</strong></td>
+<td>0.590</td>
+<td>0.667</td>
+</tr>
+<tr>
+<td><strong>몸만 → 다리 접촉</strong></td>
+<td><strong>0.590</strong></td>
+<td>0.419</td>
+<td>0.333</td>
+</tr>
+<tr>
+<td>촉각만 → 다리 접촉</td>
+<td>0.476</td>
+<td>0.448</td>
+<td>0.333</td>
+</tr>
+<tr>
+<td>후각만 → 냄새 쪽</td>
+<td>0.457</td>
+<td>0.467</td>
+<td>0.543</td>
+</tr>
+</tbody>
+</table></div>
+<p>(9 채널 전부 = <code>runs/linear-probe-20260923-031800.json</code> · 채널별 = W loop 3.5 — 기록 파일 없음, 09장 4절)</p>
+<h2 id="3-해석--막힌-곳은-앞이-아니라-전달이다">3. 해석 — 막힌 곳은 앞이 아니라 전달이다</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>물음</th>
+<th>답</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen 이 과제를 못 하나?</td>
+<td><strong>아니다</strong></td>
+<td>숫자를 그대로 주면 0.9(no_circuit)</td>
+</tr>
+<tr>
+<td>초파리 신호에 정보가 없나?</td>
+<td><strong>있다</strong> — 그리고 <strong>진짜 배선이 더 높다</strong></td>
+<td>채널별 선형 검사(시각 · 몸)</td>
+</tr>
+<tr>
+<td>그럼?</td>
+<td><strong>다리(투영기 · 넣는 방식)가 묻는다</strong></td>
+<td>3.2만 차원을 통째로 넣으면 선형 검사에서도 차이가 사라진다 · 투영기 3,187만 매개변수 대 표본 581</td>
+</tr>
+</tbody>
+</table></div>
+<p>덧붙여 두 가지:</p>
+<ul>
+<li><strong>캡션 손실이 틀 글자에 쏠린다</strong> — 손실 0.1 에서도 칸은 찍기 수준(2.1 의 예).</li>
+<li><strong>냄새 쪽은 두 뇌 모두 못 읽는다</strong> — 좌우 차이가 벡터에 남는지부터 봐야 한다. 감각 입구(ORN)를 벡터에서 뺀 것과 관련 있을 수 있다(04장 5.3).</li>
+</ul>
+<h2 id="4-다음-후보-요구자와-정한-뒤">4. 다음 후보 (요구자와 정한 뒤)</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>후보</th>
+<th>무엇</th>
+<th>기대</th>
+<th>비용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>① 넣는 숫자 줄이기</strong></td>
+<td>채널마다 요약(주성분 · 단위 평균 등)해서 수십 차원으로 · 또는 정보가 보인 채널(시각 · 몸)만 · 투영기도 그만큼 작게</td>
+<td>선형 검사의 차이를 투영기가 살릴 수 있게</td>
+<td>학습 새 판(train-v3) · 자료는 그대로 쓸 수 있다</td>
+</tr>
+<tr>
+<td>② 손실을 칸에 쏠리게</td>
+<td>틀 글자 토큰의 가중을 낮추고 칸 글자에 가중</td>
+<td>칸 정확도</td>
+<td>손실 코드 · 새 판</td>
+</tr>
+<tr>
+<td>③ 자료 늘리기</td>
+<td>581 → 수천(씨앗 늘리기)</td>
+<td>과적합 완화</td>
+<td>모으기 수 시간 · <code>fly-loop-v2</code></td>
+</tr>
+<tr>
+<td>④ 냄새 따로</td>
+<td>후각 입구 좌우 차가 벡터에 남는지 먼저 검사</td>
+<td>냄새 쪽 칸</td>
+<td>가벼운 분석</td>
+</tr>
+</tbody>
+</table></div>
+<p>그 전에 할 작은 일:</p>
+<ul>
+<li>[ ] 선형 검사에 <strong>채널 고르기 옵션</strong>을 더해 채널별 결과도 파일로 남긴다(지금은 W 에만 있다).</li>
+<li>[ ] 투영기 초기값에 씨앗을 준다 — 같은 설정이면 같은 결과가 나오게(재현성).</li>
+<li>[ ] <code>train</code> 이 <code>data/datasets/fly-loop-v1</code> 묶음을 직접 읽게 한다(지금은 <code>runs/dataset-*</code> 조각).</li>
+</ul>
+<h2 id="5-백업--git-밖에-있는-것">5. 백업 — git 밖에 있는 것</h2>
+<p><code>data/</code> 와 <code>runs/</code> 는 <code>.gitignore</code> 로 빠져 있다 — 커밋되지 않고, <strong>이 맥에만 있다.</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>무엇</th>
+<th>다시 만들 수 있나</th>
+<th>비용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data/raw/</code> 공식 파일(1.0 GB)</td>
+<td>✅ <code>download</code></td>
+<td>받기</td>
+</tr>
+<tr>
+<td><code>data/graph/</code>(397 MB)</td>
+<td>✅ <code>graph --rewired-seed 0</code></td>
+<td>약 22 s</td>
+</tr>
+<tr>
+<td><code>data/datasets/fly-loop-v1/</code>(75 MB)</td>
+<td>⚠️ 같은 커밋 · 같은 판이면 같은 자료</td>
+<td>약 30 분</td>
+</tr>
+<tr>
+<td><code>runs/projector-*/</code>(투영기 · 로그)</td>
+<td>⚠️ 초기값에 씨앗이 없어 <strong>똑같이는 안 나온다</strong></td>
+<td>학습 수 시간</td>
+</tr>
+<tr>
+<td><code>runs/scorecard-*</code> · <code>linear-probe-*</code></td>
+<td>투영기가 남아 있으면 다시 돌릴 수 있다(같은 씨앗 · 탐욕 복호 — 같은 값이 나오는지는 아직 재 보지 않았다)</td>
+<td>1.5 시간 · 14 s</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ 자료 묶음과 투영기 폴더는 <strong>따로 복사해 두기를 권한다.</strong></p>
+<h2 id="6-이-대장을-쓰는-법">6. 이 대장을 쓰는 법</h2>
+<p>학습을 새로 돌리면:</p>
+<ol>
+<li>1.1 표에 한 줄 — 이름 · 뇌 · 규칙 판 · 자료 · 시각 · 걸음 · 메모리 · 상태</li>
+<li>1.2 · 1.3 에 손실과 저장본 sha256(<code>shasum -a 256 runs/projector-*/*.safetensors</code>)</li>
+<li>평가 · 성적표를 돌렸으면 2 절에 — <strong>섞은 배선과 나란히</strong></li>
+<li>연구 노트 11장 8.5 절과 인수인계에도 한 줄(같은 커밋에서 HTML 다시 만들기)</li>
+</ol>
+<p>이전: <a href="09-평가와-대조군.html">09. 평가와 대조군</a> · 다음: <a href="11-명령-모음과-용어.html">11. 명령 모음과 용어</a></p>
+<div class="pager"><a href="09-평가와-대조군.html">← 09 · 평가와 대조군</a><a href="11-명령-모음과-용어.html">11 · 명령 모음과 용어 →</a></div>
+<footer>이 HTML 은 <code>10-학습-기록과-다음.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>

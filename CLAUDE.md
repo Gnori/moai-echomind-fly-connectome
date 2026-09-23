@@ -49,6 +49,7 @@
 | `body/` | 몸 = **FlyGym 1.x · 파이썬 3.12 별도 프로세스**(표준 입출력 JSON 한 줄). 2.1 에는 보행 제어기·냄새가 없다 |
 | `config/*.yaml` | `sim`·`loom`·`task`·`channels`·`llm`·`tool`·`guard` — **상한·임계·경로를 코드에 박지 않는다** |
 | `docs/research/fly-connectome/` | **연구 노트 11편(정본)** — 설계와 결과. 읽기는 `index.html` |
+| `docs/training/` | **학습 안내서** — 1부 초파리 뇌(01~05) · 2부 Qwen 연결(06~10) · 부록(11). 무엇을 어떤 순서로 하나 + **학습 대장(10장)**. 읽기는 `index.html` |
 | `docs/requirements/` | R/I/P/W · 대시보드 · **세션 인수인계** |
 | `docs/datasets.md` · `data/datasets/` | 학습 자료 형식과 묶음(자료 카드 · 체크섬 · git 밖) |
 | `runs/` | 실행 기록·측정(git 밖). W 에는 **파일 경로와 해시**를 적는다 |
@@ -86,7 +87,9 @@
 |---|---|
 | 회로·그래프·LIF(`sim.py`·`graph.py`·`config/sim.yaml`) | 연구 노트 08·09 + `README.md` 용어 |
 | 신호 채널·특징(`loop/signals.py`·`config/channels.yaml`) | 연구 노트 11장 4절 + `docs/datasets.md`(차원이 바뀌면 **새 이름으로 다시 묶는다**) |
-| 투영기·학습(`loop/{projector,train,train_cli}.py`) | 연구 노트 11장 2·3절 + 메모리 수치를 적은 곳(`README`·`config/guard.yaml` 주석) |
+| 투영기·학습(`loop/{projector,train,train_cli}.py`) | 연구 노트 11장 2·3절 + 메모리 수치를 적은 곳(`README`·`config/guard.yaml` 주석) + 학습 안내서 07·08장 |
+| **학습을 새로 돌림**(투영기 · 평가 · 성적표) | 학습 안내서 **10장 대장에 한 줄**(손실 · 저장본 sha256 · 섞은 배선과 나란히) |
+| 뇌 쪽(그래프·LIF·맞추기·인코더·채널) | 학습 안내서 01~04장의 해당 절 |
 | 성적표·대조군(`loop/scorecard.py`) | 연구 노트 11장 6절·8.5절(결과) + R 2.0-6 문구 규칙 |
 | 도구 서버(`mcp_server.py`·`tools.py`) | `README.md` + `.mcp.json` |
 | 몸(`body/**`) | `README.md` + 연구 노트 11장 |
@@ -94,6 +97,7 @@
 
 ⚠️ **연구 노트를 고치면 같은 커밋에서 HTML 을 다시 만든다**:
 `uv run --no-project --with markdown python docs/research/fly-connectome/build.py` (깨진 링크 0 확인)
+학습 안내서도 같다: `uv run --no-project --with markdown python docs/training/build.py`
 
 ---
 

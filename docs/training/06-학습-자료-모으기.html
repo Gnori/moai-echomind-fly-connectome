@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학습 자료 모으기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code,pre{font-variant-ligatures:none}   /* <|vision_pad|> 같은 글자가 합자로 바뀌지 않게 */
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 뇌 학습 안내서</p>
+  <p class="sub">R-3340 · 2026-09-23</p>
+  <div class="grp">시작</div>
+  <ol><li><a href="index.html">안내서 시작 — 지도와 상태</a></li></ol>
+  <div class="grp">1부 · 초파리 뇌</div>
+  <ol><li><a href="01-뇌-재료-공식-데이터와-그래프.html">01 · 뇌 재료 — 데이터와 그래프</a></li><li><a href="02-뇌-엔진-LIF.html">02 · 뇌 엔진 — LIF</a></li><li><a href="03-뇌-맞추기와-검산.html">03 · 뇌 맞추기와 검산</a></li><li><a href="04-감각-넣기와-신호-읽기.html">04 · 감각 넣기와 신호 읽기</a></li><li><a href="05-회로를-학습시키려면.html">05 · 회로를 학습시키려면(후보)</a></li></ol>
+  <div class="grp">2부 · Qwen 연결</div>
+  <ol><li><a href="06-학습-자료-모으기.html" class="cur">06 · 학습 자료 모으기</a></li><li><a href="07-투영기와-Qwen-잇기.html">07 · 투영기와 Qwen 잇기</a></li><li><a href="08-투영기-학습-절차.html">08 · 투영기 학습 절차</a></li><li><a href="09-평가와-대조군.html">09 · 평가와 대조군</a></li><li><a href="10-학습-기록과-다음.html">10 · 학습 기록 · 결과 · 다음</a></li></ol>
+  <div class="grp">부록</div>
+  <ol><li><a href="11-명령-모음과-용어.html">11 · 명령 모음과 용어</a></li></ol>
+  <div class="grp">관련 문서</div>
+  <ol><li><a href="../research/fly-connectome/index.html">연구 노트(설계 · 배경)</a></li>
+<li><a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">연구 노트 11 · 구현</a></li>
+<li><a href="../datasets.md">학습 자료 형식</a></li>
+<li><a href="../requirements/echomind-fly-connectome-handoff.md">인수인계(진행 상황)</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="06-학습-자료-모으기.md">06-학습-자료-모으기.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="06-학습-자료-모으기">06. 학습 자료 모으기</h1>
+<blockquote>
+<p>2부 Qwen 연결 · 첫 장. 코드: <code>src/moai_echomind_fly/loop/{teacher,collect,episode}.py</code> · <code>datasets.py</code>.
+형식 정본: <a href="../datasets.md">docs/datasets.md</a> · 자료 카드 <code>data/datasets/fly-loop-v1/README.md</code>(git 밖).</p>
+</blockquote>
+<h2 id="1-무엇을-모으나">1. 무엇을 모으나</h2>
+<p>투영기는 <strong>"이런 뇌 활동이면 이런 상황 · 이런 행동"</strong> 을 배운다. 그러려면 <strong>(뇌 신호, 정답)</strong> 짝이 필요하다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>짝의 한쪽</th>
+<th>어디서</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>뇌 신호</td>
+<td>04장의 채널 벡터 9개(31,950 차원) — <strong>진짜 배선 · 섞은 배선 두 뇌 모두</strong></td>
+</tr>
+<tr>
+<td>정답 ① 캡션</td>
+<td>세계 참값에서 코드가 만든 상황 설명 글</td>
+</tr>
+<tr>
+<td>정답 ② 행동</td>
+<td>세계 참값을 아는 <strong>교사 규칙</strong>이 낸 행동 JSON</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>정답은 사람이 쓰지 않는다.</strong> 몸 시뮬레이터가 아는 참값(물체가 어디 있나 · 냄새 원이 어느 쪽인가)에서 코드가 만든다.</p>
+<h2 id="2-교사-규칙--loopteacherpy">2. 교사 규칙 — <code>loop/teacher.py</code></h2>
+<p>교사가 몸을 모는 동안 결정 창마다 기록한다. 규칙은 전부 코드에 선언돼 있고 자료 <code>meta.json</code> 의 <code>teacher_rules</code> 에 그대로 실린다.</p>
+<h3 id="21-행동-정답-위에서부터-먼저-맞는-것">2.1 행동 정답 (위에서부터 먼저 맞는 것)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>조건</th>
+<th>행동</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>다가오는 물체가 <strong>다가오고</strong> 각 크기 <strong>≥ 20°</strong>(위협)</td>
+<td>물체 <strong>반대쪽</strong>으로 돌며 달린다 <code>{"walk":1.0,"turn":"right","turn_strength":1.0,…}</code>(물체가 왼쪽이면 right)</td>
+</tr>
+<tr>
+<td>먹이까지 <strong>≤ 2 mm</strong></td>
+<td>멈춘다 <code>{"walk":0.0,"stop":true,…}</code></td>
+</tr>
+<tr>
+<td>냄새(두 더듬이 평균 ≥ 0.05)가 있고 방향이 <strong>±15° 안</strong></td>
+<td>곧장 <code>{"walk":0.8,"turn":"none",…}</code></td>
+</tr>
+<tr>
+<td>냄새가 있고 옆쪽</td>
+<td>그쪽으로 <code>{"walk":0.6,"turn":"left","turn_strength":0.5,…}</code> — 세기 = min(1, 방위 절댓값 ÷ 90°)</td>
+</tr>
+<tr>
+<td>그 밖</td>
+<td><code>{"walk":0.5,"turn":"none",…}</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="22-캡션-정답--고정-서식-한-줄">2.2 캡션 정답 — 고정 서식 한 줄</h3>
+<pre><code>다가오는 물체: &lt;없음 | 쪽 · 거리 · 움직임&gt; / 먹이 냄새: &lt;없음 | 쪽 · 세기&gt; / 다리 접촉: N개 / 소리: 있음|없음 / 암컷 대용 물체: &lt;없음 | 쪽&gt;
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>값</th>
+<th>문턱(선언)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>쪽</td>
+<td>앞 · 왼쪽 · 오른쪽</td>
+<td>±15° 안이면 "앞"</td>
+</tr>
+<tr>
+<td>거리</td>
+<td>가까움 · 중간 · 멀리</td>
+<td>각 크기 ≥ 30° · ≥ 10°</td>
+</tr>
+<tr>
+<td>움직임</td>
+<td>다가옴 · 머묾</td>
+<td>확대 속도 &gt; 0</td>
+</tr>
+<tr>
+<td>냄새 세기</td>
+<td>강함 · 약함</td>
+<td>평균 농도 ≥ 0.5 · ≥ 0.05</td>
+</tr>
+<tr>
+<td>소리 · 암컷</td>
+<td>이번 과제에는 늘 "없음"</td>
+<td>자리만 있다</td>
+</tr>
+</tbody>
+</table></div>
+<p>예: <code>다가오는 물체: 왼쪽 · 중간 · 다가옴 / 먹이 냄새: 오른쪽 · 강함 / 다리 접촉: 6개 / 소리: 없음 / 암컷 대용 물체: 없음</code></p>
+<blockquote>
+<p>⚠️ <strong>교사 규칙이 곧 결과를 정한다.</strong> 규칙이 쉬우면 무엇이든 배우기 쉽다. 그래서 <strong>섞은 배선 벡터로 똑같이 학습한 대조군</strong>과 나란히 잰다(09장).</p>
+</blockquote>
+<h2 id="3-모으기--fly-connectome-collect">3. 모으기 — <code>fly-connectome collect</code></h2>
+<pre><code class="language-bash"># 학습용: 씨앗 0~59 (60 에피소드)
+uv run fly-connectome collect --name main --seeds 0-59 --workers 3 --threads 4
+# 평가용: 씨앗 1000~1011 (12 에피소드) — 학습에 쓰지 않는다
+uv run fly-connectome collect --name eval --seeds 1000-1011 --workers 3 --threads 4
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>옵션</th>
+<th>뜻</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--workers 3</code></td>
+<td>씨앗을 세 조각으로 나눠 자식 프로세스 셋이 돈다(부모가 무거운 실행 잠금을 쥔다) → <code>runs/dataset-main-w0 … w2</code></td>
+</tr>
+<tr>
+<td><code>--threads 4</code></td>
+<td>일꾼마다 CPU 스레드 수</td>
+</tr>
+<tr>
+<td><code>--graph traced-v1</code> · <code>--rewired-seed 0</code></td>
+<td>두 뇌 = 진짜 배선 · 그 씨앗으로 섞은 배선</td>
+</tr>
+</tbody>
+</table></div>
+<p>한 번 도는 동안 한 에피소드에서 일어나는 일:</p>
+<ol>
+<li>씨앗으로 과제를 뽑는다(냄새 원 위치 · 다가오는 물체 유무 · 시각 · 방향).</li>
+<li>몸을 초기화하고, 결정마다 <strong>두 뇌에 같은 감각 입력</strong>을 넣는다. 몸은 진짜 배선 뇌의 하강 뉴런을 따른다.</li>
+<li>창이 끝나면 두 뇌의 채널 특징 · 세계 참값 · 캡션 · 교사 행동을 한 줄로 남긴다(<code>DatasetWriter</code>).</li>
+<li>교사 행동이 다음 결정의 명령이 된다.</li>
+</ol>
+<p>시간: 학습용 60 에피소드 약 25 분(일꾼 3). 가드: 평소 문턱(메모리 여유 40 %) · 가벼움.</p>
+<h2 id="4-묶기--오래-둘-자리로">4. 묶기 — 오래 둘 자리로</h2>
+<p><code>runs/</code> 는 실행 기록을 쌓는 임시 자리다. 조각을 합쳐 <strong><code>data/datasets/&lt;이름&gt;/</code></strong> 에 묶는다.</p>
+<pre><code class="language-bash">uv run fly-connectome dataset pack --name fly-loop-v1 --train main --eval eval
+uv run fly-connectome dataset verify fly-loop-v1      # 체크섬 대조 — &quot;온전&quot;
+uv run fly-connectome dataset list
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>파일</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>train/</code> · <code>eval/</code> <code>features-real.npz</code> · <code>features-rewired.npz</code></td>
+<td>채널 이름 → float32 [결정 수, 차원]</td>
+</tr>
+<tr>
+<td><code>samples.jsonl</code></td>
+<td>결정마다 <code>seed</code> · <code>decision</code> · <code>t_ms</code> · <code>truth</code> · <code>caption</code> · <code>teacher_action</code> · <code>reflex_bins</code></td>
+</tr>
+<tr>
+<td><code>episodes.jsonl</code></td>
+<td>에피소드마다 도착 · 시간 · 물체 · 부딪힘</td>
+</tr>
+<tr>
+<td><code>meta.json</code></td>
+<td>판 번호 · 코드 커밋 · 채널 단위 이름 · 감각 대응표 · 교사 규칙</td>
+</tr>
+<tr>
+<td><code>README.md</code> · <code>SHA256SUMS</code></td>
+<td>자료 카드 · 체크섬</td>
+</tr>
+</tbody>
+</table></div>
+<p>같은 이름은 덮어쓰지 않는다(<code>pack</code> 이 거부). <strong>설정 판이나 채널 표가 바뀌면 새 이름</strong>으로 묶는다(<code>fly-loop-v2</code> …).</p>
+<h2 id="5-지금-있는-자료--fly-loop-v1">5. 지금 있는 자료 — <code>fly-loop-v1</code></h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>나눔</th>
+<th>결정 수</th>
+<th>에피소드</th>
+<th>씨앗</th>
+<th>교사 도착</th>
+<th>다가오는 물체</th>
+<th>부딪힘</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>train</td>
+<td><strong>581</strong></td>
+<td>60</td>
+<td>0~59</td>
+<td>60/60</td>
+<td>39</td>
+<td>1</td>
+</tr>
+<tr>
+<td>eval</td>
+<td><strong>105</strong></td>
+<td>12</td>
+<td>1000~1011</td>
+<td>12/12</td>
+<td>9</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p>모은 코드 <code>4ac4635</code> · 판 sim-v1 · loom-v1 · task-v1 · channels-v1 · 75 MB · 2026-09-22.</p>
+<p>⚠️ <strong>"평가용"이 둘이다 — 헷갈리지 않게:</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>무엇</th>
+<th>씨앗</th>
+<th>쓰는 곳</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>자료의 <code>eval</code> 나눔</td>
+<td>1000~1011</td>
+<td>학습 중 검증 손실(앞 24 개) · 캡션 평가(105 개 전부) · 선형 검사</td>
+</tr>
+<tr>
+<td>성적표 씨앗</td>
+<td>2000~2009</td>
+<td>09장 성적표 — 자료로 모으지 않고 그때 새로 돌린다</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-이-자료의-한계-10장의-원인과-이어진다">6. 이 자료의 한계 (10장의 원인과 이어진다)</h2>
+<ul>
+<li><strong>표본이 적다</strong> — 581 결정에 차원 31,950. 차원이 표본의 55 배다.</li>
+<li><strong>칸마다 답이 치우쳐 있다</strong> — 예: 평가 자료에서 "물체 있음"의 최빈값이 0.667, "냄새 쪽"이 0.543. 찍기만 해도 이만큼 나온다.</li>
+<li>소리 · 암컷 칸은 늘 "없음"이라 배울 것이 없다.</li>
+</ul>
+<h2 id="7-확인-체크리스트">7. 확인 체크리스트</h2>
+<ul>
+<li>[ ] 교사 도착 = 에피소드 수(교사가 과제를 풀 수 있어야 정답이 의미가 있다)</li>
+<li>[ ] <code>dataset verify</code> → 온전</li>
+<li>[ ] <code>meta.json</code> 의 판 번호가 지금 <code>config/*.yaml</code> 과 같다</li>
+</ul>
+<p>이전: <a href="05-회로를-학습시키려면.html">05. 회로를 학습시키려면</a> · 다음: <a href="07-투영기와-Qwen-잇기.html">07. 투영기와 Qwen 잇기</a></p>
+<div class="pager"><a href="05-회로를-학습시키려면.html">← 05 · 회로를 학습시키려면(후보)</a><a href="07-투영기와-Qwen-잇기.html">07 · 투영기와 Qwen 잇기 →</a></div>
+<footer>이 HTML 은 <code>06-학습-자료-모으기.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>

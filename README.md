@@ -1,7 +1,10 @@
 # moai-echomind-fly-connectome
 
 수컷 초파리 중추신경계 연결 지도(**MaleCNS v1.0**)를 맥에서 돌리고, 그 신경 신호를 **LLM(Qwen3.8-27B)의 입력 임베딩에 직접** 넣는 실험 저장소.
-요구사항 R-3340 · 인터페이스 계약(I) · 인수인계는 형제 저장소 `moai-echomind/docs/requirements/` 에 있다.
+요구사항 R-3340 · 인터페이스 계약(I) · 인수인계는 이 저장소의 `docs/requirements/` 에 있다(2026-09-23 moai-echomind 에서 옮겨 왔다).
+
+**학습 안내서** — 초파리 뇌를 만들고 · 맞추고 · 검산하는 법(1부)과 Qwen 에 잇는 투영기 학습(2부)을 하는 순서대로:
+[docs/training/](docs/training/README.md)(읽기는 `index.html` · 고친 뒤 `uv run --no-project --with markdown python docs/training/build.py`).
 
 **연구 노트 11편은 이 저장소 안에 있다** — [docs/research/fly-connectome/](docs/research/fly-connectome/README.md)
 (읽기는 `index.html` · 2026-09-23 에 moai-echomind 에서 옮겨 왔다).
