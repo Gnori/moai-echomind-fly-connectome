@@ -34,6 +34,23 @@
       · "단서를 끈 뒤 유지"는 자료로 못 잰다 — 필요하면 뇌만 검사를 따로
 - [ ] 결과(통과든 실패든) 기록 → F-006 목표에 반영
 
+## Task 5: F-006 회로 학습 (I v2 §7 · 착수는 F-005 판정 뒤 · 무거운 실행은 요구자 확인)
+
+- [ ] `config/physiology.yaml`(physiology-v1 · 출처 · 허용폭 — 결과 보기 전에 잠금) · `config/sim.yaml` → sim-v3 매개변수 파일 형식
+- [ ] 함수형 걸음 + 대리 기울기 + `grad_scope` · 시험: 대리 기울기 끄면 지금 엔진과 발화 완전 일치(작은 그래프)
+- [ ] `fit-probe --scope escape-small --window-ms 10,30` → 비례 확인 → **요구자 확인** → `fit --method cmaes`(1단계) → 재배선 s0~s4 같은 절차 → 정체성 검사 · 도망 재채점
+- [ ] 2단계 `sgbptt`(space · escape) — 같은 순서
+
+## Task 6: F-007 버섯체 가소성 (I v2 §8 · Task 5 뒤)
+
+- [ ] `config/plasticity.yaml`(plasticity-v1) · 구획 표를 그래프에서 생성 · `plasticity-probe`(KC 발화 비율 · MBON 반응 · DAN 효과 · η 보정 — 몸 없이 창 몇 개)
+- [ ] `task-v3`(냄새 둘) · 대조군 다섯 · `value` 채널 해독(stats-v2)
+
+## Task 7: retino-v2 (I v2 §9 · 가벼움)
+
+- [ ] `config/retino.yaml` → retino-v2(h · v · 방위 범위 선언 · 왼쪽 거울) · `retinotopy build` · 뒤섞은 대응표 둘 · (선택) T4a/b 보조 검사
+- [ ] 자료 v2 재주입(`collect --replay`) 또는 v3 — 작게 잰 뒤 요구자 확인
+
 ## 최종 검증
 
 - ruff · 가벼운 시험 · 각 Task 의 기록을 W 에
