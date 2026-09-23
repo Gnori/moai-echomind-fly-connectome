@@ -404,6 +404,19 @@ def _table(head: list[str], rows: list[list[str]]) -> str:
     return f'<div class="tbl"><table><thead><tr>{th}</tr></thead><tbody>{tr}</tbody></table></div>'
 
 
+def _guard_text() -> str:
+    """가드 문턱을 설정(`config/guard.yaml`)에서 읽어 적는다 — 코드에 박지 않는다."""
+    try:
+        from . import config
+
+        g = config.load("guard")
+        return (f"학습 문턱 {g['training_min_free_percent']} % · 평소 {g['min_free_percent']} % · "
+                f"감시: 여유 < {g['training_abort_free_percent']} % 또는 "
+                f"프로세스 > {g['training_abort_footprint_gb']} GB 면 저장하고 멈춤")
+    except Exception:                  # noqa: BLE001 — 대시보드는 읽기 실패로 죽지 않는다
+        return "가드 설정을 읽지 못함"
+
+
 def _card(key: str, value: str, sub: str) -> str:
     return (f'<div class="card"><div class="k">{_e(key)}</div><div class="v">{value}</div>'
             f'<div class="muted">{sub}</div></div>')
@@ -435,8 +448,7 @@ def _section_status(d: dict[str, Any]) -> str:
     out = '<div class="grid">' + "".join([
         _card("무거운 실행 잠금", _tag("warn" if lock["held"] else "ok", _e(lock["text"])), ""),
         _card("전체 순서(run_full_v4)", full_txt, full_sub),
-        _card("시스템 메모리 여유", _tag(free_cls, free_txt),
-              "학습 문턱 80 % · 평가 65 % · 평소 40 %"),
+        _card("시스템 메모리 여유", _tag(free_cls, free_txt), _guard_text()),
         _card("마지막 갱신", _e(d["now"]), f'{d["refresh_s"]} 초마다 새로 읽음'),
     ]) + "</div>"
     if full.get("path"):
