@@ -36,19 +36,22 @@
 
 ## Task 5: F-006 회로 학습 (I v2 §7 · 착수는 F-005 판정 뒤 · 무거운 실행은 요구자 확인)
 
-- [ ] `config/physiology.yaml`(physiology-v1 · 출처 · 허용폭 — 결과 보기 전에 잠금) · `config/sim.yaml` → sim-v3 매개변수 파일 형식
+- [x] `config/physiology.yaml`(physiology-v1 · 11 항목 · 출처 · 허용폭 · 확인 수준 — `8e7c270`)
+- [ ] `config/sim.yaml` → sim-v3 매개변수 파일 형식
 - [ ] 함수형 걸음 + 대리 기울기 + `grad_scope` · 시험: 대리 기울기 끄면 지금 엔진과 발화 완전 일치(작은 그래프)
 - [ ] `fit-probe --scope escape-small --window-ms 10,30` → 비례 확인 → **요구자 확인** → `fit --method cmaes`(1단계) → 재배선 s0~s4 같은 절차 → 정체성 검사 · 도망 재채점
 - [ ] 2단계 `sgbptt`(space · escape) — 같은 순서
 
 ## Task 6: F-007 버섯체 가소성 (I v2 §8 · Task 5 뒤)
 
-- [ ] `config/plasticity.yaml`(plasticity-v1) · 구획 표를 그래프에서 생성 · `plasticity-probe`(KC 발화 비율 · MBON 반응 · DAN 효과 · η 보정 — 몸 없이 창 몇 개)
+- [x] `config/plasticity.yaml`(plasticity-v1 · 규칙 · η 보정 목표 · 구획 · 사건 → DAN · 대조군 다섯)
+- [ ] 구획 표를 그래프에서 생성 · `plasticity-probe`(KC 발화 비율 · MBON 반응 · DAN 효과 · η 보정 — 몸 없이 창 몇 개)
 - [ ] `task-v3`(냄새 둘) · 대조군 다섯 · `value` 채널 해독(stats-v2)
 
 ## Task 7: retino-v2 (I v2 §9 · 가벼움)
 
-- [ ] `config/retino.yaml` → retino-v2(h · v · 방위 범위 선언 · 왼쪽 거울) · `retinotopy build` · 뒤섞은 대응표 둘 · (선택) T4a/b 보조 검사
+- [x] `config/retino.yaml` → retino-v2(h · v · 방위 [−170, +10] 선언 · 왼쪽 거울) · `retinotopy build` · 뒤섞은 대응표 둘 — research 세션 `58a1569` · 부호 검증 LC4→DNp02 +0.76/+0.85
+- [x] 재주입 `replay`(몸 없이 뇌만 · 조각별 씨앗 순서 · `--verify`) · `retinotopic2` 인코더 — `a94b182`(⚠️ 수집이 끝날 때까지 config/retino.yaml 은 v1 로 되돌려 둠 · task.yaml 도 그대로)
 - [ ] 자료 v2 재주입(`collect --replay`) 또는 v3 — 작게 잰 뒤 요구자 확인
 
 ## 최종 검증
