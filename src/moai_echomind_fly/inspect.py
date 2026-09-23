@@ -108,3 +108,6 @@ def register(sub) -> None:
     lat.add_argument("--steps", type=int, default=2)
     lat.add_argument("--graph", default="traced-v1")
     lat.set_defaults(func=main)
+    from .loop import bump
+
+    bump.register(isub)

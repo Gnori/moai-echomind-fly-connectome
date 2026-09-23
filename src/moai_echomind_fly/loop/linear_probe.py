@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 import time
 from collections import Counter
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 
@@ -82,8 +82,13 @@ def _public(res: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in res.items() if k not in ("correct", "baseline_correct")}
 
 
-def run(name: str, rule: dict[str, Any] | None = None) -> dict[str, Any]:
-    """진짜 배선과 묶음에 든 **모든 재배선 뇌**를 같은 방법으로 재고, 칸마다 판정(stats-v1)."""
+def run(name: str, rule: dict[str, Any] | None = None,
+        transform: Callable[[str, dict[str, np.ndarray]], dict[str, np.ndarray]] | None = None,
+        ) -> dict[str, Any]:
+    """진짜 배선과 묶음에 든 **모든 재배선 뇌**를 같은 방법으로 재고, 칸마다 판정(stats).
+
+    `transform(brain, feats)` 가 있으면 특징을 바꾼 뒤 잰다(F-004 압축 관문).
+    """
     from .. import datasets
     from .stats import STATS_RULE, finalize, judge_cell
     from .train_cli import _sub, caption_fields
@@ -98,6 +103,8 @@ def run(name: str, rule: dict[str, Any] | None = None) -> dict[str, Any]:
     for brain in brains:
         ftr, rtr = datasets.load(name, "train", brain)
         fte, rte = datasets.load(name, "eval", brain)
+        if transform is not None:
+            ftr, fte = transform(brain, ftr), transform(brain, fte)
         episodes = np.array([r["seed"] for r in rte])
         names = list(ftr)
         ytr = [_sub(caption_fields(r["caption"])) for r in rtr]

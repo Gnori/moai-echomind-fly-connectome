@@ -40,7 +40,8 @@
 
 ## Task 4: 압축 · 관문 (F-004)
 
-- [ ] `loop/compress.py` · `config/compress.yaml`(compress-v1 — 규칙 먼저) · `compress fit/gate`
+- [x] `loop/compress.py` · `config/compress.yaml`(compress-v1 — 규칙 먼저: PCA · 설명 분산 0.95 · k 16~64) · `compress fit/gate` · 시험
+- [ ] 자료 v2 에 실행
 
 ## Task 5: 작은 투영기 · 칸 토큰 손실 (F-005)
 

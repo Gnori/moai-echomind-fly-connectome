@@ -49,3 +49,29 @@ def test_excluded_cells_are_not_corrected_or_judged():
     cells = {"motor|x": {**c, "judge": False}}
     stats.finalize(cells)
     assert cells["motor|x"]["pass"] is None and cells["motor|x"]["p_holm"] is None
+
+
+def test_compress_fit_picks_k_by_variance_rule():
+    from moai_echomind_fly.loop.compress import apply, fit_channel
+
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((200, 3)) @ rng.standard_normal((3, 100))   # 계수 3 인 자료
+    m = fit_channel(x, {"var_target": 0.95, "k_min": 2, "k_max": 10, "center": True})
+    assert m["components"].shape == (3, 100) and m["explained"] >= 0.95
+    z = apply({"c": m}, {"c": x.astype(np.float32)})["c"]
+    assert z.shape == (200, 3)
+    m2 = fit_channel(x, {"var_target": 0.95, "k_min": 5, "k_max": 10, "center": True})
+    assert m2["components"].shape[0] == 5                              # 아래 한계
+
+
+def test_bump_phase_follows_planted_heading():
+    from moai_echomind_fly.loop import bump
+
+    units = [f"EPG(PB08)_R{i}:R" for i in range(1, 9)] + ["PFNd(PB04)_L2_C1:L"]
+    heading = np.deg2rad(np.arange(0, 360, 15.0))
+    ang = np.deg2rad(np.arange(8) * 45.0)
+    rate = np.clip(np.cos(ang[None, :] - heading[:, None]), 0, None) * 20   # 방향을 따라가는 봉우리
+    x = np.concatenate([np.tile(np.c_[rate, np.zeros(len(rate))], 3),
+                        np.zeros((len(rate), 3 * 9))], axis=1)
+    phase, length = bump.phase_of(x, units)
+    assert abs(bump.circ_corr(phase, heading)) > 0.95 and np.median(length) > 0.3
