@@ -72,7 +72,7 @@ class QwenPolicy:
         import mlx.core as mx
 
         t0 = time.time()
-        if self.kind in ("vector", "rewired"):
+        if self.kind == "vector" or self.kind.startswith("rewired"):
             v = vectors[self.primary]
             raw = {n: v[n].features(self.table.rate_scale_hz, self.table.depol_scale_mV)[None]
                    for n in v}
@@ -140,6 +140,36 @@ def summarize(eps: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def judge(results: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+    """`vector` 가 재배선(들)을 앞섰나 — scorecard-v2(R-7469 F-001 · F-005).
+
+    재배선이 하나면(v2 결과와 같은 구성) 옛 규칙 그대로: 도착률 또는 회피율이 높으면.
+    여럿이면: 먹이 도착률이 **재배선 전부보다 높고**, 씨앗별 쌍 차이(vector − 재배선 평균)의
+    부호 뒤집기 순열 p < alpha. 회피율은 가르는 힘이 없어(움직이면 전부 1.0) 쓰지 않는다.
+    """
+    from .stats import STATS_RULE, bootstrap_ci, sign_flip_p
+
+    rew = sorted(c for c in results if c.startswith("rewired"))
+    if "vector" not in results or not rew:
+        return {"rule": "scorecard-v2", "vector_beats_rewired": None}
+    seeds = [e["seed"] for e in results["vector"]]
+    reach = {c: np.array([float(next(e for e in results[c] if e["seed"] == s)["reached"])
+                          for s in seeds]) for c in ["vector", *rew]}
+    ci = {c: list(bootstrap_ci(v.astype(bool), np.array(seeds))) for c, v in reach.items()}
+    if len(rew) == 1:
+        v, r = summarize(results["vector"]), summarize(results[rew[0]])
+        beats = bool((v["reach_rate"] or 0) > (r["reach_rate"] or 0)
+                     or ((v["avoid_rate"] or 0) > (r["avoid_rate"] or 0)))
+        return {"rule": "scorecard-v1(재배선 하나)", "rewired": rew, "reach_ci95": ci,
+                "vector_beats_rewired": beats}
+    ens = np.mean([reach[c] for c in rew], axis=0)
+    p = sign_flip_p(reach["vector"] - ens)
+    rank = float(100.0 * np.mean([reach[c].mean() < reach["vector"].mean() for c in rew]))
+    beats = bool(rank == 100.0 and p < STATS_RULE["alpha"])
+    return {"rule": "scorecard-v2", "rewired": rew, "reach_ci95": ci, "rank_pct": rank,
+            "p_sign_flip": p, "vector_beats_rewired": beats}
+
+
 def main(args: argparse.Namespace) -> int:
     from .qwen import QwenLM
 
@@ -154,15 +184,17 @@ def main(args: argparse.Namespace) -> int:
             q = QwenLM()
             results: dict[str, list[dict]] = {}
             for cfg_name in configs:
-                brain = "rewired" if cfg_name == "rewired" else "real"
-                graphs = {brain: (graph_mod.rewire(g, args.rewired_seed)
-                                  if brain == "rewired" else g)}
+                brain = cfg_name if cfg_name.startswith("rewired") else "real"
+                seed_k = (int(cfg_name.rsplit("-s", 1)[1]) if cfg_name.startswith("rewired-s")
+                          else args.rewired_seed)
+                graphs = {brain: (graph_mod.rewire(g, seed_k) if brain != "real" else g)}
                 loop = Loop(graphs, brain)
                 if cfg_name == "no_llm":
                     policy = None
                 else:
+                    uses_proj = cfg_name == "vector" or cfg_name.startswith("rewired")
                     proj, names, k, squeeze = (_load_projector(q, brain, args.version)
-                                               if cfg_name in ("vector", "rewired")
+                                               if uses_proj
                                                else (None, list(loop.table.channels), 2, None))
                     policy = QwenPolicy(cfg_name, q, names, k, brain, proj, loop.table, squeeze)
                 eps = []
@@ -192,15 +224,13 @@ def main(args: argparse.Namespace) -> int:
                     "".join(json.dumps(e, ensure_ascii=False) + "\n" for e in eps),
                     encoding="utf-8")
             table = {c: summarize(e) for c, e in results.items()}
-            v, r = table.get("vector"), table.get("rewired")
-            beats = None
-            if v and r:
-                beats = bool((v["reach_rate"] or 0) > (r["reach_rate"] or 0)
-                             or ((v["avoid_rate"] or 0) > (r["avoid_rate"] or 0)))
+            verdict = judge(results)
+            beats = verdict["vector_beats_rewired"]
             wording = ("초파리 배선 벡터가 섞은 배선보다 나았다" if beats
                        else "섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다")
             card = {"seeds": seeds, "llm": q.label, "configs": table,
                     "projector_version": args.version or TRAIN_RULE["version"],
+                    "judgement": verdict,
                     "vector_beats_rewired": beats, "wording": wording,
                     "notes": ["no_circuit 에는 영상 이미지를 주지 않았다(mlx-lm 은 글 부분만)",
                               "몸의 걷기 리듬은 FlyGym 1.x 제어기가 만든다(06 (나) 갈래)"]}

@@ -89,3 +89,19 @@ def test_value_spans_and_token_weights_mark_only_field_values():
     # 토큰 가상 구간: "다가오는 물체: "(틀) · "왼쪽"(값)
     w = token_weights([(0, 8), (9, 11)], spans, 0.1)
     assert w == [0.1, 1.0]
+
+
+def test_scorecard_judge_needs_to_beat_every_rewired_and_be_significant():
+    from moai_echomind_fly.loop.scorecard import judge
+
+    def eps(hits):
+        return [{"seed": s, "reached": bool(h), "looming": False, "looming_hit": None,
+                 "reach_ms": 1.0 if h else None, "final_food_mm": 1.0, "decisions": 1}
+                for s, h in enumerate(hits)]
+
+    good = eps([1] * 40)
+    bad = [eps([1] * 5 + [0] * 35) for _ in range(3)]
+    v = judge({"vector": good, "rewired-s0": bad[0], "rewired-s1": bad[1], "rewired-s2": bad[2]})
+    assert v["vector_beats_rewired"] is True and v["p_sign_flip"] < 0.05
+    tie = judge({"vector": bad[0], "rewired-s0": good, "rewired-s1": bad[1], "rewired-s2": bad[2]})
+    assert tie["vector_beats_rewired"] is False
