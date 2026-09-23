@@ -29,6 +29,7 @@ from .collect import parse_seeds
 from .decoder import IDLE, parse_action
 from .episode import Loop
 from .signals import text_summary
+from .train_cli import TRAIN_RULE
 
 CONFIGS = ["vector", "text", "no_circuit", "rewired", "no_llm"]
 
@@ -96,13 +97,13 @@ def no_llm_policy(vectors, truth, obs, decision):
     return dict(IDLE), {"source": "no_llm"}
 
 
-def _load_projector(qwen, brain: str):
+def _load_projector(qwen, brain: str, version: str | None = None):
     import mlx.core as mx
 
     from .projector import ChannelProjector
-    from .train_cli import TRAIN_RULE
+    from .train_cli import projector_dir
 
-    pdir = paths.runs_dir() / f"projector-{brain}-{TRAIN_RULE['version']}"
+    pdir = projector_dir(brain, version)
     meta = json.loads((pdir / "meta.json").read_text())
     pm = meta["projector"]
     proj = ChannelProjector(meta["dims"], hidden=qwen.hidden, k=pm["k"], kind=pm["kind"],
@@ -153,7 +154,8 @@ def main(args: argparse.Namespace) -> int:
                 if cfg_name == "no_llm":
                     policy = None
                 else:
-                    proj, names, k = (_load_projector(q, brain) if cfg_name in ("vector", "rewired")
+                    proj, names, k = (_load_projector(q, brain, args.version)
+                                      if cfg_name in ("vector", "rewired")
                                       else (None, list(loop.table.channels), 2))
                     policy = QwenPolicy(cfg_name, q, names, k, brain, proj, loop.table)
                 eps = []
@@ -191,6 +193,7 @@ def main(args: argparse.Namespace) -> int:
             wording = ("초파리 배선 벡터가 섞은 배선보다 나았다" if beats
                        else "섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다")
             card = {"seeds": seeds, "llm": q.label, "configs": table,
+                    "projector_version": args.version or TRAIN_RULE["version"],
                     "vector_beats_rewired": beats, "wording": wording,
                     "notes": ["no_circuit 에는 영상 이미지를 주지 않았다(mlx-lm 은 글 부분만)",
                               "몸의 걷기 리듬은 FlyGym 1.x 제어기가 만든다(06 (나) 갈래)"]}
@@ -209,4 +212,6 @@ def register(sub) -> None:
     p.add_argument("--configs", default=",".join(CONFIGS))
     p.add_argument("--graph", default="traced-v1")
     p.add_argument("--rewired-seed", type=int, default=0)
+    p.add_argument("--version", default=None,
+                   help="투영기 규칙 판(기본 = 지금 TRAIN_RULE · 예전 결과는 train-v2)")
     p.set_defaults(func=main)

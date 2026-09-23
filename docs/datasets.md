@@ -29,6 +29,9 @@ from moai_echomind_fly import datasets
 feats, rows = datasets.load("fly-loop-v1", "train", "real")    # "rewired" · "eval"
 ```
 
+학습 · 평가 명령(`train` · `eval-caption` · `train-probe`)은 `--dataset <묶음 이름>`(기본 `fly-loop-v1`)으로 **묶음을 직접 읽는다**(2026-09-23 부터 ·
+묶음이 없으면 예전처럼 `runs/dataset-<이름>` 조각). 읽은 묶음과 그 `SHA256SUMS` 해시가 투영기 `meta.json` 의 `data` 에 남는다.
+
 ## 새로 만들기
 
 ```bash

@@ -204,7 +204,7 @@ ollama ps                                   # Qwen 올리기 전 — 다른 큰 
 <td>12</td>
 <td><code>uv run fly-connectome linear-probe --dataset &lt;이름&gt;</code></td>
 <td>09</td>
-<td>약 14 s(CPU)</td>
+<td>약 30 s(CPU · 채널별 포함)</td>
 <td>—</td>
 </tr>
 </tbody>
@@ -218,6 +218,8 @@ uv run fly-connectome eval-caption --brain real    --checkpoint final
 uv run fly-connectome eval-caption --brain rewired --checkpoint final
 uv run fly-connectome scorecard --seeds 2000-2009
 </code></pre>
+<p>지금 있는 결과(train-v2)를 다시 평가하려면 <code>eval-caption</code> · <code>scorecard</code> 에 <strong><code>--version train-v2</code></strong> 를 붙인다 — 기본은 지금 규칙 판(train-v3)이다.
+학습은 끝난 폴더를 덮어쓰지 않는다(<code>final.safetensors</code> 가 있으면 시작하지 않음).</p>
 <p>⚠️ <strong>무거운 실행은 요구자께 먼저 말씀드린 뒤.</strong> 한 번에 하나(<code>runs/.heavy.lock</code>). 띄웠으면 수십 분 간격으로 확인한다.
 11 번의 학습 시간은 걸음당 약 7 s 기준 추정(한 뇌 1,917 걸음 ≈ 3.7 시간)이다 — 실측은 섞은 배선 전체 3.3 시간.</p>
 <h2 id="3-판-번호--무엇을-바꾸면-무엇을-다시-하나">3. 판 번호 — 무엇을 바꾸면 무엇을 다시 하나</h2>

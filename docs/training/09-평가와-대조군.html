@@ -134,7 +134,7 @@
 <td><strong>선형 검사</strong></td>
 <td>신호 <strong>자체에</strong> 정보가 있나(Qwen · 투영기 없이)</td>
 <td>안 씀</td>
-<td>CPU 14 s</td>
+<td>CPU 약 30 s</td>
 </tr>
 </tbody>
 </table></div>
@@ -174,7 +174,8 @@ uv run fly-connectome eval-caption --brain rewired --checkpoint final
 </tr>
 </tbody>
 </table></div>
-<p>결과는 <code>runs/projector-&lt;뇌&gt;-train-v2/eval-caption-&lt;저장본&gt;.json</code>(정확도 · 기준선 · 예시 8 개).</p>
+<p>결과는 <code>runs/projector-&lt;뇌&gt;-&lt;판&gt;/eval-caption-&lt;저장본&gt;.json</code>(정확도 · 기준선 · 예시 8 개).
+<code>--version</code> 으로 어느 판의 투영기를 잴지 고른다(기본 = 지금 규칙 판 train-v3 · <strong>지금 있는 결과는 <code>--version train-v2</code></strong>). 성적표도 같다.</p>
 <p><strong>읽는 법</strong>: 기준선보다 확실히 높아야 "읽었다". 그리고 <strong>진짜 배선이 섞은 배선보다 높아야</strong> "초파리 배선 덕에 읽었다".</p>
 <h2 id="3-성적표--fly-connectome-scorecard">3. 성적표 — <code>fly-connectome scorecard</code></h2>
 <pre><code class="language-bash">uv run fly-connectome scorecard --seeds 2000-2009
@@ -257,7 +258,7 @@ wording = &quot;초파리 배선 벡터가 섞은 배선보다 나았다&quot; i
 <p>⚠️ 정직 목록: no_circuit 에는 영상 이미지를 주지 않는다(mlx-lm 은 Qwen 의 글 부분만 올린다) · 걷기 리듬은 FlyGym 제어기가 만든다.</p>
 <h2 id="4-선형-검사--fly-connectome-linear-probe">4. 선형 검사 — <code>fly-connectome linear-probe</code></h2>
 <p>캡션 평가가 찍기 수준일 때 <strong>어디가 막혔는지</strong> 가르는 도구다.</p>
-<pre><code class="language-bash">uv run fly-connectome linear-probe --dataset fly-loop-v1     # CPU · 약 14 s · runs/linear-probe-*.json
+<pre><code class="language-bash">uv run fly-connectome linear-probe --dataset fly-loop-v1     # CPU · 약 30 s · runs/linear-probe-*.json
 </code></pre>
 <div class="tbl"><table>
 <thead>
@@ -303,9 +304,10 @@ wording = &quot;초파리 배선 벡터가 섞은 배선보다 나았다&quot; i
 </tr>
 </tbody>
 </table></div>
-<p>지금 명령은 <strong>9 채널 전부를 한꺼번에</strong> 넣어 재고, 그 결과만 파일(<code>runs/linear-probe-20260923-031800.json</code>)에 남긴다.
-<strong>칸에 맞는 채널만</strong> 넣은 결과(시각 → 물체 · 몸 → 다리 등 · 10장의 핵심 근거)는 같은 함수(<code>probe_field</code>)로 채널을 골라 잰 값인데,
-⚠️ <strong>실행 기록 파일이 없고 W loop 3.5 에만 적혀 있다.</strong> 다시 재려면 채널을 고르는 옵션을 명령에 더해 기록을 남기는 것이 먼저다(10장 할 일).</p>
+<p>명령은 <strong>9 채널 전부를 한꺼번에</strong> 넣은 결과(<code>fields</code>)와 <strong>채널 하나씩</strong> 넣은 결과(<code>per_channel</code> · 채널 9 × 칸 7)를 함께 파일에 남긴다(2026-09-23 부터).
+그전에는 채널별 값이 W loop 3.5 에만 있었다 — 다시 재 보니 <strong>W 의 값과 소수 셋째 자리까지 같다</strong>(<code>runs/linear-probe-20260923-094302.json</code>).</p>
+<p>⚠️ 채널별 표는 <strong>54 쌍</strong>(채널 9 × 칸 6)을 105 개 표본으로 비교한다 — 우연히 한쪽이 높게 나오는 칸이 섞인다(예: 청각 → 물체 있음은 섞은 배선이 0.790 으로 더 높다).
+하나의 칸보다 <strong>여러 칸에서 같은 방향</strong>인지를 본다.</p>
 <h2 id="5-판정-순서">5. 판정 순서</h2>
 <pre><code>선형 검사가 찍기 수준?  ── 예 ──► 1부(신호 · 채널 · 인코더)를 고친다
         │ 아니오

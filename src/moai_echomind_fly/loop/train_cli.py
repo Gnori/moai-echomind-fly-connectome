@@ -18,6 +18,7 @@ import shutil
 import time
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -29,11 +30,54 @@ TRAIN_RULE = {
     # v2(2026-09-22): 행동 단계는 새 옵티마이저로 시작한다 — 캡션 단계 저장본에서 이어 가도
     # 진짜 · 섞은 배선이 같은 절차가 되게(저장본에는 옵티마이저 상태가 없다).
     # 캡션 단계는 v1 과 같다.
-    "version": "train-v2",
+    # v3(2026-09-23): 투영기 초기값에 씨앗(init_seed)을 준다 — v2 까지는 초기값이 실행마다 달라
+    # 같은 설정으로도 같은 저장본이 나오지 않았다(W loop 잔여 이슈 5). 나머지는 v2 와 같다.
+    "version": "train-v3",
     "k": 2, "width": 256, "kind": "mlp2", "lr": 2e-4,
     "caption_epochs": 2, "action_epochs": 1, "caption_rehearsal": 0.3,
-    "val_samples": 24, "seed": 0,
+    "val_samples": 24, "seed": 0, "init_seed": 0,
 }
+
+
+def projector_dir(brain: str, version: str | None = None) -> Path:
+    """투영기 결과 폴더 — 규칙 판마다 따로(`runs/projector-<뇌>-<판>`)."""
+    return paths.runs_dir() / f"projector-{brain}-{version or TRAIN_RULE['version']}"
+
+
+def new_projector(dims: dict[str, int], hidden: int, rule: dict, target_rms: float):
+    """규칙대로 투영기를 만든다. `init_seed` 가 있으면 초기값이 씨앗으로 정해진다."""
+    import mlx.core as mx
+
+    from .projector import ChannelProjector
+
+    if rule.get("init_seed") is not None:
+        mx.random.seed(int(rule["init_seed"]))
+    proj = ChannelProjector(dims, hidden=hidden, k=rule["k"], kind=rule["kind"],
+                            width=rule["width"], target_rms=target_rms)
+    mx.eval(proj.parameters())
+    return proj
+
+
+def data_source(data: str, val: str = "eval") -> dict[str, Any]:
+    """학습 자료가 어디 있나 — 묶음(`data/datasets/<이름>`)이 있으면 그것, 없으면 `runs/` 조각."""
+    from .. import datasets
+
+    pack = datasets.store_dir() / data
+    if pack.is_dir():
+        sums = pack / "SHA256SUMS"
+        digest = hashlib.sha256(sums.read_bytes()).hexdigest() if sums.exists() else None
+        return {"pack": data, "sha256sums": digest}
+    return {"runs": {"train": expand(data), "eval": expand(val)}}
+
+
+def load_split(src: dict[str, Any], split: str, brain: str
+               ) -> tuple[dict[str, np.ndarray], list[dict]]:
+    """`data_source` 가 가리키는 자료에서 train · eval 한 쪽을 불러온다."""
+    from .. import datasets
+
+    if "pack" in src:
+        return datasets.load(src["pack"], split, brain)
+    return load_datasets(src["runs"][split], brain)
 
 
 def load_datasets(names: list[str], brain: str) -> tuple[dict[str, np.ndarray], list[dict]]:
@@ -111,13 +155,17 @@ def train(args: argparse.Namespace) -> int:
     import mlx.core as mx
     from mlx.utils import tree_flatten
 
-    from .projector import ChannelProjector
     from .qwen import QwenLM
     from .train import Trainer
 
     rule = dict(TRAIN_RULE)
     gcfg = config.load("guard")
-    out = paths.runs_dir() / f"projector-{args.brain}-{rule['version']}"
+    out = projector_dir(args.brain, rule["version"])
+    if (out / "final.safetensors").exists():
+        # 끝난 학습을 덮어쓰지 않는다 — 규칙을 바꿨으면 판을 올린다(결과 폴더가 새로 생긴다)
+        print(f"[train] 막음 — {out}/final.safetensors 가 이미 있다. 같은 판으로 다시 돌리려면 "
+              "폴더를 옮긴 뒤 돌린다.")
+        return 2
     out.mkdir(parents=True, exist_ok=True)
     log = (out / "train.log").open("a", encoding="utf-8")
 
@@ -129,18 +177,17 @@ def train(args: argparse.Namespace) -> int:
     try:
         with heavy("train", min_free_percent=int(gcfg["training_min_free_percent"])) as guard:
             say(f"[guard] 메모리 여유 {guard.free_percent}% ≥ 학습 문턱 {guard.threshold}%")
-            feats, rows = load_datasets(expand(args.dataset), args.brain)
-            vfeats, vrows = load_datasets(expand(args.val), args.brain)
+            src = data_source(args.dataset, args.val)
+            feats, rows = load_split(src, "train", args.brain)
+            vfeats, vrows = load_split(src, "eval", args.brain)
+            say(f"[data] {src}")
             names = list(feats)
             q = QwenLM()
             fp_before = qwen_fingerprint(q)
             say(f"[qwen] 가중치 지문(학습 전) {fp_before[:16]}")
             emb = q.embed(mx.arange(1000, 3000)).astype(mx.float32)
             rms = float(mx.sqrt(mx.mean(emb * emb)))
-            proj = ChannelProjector({n: feats[n].shape[1] for n in names}, hidden=q.hidden,
-                                    k=rule["k"], kind=rule["kind"], width=rule["width"],
-                                    target_rms=rms)
-            mx.eval(proj.parameters())
+            proj = new_projector({n: feats[n].shape[1] for n in names}, q.hidden, rule, rms)
             trainer = Trainer(q, proj, lr=rule["lr"],
                               cache_limit_gb=float(gcfg["training_cache_limit_gb"]))
             watchdog = Watchdog()
@@ -201,7 +248,7 @@ def train(args: argparse.Namespace) -> int:
                 run_epochs([(i, "cap") for i in range(n)], "caption", rule["caption_epochs"])
                 mx.save_safetensors(str(out / "stage1-caption.safetensors"),
                                     dict(tree_flatten(proj.parameters())))
-            trainer.reset_optimizer()   # 행동 단계는 새 옵티마이저(TRAIN_RULE v2)
+            trainer.reset_optimizer()   # 행동 단계는 새 옵티마이저(TRAIN_RULE v2 부터)
             reh = rng.sample(range(n), int(n * rule["caption_rehearsal"]))
             run_epochs([(i, "act") for i in range(n)] + [(i, "cap") for i in reh], "action",
                        rule["action_epochs"])
@@ -210,7 +257,7 @@ def train(args: argparse.Namespace) -> int:
             fp_after = qwen_fingerprint(q)
             say(f"[qwen] 가중치 지문(학습 뒤) {fp_after[:16]} · 같음 {fp_after == fp_before}")
             (out / "meta.json").write_text(json.dumps({
-                "brain": args.brain, "dataset": expand(args.dataset), "val": expand(args.val),
+                "brain": args.brain, "data": src,
                 "rule": rule, "caption_stage_from": caption_from, "projector": proj.meta(),
                 "dims": {k: int(feats[k].shape[1]) for k in names},
                 "qwen_fingerprint": {"before": fp_before, "after": fp_after,
@@ -233,7 +280,6 @@ def probe(args: argparse.Namespace) -> int:
     """짧게 돌리며 걸음마다 메모리를 잰다 — 긴 학습 전에 평탄한지 본다(저장 없음)."""
     import mlx.core as mx
 
-    from .projector import ChannelProjector
     from .qwen import QwenLM
     from .train import Trainer
 
@@ -245,14 +291,12 @@ def probe(args: argparse.Namespace) -> int:
         with heavy("train-probe",
                    min_free_percent=int(gcfg["training_min_free_percent"])) as guard:
             print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
-            feats, rows = load_datasets(expand(args.dataset), args.brain)
+            feats, rows = load_split(data_source(args.dataset), "train", args.brain)
             names = list(feats)
             q = QwenLM()
             emb = q.embed(mx.arange(1000, 3000)).astype(mx.float32)
-            proj = ChannelProjector({n: feats[n].shape[1] for n in names}, hidden=q.hidden,
-                                    k=rule["k"], kind=rule["kind"], width=rule["width"],
-                                    target_rms=float(mx.sqrt(mx.mean(emb * emb))))
-            mx.eval(proj.parameters())
+            proj = new_projector({n: feats[n].shape[1] for n in names}, q.hidden, rule,
+                                 float(mx.sqrt(mx.mean(emb * emb))))
             cache = float(gcfg["training_cache_limit_gb"])
             trainer = Trainer(q, proj, lr=rule["lr"], cache_limit_gb=cache)
             setup = _Setup(q, names, rule["k"])
@@ -335,11 +379,11 @@ def eval_caption(args: argparse.Namespace) -> int:
     from .qwen import QwenLM
     from .train import Trainer
 
-    pdir = paths.runs_dir() / f"projector-{args.brain}-{TRAIN_RULE['version']}"
+    pdir = projector_dir(args.brain, args.version)
     meta = json.loads((pdir / "meta.json").read_text())
     try:
         with heavy("eval-caption", extra_gb=float(config.load("llm")["weights_gb"])):
-            vfeats, vrows = load_datasets(expand(args.val), args.brain)
+            vfeats, vrows = load_split(data_source(args.dataset, args.val), "eval", args.brain)
             names = list(meta["dims"])
             q = QwenLM()
             pm = meta["projector"]
@@ -381,19 +425,23 @@ def register(sub) -> None:
     p = sub.add_parser("train",
                        help="F-017 투영기 학습(Qwen 얼림 · 최대 약 32 GB · 학습 전용 문턱)")
     p.add_argument("--brain", choices=["real", "rewired"], required=True)
-    p.add_argument("--dataset", default="main")
-    p.add_argument("--val", default="eval")
+    p.add_argument("--dataset", default="fly-loop-v1",
+                   help="묶음 이름(data/datasets/) — 없으면 runs/dataset-<이름> 조각으로 읽는다")
+    p.add_argument("--val", default="eval", help="조각으로 읽을 때만: 검증 조각 이름")
     p.add_argument("--resume-caption", default="",
                    help="캡션 단계 저장본(.safetensors)에서 이어 행동 단계만 돈다")
     p.set_defaults(func=train)
     pr = sub.add_parser("train-probe", help="짧게 돌리며 걸음마다 메모리를 잰다(저장 없음)")
     pr.add_argument("--brain", choices=["real", "rewired"], default="real")
-    pr.add_argument("--dataset", default="main")
+    pr.add_argument("--dataset", default="fly-loop-v1")
     pr.add_argument("--steps", type=int, default=50)
     pr.set_defaults(func=probe)
     e = sub.add_parser("eval-caption", help="F-017 캡션 칸별 정확도(학습에 안 쓴 씨앗)")
     e.add_argument("--brain", choices=["real", "rewired"], required=True)
     e.add_argument("--checkpoint", default="stage1-caption", choices=["stage1-caption", "final"])
-    e.add_argument("--val", default="eval")
+    e.add_argument("--dataset", default="fly-loop-v1", help="묶음 이름(eval 나눔을 쓴다)")
+    e.add_argument("--val", default="eval", help="조각으로 읽을 때만: 평가 조각 이름")
+    e.add_argument("--version", default=None,
+                   help=f"투영기 규칙 판(기본 {TRAIN_RULE['version']} · 예전 결과는 train-v2)")
     e.add_argument("--limit", type=int, default=0)
     e.set_defaults(func=eval_caption)

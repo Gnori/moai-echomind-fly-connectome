@@ -10,6 +10,9 @@
 분류기는 선형(능선 회귀 · 이중 형태)이다. 차원(3.2만)이 표본(581)보다 크므로 581×581 행렬만 푼다.
 규제 세기는 학습 자료 안에서 5겹 교차검증으로 고르고, 정확도는 학습에 안 쓴 씨앗(eval)에서 잰다.
 CPU·수 초. 진짜 배선과 섞은 배선을 같은 방법으로 잰다.
+채널 전부를 한꺼번에 넣은 결과(`fields`)와 **채널 하나씩** 넣은 결과(`per_channel`)를 함께 남긴다 —
+한꺼번에 넣으면 묻히는 차이가 채널 하나에서는 보일 수 있다
+(2026-09-23 · 그전에는 채널별 값이 W 에만 있었다).
 """
 
 from __future__ import annotations
@@ -86,10 +89,18 @@ def run(name: str) -> dict[str, Any]:
         xte = np.concatenate([fte[n] for n in names], axis=1).astype(np.float64)
         ytr = [_sub(caption_fields(r["caption"])) for r in rtr]
         yte = [_sub(caption_fields(r["caption"])) for r in rte]
+
+        def fields(a: np.ndarray, b: np.ndarray) -> dict[str, Any]:
+            return {f: probe_field(a, [y[f] for y in ytr], b, [y[f] for y in yte])
+                    for f in yte[0]}
+
         out["brains"][brain] = {
             "samples": {"train": len(rtr), "eval": len(rte)}, "dims": int(xtr.shape[1]),
-            "fields": {f: probe_field(xtr, [y[f] for y in ytr], xte, [y[f] for y in yte])
-                       for f in yte[0]},
+            "fields": fields(xtr, xte),
+            "per_channel": {n: {"dims": int(ftr[n].shape[1]),
+                                "fields": fields(ftr[n].astype(np.float64),
+                                                 fte[n].astype(np.float64))}
+                            for n in names},
         }
     return out
 
@@ -99,10 +110,18 @@ def main(args) -> int:
     path = paths.runs_dir() / f"linear-probe-{time.strftime('%Y%m%d-%H%M%S')}.json"
     path.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
     fields = list(res["brains"]["real"]["fields"])
-    print(f"{'칸':<14}{'진짜 배선':<12}{'섞은 배선':<12}찍기")
-    for f in fields:
-        r, w = (res["brains"][b]["fields"][f] for b in ("real", "rewired"))
-        print(f"{f:<14}{r['accuracy']:<12.3f}{w['accuracy']:<12.3f}{r['baseline']:.3f}")
+    print(f"{'채널':<11}{'칸':<14}{'진짜 배선':<12}{'섞은 배선':<12}찍기")
+    real, rew = res["brains"]["real"], res["brains"]["rewired"]
+    for ch in ["(전부)", *real["per_channel"]]:
+        for f in fields:
+            if ch == "(전부)":
+                r, w = real["fields"][f], rew["fields"][f]
+            else:
+                r, w = real["per_channel"][ch]["fields"][f], rew["per_channel"][ch]["fields"][f]
+            if r["classes"] == 1:
+                continue
+            print(f"{ch:<11}{f:<14}{r['accuracy']:<12.3f}{w['accuracy']:<12.3f}"
+                  f"{r['baseline']:.3f}")
     print(f"기록 {path}")
     return 0
 

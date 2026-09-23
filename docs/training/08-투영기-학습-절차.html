@@ -130,17 +130,17 @@
 <td>"지금 어떻게 움직일까?" → 행동 JSON <strong>+ 캡션 30 % 섞기</strong></td>
 <td>1</td>
 <td>581 + 174 = <strong>755</strong></td>
-<td>AdamW <strong>새로</strong>(train-v2)</td>
+<td>AdamW <strong>새로</strong>(train-v2 부터)</td>
 </tr>
 </tbody>
 </table></div>
 <p>한 걸음 = 예시 <strong>하나</strong>(배치 1). 진짜 배선과 섞은 배선을 <strong>똑같은 절차 · 같은 씨앗 순서</strong>로 따로 학습한다 — 대조군.</p>
-<h2 id="2-학습-규칙--train_rule판-train-v2">2. 학습 규칙 — <code>TRAIN_RULE</code>(판 <code>train-v2</code>)</h2>
+<h2 id="2-학습-규칙--train_rule판-train-v3">2. 학습 규칙 — <code>TRAIN_RULE</code>(판 <code>train-v3</code>)</h2>
 <pre><code class="language-python">TRAIN_RULE = {
-    &quot;version&quot;: &quot;train-v2&quot;,
+    &quot;version&quot;: &quot;train-v3&quot;,
     &quot;k&quot;: 2, &quot;width&quot;: 256, &quot;kind&quot;: &quot;mlp2&quot;, &quot;lr&quot;: 2e-4,
     &quot;caption_epochs&quot;: 2, &quot;action_epochs&quot;: 1, &quot;caption_rehearsal&quot;: 0.3,
-    &quot;val_samples&quot;: 24, &quot;seed&quot;: 0,
+    &quot;val_samples&quot;: 24, &quot;seed&quot;: 0, &quot;init_seed&quot;: 0,
 }
 </code></pre>
 <div class="tbl"><table>
@@ -165,12 +165,45 @@
 </tr>
 <tr>
 <td><code>seed</code> 0</td>
-<td>예시 순서를 섞는 난수 씨앗(⚠️ 투영기 <strong>초기값</strong>에는 씨앗을 주지 않는다 — 10장 잔여 이슈)</td>
+<td>예시 순서를 섞는 난수 씨앗</td>
+</tr>
+<tr>
+<td><code>init_seed</code> 0</td>
+<td>투영기 <strong>초기값</strong>의 씨앗(train-v3 부터) — 같은 규칙이면 같은 초기값에서 시작한다</td>
 </tr>
 </tbody>
 </table></div>
 <p><strong>판 변천</strong>: <code>train-v1</code> 은 행동 단계가 캡션 단계의 옵티마이저를 이어 썼다. v1 캡션 저장본에는 옵티마이저 상태가 없어서, 진짜 배선만 이어 돌리면
-대조군과 절차가 달라진다 → <code>train-v2</code> 는 <strong>두 뇌 모두 행동 단계를 새 옵티마이저로</strong> 시작한다. 캡션 단계는 v1 과 같다.</p>
+대조군과 절차가 달라진다 → <code>train-v2</code> 는 <strong>두 뇌 모두 행동 단계를 새 옵티마이저로</strong> 시작한다. 캡션 단계는 v1 과 같다.
+<code>train-v3</code>(2026-09-23)은 v2 에 <strong>초기값 씨앗</strong>만 더했다 — v2 까지는 초기값이 실행마다 달라 같은 설정으로도 같은 저장본이 나오지 않았다.
+초기값이 같다는 것은 시험(<code>test_projector_init_seed_makes_same_weights</code>)으로 확인한다. 다만 GPU 는 계산 순서에 따라 기울기가 조금씩 흔들릴 수 있어서
+(4.2 의 시험 머리말), <strong>학습이 끝난 저장본까지 비트 단위로 같은지는 아직 재 보지 않았다.</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>판</th>
+<th>무엇이 달라졌나</th>
+<th>결과 폴더</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>train-v1</td>
+<td>첫 판 — 행동 단계가 캡션 단계의 옵티마이저를 이어 씀</td>
+<td><code>runs/projector-real-train-v1</code>(캡션 단계만)</td>
+</tr>
+<tr>
+<td>train-v2</td>
+<td>행동 단계는 새 옵티마이저</td>
+<td><code>runs/projector-{real,rewired}-train-v2</code> — <strong>지금 결과</strong></td>
+</tr>
+<tr>
+<td>train-v3</td>
+<td>+ 초기값 씨앗 · 묶음 자료를 직접 읽음</td>
+<td>아직 돌리지 않음</td>
+</tr>
+</tbody>
+</table></div>
 <h2 id="3-손실--정답-글-토큰의-교차-엔트로피">3. 손실 — 정답 글 토큰의 교차 엔트로피</h2>
 <pre><code>입력 임베딩 = [ 프롬프트(자리 표시 18 개 → 투영기 출력) , 정답 토큰 (마지막 하나 뺌) ]
 손실       = 프롬프트 끝부터 나오는 로짓 vs 정답 토큰 + &lt;|im_end|&gt;   의 평균 교차 엔트로피
@@ -253,7 +286,7 @@ mlx-lm 의 층별 재계산(<code>grad_checkpoint</code>)은 전체를 한 번�
 uv run fly-connectome train-probe --steps 12
 
 # 한 뇌씩
-uv run fly-connectome train --brain real      # 기본 --dataset main --val eval (runs/dataset-* 조각)
+uv run fly-connectome train --brain real      # 기본 --dataset fly-loop-v1 (data/datasets/ 묶음)
 uv run fly-connectome train --brain rewired
 
 # 캡션 단계 저장본에서 이어 행동 단계만
@@ -263,10 +296,14 @@ uv run fly-connectome train --brain real --resume-caption runs/projector-real-tr
 bin/run_full.sh
 bin/run_full.sh --resume-real &lt;진짜 배선 캡션 저장본&gt;
 </code></pre>
-<p>⚠️ <code>train</code> 의 <code>--dataset</code> · <code>--val</code> 은 지금 <code>runs/dataset-&lt;이름&gt;</code> 조각을 읽는다(<code>fly-loop-v1</code> 묶음이 아니라). 묶음과 같은 내용이다.</p>
+<p><code>--dataset</code> 은 <strong>묶음 이름</strong>(<code>data/datasets/&lt;이름&gt;</code>)이다 — 묶음이 있으면 그 <code>train</code> · <code>eval</code> 나눔을 읽고, 없으면 예전처럼
+<code>runs/dataset-&lt;이름&gt;</code> 조각(검증은 <code>--val</code>)을 읽는다. 어느 쪽을 읽었는지는 <code>meta.json</code> 의 <code>data</code> 에 남는다(묶음이면 <code>SHA256SUMS</code> 의 해시까지).
+<code>fly-loop-v1</code> 묶음과 <code>runs/</code> 조각은 특징 · 순서 · 정답이 <strong>전부 같다</strong>(2026-09-23 대조).</p>
+<p>⚠️ <strong>끝난 학습은 덮어쓰지 않는다</strong> — 결과 폴더에 <code>final.safetensors</code> 가 있으면 <code>train</code> 이 시작하지 않는다(끝 코드 2).
+같은 판으로 다시 돌리려면 폴더를 옮긴 뒤, 규칙을 바꿨으면 판을 올린다.</p>
 <p><strong>이어 가기</strong>의 세부: 저장본을 불러오고 → 캡션 단계가 썼을 난수만 소비해(순서를 건너뛰기) → 행동 단계의 예시 순서가 처음부터 돈 것과 <strong>같게</strong> 한다.
 저장본의 sha256 을 <code>meta.json</code> 의 <code>caption_stage_from</code> 에 남긴다.</p>
-<h2 id="7-결과물--runsprojector-뇌-train-v2">7. 결과물 — <code>runs/projector-&lt;뇌&gt;-train-v2/</code></h2>
+<h2 id="7-결과물--runsprojector-뇌-판">7. 결과물 — <code>runs/projector-&lt;뇌&gt;-&lt;판&gt;/</code></h2>
 <div class="tbl"><table>
 <thead>
 <tr>

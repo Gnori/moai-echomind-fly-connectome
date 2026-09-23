@@ -86,3 +86,32 @@ def test_linear_probe_finds_a_planted_signal():
     noise = probe_field(rng.standard_normal((60, 50)), labels[:60],
                         rng.standard_normal((20, 50)), labels[60:])
     assert noise["accuracy"] <= 0.75                   # 신호가 없으면 못 맞힌다
+
+
+def test_projector_init_seed_makes_same_weights():
+    """train-v3: 같은 규칙이면 투영기 초기값이 같다 · 씨앗이 다르면 다르다(재현성)."""
+    from mlx.utils import tree_flatten
+
+    from moai_echomind_fly.loop.train_cli import TRAIN_RULE, new_projector
+
+    def weights(rule: dict) -> list[np.ndarray]:
+        proj = new_projector({"vision": 12, "body": 5}, 16, rule, 1.0)
+        return [np.array(v) for _, v in tree_flatten(proj.parameters())]
+
+    a, b = weights(TRAIN_RULE), weights(TRAIN_RULE)
+    assert all(np.array_equal(x, y) for x, y in zip(a, b))
+    c = weights({**TRAIN_RULE, "init_seed": 1})
+    assert not all(np.array_equal(x, y) for x, y in zip(a, c))
+
+
+def test_data_source_prefers_pack_then_runs_shards(tmp_path, monkeypatch):
+    """묶음(data/datasets/<이름>)이 있으면 그것을, 없으면 runs/ 조각을 가리킨다."""
+    from moai_echomind_fly import datasets
+    from moai_echomind_fly.loop import train_cli
+
+    (tmp_path / "pack-a").mkdir()
+    (tmp_path / "pack-a" / "SHA256SUMS").write_text("x  train/a\n")
+    monkeypatch.setattr(datasets, "store_dir", lambda: tmp_path)
+    got = train_cli.data_source("pack-a")
+    assert got["pack"] == "pack-a" and len(got["sha256sums"]) == 64
+    assert "runs" in train_cli.data_source("no-such-pack")
