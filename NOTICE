@@ -27,3 +27,20 @@ LIF 방정식과 매개변수: Shiu et al. 2024, Nature 634:210-219
   FLYCNS 저장소에는 라이선스가 없어 코드를 쓰지 않았다.
 - 다가옴 자극의 LC/LPLC 상대 세기: Turner, Krieger, Pang & Clandinin 2022, eLife 11:e82587
   (Dryad doi:10.5061/dryad.h44j0zpp8). 값의 추출은 FLYCNS(data/loom_tuning_measured.json).
+
+2026-09-23 추가 (R-7469 다음 학습 — 값 · 규약만 인용, 코드는 쓰지 않음)
+---------------------------------------------------------------
+- 같은 쪽 방출 비대칭(config/sim.yaml `ipsi_release` · sim-v2 · 같은 쪽 연결 세기 × 1.4):
+  Gaudry, Hong, Kain, de Bivort & Wilson 2013, Nature 493:424-428 (doi:10.1038/nature11747)
+  — 후각 수용 뉴런의 같은 쪽 가지가 스파이크마다 약 40 % 더 방출. 값만 인용.
+- 시각엽 기둥 좌표(공식 주석 assignedOlHex1/2 의 뜻 · 기둥 배정 · retino-v1):
+  Nern et al. 2025, Nature — https://www.nature.com/articles/s41586-025-08746-0
+  코드 저장소 reiserlab/male-drosophila-visual-system-connectome-code 는 GPL-3 —
+  좌표 규약을 확인하려고 읽었을 뿐 코드는 쓰지 않았다.
+- 시야 고도 범위(config/retino.yaml · −70° ~ +90° 를 기둥 y 에 선형으로 대응한 근사):
+  Zhao et al. 2025, Nature — https://www.nature.com/articles/s41586-025-09276-5
+- 중심복합체 나침반 · EPG 의 PB 구획 1~8 이 360° 를 한 번 덮음(loop/bump.py · 구획 → 45° 간격):
+  Seelig & Jayaraman 2015, Nature — https://www.nature.com/articles/nature14446 ·
+  Hulse et al. 2021, eLife — https://elifesciences.org/articles/66039 ·
+  Wolff, Iyer & Rubin 2015, J Comp Neurol 523:997-1037 (doi:10.1002/cne.23705)
+  연구 노트 12 의 번호로는 [3D-1] · [3D-2] · [3D-10] · [3D-11].
