@@ -73,3 +73,14 @@ def _check_layerwise():
         assert float(mx.abs(want[k]).max()) > 0, k           # 기울기가 실제로 흐른다
         scale = float(mx.abs(want[k]).max())               # 텐서 크기 대비 오차
         np.testing.assert_allclose(np.array(got[k]), np.array(want[k]), rtol=0, atol=1e-5 * scale)
+
+
+def test_weighted_loss_equals_mean_when_uniform_and_ignores_zero_weights():
+    logits = mx.array(np.random.default_rng(0).standard_normal((4, 10)).astype(np.float32))
+    tgt = [1, 2, 3, 4]
+    plain = Trainer._ce(logits, Sample([0], tgt, {}))
+    same = Trainer._ce(logits, Sample([0], tgt, {}, [1.0, 1.0, 1.0, 1.0]))
+    assert abs(float(plain) - float(same)) < 1e-6
+    only_first = Trainer._ce(logits, Sample([0], tgt, {}, [1.0, 0.0, 0.0, 0.0]))
+    ce0 = float(nn.losses.cross_entropy(logits[:1], mx.array(tgt[:1]), reduction="mean"))
+    assert abs(float(only_first) - ce0) < 1e-6

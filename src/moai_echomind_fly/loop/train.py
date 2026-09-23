@@ -33,6 +33,7 @@ class Sample:
     prompt: list[int]                  # 자리 표시 토큰이 든 입력(채팅 틀 적용 · 생성 시작 표시까지)
     target: list[int]                  # 정답 글 토큰 + 끝 표시
     feats: dict[str, Any]              # 채널 → 특징 벡터(np.float32)
+    weights: list[float] | None = None  # 정답 토큰마다 손실 가중(train-v4) · 없으면 고르게
 
 
 class Trainer:
@@ -59,14 +60,20 @@ class Trainer:
 
     def _head_loss(self, h: mx.array, s: Sample) -> mx.array:
         h = self.qwen.lm.model.norm(h)[0][len(s.prompt) - 1:]   # 정답 토큰을 맞히는 자리만
-        logits = self.qwen.lm.lm_head(h)
-        return nn.losses.cross_entropy(logits, mx.array(s.target), reduction="mean")
+        return self._ce(self.qwen.lm.lm_head(h), s)
+
+    @staticmethod
+    def _ce(logits: mx.array, s: Sample) -> mx.array:
+        if s.weights is None:
+            return nn.losses.cross_entropy(logits, mx.array(s.target), reduction="mean")
+        w = mx.array(s.weights, dtype=mx.float32)
+        ce = nn.losses.cross_entropy(logits, mx.array(s.target), reduction="none")
+        return (ce * w).sum() / w.sum()
 
     def _loss(self, s: Sample) -> mx.array:
         h = self.qwen.lm.model(None, input_embeddings=self._embeddings(s)[None])
         h = h[0][len(s.prompt) - 1:]
-        logits = self.qwen.lm.lm_head(h)
-        return nn.losses.cross_entropy(logits, mx.array(s.target), reduction="mean")
+        return self._ce(self.qwen.lm.lm_head(h), s)
 
     def _pulled(self, s: Sample, cot: mx.array) -> mx.array:
         # ⟨임베딩(투영기), 임베딩 쪽 기울기⟩ 의 기울기 = 투영기 기울기

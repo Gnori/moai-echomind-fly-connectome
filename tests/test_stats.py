@@ -75,3 +75,17 @@ def test_bump_phase_follows_planted_heading():
                         np.zeros((len(rate), 3 * 9))], axis=1)
     phase, length = bump.phase_of(x, units)
     assert abs(bump.circ_corr(phase, heading)) > 0.95 and np.median(length) > 0.3
+
+
+def test_value_spans_and_token_weights_mark_only_field_values():
+    from moai_echomind_fly.loop.train_cli import token_weights, value_spans
+
+    cap = "다가오는 물체: 왼쪽 · 중간 · 다가옴 / 먹이 냄새: 없음 / 다리 접촉: 6개 / 소리: 없음"
+    spans = value_spans(cap, "cap")
+    assert [cap[a:b] for a, b in spans] == ["왼쪽 · 중간 · 다가옴", "없음", "6개", "없음"]
+    act = '{"walk":0.8,"turn":"none","turn_strength":0.0,"stop":false,"groom":false}'
+    assert [act[a:b] for a, b in value_spans(act, "act")] == [
+        "0.8", '"none"', "0.0", "false", "false"]
+    # 토큰 가상 구간: "다가오는 물체: "(틀) · "왼쪽"(값)
+    w = token_weights([(0, 8), (9, 11)], spans, 0.1)
+    assert w == [0.1, 1.0]

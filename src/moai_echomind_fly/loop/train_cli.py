@@ -32,11 +32,32 @@ TRAIN_RULE = {
     # 캡션 단계는 v1 과 같다.
     # v3(2026-09-23): 투영기 초기값에 씨앗(init_seed)을 준다 — v2 까지는 초기값이 실행마다 달라
     # 같은 설정으로도 같은 저장본이 나오지 않았다(W loop 잔여 이슈 5). 나머지는 v2 와 같다.
-    "version": "train-v3",
-    "k": 2, "width": 256, "kind": "mlp2", "lr": 2e-4,
+    # v4(2026-09-23 · R-7469 F-005): 입력 = 관문을 통과한 채널의 **압축 벡터**(compress-v1) ·
+    # 채널당 **선형 토큰 1 개** · 손실 가중 = 칸 값 토큰 1 · 틀 토큰 `template_weight`.
+    # 틀을 0 으로 두지 않는 까닭: 시스템 글에 캡션 서식이 없어 서식을 배울 곳이 정답뿐이다
+    # (연구 노트 12 §4).
+    "version": "train-v4",
+    "input": "compress", "compress": "compress-v1",
+    "k": 1, "width": 0, "kind": "linear", "lr": 2e-4,
     "caption_epochs": 2, "action_epochs": 1, "caption_rehearsal": 0.3,
-    "val_samples": 24, "seed": 0, "init_seed": 0,
+    "val_samples": 24, "seed": 0, "init_seed": 0, "template_weight": 0.1,
 }
+
+_CAP_VALUE = re.compile(r": ([^/]+?)(?= / |$)")
+_ACT_VALUE = re.compile(r':("?[^",}]*"?)')
+
+
+def value_spans(text: str, task: str) -> list[tuple[int, int]]:
+    """정답 글에서 **칸 값**의 글자 구간 — 캡션은 `: 값 /`, 행동 JSON 은 `:값,`."""
+    pat = _CAP_VALUE if task == "cap" else _ACT_VALUE
+    return [m.span(1) for m in pat.finditer(text)]
+
+
+def token_weights(offsets: list[tuple[int, int]], spans: list[tuple[int, int]],
+                  template_weight: float) -> list[float]:
+    """토큰마다 가중 — 칸 값 구간과 겹치면 1, 아니면 `template_weight`."""
+    return [1.0 if any(a < e and b > s for s, e in spans) else float(template_weight)
+            for a, b in offsets]
 
 
 def projector_dir(brain: str, version: str | None = None) -> Path:
@@ -102,9 +123,11 @@ def expand(names: str) -> list[str]:
 
 
 class _Setup:
-    def __init__(self, qwen, names: list[str], k: int) -> None:
+    def __init__(self, qwen, names: list[str], k: int,
+                 template_weight: float | None = None) -> None:
         self.q = qwen
         self.names = names
+        self.template_weight = template_weight
         self.im_end = qwen.tok.convert_tokens_to_ids("<|im_end|>")
         self.cap_prompt = qwen.render(
             fp.messages(fp.SYSTEM_CAPTION, fp.INSTRUCTION_CAPTION, names, k))
@@ -114,14 +137,39 @@ class _Setup:
     def target(self, text: str) -> list[int]:
         return list(self.q.tok.encode(text, add_special_tokens=False)) + [self.im_end]
 
+    def weighted(self, text: str, task: str) -> tuple[list[int], list[float] | None]:
+        """정답 토큰 + 토큰마다 손실 가중(train-v4). 가중 규칙이 없으면 (토큰, None)."""
+        if self.template_weight is None:
+            return self.target(text), None
+        enc = self.q.tok._tokenizer(text, add_special_tokens=False, return_offsets_mapping=True)
+        w = token_weights(enc["offset_mapping"], value_spans(text, task), self.template_weight)
+        return list(enc["input_ids"]) + [self.im_end], w + [float(self.template_weight)]
+
 
 def _sample(setup: _Setup, feats, rows, i: int, task: str):
     from .train import Sample
 
     f = {n: feats[n][i] for n in setup.names}
     if task == "cap":
-        return Sample(setup.cap_prompt, setup.target(rows[i]["caption"]), f)
-    return Sample(setup.act_prompt, setup.target(fp.action_text(rows[i]["teacher_action"])), f)
+        tgt, w = setup.weighted(rows[i]["caption"], "cap")
+        return Sample(setup.cap_prompt, tgt, f, w)
+    tgt, w = setup.weighted(fp.action_text(rows[i]["teacher_action"]), "act")
+    return Sample(setup.act_prompt, tgt, f, w)
+
+
+def compress_for(rule: dict, src: dict, brain: str):
+    """train-v4 입력 — (압축기 적용 함수, 통과 채널). 규칙에 압축이 없으면 (None, None)."""
+    if rule.get("input") != "compress":
+        return None, None
+    from . import compress
+
+    dataset = src["pack"]
+    gate = json.loads((compress.out_dir(dataset) / "gate.json").read_text())
+    model = compress.load(dataset, brain)
+    passed = gate["passed_channels"]
+    if not passed:
+        raise GuardRefused("gate", "관문을 통과한 채널이 없다 — train-v4 를 하지 않는다(F-004)")
+    return (lambda feats: compress.apply({c: model[c] for c in passed}, feats)), passed
 
 
 class TrainingAborted(RuntimeError):
@@ -180,6 +228,10 @@ def train(args: argparse.Namespace) -> int:
             src = data_source(args.dataset, args.val)
             feats, rows = load_split(src, "train", args.brain)
             vfeats, vrows = load_split(src, "eval", args.brain)
+            squeeze, passed = compress_for(rule, src, args.brain)
+            if squeeze is not None:
+                feats, vfeats = squeeze(feats), squeeze(vfeats)
+                src = {**src, "compress": rule["compress"], "channels": passed}
             say(f"[data] {src}")
             names = list(feats)
             q = QwenLM()
@@ -192,7 +244,7 @@ def train(args: argparse.Namespace) -> int:
                               cache_limit_gb=float(gcfg["training_cache_limit_gb"]))
             watchdog = Watchdog()
             total = [0]
-            setup = _Setup(q, names, rule["k"])
+            setup = _Setup(q, names, rule["k"], rule.get("template_weight"))
             rng = random.Random(rule["seed"])
             n, nv = len(rows), min(rule["val_samples"], len(vrows))
             say(f"[train] {args.brain} · 학습 {n} · 검증 {nv} · "
@@ -383,7 +435,11 @@ def eval_caption(args: argparse.Namespace) -> int:
     meta = json.loads((pdir / "meta.json").read_text())
     try:
         with heavy("eval-caption", extra_gb=float(config.load("llm")["weights_gb"])):
-            vfeats, vrows = load_split(data_source(args.dataset, args.val), "eval", args.brain)
+            src = meta.get("data") or data_source(args.dataset, args.val)
+            vfeats, vrows = load_split(src, "eval", args.brain)
+            squeeze, _ = compress_for(meta["rule"], src, args.brain)
+            if squeeze is not None:                # train-v4 — 학습 때와 같은 압축
+                vfeats = squeeze(vfeats)
             names = list(meta["dims"])
             q = QwenLM()
             pm = meta["projector"]
@@ -421,25 +477,31 @@ def eval_caption(args: argparse.Namespace) -> int:
     return 0
 
 
+def _brain(text: str) -> str:
+    if not re.fullmatch(r"real|rewired|rewired-s\d+", text):
+        raise argparse.ArgumentTypeError("real · rewired · rewired-s<K>")
+    return text
+
+
 def register(sub) -> None:
     p = sub.add_parser("train",
                        help="F-017 투영기 학습(Qwen 얼림 · 최대 약 32 GB · 학습 전용 문턱)")
-    p.add_argument("--brain", choices=["real", "rewired"], required=True)
-    p.add_argument("--dataset", default="fly-loop-v1",
+    p.add_argument("--brain", type=_brain, required=True, help="real · rewired · rewired-s<K>")
+    p.add_argument("--dataset", default="fly-loop-v2",
                    help="묶음 이름(data/datasets/) — 없으면 runs/dataset-<이름> 조각으로 읽는다")
     p.add_argument("--val", default="eval", help="조각으로 읽을 때만: 검증 조각 이름")
     p.add_argument("--resume-caption", default="",
                    help="캡션 단계 저장본(.safetensors)에서 이어 행동 단계만 돈다")
     p.set_defaults(func=train)
     pr = sub.add_parser("train-probe", help="짧게 돌리며 걸음마다 메모리를 잰다(저장 없음)")
-    pr.add_argument("--brain", choices=["real", "rewired"], default="real")
-    pr.add_argument("--dataset", default="fly-loop-v1")
+    pr.add_argument("--brain", type=_brain, default="real")
+    pr.add_argument("--dataset", default="fly-loop-v2")
     pr.add_argument("--steps", type=int, default=50)
     pr.set_defaults(func=probe)
     e = sub.add_parser("eval-caption", help="F-017 캡션 칸별 정확도(학습에 안 쓴 씨앗)")
-    e.add_argument("--brain", choices=["real", "rewired"], required=True)
+    e.add_argument("--brain", type=_brain, required=True)
     e.add_argument("--checkpoint", default="stage1-caption", choices=["stage1-caption", "final"])
-    e.add_argument("--dataset", default="fly-loop-v1", help="묶음 이름(eval 나눔을 쓴다)")
+    e.add_argument("--dataset", default="fly-loop-v2", help="묶음 이름(eval 나눔을 쓴다)")
     e.add_argument("--val", default="eval", help="조각으로 읽을 때만: 평가 조각 이름")
     e.add_argument("--version", default=None,
                    help=f"투영기 규칙 판(기본 {TRAIN_RULE['version']} · 예전 결과는 train-v2)")

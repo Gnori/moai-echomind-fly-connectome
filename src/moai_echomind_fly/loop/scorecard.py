@@ -54,7 +54,8 @@ class QwenPolicy:
     """vector · text · no_circuit — 결정마다 Qwen 이 행동 JSON 을 낸다. 위반이면 직전 행동 유지."""
 
     def __init__(self, kind: str, qwen, names: list[str], k: int, primary: str,
-                 projector=None, table=None) -> None:
+                 projector=None, table=None, squeeze=None) -> None:
+        self.squeeze = squeeze
         self.kind, self.q, self.names, self.k = kind, qwen, names, k
         self.primary, self.proj, self.table = primary, projector, table
         self.slot = qwen.tok.convert_tokens_to_ids(fp.SLOT)
@@ -73,8 +74,11 @@ class QwenPolicy:
         t0 = time.time()
         if self.kind in ("vector", "rewired"):
             v = vectors[self.primary]
-            feats = {n: mx.array(v[n].features(self.table.rate_scale_hz, self.table.depol_scale_mV))
-                     for n in self.names}
+            raw = {n: v[n].features(self.table.rate_scale_hz, self.table.depol_scale_mV)[None]
+                   for n in v}
+            if self.squeeze is not None:          # train-v4 — 학습 때와 같은 압축
+                raw = self.squeeze(raw)
+            feats = {n: mx.array(raw[n][0]) for n in self.names}
             emb = self.q.splice(self.act_prompt, self.slot, self.proj(feats))
             gen = self.q.generate(self.act_prompt, max_tokens=60, input_embeddings=emb)
         else:
@@ -110,7 +114,10 @@ def _load_projector(qwen, brain: str, version: str | None = None):
                             width=meta["rule"]["width"], target_rms=pm["target_rms"])
     proj.load_weights(str(pdir / "final.safetensors"))
     mx.eval(proj.parameters())
-    return proj, list(meta["dims"]), pm["k"]
+    from .train_cli import compress_for
+
+    squeeze, _ = compress_for(meta["rule"], meta.get("data") or {}, brain)
+    return proj, list(meta["dims"]), pm["k"], squeeze
 
 
 def summarize(eps: list[dict[str, Any]]) -> dict[str, Any]:
@@ -154,10 +161,10 @@ def main(args: argparse.Namespace) -> int:
                 if cfg_name == "no_llm":
                     policy = None
                 else:
-                    proj, names, k = (_load_projector(q, brain, args.version)
-                                      if cfg_name in ("vector", "rewired")
-                                      else (None, list(loop.table.channels), 2))
-                    policy = QwenPolicy(cfg_name, q, names, k, brain, proj, loop.table)
+                    proj, names, k, squeeze = (_load_projector(q, brain, args.version)
+                                               if cfg_name in ("vector", "rewired")
+                                               else (None, list(loop.table.channels), 2, None))
+                    policy = QwenPolicy(cfg_name, q, names, k, brain, proj, loop.table, squeeze)
                 eps = []
                 try:
                     for seed in seeds:
