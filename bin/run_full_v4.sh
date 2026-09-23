@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # R-7469 F-004 · F-005 전체 — 압축 · 관문(compress-v1) → 투영기 학습 train-v4(진짜 + 재배선 3) → 캡션 평가 8 → 성적표(씨앗 40 · 7 구성).
 # ⚠️ 요구자 확인 뒤 실행한다. 그 전에 `fly-connectome train-probe --steps 12` 로 걸음당 시간 · 최대 메모리를 먼저 잰다(CLAUDE.md 무거운 실행 규약).
-# 학습은 시작 전 시스템 메모리 여유 80 % 이상(학습만의 예외 · 요구자 2026-09-22) · 평가 · 성적표는 65 % · 압축 · 관문은 40 %.
+# 학습은 시작 전 시스템 메모리 여유 40 % 이상(2026-09-23 요구자 "문턱을 40%로 낮춰 지금 바로" · 실측 최대 31.4 GB / 137 GB ·
+#   실행 중 감시 유지 · 옛 값 80 은 90 GB 먹던 때) · 평가 · 성적표도 40 %(Qwen 29 GB 는 guard 가 따로 센다).
 # 관문을 통과한 채널이 하나도 없으면 v4 학습을 하지 않는다(F-004 규칙 · 끝 코드 4).
 # 단계마다 메모리 여유가 문턱 위로 돌아올 때까지 기다린다 — 큰 프로세스가 끝난 직후엔 회수가 늦다. 30 분 넘게 안 돌아오면 중단(끝 코드 3).
 #
@@ -67,7 +68,7 @@ echo "--- $GATE_MSG" | tee -a "$LOG"
 # 3 · 4. 투영기 학습 — 진짜 + 재배선 3 · 같은 절차(대조군)
 if [ $SKIP_TRAIN -eq 0 ]; then
   for b in "${BRAINS[@]}"; do
-    run 80 train --brain "$b" --dataset "$DATASET" --train-seeds "$TRAIN_SEEDS"
+    run 40 train --brain "$b" --dataset "$DATASET" --train-seeds "$TRAIN_SEEDS"
   done
 else
   echo "--- 학습 건너뜀(--skip-train) — 기존 runs/projector-<뇌>-$VERSION 을 쓴다" | tee -a "$LOG"
@@ -76,11 +77,11 @@ fi
 # 5. 캡션 평가 — 뇌 4 × 저장본 2
 for ck in stage1-caption final; do
   for b in "${BRAINS[@]}"; do
-    run 65 eval-caption --brain "$b" --checkpoint "$ck" --version "$VERSION"
+    run 40 eval-caption --brain "$b" --checkpoint "$ck" --version "$VERSION"
   done
 done
 
 # 6. 성적표 — 재배선 투영기 셋과 앙상블 비교(scorecard-v2)
-run 65 scorecard --seeds "$SEEDS" --configs "$CONFIGS" --version "$VERSION"
+run 40 scorecard --seeds "$SEEDS" --configs "$CONFIGS" --version "$VERSION"
 
 echo "=== $(date '+%F %T') 전체 끝 · 로그 $LOG" | tee -a "$LOG"
