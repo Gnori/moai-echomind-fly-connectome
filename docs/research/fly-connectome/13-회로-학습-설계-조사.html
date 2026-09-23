@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>회로 학습 설계 조사 — 세포 종류 단위 학습 · 버섯체 가소성 · 눈의 앞뒤 축</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li>
+<li><a href="12-다음-학습-조사.html">12 · 다음 학습 — 조사</a></li>
+<li><a href="13-회로-학습-설계-조사.html" class="cur">13 · 회로 학습 설계 — 조사</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="13-회로-학습-설계-조사.md">13-회로-학습-설계-조사.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="13-회로-학습-설계-조사--세포-종류-단위-학습--버섯체-가소성--눈의-앞뒤-축">13. 회로 학습 설계 조사 — 세포 종류 단위 학습 · 버섯체 가소성 · 눈의 앞뒤 축</h1>
+<blockquote>
+<p>2026-09-23. 조율 세션(<code>echomind-fly</code>)이 이 세션(<code>echomind-fly-research</code>)에 준 일감 — <a href="../../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> <strong>F-006</strong>(세포 종류 단위 회로 학습)과 <strong>F-007</strong>(버섯체 가소성)의 설계 조사, 그리고 <strong>F-008</strong> 2단계에서 미확정으로 남긴 <strong>눈 안의 앞 · 뒤 축</strong> 재조사.
+이 문서는 <strong>조사와 근거</strong>다. 계약(명령 · 파일 · 판 번호)은 조율 세션이 I v2 로 쓴다. 웹 조사 + 그래프 조회만 했고 <strong>뇌 시뮬레이션은 돌리지 않았다</strong>(자료 v2 수집이 잠금을 쥐고 있었다).
+⚠️ 문헌은 조사 에이전트 셋이 모았다. 확인 수준을 표시한다 — <strong>[P]</strong> 원문(본문 · 코드)에서 확인 · <strong>[A]</strong> 초록만 · <strong>[S]</strong> 2차 자료(검색 발췌 · 인용 논문) · <strong>[X]</strong> 열지 못함. 수치 중 우리 계산은 <strong>추정</strong>이라 적었다.
+앞선 조사: <a href="12-다음-학습-조사.html">12 다음 학습 조사</a> §6 · §9. 그래프 실측 파일: <code>runs/mb-typepairs-20260923.json</code> · <code>runs/lc4-dn-axis-20260923.json</code>(git 밖).</p>
+</blockquote>
+<h2 id="0-한눈에--권고">0. 한눈에 — 권고</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>물음</th>
+<th>답</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-006 에서 <strong>무엇을</strong> 배우나</td>
+<td>종류별 <strong>막 시간 상수 τ</strong> · 종류별 <strong>문턱 v_th</strong> · 종류 쌍별 <strong>시냅스 배율 α ≥ 0</strong>. 연결 수 · 부호 · 상대는 불변</td>
+<td>Lappalainen 2024 의 734 개(τ 65 · 휴지 전위 65 · 쌍 배율 604)와 같은 구도 [1] · 문턱과 이득은 LIF 에서 퇴화라 하나만(2.1)</td>
+</tr>
+<tr>
+<td><strong>몇 개</strong>나</td>
+<td>범위를 좁힌다 — 공간(중심복합체) 125 · 도망(시각 투사 → 하강) 약 2,100 · 채널 내부 전체는 약 1.3만이라 뒤로 · 뇌 전체(약 18만)는 하지 않는다</td>
+<td>그래프 실측(1.2) · 자료 v2 결정 약 3,000</td>
+</tr>
+<tr>
+<td><strong>기울기</strong>는 어떻게</td>
+<td><strong>1단계 기울기 없음</strong>(CMA-ES · 매개변수 ≤ 50 · 정방향만) → <strong>2단계 대리 기울기 BPTT + 발화한 뉴런만 + 체크포인트</strong>(수백~2천) → 막히면 온라인 흔적(e-prop 류) · 속도 근사는 이식 미검증이라 마지막</td>
+<td>2.2 · 2.3</td>
+</tr>
+<tr>
+<td>메모리는 <strong>무엇에 비례</strong>하나</td>
+<td>BPTT = <strong>배치 × 걸음 × 기울기가 흐르는 뉴런 수</strong>(+ 연결은 한 번). 뇌 전체 3,000 걸음 = 상태 약 7 GB(배치 1 · 추정) · 체크포인트로 약 0.3 GB. <strong>걸음마다 연결 전체를 곱하면 걸음 × 연결 = 약 300 GB</strong> — 금지</td>
+<td>Neftci O(NT) [2] · Eshraghian O(nT) [4] · ConnecTorch 실측 [22] · 우리 계산(2.3)</td>
+</tr>
+<tr>
+<td>무엇을 <strong>목표</strong>로</td>
+<td>과제 손실만으로는 해가 정해지지 않는다(퇴화) → <strong>알려진 생리 5~10 개를 제약으로</strong> + 선형 관문 칸 해독</td>
+<td>Beiran &amp; Litwin-Kumar 2025 [13] · 생리 자료 표(2.4)</td>
+</tr>
+<tr>
+<td>F-007 규칙</td>
+<td>KC→MBON 만 · 3요소(KC 흔적 × 같은 구획 DAN 발화 × 시간 창) · <strong>DAN 은 세계 사건으로 직접 자극</strong>(광유전 실험 흉내 · 회로가 스스로 DAN 을 못 켜므로) · 구획은 그래프의 DAN→MBON 시냅스 표로</td>
+<td>3장 · Aso &amp; Rubin 2016 · Hige 2015 · Jiang &amp; Litwin-Kumar 2021(3.2)</td>
+</tr>
+<tr>
+<td>F-007 대조군</td>
+<td>가소성 끔 · <strong>무작위 보상</strong> · 재배선(<strong>KC→MBON 만 섞는 것은 약하다</strong> → PN→KC 섞기) · <strong>DAN↔구획 바꿔치기</strong>(정서가 뒤집혀야) · 학습 전</td>
+<td>R-7469 F-007 + 문헌(3.2 · 3.3) · DoomFly · malecns-lab 실패 사례</td>
+</tr>
+<tr>
+<td>F-007 값</td>
+<td>τ_e 5 s(1~20) · τ_D 0.2~0.5 s · 앞 짝짓기만 약화 · m_min 0.1 · <strong>η 는 Hige 의 "한 번 짝짓기 → 50~90 % 감소"로 보정</strong> · 먼저 KC 희소성(5~10 %)을 잰다</td>
+<td>3.3 표(값은 선언 · 창 경계는 원문)</td>
+</tr>
+<tr>
+<td>눈의 <strong>앞 · 뒤 축</strong></td>
+<td><strong>앞쪽 = hex1 − hex2 가 큰 쪽</strong>(공개 정의 [P]) = 우리 <code>x = hex2 − hex1</code> 의 <strong>음수 쪽</strong>. 그래프에서 독립 검증: LC4→DNp02 r −0.76/−0.85 · LC4→DNp11 +0.73/+0.80(양 반구) · DNp02 = 앞쪽 물체 [P]</td>
+<td>4장 · MaleCNS 시각 경로 논문 방법 [39] · Dombrovski 2023 [42]</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="1-출발점--지금-회로는-무엇이고-그래프에-무엇이-있나">1. 출발점 — 지금 회로는 무엇이고, 그래프에 무엇이 있나</h2>
+<h3 id="11-지금-sim-v2">1.1 지금 (sim-v2)</h3>
+<ul>
+<li>165,122 뉴런 · 25,563,197 연결 · 시냅스 124,025,046 · 종류 11,751. LIF 매개변수는 <strong>모든 뉴런이 같다</strong>(v0 −52 · v_th −45 · τ 20 ms · τ_syn 5 ms · 불응 2.2 · 지연 1.8 · w_syn 0.275 mV × w_scale 0.25 · <a href="09-LIF-모델.html">09</a>).
+  종류별로 다른 것은 후각 수용 뉴런의 같은 쪽 방출 × 1.4(<code>sim-v2</code>)뿐. 도파민 · 세로토닌 · 옥토파민 뉴런은 <strong>부호 0</strong>(연결은 있으나 영향 없음).</li>
+<li>쉬는 상태는 <strong>침묵</strong>(도망 시행에서 뇌 전체 0.0027 Hz) — 자극한 경로만 발화한다. "억제를 푸는" 회로는 못 낸다(Shiu 스스로 밝힌 한계 [37]).</li>
+<li>엔진(<code>sim.py</code>)은 <strong>제자리 연산</strong>(<code>index_add_</code> · <code>v[spiked] = v_reset</code> · 불응 마스크)과 파이썬 걸음 루프(0.1 ms × 3,000 = 창 300 ms)로 돼 있다 → 그대로는 미분되지 않는다. 학습에는 <strong>함수형 걸음(제자리 없음 · 대리 기울기 문턱)</strong> 이 따로 필요하다(2.5).</li>
+</ul>
+<h3 id="12-그래프-실측-2026-09-23--가벼움--cpu-82-s">1.2 그래프 실측 (2026-09-23 · 가벼움 · CPU 82 s)</h3>
+<p><strong>세포 종류 쌍의 수</strong> — 종류 쌍 배율 α 의 개수는 "어느 부분 그래프"에 따라 이렇게 달라진다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>범위</th>
+<th>출발 종류</th>
+<th>도착 종류</th>
+<th>연결</th>
+<th>종류 쌍(≥ 1 연결)</th>
+<th>≥ 5 시냅스</th>
+<th>≥ 20</th>
+<th>≥ 100</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>뇌 전체</td>
+<td>11,750</td>
+<td>11,750</td>
+<td>25,120,209</td>
+<td><strong>3,830,926</strong></td>
+<td>1,434,154</td>
+<td>583,744</td>
+<td>156,067</td>
+</tr>
+<tr>
+<td>시각 투사 → 하강(직접)</td>
+<td>321</td>
+<td>366</td>
+<td>28,993</td>
+<td>5,096</td>
+<td>2,408</td>
+<td>1,228</td>
+<td><strong>473</strong></td>
+</tr>
+<tr>
+<td>중심복합체 내부(channels-v2 space 21 종류)</td>
+<td>21</td>
+<td>21</td>
+<td>31,237</td>
+<td>245</td>
+<td>182</td>
+<td>116</td>
+<td><strong>83</strong></td>
+</tr>
+<tr>
+<td>채널 뉴런 내부(시각 투사 · 상행 · 하강 · MBON · 후각 투사 · 공간 · 기계감각 · 청각 · 미각 = 20,950 뉴런 · 1,875 종류)</td>
+<td>1,875</td>
+<td>1,874</td>
+<td>1,273,512</td>
+<td>196,446</td>
+<td>75,485</td>
+<td>32,298</td>
+<td>9,700</td>
+</tr>
+<tr>
+<td>채널 뉴런에 닿는 모든 연결</td>
+<td>11,685</td>
+<td>11,739</td>
+<td>7,202,462</td>
+<td>1,211,414</td>
+<td>468,057</td>
+<td>202,247</td>
+<td>59,457</td>
+</tr>
+</tbody>
+</table></div>
+<p>부분 집합 크기: 시각 투사 9,201 뉴런 / 346 종류 · 하강 1,314 / 480 · 상행 1,846 / 567 · 후각 투사 686 / 180 · MBON 97 / 37 · KC 4,064 / 15 · DAN 340 / 27 · 공간 656 / 21. 평균 출차수 155(최대 11,203).</p>
+<p>→ <strong>뇌 전체의 종류 쌍(383 만)은 자료(결정 약 3,000)보다 천 배 많다.</strong> 시냅스 100 개 이상으로 잘라도 15.6 만. 반면 과제 부분 그래프에서는 수백이다. R-7469 의 "모두 돌리되 학습은 과제 관련 종류부터"가 숫자로도 맞다.</p>
+<h2 id="2-f-006--세포-종류-단위-회로-학습">2. F-006 — 세포 종류 단위 회로 학습</h2>
+<h3 id="21-무엇을-배우나--매개변수-목록">2.1 무엇을 배우나 — 매개변수 목록</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>매개변수</th>
+<th>단위</th>
+<th>지금 값</th>
+<th>학습 범위(제안 · 선언)</th>
+<th>무엇을 바꾸나</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>τ_m,t</strong> 막 시간 상수</td>
+<td>종류 t 마다 하나</td>
+<td>20 ms 공통</td>
+<td>5~200 ms(로그 매개화)</td>
+<td>입력을 얼마나 오래 모으나</td>
+<td>Lappalainen 의 종류별 시간 상수 [1] · KC 는 200 ms 넘게 길다는 보고도 있다(개인 저장소 [23] · 참고만)</td>
+</tr>
+<tr>
+<td><strong>v_th,t</strong> 문턱</td>
+<td>종류 t 마다 하나</td>
+<td>−45 mV 공통(쉬는 값 위 7 mV)</td>
+<td>쉬는 값 위 2~15 mV</td>
+<td>얼마나 쉽게 발화하나</td>
+<td>Lappalainen 의 휴지 전위와 같은 구실 [1]</td>
+</tr>
+<tr>
+<td><strong>α_{t→u}</strong> 시냅스 배율</td>
+<td>종류 쌍마다 하나 · <strong>α ≥ 0</strong></td>
+<td>1(w_scale 0.25 공통)</td>
+<td>0.1~10(로그)</td>
+<td>연결 세기 — 수 · 부호 · 상대는 불변</td>
+<td>Lappalainen 의 <code>SynapseCountScaling</code>(0 아래 잘라 부호 못 뒤집음) [1]</td>
+</tr>
+<tr>
+<td>(선택) <strong>b_t</strong> 종류별 상수 입력</td>
+<td>종류 t</td>
+<td>0</td>
+<td>0~5 mV</td>
+<td>종류별 배경 활동 — "억제를 푸는" 회로의 빠진 재료</td>
+<td>Shiu · FLYCNS 한계(<a href="09-LIF-모델.html">09</a> §4) · <strong>출처 있는 종류에만</strong></td>
+</tr>
+<tr>
+<td>(선택) 적응 b_adapt,t</td>
+<td>종류 t</td>
+<td>0(<code>adaptation: []</code>)</td>
+<td>0~30 mV</td>
+<td>발화 적응</td>
+<td>이미 설정 자리 있음 · 출처 있는 것만</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>문턱 대 이득</strong>: LIF 에서 종류 t 로 들어오는 입력 전체에 이득 g_t 를 곱하는 것과 문턱 거리(v_th − v0)를 1/g_t 로 줄이는 것은 (불응 · 리셋을 빼면) <strong>같은 해</strong>다 → 둘 다 넣으면 퇴화. <strong>문턱 하나만</strong> 둔다. Lappalainen 이 "휴지 전위 + 쌍 배율"만 둔 것도 같은 이유로 읽힌다.</li>
+<li><strong>개수(추정)</strong>: 공간 범위 = 21 × 2 + 83 = <strong>125</strong> · 도망 범위 = (346 + 480) × 2 + 473 = <strong>2,125</strong>(다가옴 관련 LC/LPLC 13 종 + 거대섬유 경로 하강 몇 종으로 좁히면 수십) · 채널 내부 = 1,875 × 2 + 9,700 ≈ <strong>13,450</strong>(자료보다 많다 → 뒤로) · 뇌 전체 ≈ 11,751 × 2 + 156,067 ≈ <strong>18 만</strong>(하지 않는다).</li>
+<li><strong>커넥톰 정체성 검사</strong>(학습 뒤 반드시): <code>edges.npz</code>(row_ptr · dst · count) 해시가 학습 전과 같다 · α ≥ 0 · 부호 배열 같다 · 학습된 것은 매개변수 파일뿐. 판은 <code>sim-v3</code> 계열(학습 매개변수 파일 = 종류별 τ · v_th · 쌍 배율 + 연결마다 쌍 번호 <code>pair_id</code> int32[E] ≈ 100 MB).</li>
+</ul>
+<h3 id="22-기울기를-어떻게-얻나--네-갈래">2.2 기울기를 어떻게 얻나 — 네 갈래</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>갈래</th>
+<th>원리</th>
+<th>메모리 ∝</th>
+<th>정확도</th>
+<th>우리에게</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>(a) 대리 기울기 BPTT</strong></td>
+<td>문턱 계단의 미분을 매끈한 함수(SuperSpike 등 · 최대 1 로 정규화)로 바꿔 시간 역전파</td>
+<td><strong>B × T × N</strong>(상태 저장) + 연결 한 번</td>
+<td>정확(잘림 없으면) · 모양보다 <strong>크기(β)에 민감</strong></td>
+<td>표준. 우리 뇌는 침묵이라 문턱 근처 뉴런이 적어 (a′) 가 자연스럽다</td>
+<td>Neftci 2019 [2] · Zenke &amp; Vogels 2021 [3] · Eshraghian 2023 [4]</td>
+</tr>
+<tr>
+<td><strong>(a′) 희소 대리 기울기</strong></td>
+<td>문턱 근처(활성) 뉴런만 역전파 · 나머지 기울기 0</td>
+<td>역전파 버퍼 ∝ <strong>ρ × B × T × N</strong>(ρ = 활성 비율 · 논문 ≤ 2 %) · 정방향 저장은 그대로</td>
+<td>활성 창 밖은 기울기 0 — <strong>자극 경로에만 닿는다</strong></td>
+<td>은닉 200 뉴런에서 역전파 40 배 빠르고 메모리 −35 %. 우리 ρ ≪ 1 %</td>
+<td>Perez-Nieves &amp; Goodman 2021 [6]</td>
+</tr>
+<tr>
+<td><strong>(b) 속도(rate) 근사</strong></td>
+<td>같은 배선에 문턱-선형 속도 모형(Lappalainen 식 · dt 1~20 ms)을 얹어 학습 → τ · 문턱 · α 를 LIF 로 이식</td>
+<td>B × T′ × N · <strong>T′ = T × (0.1 ms / dt)</strong> → 10~200 배 작음</td>
+<td><strong>이식이 검증된 초파리 사례 없음</strong> — 속도 → 스파이크 이식은 가중치 재척도 가정(PNAS 2019 [14][S])</td>
+<td>메모리는 가장 싸지만, 이식 뒤 LIF 를 다시 돌려 채점해야 하고 침묵 LIF 에서 성립한다는 보장이 없다 → <strong>마지막 후보</strong></td>
+<td>Lappalainen [1] · [14] · 유충 "얼린 속도 연산자"는 학습이 없다 [12]</td>
+</tr>
+<tr>
+<td><strong>(c) 온라인 흔적</strong>(e-prop · OTTT · OSTL · BrainTrace pp-prop)</td>
+<td>시냅스(또는 뉴런)마다 적격 흔적을 앞으로 굴리며 갱신 · 걸음을 저장하지 않음</td>
+<td><strong>B × E</strong>(연결당 흔적 · e-prop O(S)) 또는 <strong>B × N</strong>(BrainTrace 계수 1) — <strong>걸음 수 T 와 무관</strong></td>
+<td>근사(뉴런 사이 시간 경로 무시 · 대각 야코비안)</td>
+<td>BrainTrace 가 <strong>FlyWire 12.5 만 뉴런을 8.9 GB 로</strong> 칼슘 영상에 맞췄다(BPTT 는 32 GB 초과) — 우리 맥(통합 메모리)에 맞는 유일한 선례</td>
+<td>Bellec 2020 [5] · Xiao 2022 [7] · Bohnstingl 2022 [8] · Wang 2026 [9]</td>
+</tr>
+<tr>
+<td><strong>(d) 기울기 없음</strong>(CMA-ES · ES · SBI)</td>
+<td>매개변수를 흔들어 정방향만 돌리고 좋은 쪽으로</td>
+<td><strong>정방향 상태만</strong>(λ 개 병렬이면 λ 배) · CMA-ES 는 P² 공분산</td>
+<td>정확(근사 없음) · 평가 횟수가 P 에 비례해 는다</td>
+<td>λ = 4 + ⌊3 ln P⌋ = 23(P 734) · 세대 수백~수천 → 시뮬레이션 수천~수만 회. <strong>P ≤ 50 이면 현실적</strong> · 손실은 생리 목표</td>
+<td>Hansen [17] · Salimans [16] · 신경과학 사례 1,600~4,000 회 [19] · SNPE 는 30 차원 위가 어렵다 [20] · 베이즈 최적화는 &lt; 20 차원 [18]</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>권고 순서</strong>
+1. <strong>(d) 로 작게 시작</strong> — P ≤ 50(예: 도망 경로 LC/LPLC 13 종 + DNp01 · DNp02 · DNp04 · DNp11 의 τ · v_th · 클래스 쌍 배율 몇 개). 정방향만이라 메모리 위험이 없고, 채점(도망 5 항목 · Turner 2022 조율)이 그대로 손실이 된다. 이것으로 <strong>"종류 매개변수를 바꾸면 채점이 움직이나"</strong> 를 먼저 본다.
+2. <strong>(a′) + 잘림 BPTT + 체크포인트</strong> — P 수백~2천(공간 125 · 도망 2,125). 기울기는 학습 종류 사이 경로에만 흐르게(나머지 뉴런은 정방향만 · detach) → 메모리는 <strong>기울기가 흐르는 뉴런 수 N_g</strong> 에 비례.
+3. <strong>(c)</strong> 는 (a′) 가 시간 · 메모리에서 막힐 때(예: 뇌 전체 N_g · 긴 창). <strong>(b)</strong> 는 이식을 작은 회로(도망 경로)에서 먼저 검증한 뒤에만.</p>
+<h3 id="23-메모리는-무엇에-비례하나--우리-숫자로-추정--재기-전">2.3 메모리는 무엇에 비례하나 — 우리 숫자로 (추정 · 재기 전)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>식</th>
+<th>뇌 전체(N = 165,122 · T = 3,000 · B = 1)</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>정방향 상태(지금)</td>
+<td>N × (v 4 + g 4 + A 4 + 불응 8) B</td>
+<td>3.3 MB</td>
+<td>+ 연결 E × (dst 4 + w 4 + count 4) ≈ 300 MB · 실측 뇌 전체 1,000 ms = CPU 4.3 s</td>
+</tr>
+<tr>
+<td><strong>BPTT 저장(순진)</strong></td>
+<td>B × T × N × (v 4 + g 4 + 마스크 2 + 대리 입력 v−v_th 4 ≈ 14 B)</td>
+<td><strong>6.9 GB</strong> · autograd 중간값 ×2~4 → <strong>14~28 GB</strong></td>
+<td>학습 여유 80 % 규칙(약 25 GB 상한)에 아슬아슬 → 체크포인트 필수</td>
+</tr>
+<tr>
+<td>BPTT + √T 체크포인트</td>
+<td>저장 ≈ N × 상태 × (√T + √T)</td>
+<td>약 <strong>0.3 GB</strong> · 정방향 재계산 1 회(시간 약 1.3 배)</td>
+<td>표준 방법 · Fly-LLM 이 청크 16 으로 씀 [S]</td>
+</tr>
+<tr>
+<td>기울기 범위를 부분 그래프로</td>
+<td>N → N_g</td>
+<td>시각 투사 + 하강 + 중계 약 2 만이면 순진 저장도 약 0.8 GB</td>
+<td>"모두 돌리되 학습은 종류부터" — 정방향은 뇌 전체, 기울기는 N_g</td>
+</tr>
+<tr>
+<td>연결 항(도착한 연결만)</td>
+<td>걸음마다 발화 뉴런 × 출차수 155 × 12 B</td>
+<td>창당 발화 10³~10⁴(추정: 도망 시행당 약 680 · 후각 자극 ORN 157 × 60 Hz × 0.3 s ≈ 2,800) → 도착 연결 10⁵~10⁶ → <strong>수십 MB</strong></td>
+<td>문제없음. <strong>단</strong> ConnecTorch 처럼 걸음마다 E 전체를 곱하면 T × E × 4 B = <strong>300 GB</strong> [22] → 금지</td>
+</tr>
+<tr>
+<td>온라인 흔적 (c)</td>
+<td>E × 4 B(연결당) 또는 N × 4 B</td>
+<td>100 MB / 0.7 MB</td>
+<td>T 무관</td>
+</tr>
+<tr>
+<td>기울기 없음 (d)</td>
+<td>정방향 × λ(병렬이면)</td>
+<td>3.3 MB × 23</td>
+<td>시간이 문제 — 아래</td>
+</tr>
+<tr>
+<td><strong>시간</strong>(추정)</td>
+<td>정방향 창 300 ms 1.3 s · 역전파 2~3 배 · 재계산 1.3 배</td>
+<td>창당 약 <strong>4~6 s</strong> → 자료 v2 결정 3,000 × 1 epoch ≈ <strong>4 h / 뇌</strong> · 재배선 5 앙상블 같은 절차 → 20 h+</td>
+<td>(d): 23 × 세대 1,000 × 창 20 개 × 1.3 s ≈ 165 h 뇌 전체 — 부분 그래프 · 짧은 창 · 병렬 없이는 무리 → <strong>P ≤ 50 · 창 20 개 · 세대 100 부터</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>⚠️ 전부 <strong>추정</strong>이다. CLAUDE.md 규약대로 <strong>창 100 걸음과 300 걸음 두 길이로 최대 메모리를 재서 무엇에 비례하는지 확인</strong>한 뒤(<code>fit-probe</code>) 요구자 확인을 받고 돌린다. Qwen 역전파 때 "토큰당 0.32 GB" 를 재지 않고 90 GB 를 받아들였던 실수를 되풀이하지 않는다.</p>
+<h3 id="24-무엇을-목표로--손실과-제약">2.4 무엇을 목표로 — 손실과 제약</h3>
+<p><strong>왜 과제 손실만으로는 안 되나</strong>: 커넥톰을 고정해도 뉴런 매개변수의 여러 조합이 같은 과제 출력을 낸다(퇴화). Beiran &amp; Litwin-Kumar 2025 [13][P]: <em>"training a connectome-constrained student network to generate the task-related readout of the teacher does not always produce consistent dynamics"</em> · <strong>소수 뉴런의 기록이 있으면 풀린다</strong>(필요한 수는 망 크기가 아니라 동역학 차원에 비례 · N 300 에서 30 개 넘게). Lappalainen 은 해 50 개 앙상블로 불확실성을 표시했다 [1]. → 우리 손실 = <strong>생리 제약 + 과제 관문</strong>, 그리고 씨앗 앙상블(5~10).</p>
+<p><strong>생리 제약 후보 — 공개 자료(원문 · 자료 확인 수준 표시)</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>회로</th>
+<th>제약 양(무엇을 맞추나)</th>
+<th>출처 · 자료</th>
+<th>원자료 받을 수 있나</th>
+<th>확인</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>도망(LC/LPLC → GF)</td>
+<td>GF 반응 확률 0.5~1 · 반응당 발화 1~2 · 잠복 10~60 ms · 뇌 전체 &lt; 0.05 Hz · 섞은 배선 &lt; 0.1(이미 <code>bench/escape.py</code> 채점)</td>
+<td>von Reyn 2014 [29] · 2017 [28] · FLYCNS 정리</td>
+<td>2017 은 ModelDB 230400 모형 코드</td>
+<td>[S]/[A]</td>
+</tr>
+<tr>
+<td>LC/LPLC 다가옴 조율</td>
+<td>13 사구체의 다가옴 반응 상대 세기(이미 <code>loom.yaml</code>) · LPLC2 는 어두운 팽창에만 · 수용장 ≤ 60°</td>
+<td>Turner 2022 eLife [25] · Klapoetke 2017 [26]</td>
+<td>Turner: Dryad 53 GB · Klapoetke: 요청 시</td>
+<td>[P] · [P] · 자료 없음</td>
+</tr>
+<tr>
+<td>GF 합산</td>
+<td>GF = 각 크기(LPLC2) + 각속도(LC4) 선형 합</td>
+<td>Ache 2019 [27] · von Reyn 2017 [28]</td>
+<td>그림만</td>
+<td>[A]</td>
+</tr>
+<tr>
+<td>중심복합체 나침반</td>
+<td>EPG 봉우리 폭 FWHM 82.3 ± 11.5° · 어둠에서 30 s 넘게 유지 · 봉우리 속도 = 몸 각속도</td>
+<td>Seelig &amp; Jayaraman 2015 [30] · Turner-Evans 2017 [31]</td>
+<td>Turner-Evans: GitHub .mat 시행별 · Kim 2019 원자료 figshare 184 GB [32]</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>수평 · 수직계(HS · VS)</td>
+<td>방향 선택 · 등급 응답 · HSN/HSE/HSS 수용장 순서(우리가 이미 y 축 확인에 씀)</td>
+<td>Schnell 2010 [33]</td>
+<td>그림만</td>
+<td>[A]</td>
+</tr>
+<tr>
+<td>후각 입구</td>
+<td>수용체별 농도-반응(693 냄새 × 78 단위 · 0~1 정규화) · ORN→PN 압축 정규화(Rmax · σ 값)</td>
+<td>DoOR 2.0 [34] · Olsen 2010 [35]</td>
+<td>DoOR: R 자료 · Olsen: 그림</td>
+<td>[P] · [S]</td>
+</tr>
+<tr>
+<td>KC 희소성</td>
+<td>냄새당 KC 5~10 % 만 · 몇 발화 · APL 막으면 넓어짐</td>
+<td>Lin 2014 [36]</td>
+<td>그림</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Shiu 검증 집합</td>
+<td>단맛 → MN9 · 쓴맛 억제 · 물 · JO → aBN1 등 164 시험 91 %</td>
+<td>Shiu 2024 [37] · 결과 파일 Edmond</td>
+<td>모형 출력 · 코드 MIT</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>뇌 전체 활동</td>
+<td>68~73 신경절 ΔF/F 1.2 Hz(BrainTrace · Li 2026 이 맞춘 자료)</td>
+<td>Turner, Mann, Clandinin 2021 figshare [38]</td>
+<td>235 MB</td>
+<td>[P]</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>손실 구성(제안)</strong>: L = Σ_생리 w_k · (측정 − 목표)² / 허용폭² + L_과제(관문 통과 칸의 선형 해독 · 창 발화율을 대리 기울기로 미분) + 규제(매개변수가 초기값에서 멀어지는 정도). 생리 항은 <strong>판 번호로 잠근 목록</strong>(결과 보기 전에 적는다).</p>
+<p><strong>대조군 · 성공 기준</strong>(R-7469 F-006 그대로): 재배선 5 에 <strong>같은 매개변수 수 · 같은 절차 · 같은 씨앗</strong> · 학습 뒤 진짜 &gt; 재배선 앙상블(stats-v2) · 도망 반사 5 항목 유지 · 재배선도 똑같이 오르면 실패로 기록. 추가: <strong>학습 전 대 학습 후</strong>(진짜 배선) · 매개변수 씨앗 앙상블의 퍼짐을 결과에 적는다.</p>
+<h3 id="25-코드-설계-항목-i-v2-재료">2.5 코드 설계 항목 (I v2 재료)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>판</td>
+<td><code>sim-v3</code>(학습 매개변수 있음). 매개변수 파일 <code>data/graph/traced-v1.params-&lt;판&gt;.npz</code>: <code>tau_ms[T]</code> · <code>v_th_mV[T]</code> · <code>alpha[P]</code> · <code>pair_id[E]</code> · <code>types[T]</code> · 범위 이름 · 씨앗</td>
+</tr>
+<tr>
+<td>함수형 걸음</td>
+<td>지금 엔진과 <strong>같은 순서</strong>(상태 → 문턱 → 전달 → 리셋 · 불응 중 입력 버림)를 제자리 없이 · 문턱은 대리 기울기(정규화 최대 1 · β 는 규칙으로) · 시험: 대리 기울기를 끈 정방향이 지금 엔진과 <strong>발화 완전 일치</strong></td>
+</tr>
+<tr>
+<td>기울기 범위</td>
+<td><code>grad_scope</code>: 기울기가 흐르는 뉴런 집합 N_g(범위 이름으로) · 나머지는 detach</td>
+</tr>
+<tr>
+<td>명령</td>
+<td><code>fit-probe --window-ms 10,30 --scope escape</code>(메모리 · 시간 · 비례) → <code>fit --scope … --method cmaes\|sgbptt --targets physiology-v1 --brain real\|rewired-sK</code></td>
+</tr>
+<tr>
+<td>불변 검사</td>
+<td>학습 뒤 <code>edges.npz</code> 해시 · 부호 · α ≥ 0 · 매개변수 외 변경 0 — 시험으로</td>
+</tr>
+<tr>
+<td>기록</td>
+<td>학습 안내서 10장 대장 한 줄(손실 · 저장본 sha256 · 재배선과 나란히) · 도망 재채점</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-f-007--버섯체-가소성">3. F-007 — 버섯체 가소성</h2>
+<h3 id="31-그래프-실측--버섯체에-무엇이-있나-2026-09-23">3.1 그래프 실측 — 버섯체에 무엇이 있나 (2026-09-23)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>부품</th>
+<th>수</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>KC</strong>(class Kenyon_Cell)</td>
+<td><strong>4,064</strong> · 15 종류</td>
+<td>γ-m 1,342 · αβ-s 657 · αβ-m 536 · αβ-c 488 · α'β'-ap2 291 · γ-d 206 · α'β'-m 205 · α'β'-ap1 199 · αβ-p 129 · 나머지 11 · <strong>전부 아세틸콜린(+)</strong></td>
+</tr>
+<tr>
+<td><strong>MBON</strong></td>
+<td><strong>97</strong> · 37 종류(MBON01~35 + "-like" 3)</td>
+<td>아세틸콜린 50 · 글루탐산 26 · GABA 21</td>
+</tr>
+<tr>
+<td><strong>DAN</strong></td>
+<td>PAM 316 + PPL1 16 = <strong>332</strong>(PPL2 8 더하면 340) · 27 종류</td>
+<td>도파민 338 · 미정 2 · <strong>부호 전부 0</strong></td>
+</tr>
+<tr>
+<td>APL</td>
+<td>2</td>
+<td>GABA</td>
+</tr>
+<tr>
+<td>후각 투사 뉴런(ALPN)</td>
+<td>686</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>연결</th>
+<th>연결 수</th>
+<th>시냅스</th>
+<th>출발 → 도착 뉴런</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>KC → MBON</strong></td>
+<td><strong>61,210</strong></td>
+<td><strong>463,640</strong></td>
+<td>4,063 → 97</td>
+<td>연결당 시냅스 중앙 5 · 평균 7.6 · 90 % 18 · 최대 152 · ≥ 5 시냅스 33,496</td>
+</tr>
+<tr>
+<td>DAN → KC</td>
+<td>127,599(PAM · PPL1)</td>
+<td>223,045</td>
+<td>332 → 4,063</td>
+<td>구획별 도파민 입력</td>
+</tr>
+<tr>
+<td>DAN → MBON</td>
+<td>3,160</td>
+<td>39,711</td>
+<td>337 → 97</td>
+<td><strong>구획 대응표의 재료</strong>(아래)</td>
+</tr>
+<tr>
+<td>KC → DAN</td>
+<td>145,663</td>
+<td>281,862</td>
+<td>4,061 → 339</td>
+<td>KC 가 DAN 을 되먹인다</td>
+</tr>
+<tr>
+<td>MBON → DAN</td>
+<td>2,589</td>
+<td>11,309</td>
+<td>97 → 338</td>
+<td>되먹임(유충 [12장 28])</td>
+</tr>
+<tr>
+<td>APL ↔ KC</td>
+<td>4,633 / 4,693</td>
+<td>196,200 / 210,352</td>
+<td></td>
+<td>희소성 억제 고리</td>
+</tr>
+<tr>
+<td>PN → KC</td>
+<td>22,586</td>
+<td>390,928</td>
+<td>314 → 3,812</td>
+<td><strong>KC 하나가 받는 PN 수 평균 5.6 · 중앙 6</strong>(10~90 %: 3~8) · 받지 않는 KC 252</td>
+</tr>
+<tr>
+<td>KC → KC</td>
+<td>642,933</td>
+<td>1,153,845</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MBON → MBON</td>
+<td>1,606</td>
+<td>26,259</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>MBON 종류별 KC 입력(시냅스 상위)</strong>: MBON09 63,579(4 세포 · KC 2,257) · <strong>MBON11 41,460(2 세포 · KC 3,623 · 연결 4,184)</strong> · MBON01 40,888 · MBON05 36,320 · MBON06 25,465 · MBON03 24,004 · MBON07 22,840 · MBON12 22,603 · MBON14 22,217 · MBON02 18,671 · MBON22 16,084.
+DOOMFLY 가 가소성을 얹은 "KC→MBON11 연결 4,184 개"는 우리 그래프의 MBON11 연결 수와 <strong>정확히 같다</strong>(<a href="03-기대치와-사례.html">03</a>) — 같은 자료(MaleCNS)였다.</p>
+<p><strong>DAN → MBON 시냅스 상위 쌍(구획 추정의 그래프 근거)</strong>: PAM06→MBON03 3,296 · PAM10→MBON06 3,274 · <strong>PPL101→MBON11 2,311</strong> · PAM08→MBON05 2,197 · PAM11→MBON07 1,918 · PAM12→MBON09 1,804 · <strong>PAM01→MBON01 1,597</strong> · PAM04→MBON02 1,168 · PAM05→MBON26 1,132 · PPL103→MBON32 972 · PPL106→MBON14 860 · PPL103→MBON12 802 · PPL105→MBON13 657 · PPL105→MBON18 434 · PPL104→MBON16 302.
+DAN → KC 시냅스(DAN 종류별): PAM08 32,030 · PAM01 24,037 · PPL103 20,538 · PAM10 18,882 · PAM06 18,418 · PAM04 12,497 · PAM07 11,865 · PPL101 11,482 · PAM05 11,034 · PAM12 10,456 · PAM11 9,049 · PPL105 8,147 · PAM14 6,574 · PPL106 6,287.</p>
+<p>→ 구획은 손으로 만든 표가 아니라 <strong>그래프의 DAN→MBON 시냅스 표로</strong> 정할 수 있다(문헌 대응은 3.2 의 표로 교차 확인).</p>
+<h3 id="32-문헌--규칙--시간-창--구획과-정서">3.2 문헌 — 규칙 · 시간 창 · 구획과 정서</h3>
+<p><strong>연결 지도의 버섯체(hemibrain · Li 2020 [48][P])</strong>: 오른쪽 반구 KC 1,927(γ 701 · α′β′ 337 · αβ 889) · 구획 15(엽마다 5) · MBON 전형 21 종류 + 비전형 14 · PPL1 은 종류당 1 세포 · PAM 15 종류(3~26 세포) · 버섯체에 닿는 DAN 158 · MBON 하나가 받는 KC 122(MBON10)~<strong>1,694(MBON11)</strong> · KC 하나는 PN <strong>평균 6</strong>(발톱 6 개 · 발톱마다 PN 하나). FlyWire 는 반구당 KC 2,597/2,580(hemibrain 보다 30 % 많다 · Schlegel 2024 [12장 3D-24]). 우리 MaleCNS 수(KC 4,064 양쪽 · MBON 97 · DAN 332)는 제3자 저장소들의 수와 같다 [72][73].
+Takemura 2017(α 엽 FIB-SEM [49][P]): DAN→KC 시냅스는 <strong>KC 축삭 위의 축삭-축삭 접촉</strong> · DAN 은 MBON 에도 직접 시냅스(세 구획 모두) · <strong>KC→MBON 시냅스 중 DAN 이 직접 닿는 것은 6 %</strong> → 도파민은 시냅스마다가 아니라 <strong>구획 단위로 퍼지는 신호</strong>로 모형화하는 것이 자료에 맞다(3.3 의 D_c).</p>
+<p><strong>실험으로 잰 규칙</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>출처</th>
+<th>무엇을 쟀나</th>
+<th>규칙에 주는 것</th>
+<th>확인</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hige 2015 [50]</td>
+<td>냄새 1 s + PPL1-γ1pedc 광유전 4 펄스(2 Hz · 냄새 시작 0.2 s 뒤) <strong>한 번</strong> 짝짓기 → MBON-γ1pedc&gt;α/β 의 CS+ 반응 118 → 24 발화(약 80 % ↓) · EPSC 전하 −90 ± 3.7 % · 짝 안 지은 냄새 110 → 83 · 40 분 넘게 유지</td>
+<td><strong>뒤 짝짓기(DAN 0.5 s 먼저)는 변화 없음</strong> · 다른 구획 DAN 은 효과 없음(<em>"does not spill over into the next compartment"</em>) · MBON 발화를 막아도(QX-314) 일어남 → <strong>KC 활동 × DAN 이면 충분</strong>(이종시냅스)</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Aso &amp; Rubin 2016 [51]</td>
+<td>DAN 종류마다 정서 · 유지 시간: PPL1-γ1pedc 혐오(10 분 유지 · 24 h 에 소멸) · PPL1-γ2α′1+α′2α2 혐오(간격 훈련 1~4 일) · PPL1-α3 혐오 LTM · PAM-α1 보상 LTM(반복) · PAM-β1/β2 보상(1 일) · PAM-γ5+β′2a 보상</td>
+<td>시간 창: 10 s 냄새 시작 뒤 <strong>30 s 안의 DAN</strong> → 혐오 · 냄새보다 <strong>20~60 s 앞선 DAN</strong> → 안도(보상) 기억 · 프로토콜 60 s 냄새 + 1 s 빛 30 회 · <em>"a single DAN cell type can either write or reduce an aversive memory, or write an appetitive memory, depending on when it is activated"</em></td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Handler 2019 [52]</td>
+<td>순서를 <strong>수백 ms</strong> 만 바꿔도 회피 ↔ 접근</td>
+<td>앞 짝짓기(냄새 먼저) 약화(DopR1 · cAMP) · 뒤 짝짓기 강화(DopR2 · Ca)</td>
+<td>[A]+본문 일부</td>
+</tr>
+<tr>
+<td>Cohn 2015 [53]</td>
+<td>구획 독립(γ4 DAN 은 γ2 MBON 에 무효) · PAM + KC 자극 500 ms 안 → γ4 MBON 약화 · 설탕은 γ4 · γ5 DAN 을 켜고 γ2 · γ3 DAN 을 끈다</td>
+<td>구획 규칙 · 보상 DAN = γ4 · γ5</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Berry 2018 [54]</td>
+<td>짝 안 지은 DAN 활동은 기억을 <strong>지운다</strong>(망각)</td>
+<td>무작위 보상 대조군의 예측: 연합 안 생김 + 있던 것도 지워짐</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Owald 2015 [55] · Perisse 2016 [56]</td>
+<td>M4/6(MBON-β2β′2a · β′2mp · γ5β′2a · 글루탐산) 활성 → 회피 · MBON-γ1pedc&gt;α/β(GABA)가 M4/6 를 앞먹임 억제 · 혐오 학습은 이 억제를 줄여 회피를 푼다 · 3~4 h 유지</td>
+<td>정서 읽기의 회로</td>
+<td>[P]</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>정서 규칙(Aso 2014b [57][P])</strong>: <em>"all MBONs eliciting aversion were glutamatergic and all the MBONs eliciting attraction were either GABAergic or cholinergic"</em>. 규칙 자체는 하나 — <strong>DAN 은 자기 구획의 KC→MBON 을 약화한다</strong> — 정서는 그 구획에 어느 MBON 이 있느냐로 정해진다: 처벌 DAN(PPL1)은 접근 MBON 을, 보상 DAN(PAM)은 회피 MBON 을 약화한다.</p>
+<p><strong>구획 대응 — 우리 그래프의 DAN→MBON 상위 쌍(3.1) 을 명명법(Aso 2014a 표 1 [57] · Li 2020 [48])으로 교차 확인</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>그래프 상위 쌍</th>
+<th>DAN 이름</th>
+<th>MBON 이름(전달물질 · 타고난 구실)</th>
+<th>맞나</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PPL101 → MBON11</td>
+<td>PPL1-γ1pedc(처벌)</td>
+<td>MBON-γ1pedc&gt;α/β(GABA · 접근 · M4/6 억제)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PPL103 → MBON12 · 31 · 32 · 35</td>
+<td>PPL1-γ2α′1(처벌)</td>
+<td>MBON-γ2α′1(ACh · 접근) · 나머지 셋은 구획 미확인</td>
+<td>✓ / ?</td>
+</tr>
+<tr>
+<td>PPL105 → MBON13 · 18</td>
+<td>PPL1-α′2α2(처벌)</td>
+<td>MBON-α′2 · α2sc(ACh · 접근)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PPL106 → MBON14</td>
+<td>PPL1-α3(처벌 · LTM)</td>
+<td>MBON-α3(ACh · 접근)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PPL104 → MBON16</td>
+<td>PPL1-α′3</td>
+<td>MBON-α′3ap(ACh)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PAM01 → MBON01</td>
+<td>PAM-γ5(보상)</td>
+<td>MBON-γ5β′2a(Glu · 회피)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PAM04 → MBON02</td>
+<td>PAM-β2(보상)</td>
+<td>MBON-β2β′2a(Glu · 회피)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PAM06 · 05 → MBON03 · 04 · 26</td>
+<td>PAM-β′2m · β′2p(보상)</td>
+<td>MBON-β′2mp · β′2mp_bilateral(Glu · 회피) · MBON26 = β′2d [S]</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PAM08 → MBON05</td>
+<td>PAM-γ4(보상)</td>
+<td>MBON-γ4&gt;γ1γ2(Glu · 회피)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PAM10 → MBON06</td>
+<td>PAM-β1(보상)</td>
+<td>MBON-β1&gt;α(Glu · 회피)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PAM11 → MBON07</td>
+<td>PAM-α1(보상 LTM)</td>
+<td>MBON-α1(Glu)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PAM12 → MBON09</td>
+<td>PAM-γ3(설탕에 억제)</td>
+<td>MBON-γ3β′1(GABA · 접근)</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ <strong>구획은 그래프의 DAN→MBON 시냅스 표로 정해도 문헌과 맞는다.</strong> MBON25 · 31 · 32 · 34 · 35 의 구획은 확인 못 함(비전형 · Li 2020 이후 번호).</p>
+<p><strong>모형의 식과 값</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>모형</th>
+<th>뉴런</th>
+<th>갱신식</th>
+<th>값</th>
+<th>확인</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jiang &amp; Litwin-Kumar 2021 [58]</td>
+<td>속도 · Δt 0.5 s</td>
+<td>dw/dt = r̄_DAN·r_KC − r̄_KC·r_DAN(바 = 저역 흔적 · 앞 짝짓기 → 약화 · 뒤 → 강화) + β·r̄_DAN · τ_W dW/dt = −W + w</td>
+<td>τ_W <strong>5 s</strong> · w ∈ [0, 0.05] · 초기 = 최대 · KC 10 % 활성(이진) · 흔적 시간 상수는 본문에서 못 뽑음</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Bennett 2021 [59]</td>
+<td>속도 · 시행</td>
+<td>보상 예측 오차 Δw± = ηk(d∓ − d±)</td>
+<td>η <strong>0.025</strong>(bioRxiv) · 실험 439 개 맞춤</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Springer &amp; Nawrot 2021 [60]</td>
+<td>속도 · 시행</td>
+<td>w_app ← w_app − PPL1·δ(KC &gt; 0 일 때 · 바닥 0)</td>
+<td>δ <strong>0.0045</strong> · KC 2,000 중 상위 <strong>5 %</strong> · APL 없음</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Zhao 2021(Senn) [61]</td>
+<td>속도</td>
+<td>dw/dt = η(s − v)õ</td>
+<td>냄새 흔적 τ_o <strong>14.25 s</strong>(자취 조건화 5~30 s 재현)</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Gkanias 2022 [62]</td>
+<td>속도</td>
+<td>ΔW = δ_j[k_i + W − w_rest] · DopR1/DopR2 부호</td>
+<td>DAN→MBON 대응표 명시</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Jürgensen 2024(유충 · <strong>전도성 LIF</strong>) [63]</td>
+<td>스파이크</td>
+<td>Δw_i = −a·e_i(t)·R(t) ≤ 0 · e_i 는 KC 발화마다 1 로 뒤 지수 감쇠 · 항상성 (w_init − w)·M·h</td>
+<td>a 0.6~0.8 nS · w ≥ 0 · 흔적 상수는 표 S1(못 뽑음)</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Kennedy(bioRxiv) [64]</td>
+<td><strong>LIF KC</strong></td>
+<td>도파민 관문 2 부분 규칙 · 적격 흔적</td>
+<td>발톱 6.8 ± 1.7 · 문턱으로 20 % 활성 → APL 이 <strong>10 %</strong> 로 반감 · αβ · γ 는 쉬는 상태 침묵</td>
+<td>[P]</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>KC 희소성</strong>: 발톱 2~11(평균 7) · 무작위 사구체 조합(Caron 2013 [65]) · KC 는 문턱이 높고 PN 수렴 약 10 · 발화 몇 개(Turner 2008 [66][A]) · 여러 발톱이 함께 켜져야 발화(Gruntman &amp; Turner 2013 [67][A]) · 냄새당 5~10 % · APL 막으면 넓어진다(Lin 2014 [36][P]) · APL 억제는 국소(Amin 2020 [68]) · ⚠️ KC 를 20 % 넘게 켜는 냄새가 잘 학습되고 10 % 아래는 못 배운다(MacKenzie 2025 [69][A]) → <strong>너무 희소하게 맞추지 말 것</strong>.
+침묵 LIF 에서 APL 이 없어도 희소성은 문턱과 낮은 PN 수렴으로 대부분 생긴다(Turner 2008 · Kennedy) · APL 은 농도 · 냄새에 걸쳐 희소성을 고르게 하고 비슷한 냄새를 가른다(Lin 2014). APL 은 그래프에 GABA 로 있으니 그대로 둔다. <strong>먼저 잴 것은 냄새당 KC 발화 비율</strong>이다.</p>
+<p><strong>이전 시도 — 전부 학습 입증 실패</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>시도</th>
+<th>무엇을 했나</th>
+<th>결과 · 스스로 적은 원인</th>
+<th>확인</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DoomFly [70]</td>
+<td>MaleCNS · KC→MBON11 4,184 연결 · 기준 중심 반헵 규칙(Huang 2024 [71] 적응) · η 0.001/10 ms · 흔적 1 s · 기억 감쇠 1,800 s · 범위 0.1~2× · 손상 시 PPL101 2 세포에 200 ms +4 mV</td>
+<td><em>"not demonstrated learned survival"</em> · v6 관문(시각 회복 · 조건화 · 생존) 통과 못 함 · <strong>얼린/섞은 대조군은 돌리지 않음</strong> · 상수 보정 필요</td>
+<td>[P] README · 코드</td>
+</tr>
+<tr>
+<td>FlyTris [72]</td>
+<td>속도 버섯체 · PAM 316 + PPL1 16 · MBON 97</td>
+<td>학습률이 30~300 배 높았음 · lr ≤ 0.03 에서 안정 · <em>"MB silenced is the control that matters … learning does nothing at all"</em></td>
+<td>[S]</td>
+</tr>
+<tr>
+<td>malecns-lab [73]</td>
+<td>속도 · 시행 · KC 4,064 · MBON 97 · PAM 316 · 오차 = 보상 − 예측</td>
+<td>모형이 배우고 뒤집지만 <strong>"섞은 망도 똑같이 배운다"</strong></td>
+<td>[S]</td>
+</tr>
+<tr>
+<td>동료 심사 전체 뇌 스파이크 + 버섯체 가소성</td>
+<td>—</td>
+<td><strong>없음</strong>(2023~2026 검색)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>두 저장소가 처음 부딪힌 것이 <strong>학습률 크기</strong>였다 → η 는 Hige 의 "한 번 짝짓기 → 50~90 % 감소"로 <strong>먼저 보정</strong>한 뒤 몸을 붙인다.</p>
+<h3 id="33-설계--규칙-판-plasticity-v1제안--가정은-그렇게-표시">3.3 설계 — 규칙 판 <code>plasticity-v1</code>(제안 · 가정은 그렇게 표시)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>부품</th>
+<th>제안</th>
+<th>가정/출처</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>바뀌는 곳</td>
+<td><strong>KC → MBON 61,210 연결의 세기만</strong>(연결당 배율 m_ij ∈ [m_min, 1] · 초기 1). 나머지 2,550 만 연결 불변 · KC→MBON 연결의 존재 · 시냅스 수 · 부호 불변 · <strong>DAN 부호는 0 그대로</strong>(DAN 발화는 조절 신호로만 읽는다)</td>
+<td>R-7469 F-007 · Takemura 2017(DAN 은 구획 단위 신호)</td>
+</tr>
+<tr>
+<td>3요소 규칙</td>
+<td>KC 흔적 dē_i/dt = −ē_i/τ_e + Σ δ(t − t_i^spike) · 구획 신호 dD_c/dt = −D_c/τ_D + Σ_{DAN∈c} δ(t − t^spike) · <strong>dm_ij/dt = −η · D_c(j)(t) · ē_i(t) · m_ij</strong>(곱셈형 → 0 아래로 안 감) · m_ij ∈ [m_min, 1] · 구획 c(j) = MBON j 에 시냅스가 가장 많은 DAN 종류(3.1 표 · 3.2 로 교차 확인)</td>
+<td>방향 · 이종시냅스 · 구획 독립은 Hige 2015 · Cohn 2015 [P] · 식 형태는 Jürgensen 2024(유충 LIF) [P]</td>
+</tr>
+<tr>
+<td><strong>τ_e</strong> KC 흔적</td>
+<td><strong>5 s</strong>(1~20 s 사이에서 규칙으로 고름 · 결과 보기 전에)</td>
+<td>창의 경계는 원문: 냄새 시작 0.2 s 뒤 DAN 이면 됨(Hige) · 500 ms 안(Cohn) · 10 s 냄새 시작 뒤 30 s 안이면 씀(Aso &amp; Rubin) · Zhao/Senn 14.25 s · DoomFly · Jiang 류 1 s → <strong>값은 선언</strong></td>
+</tr>
+<tr>
+<td><strong>τ_D</strong> DAN 신호</td>
+<td><strong>0.2~0.5 s</strong></td>
+<td>Hige 4 펄스 2 Hz · Handler 수백 ms 민감 → 선언</td>
+</tr>
+<tr>
+<td><strong>η</strong></td>
+<td>값이 아니라 <strong>목표로 보정</strong>: 짧은 짝짓기 <strong>한 번</strong>(냄새 1 s × DAN 1 s)에 그 구획 MBON 의 CS+ 구동이 <strong>50~90 %</strong> 줄고 짝 안 지은 냄새는 <strong>25 % 미만</strong> 바뀌게</td>
+<td>Hige 118 → 24 발화 · EPSC −90 ± 3.7 % · 짝 안 지은 110 → 83 [P] · 문헌 단위 값(Springer 0.0045/시행 · Bennett 0.025 · FlyTris ≤ 0.03 · DoomFly 0.001/10 ms — 검증 없음)은 우리 단위와 달라 참고만</td>
+</tr>
+<tr>
+<td>m_min</td>
+<td><strong>0.1</strong>(또는 0)</td>
+<td>Springer · Jürgensen 바닥 0 · DoomFly 0.1× · Jiang [0, 0.05] → 선언</td>
+</tr>
+<tr>
+<td>위 한계</td>
+<td>1(강화 없음)</td>
+<td>Jiang 초기 = 최대</td>
+</tr>
+<tr>
+<td>앞뒤 순서</td>
+<td>1판은 <strong>앞 짝짓기(KC 먼저 → DAN)만 약화</strong> · 뒤 짝짓기는 변화 없음</td>
+<td>Hige 2015(0.5 s 뒤 짝짓기 변화 없음) [P] · 뒤 짝짓기 강화(Handler 2019 · Jiang 식 4) 는 <strong>2판</strong></td>
+</tr>
+<tr>
+<td>회복 τ_rec</td>
+<td>에피소드 안에서는 없음 · 필요하면 <strong>1~3 h</strong></td>
+<td>Hige ≥ 40 분 · Perisse 3~4 h · Aso &amp; Rubin: γ1pedc 10 분 유지 · 24 h 소멸 · DoomFly 1,800 s(선택)</td>
+</tr>
+<tr>
+<td>가르치는 신호</td>
+<td><strong>세계 사건 → DAN 직접 자극</strong>(포아송 킥 · 광유전 실험 흉내): 먹이 도착 → <strong>보상 DAN = PAM01/15(γ5) · PAM02(β′2a) · PAM07/08(γ4) · PAM03/04(β2) · PAM11(α1)</strong> → MBON01/02/03/05/07(글루탐산 · 회피)이 약해진다 · 부딪힘 → <strong>처벌 DAN = PPL101(γ1pedc) · PPL103(γ2α′1) · PPL106(α3)</strong> → MBON11/12/14(접근)이 약해진다 · 길이 약 1 s · 종류 · 시간은 규칙 판으로</td>
+<td>회로가 스스로 DAN 을 못 켠다(침묵 LIF · 먹기 회로 재현 실패) — Aso &amp; Rubin 2016 의 실험 설계가 바로 이것(DAN 광유전 활성 + 냄새) · 대응은 3.2 표 [P]</td>
+</tr>
+<tr>
+<td>과제</td>
+<td>FlyGym 냄새 두 가지: CS+(지금 먹이 냄새 = ORN_DM1 · VA2) 와 CS−(다른 사구체 ORN 집합 · 선언) · 먹이는 CS+ 에서만 · 학습 에피소드 N 회 → 시험 에피소드(보상 없음)</td>
+<td>지금 task-v2 에 냄새는 하나 → <strong>task-v3</strong>(냄새 둘) 필요</td>
+</tr>
+<tr>
+<td>읽는 곳</td>
+<td><code>value</code> 채널(MBON 종류 × 좌우 · 발화율 · 탈분극) — 학습 전 · 후에 CS+ 대 CS− 선형 해독(stats-v2)</td>
+<td>지금 채널 그대로</td>
+</tr>
+<tr>
+<td>행동 읽기(2차)</td>
+<td>회로가 낸 하강 뉴런(DNa02 좌우 · DNp09) 발화 차이로 CS+ 쪽 돌기 — MBON → 하강 경로가 침묵 LIF 에서 발화를 내는지 <strong>먼저 잰다</strong>(모르면 결과에 "못 잼"이라 적는다)</td>
+<td>미확인</td>
+</tr>
+<tr>
+<td><strong>대조군</strong></td>
+<td>① 가소성 끔 ② <strong>무작위 보상</strong>(같은 수의 DAN 자극을 사건과 무관하게 — 문헌 예측: 연합 안 생기고 있던 것도 지워짐 [54]) ③ <strong>재배선</strong> — ⚠️ KC→MBON 도착만 섞는 것은 <strong>약한 대조군</strong>이다(MBON 하나가 이미 KC 대부분을 받아 섞어도 거의 안 바뀜 · malecns-lab 의 "섞은 망도 배운다"가 이것) → <strong>PN→KC 를 섞는다</strong>(냄새 정체성이 깨짐 · MacKenzie 2025 · malecns-lab 방식) ④ <strong>DAN↔구획 바꿔치기</strong>(PAM 과 PPL1 의 구획을 서로 바꿈 · 학습된 정서가 <strong>뒤집혀야</strong> 규칙이 구획을 쓰고 있다는 증거) ⑤ 학습 전</td>
+<td>R-7469 · DoomFly · malecns-lab 실패 사례 · Berry 2018</td>
+</tr>
+<tr>
+<td>성공 기준</td>
+<td>학습 뒤 <code>value</code> 채널의 CS+/CS− 해독이 찍기를 넘고 <strong>①②③ 모두보다 높다</strong>(stats-v2 · 에피소드 블록 순열) · ④ 에서 정서가 뒤집힌다 · 행동 읽기는 있으면 추가</td>
+<td>R-7469 F-007</td>
+</tr>
+<tr>
+<td>먼저 잴 것</td>
+<td>(i) sim-v2 에서 CS+ · CS− 자극 시 <strong>KC 발화 비율</strong>(문헌 5~10 % · 10 % 아래면 못 배운다는 보고도 [69]) — 0 % 나 50 % 면 가소성 이전 문제 · 손으로 고치지 않고 기록(F-006 목표로) (ii) MBON 이 KC 입력으로 발화하나 (iii) DAN 자극이 구획 MBON 을 바꾸나 (iv) <strong>η 보정</strong> — 몸 없이 짝짓기 한 번으로 Hige 의 감소폭이 나오는 η</td>
+<td>뇌 시뮬레이션 — 잠금 뒤 · 가벼움(창 몇 개)</td>
+</tr>
+<tr>
+<td>무게</td>
+<td>가소성 계산은 61,210 연결의 흔적 · 배율(&lt; 1 MB) — <strong>가볍다</strong>. 무게는 에피소드 수(몸 + 뇌 · 결정당 약 12~18 s)</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>DOOMFLY 는 왜 실패했나(추정 · 저장소 기록만으로)</strong>: MBON11 하나에만 · 구획 특이성 없이 · KC 희소성 확인 없이 · 손상 시 PPL101 200 ms 자극 하나로 — "학습된 생존을 보이지 못했다"고 스스로 적었다(<a href="03-기대치와-사례.html">03</a>). 우리는 ① 먼저 KC 희소성과 MBON 반응을 잰다 ② 구획을 그래프로 정한다 ③ 대조군 넷을 설계에 먼저 넣는다 ④ 행동이 아니라 <strong>채널 해독</strong>을 1차 기준으로 둔다(행동은 하강 경로가 살아 있어야 한다).</p>
+<h2 id="4-눈-안의-앞--뒤-축--f-008-2단계의-미확정을-닫는다">4. 눈 안의 앞 · 뒤 축 — F-008 2단계의 미확정을 닫는다</h2>
+<h3 id="41-공개-정의--앞쪽--hex1--hex2-가-큰-쪽-p">4.1 공개 정의 — 앞쪽 = hex1 − hex2 가 큰 쪽 [P]</h3>
+<ul>
+<li><strong>MaleCNS 시각 경로 논문</strong>(Nern 연구실 · Cell 2026 · bioRxiv v2 본문 [39][P]) 방법 "Columns and hexagonal coordinates": <em>"we assigned L3, R7 and R8 neurons to hexagonal coordinates (hex1_id, hex2_id) based on the medulla column ROI containing the largest number of synapses"</em> · <em>"x = (hex1_id − hex2_id and y = hex1_id + hex2_id − 22 … (h,v) coordinates defined by h = x"</em>.
+  그림 1b 설명: <em>"a coordinate system where high h corresponds to anterior and high v to dorsal positions in the visual field"</em>. 그림에서 h 화살표는 <strong>왼쪽 = 앞쪽</strong>, v 는 <strong>위 = 등쪽</strong>(직접 봄).</li>
+<li><strong>Nern 2025 Nature</strong> [40][P]: 그림 3a — <em>"p and q denote hexagonal coordinates; h and v indicate the horizontal and vertical axes of the eye"</em> · <em>"Correspondence to the hexagonal grid of the eye looking outwards through the right eye from inside head"</em> · 머리 그림에서 앞쪽이 왼쪽, h 화살표가 왼쪽(직접 봄). → hex1 = q 방향(앞-등쪽) · hex2 = p 방향(뒤-등쪽)으로 <strong>추론</strong>(그림 기하 + 위 식 · 문장으로 적힌 곳은 못 찾음).</li>
+<li>neuPrint 칸 <code>assignedOlHex1/2</code> ↔ <code>hex1_id/hex2_id</code>: Nern 2025 코드 저장소의 기둥 ROI 이름 <code>ME_R_col_&lt;hex1&gt;_&lt;hex2&gt;</code> 로 확인 [40][P · 코드 GPL-3 — 읽기만 · 쓰지 않음].</li>
+<li><strong>Zhao 2025</strong>(눈 지도 · FAFB 암컷 [41][P]): 같은 (h, v) 규약 · +h = 시야 앞쪽 · T4b(뒤→앞 운동 선호)의 선호 방향이 +h. 단 FAFB 기둥 번호 기준이라 MaleCNS 로 바로 옮기는 표 · 함수는 <strong>없다</strong>.</li>
+<li>⚠️ FlyWire 쪽 규약(OpticLobe.jl [46])은 <strong>수질 해부 기준</strong>이라 첫 시교차로 앞뒤가 뒤집혀 있다(+h = 뒤쪽). 섞지 않는다.</li>
+</ul>
+<p>→ 우리 <code>x = hex2 − hex1</code> 은 <strong>−h</strong> 다. <strong>앞쪽 = x 음수 · 뒤쪽 = x 양수.</strong> y = hex1 + hex2 = 등쪽(이미 확인)은 논문의 v 와 같다.</p>
+<h3 id="42-그래프에서-독립-검증--lc4-의-하강-뉴런-시냅스-기울기">4.2 그래프에서 독립 검증 — LC4 의 하강 뉴런 시냅스 기울기</h3>
+<p>Dombrovski et al. 2023 Nature [42][P]: <em>"antiparallel synaptic number gradients along the lobula anterior–posterior (A–P) axis for DNp02 and DNp11"</em> · <em>"anterior LC4 neurons that provide relatively more drive to DNp02"</em> · <em>"posterior LC4 neurons become more active and drive DNp11"</em> · DNp02 는 앞쪽 자극에 더 발화, DNp11 은 반대 · <strong>EM 시냅스 수로 잰 것</strong>(FAFB 55 LC4 · hemibrain 에서도 같음) → 우리 측정과 같은 종류다. DNp04 · GF 에는 앞뒤 기울기 없음. LPLC2 는 위아래로 나뉨(등쪽 LPLC2 가 GF 를 더 세게).</p>
+<p>우리 그래프(<code>runs/lc4-dn-axis-20260923.json</code> · 시각 투사 뉴런 좌표는 retino-v1 · 하강 뉴런은 종류마다 2 개 있음):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>출발 → 도착</th>
+<th>시냅스(L / R)</th>
+<th>x 와의 상관(L / R)</th>
+<th>y 와의 상관(L / R)</th>
+<th>시냅스 가중 평균 x(전체 평균 대비)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LC4 → DNp02</strong></td>
+<td>2,279 / 1,930</td>
+<td><strong>−0.759 / −0.845</strong></td>
+<td>−0.175 / −0.113</td>
+<td>−0.36 · −0.65(전체 2.3 · 2.7)</td>
+</tr>
+<tr>
+<td><strong>LC4 → DNp11</strong></td>
+<td>2,022 / 1,644</td>
+<td><strong>+0.733 / +0.795</strong></td>
+<td>+0.490 / +0.451</td>
+<td>+6.9 · +7.2</td>
+</tr>
+<tr>
+<td>LC4 → DNp04</td>
+<td>6,811 / 4,786</td>
+<td>−0.116 / −0.281</td>
+<td><strong>−0.657 / −0.631</strong></td>
+<td>(배쪽 LC4 가 더)</td>
+</tr>
+<tr>
+<td>LC4 → DNp01(GF)</td>
+<td>3,782 / 2,580</td>
+<td>−0.149 / +0.111</td>
+<td>+0.123 / +0.269</td>
+<td>기울기 없음 — 논문과 같다</td>
+</tr>
+<tr>
+<td>LPLC2 → DNp04</td>
+<td>1,957 / 1,441</td>
+<td>−0.785 / −0.690</td>
+<td>−0.190 / −0.187</td>
+<td>논문에 없음 — 참고</td>
+</tr>
+<tr>
+<td>LPLC2 → DNp01</td>
+<td>2,642 / 2,220</td>
+<td>−0.144 / −0.101</td>
+<td><strong>+0.681 / +0.773</strong></td>
+<td>등쪽 LPLC2 → GF 더 세게(논문과 방향 같다)</td>
+</tr>
+<tr>
+<td>LPLC1 → DNp11</td>
+<td>542 / 499</td>
+<td>+0.695 / +0.604</td>
+<td></td>
+<td>논문은 LPLC1→PLP219 앞뒤 기울기만</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>DNp02(앞쪽) 시냅스는 x 가 <strong>작을수록</strong> 많고 DNp11(뒤쪽)은 <strong>클수록</strong> 많다 · 양 반구 같다 → <strong>앞쪽 = x 음수</strong>. 4.1 의 공개 정의와 <strong>독립적으로 일치</strong>한다.</li>
+<li>GF 에 기울기가 없다는 것, 등쪽 LPLC2 → GF 가 세다는 것도 논문과 같다 — 우리 retino-v1 좌표 계산(입력 기둥 가중 평균)이 그럴듯하다는 방증.</li>
+<li>DNp04 의 배쪽 기울기(y −0.66 / −0.63)는 논문이 다루지 않았다 — <strong>확인도 반박도 아님</strong>.</li>
+</ul>
+<h3 id="43-결론과-retino-v2-제안">4.3 결론과 retino-v2 제안</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>제안</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>앞뒤 축</td>
+<td><code>h = hex1 − hex2</code>(앞쪽 +) · <code>v = hex1 + hex2</code>(등쪽 +) — 공개 정의와 이름을 맞춘다(지금 x 는 −h)</td>
+</tr>
+<tr>
+<td>방위 변환</td>
+<td>h 의 [최소, 최대] 를 방위 범위로 <strong>선형</strong> 대응(고도와 같은 근사 · 선언). 눈 하나의 방위 폭은 Zhao 2025 의 눈 지도로 정하되 FAFB → MaleCNS 이식이 없으니 <strong>범위는 선언 값</strong>으로 적고 앞쪽 0° 근처가 두 눈에 겹침(양안 영역)을 허용</td>
+</tr>
+<tr>
+<td>왼쪽 눈</td>
+<td>거울(방위 부호 반전). 왼쪽 반구도 같은 h 부호를 주는지는 문장 확인이 없으나 <strong>양 반구 상관이 같은 부호</strong>라 같은 규약으로 본다</td>
+</tr>
+<tr>
+<td>뒤섞은 대응표 대조</td>
+<td>방위를 섞은 표 · 고도를 섞은 표 둘 다(R-7469 F-008 2단계 대조군)</td>
+</tr>
+<tr>
+<td>보조 검사(선택)</td>
+<td>T4a/T4b 수상돌기 벡터: Mi9 입력 기둥 무게중심 → Mi4 · C3 · CT1 입력 기둥 무게중심이 선호 방향(T4a 앞→뒤 · T4b 뒤→앞) [43][44][45][P 각각 · 조합은 추론]. T4c/T4d 로 y 를 먼저 검증한 뒤 읽는다</td>
+</tr>
+<tr>
+<td>남은 것</td>
+<td>Nern 2025 방법 본문(열지 못함) · MaleCNS 공개 기록에 <code>assignedOlHex</code> 설명 없음 · v 의 정규화 식(그림 차단)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-종합--순서--무게--요구자-확인-지점">5. 종합 — 순서 · 무게 · 요구자 확인 지점</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>순서</th>
+<th>할 일</th>
+<th>무게</th>
+<th>요구자 확인</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>retino-v2(앞뒤 축) — 대응표 다시 만들기 · 방위 칸 · 뒤섞은 대응표</td>
+<td>가벼움(CPU 초)</td>
+<td>아니오 — 단 <strong>자료 v2 는 retino-v1 로 모았으므로</strong> 새 대응표는 v3 자료나 시각 입력만 다시 넣는 실험(<code>stim.npz</code>)에 쓴다</td>
+</tr>
+<tr>
+<td>2</td>
+<td>F-006 1단계 — 기울기 없음(CMA-ES · P ≤ 50 · 도망 범위 · 생리 손실) · 먼저 <code>fit-probe</code></td>
+<td>중간(정방향만 · 시간)</td>
+<td><strong>예</strong>(뇌 반복 수천 회)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>F-006 2단계 — 함수형 걸음 + 대리 기울기 + 체크포인트 · <code>fit-probe</code> 로 비례 확인 → 공간 125 · 도망 2,125</td>
+<td>무거움(시간) · 메모리는 체크포인트로 작게</td>
+<td><strong>예</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>F-007 먼저 잴 것 (i)~(iii) → task-v3(냄새 둘) → 규칙 판 → 대조군 넷</td>
+<td>중간(에피소드)</td>
+<td><strong>예</strong>(수집)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>(b) 속도 근사 · (c) 온라인 흔적은 3 이 막힐 때</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>F-006 · F-007 은 R-7469 순서대로 <strong>전달(F-004 · F-005) 판정 뒤</strong>에 한다 — 회로와 전달을 동시에 바꾸면 무엇 덕인지 가를 수 없다.</p>
+<h2 id="6-확인하지-못한-것--정직-목록">6. 확인하지 못한 것 · 정직 목록</h2>
+<ul>
+<li>Lappalainen 의 GPU 메모리 · 벽시계 시간은 논문 · 코드 어디에도 없다. 우리 메모리 · 시간 수치는 <strong>전부 계산 · 추정</strong>이며 <code>fit-probe</code> 로 재기 전에는 계획 근거로만 쓴다.</li>
+<li>속도 모형 → LIF 이식이 초파리 모형에서 검증된 사례를 찾지 못했다. BrainTrace 의 초파리 맞춤은 "시냅스 가중치"(저계수)를 배운 것이라 우리 "종류 단위"와는 다르다.</li>
+<li>세포 종류에 매개변수를 묶어 배운 <strong>스파이크</strong> 망 논문은 찾지 못했다(층 단위 τ 공유 [10] · 뉴런별 τ [11] 뿐). Lappalainen 은 속도 모형이다.</li>
+<li>CMA-ES 의 차원 상한을 Hansen 원문에서 확인하지 못했다("저~중간 차원에 성공적" [16]). BO &lt; 20 차원 [18] · SNPE &gt; 30 어려움 [20] 은 원문.</li>
+<li>Olsen 2010 의 정규화 매개변수 값 · Honegger 2011 의 "5 %" 는 2차 자료.</li>
+<li>앞뒤 축: Nern 2025 방법 본문 · 왼쪽 눈의 hex 부호 규약 문장 · MaleCNS 기둥 → (방위, 고도) 표는 없다. 방위 각도 변환은 우리 선언이다.</li>
+<li>버섯체: MBON25 · 31 · 32 · 34 · 35 의 구획 · MaleCNS 논문 본문의 버섯체 수(제3자 저장소 수만) · Jiang 2021 · Jürgensen 2024 의 흔적 시간 상수 · Handler 2019 의 정확한 간격과 감소폭 · Aso &amp; Rubin 프로토콜의 빛 30 회 대 60 회(추출 셋 중 둘이 30). 규칙 값(τ_e · τ_D · m_min)은 <strong>선언</strong>이고 창의 경계만 원문이다.</li>
+<li>DOOMFLY 실패 원인은 저장소 기록(스스로 적은 것)으로 추정한 것이다.</li>
+<li>이번에 새로 잰 것(종류 쌍 수 · 버섯체 연결 수 · LC4 기울기)은 <strong>그래프 조회</strong>이고 시뮬레이션이 아니다. KC 희소성 · MBON 반응 · DAN 자극 효과는 잠금이 풀린 뒤 창 몇 개로 잰다.</li>
+</ul>
+<h2 id="참고-문헌">참고 문헌</h2>
+<p>회로 학습 방법
+1. Lappalainen et al. 2024, Nature 634:1132 — https://www.nature.com/articles/s41586-024-07939-3 [X] · 본문 PMC11525180 [P] · bioRxiv https://www.biorxiv.org/content/10.1101/2023.03.11.532232v1.full [P] · flyvis https://github.com/TuragaLab/flyvis · https://turagalab.github.io/flyvis/reference/network/ [P]
+2. Neftci, Mostafa &amp; Zenke 2019, IEEE SPM — https://arxiv.org/abs/1901.09948 [P]
+3. Zenke &amp; Vogels 2021, Neural Comput — https://direct.mit.edu/neco/article/33/4/899/97482 [A] · https://www.biorxiv.org/content/10.1101/2020.06.29.176925v1.full [P]
+4. Eshraghian et al. 2023, Proc IEEE — https://arxiv.org/abs/2109.12894 [P]
+5. Bellec et al. 2020, Nat Commun(e-prop) — https://pmc.ncbi.nlm.nih.gov/articles/PMC7367848/ [P]
+6. Perez-Nieves &amp; Goodman 2021, NeurIPS(희소 대리 기울기) — https://proceedings.neurips.cc/paper/2021/hash/61f2585b0ebcf1f532c4d1ec9a7d51aa-Abstract.html [P] · https://github.com/npvoid/SparseSpikingBackprop
+7. Xiao et al. 2022, NeurIPS(OTTT) — https://arxiv.org/abs/2210.04195 [P]
+8. Bohnstingl et al. 2022, IEEE TNNLS(OSTL) — https://arxiv.org/abs/2007.12723 [P]
+9. Wang et al. 2026, Nat Commun(BrainTrace) — https://www.nature.com/articles/s41467-026-68453-w [X] · PMC12913608 [P] · https://www.biorxiv.org/content/10.1101/2024.09.24.614728v3.full [P] · https://github.com/chaobrain/fitting_drosophila_whole_brain_spiking_model [P]
+10. Fang et al. 2021, ICCV(PLIF · 층 단위 τ) — https://arxiv.org/abs/2007.05785 [P]
+11. Perez-Nieves et al. 2021, Nat Commun(뉴런별 τ) — https://www.nature.com/articles/s41467-021-26022-3 [A]
+12. Therianos 2026, arXiv(유충 얼린 속도 연산자) — https://arxiv.org/html/2606.17745 [P]
+13. Beiran &amp; Litwin-Kumar 2025, Nat Neurosci — https://www.nature.com/articles/s41593-025-02080-4 [A] · http://lk.zuckermaninstitute.columbia.edu/pdf/beiran_prediction_2025.pdf [P] · https://github.com/emebeiran/connconstr
+14. Kim, Li &amp; Sejnowski 2019, PNAS(속도 → 스파이크 이식) — https://www.pnas.org/doi/10.1073/pnas.1905926116 [S]
+15. Creamer, Leifer &amp; Pillow 2025(예쁜꼬마선충 · 커넥톰 제약 선형 모형) — https://pmc.ncbi.nlm.nih.gov/articles/PMC12485687/ [P]
+16. Salimans et al. 2017(ES) — https://arxiv.org/abs/1703.03864 [P]
+17. Hansen, CMA-ES tutorial — https://arxiv.org/abs/1604.00772 [P]
+18. Frazier 2018, Bayesian optimization tutorial — https://arxiv.org/abs/1807.02811 [P]
+19. Jędrzejewski-Szmek et al. 2018, Front Neuroinform(CMA-ES 로 뉴런 모형 맞춤) — https://www.frontiersin.org/journals/neuroinformatics/articles/10.3389/fninf.2018.00047/full [P]
+20. Gonçalves et al. 2020, eLife(SNPE) — https://elifesciences.org/articles/56261 [P]
+21. Li, Ping, Zhang, Wang 2026, bioRxiv(FlyWire 속도 모형 맞춤) — https://www.biorxiv.org/content/10.64898/2026.08.21.745055v1.full [P]
+22. ConnecTorch(MaleCNS RNN · MIT · README 만) — https://github.com/us/connectorch [P]
+23. annel0/flybrain(개인 저장소 · 참고만) — https://github.com/annel0/flybrain [P]
+24. Dhiman 2026, arXiv 2604.04033(flyvis 구조 이점은 공정 초기화에서 사라짐) — https://arxiv.org/abs/2604.04033 [A]</p>
+<p>생리 자료
+25. Turner, Krieger, Pang &amp; Clandinin 2022, eLife 11:e82587 — https://elifesciences.org/articles/82587 · Dryad https://doi.org/10.5061/dryad.h44j0zpp8 [P]
+26. Klapoetke et al. 2017, Nature 551:237 — https://www.nature.com/articles/nature24626 [P · PMC]
+27. Ache et al. 2019, Curr Biol 29:1073 — https://doi.org/10.1016/j.cub.2019.01.079 [A]
+28. von Reyn et al. 2017, Neuron 94:1190 — https://doi.org/10.1016/j.neuron.2017.05.036 [A] · ModelDB https://modeldb.science/230400 [P]
+29. von Reyn et al. 2014, Nat Neurosci 17:962 — https://www.nature.com/articles/nn.3741 [S]
+30. Seelig &amp; Jayaraman 2015, Nature 521:186 — https://pmc.ncbi.nlm.nih.gov/articles/PMC4704792/ [P]
+31. Turner-Evans et al. 2017, eLife 6:e23496 — https://elifesciences.org/articles/23496 · https://github.com/DanTurner-Evans/AngularVelocityData [P]
+32. Kim et al. 2019, Nature 576:126 원자료 — https://janelia.figshare.com/articles/dataset/raw_data_imaging3_tar_gz/12106830 [P]
+33. Schnell et al. 2010, J Neurophysiol 103:1646 — https://journals.physiology.org/doi/full/10.1152/jn.00950.2009 [A]
+34. Münch &amp; Galizia 2016, Sci Rep(DoOR 2.0) — https://pmc.ncbi.nlm.nih.gov/articles/PMC4766438/ · https://github.com/ropensci/DoOR.data [P]
+35. Olsen, Bhandawat &amp; Wilson 2010, Neuron 66:287 — https://www.cell.com/neuron/fulltext/S0896-6273(10)00249-7 [S]
+36. Lin et al. 2014, Nat Neurosci 17:559 — https://pmc.ncbi.nlm.nih.gov/articles/PMC4000970/ [P]
+37. Shiu et al. 2024, Nature 634:210 — https://pmc.ncbi.nlm.nih.gov/articles/PMC11446845/ [P] · 결과 Edmond https://doi.org/10.17617/3.CZODIW
+38. Turner, Mann &amp; Clandinin 2021, Curr Biol 자료 — https://doi.org/10.6084/m9.figshare.13349282 [P]</p>
+<p>눈의 축
+39. MaleCNS 시각 경로 논문(Nern 연구실 · Cell 2026) — https://www.biorxiv.org/content/10.64898/2025.12.22.696097v2.full [P · 방법 · 그림 1b]
+40. Nern et al. 2025, Nature — https://www.nature.com/articles/s41586-025-08746-0 · https://pmc.ncbi.nlm.nih.gov/articles/PMC12119369/ [P · 그림 3a] · 코드 https://github.com/reiserlab/male-drosophila-visual-system-connectome-code (GPL-3 · 규약 확인만)
+41. Zhao et al. 2025, Nature — https://www.nature.com/articles/s41586-025-09276-5 · https://pmc.ncbi.nlm.nih.gov/articles/PMC12488493/ [P] · https://github.com/reiserlab/eyemap_T4
+42. Dombrovski et al. 2023, Nature — https://www.nature.com/articles/s41586-022-05562-8 · https://pmc.ncbi.nlm.nih.gov/articles/PMC9849133/ [P]
+43. Shinomiya et al. 2019, eLife — https://elifesciences.org/articles/40025 [P]
+44. Takemura et al. 2017, eLife — https://elifesciences.org/articles/24394 [P]
+45. Haag et al. 2016, eLife — https://elifesciences.org/articles/17421 [P]
+46. OpticLobe.jl(FlyWire 규약 · 수질 기준) — https://github.com/hsseung/OpticLobe.jl [P] · 첫 시교차 뒤집힘 https://pmc.ncbi.nlm.nih.gov/articles/PMC6797552/ [P]
+47. neuView(Reiser 연구실 세포 종류 탐색기 · 좌표 그리기 코드) — https://github.com/reiserlab/neuView [P]</p>
+<p>버섯체
+48. Li et al. 2020, eLife 9:e62576(hemibrain 버섯체) — https://elifesciences.org/articles/62576 [P]
+49. Takemura et al. 2017, eLife 6:e26975(α 엽 FIB-SEM) — https://elifesciences.org/articles/26975 [P]
+50. Hige, Aso, Modi, Rubin &amp; Turner 2015, Neuron 88:985 — https://pmc.ncbi.nlm.nih.gov/articles/PMC4674068/ [P]
+51. Aso &amp; Rubin 2016, eLife 5:e16135 — https://elifesciences.org/articles/16135 [P]
+52. Handler et al. 2019, Cell 178:60 — https://doi.org/10.1016/j.cell.2019.05.040 [A] · https://pmc.ncbi.nlm.nih.gov/articles/PMC9012144/ [P 일부]
+53. Cohn, Morantte &amp; Ruta 2015, Cell 163:1742 — https://pmc.ncbi.nlm.nih.gov/articles/PMC4732734/ [P]
+54. Berry, Phan &amp; Davis 2018, Cell Rep 25:651 — https://pmc.ncbi.nlm.nih.gov/articles/PMC6239218/ [P]
+55. Owald et al. 2015, Neuron — https://pmc.ncbi.nlm.nih.gov/articles/PMC4416108/ [P]
+56. Perisse et al. 2016, Neuron 90:1086 — https://pmc.ncbi.nlm.nih.gov/articles/PMC4893166/ [P]
+57. Aso et al. 2014a(명명법 · 표 1) eLife 3:e04577 — https://elifesciences.org/articles/04577 [P] · Aso et al. 2014b(정서) eLife 3:e04580 — https://elifesciences.org/articles/04580 [P] · Rubin &amp; Aso 2024, eLife — https://elifesciences.org/articles/90523 [P]
+58. Jiang &amp; Litwin-Kumar 2021, PLOS Comput Biol 17:e1009205 — https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009205 [P]
+59. Bennett, Philippides &amp; Nowotny 2021, Nat Commun 12:2569 — https://pmc.ncbi.nlm.nih.gov/articles/PMC8105414/ · https://www.biorxiv.org/content/10.1101/776401v1.full [P]
+60. Springer &amp; Nawrot 2021, eNeuro — https://www.eneuro.org/content/8/3/ENEURO.0549-20.2021 [P]
+61. Zhao et al. 2021(Senn), Sci Rep — https://pmc.ncbi.nlm.nih.gov/articles/PMC7990964/ [P]
+62. Gkanias et al. 2022, eLife 11:e75611 — https://elifesciences.org/articles/75611 [P]
+63. Jürgensen et al. 2024, iScience(유충 · 전도성 LIF) — https://pmc.ncbi.nlm.nih.gov/articles/PMC10824792/ [P]
+64. Kennedy, bioRxiv 783191(LIF KC · APL) — https://www.biorxiv.org/content/10.1101/783191v1.full [P]
+65. Caron, Ruta, Abbott &amp; Axel 2013, Nature 497:113 — https://pmc.ncbi.nlm.nih.gov/articles/PMC4148081/ [P]
+66. Turner, Bazhenov &amp; Laurent 2008, J Neurophysiol 99:734 — PMID 18094099 [A]
+67. Gruntman &amp; Turner 2013, Nat Neurosci 16:1821 — https://pubmed.ncbi.nlm.nih.gov/24141312/ [A]
+68. Amin et al. 2020, eLife 9:e56954 — https://elifesciences.org/articles/56954 [P]
+69. MacKenzie … Caron 2025, bioRxiv — https://www.biorxiv.org/content/10.1101/2025.10.29.684686v2 [A]
+70. DoomFly(MIT · 학습 입증 실패를 스스로 기록) — https://github.com/nftechie/doomfly · <code>docs/doom-live-training.md</code> · <code>doom_learning_v6/rule.py</code> [P · 코드는 쓰지 않음]
+71. Huang, Luo, … Schnitzer 2024, Nature 634:1141 — https://www.nature.com/articles/s41586-024-07819-w [A]
+72. FlyTris(개인 저장소 · 참고만) — https://github.com/rothilion26/flytris [S]
+73. malecns-lab(개인 저장소 · 참고만 · "섞은 망도 배운다") — https://github.com/merolaagi/malecns-lab [S]</p>
+<div class="pager"><a href="12-다음-학습-조사.html">← 12 · 다음 학습 — 조사</a><span></span></div>
+<footer>이 HTML 은 <code>13-회로-학습-설계-조사.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>
