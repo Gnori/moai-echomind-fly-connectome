@@ -103,11 +103,13 @@ class Loop:
         for d in range(int(ep["max_decisions"])):
             dn_new = self.decoder.target_rates(action)
             bins = {name: [] for name in self.brains}
+            self.last_stim = []          # 이 결정의 감각 입력(구간마다) — 자료 v2 의 stim.npz
             reflex_bins = 0
             drive = (0.0, 0.0)
             for b in range(self.table.bins):
                 dn = 0.5 * (dn_prev + dn_new) if b == 0 else dn_new
                 sens = self.encoder.rates(obs)
+                self.last_stim.append(sens.astype(np.float32))
                 tb = time.time()
                 spikes = {}
                 for name, br in self.brains.items():
@@ -156,15 +158,21 @@ class Loop:
 class DatasetWriter:
     """결정마다 채널 특징(뇌별) · 참값 · 캡션 · 교사 행동을 모은다(F-017 학습 자료)."""
 
-    def __init__(self, out: Path, table: ChannelTable) -> None:
+    def __init__(self, out: Path, table: ChannelTable,
+                 stim_idx: np.ndarray | None = None) -> None:
         self.out = out
         self.table = table
+        self.stim_idx = stim_idx if stim_idx is not None else np.zeros(0, np.int64)
         out.mkdir(parents=True, exist_ok=True)
         self.feats: dict[str, dict[str, list[np.ndarray]]] = {}
         self.rows: list[dict[str, Any]] = []
+        self.stim: list[np.ndarray] = []
 
-    def add(self, seed: int, step: Step, vectors: dict[str, dict[str, ChannelVector]]) -> None:
+    def add(self, seed: int, step: Step, vectors: dict[str, dict[str, ChannelVector]],
+            stim: list[np.ndarray] | None = None) -> None:
         t = self.table
+        if stim is not None:
+            self.stim.append(np.stack(stim))
         for brain, vec in vectors.items():
             per = self.feats.setdefault(brain, {n: [] for n in vec})
             for n, v in vec.items():
@@ -177,6 +185,9 @@ class DatasetWriter:
         for brain, per in self.feats.items():
             np.savez_compressed(self.out / f"features-{brain}.npz",
                                 **{n: np.stack(v) for n, v in per.items()})
+        if self.stim:
+            np.savez_compressed(self.out / "stim.npz", rates=np.stack(self.stim),
+                                stim_idx=self.stim_idx)
         (self.out / "samples.jsonl").write_text(
             "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in self.rows), encoding="utf-8")
         (self.out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2),

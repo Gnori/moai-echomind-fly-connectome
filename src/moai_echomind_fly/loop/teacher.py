@@ -35,6 +35,11 @@ class Truth:
     sound: bool = False
     female_present: bool = False
     female_azimuth_deg: float = 0.0
+    # task-v2(3차원 · R-7469 F-008) — 자료에만 남긴다(캡션 서식은 그대로 · 3차원 캡션은 F-008 5단계)
+    looming_elevation_deg: float = 0.0
+    heading_deg: float = 0.0
+    pos_xy: tuple[float, float] = (0.0, 0.0)
+    body_euler_deg: tuple[float, ...] = ()   # FlyGym 순서 ZYX(방향 · 앞뒤 기울기 · 좌우 기울기)
 
 
 def _side(az: float) -> str:

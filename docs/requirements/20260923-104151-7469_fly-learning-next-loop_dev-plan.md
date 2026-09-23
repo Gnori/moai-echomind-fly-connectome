@@ -25,17 +25,18 @@
 
 ## Task 2: 3차원 세계 · 시야 지도 입력 · 채널 v2 (F-008 1~3 · F-003 반영)
 
-- [ ] `config/task.yaml` → task-v2(물체 고도 · 지형 · `vision.mode`) · 옛 판 `config/archive/task-task-v1.yaml` · `config.load(name, version=)`
-- [ ] 몸: 물체 고도 계산 · 몸 롤/피치 기록(`body/fly_body_server.py`) · 지형 선택
-- [ ] 인코더 `retinotopic`: core 의 LC 시야 대응 → 물체 자리 가우시안 입력
-- [ ] `config/channels.yaml` → channels-v2(`space` · 후각 개정 · `judge`)
-- [ ] 캡션 참값에 3차원 칸(자료에만 · 캡션 서식은 v1 유지 — 3차원 캡션은 F-008 5단계)
-- [ ] 시험: 고도가 입력에 들어간다(위 · 아래 물체에서 다른 LC 가 켜짐) · 뒤섞은 대응표 대조
+- [x] `config/task.yaml` → task-v2(물체 고도 −30~60° · `vision.mode: retinotopic` · σ 25°) · 옛 판 `config/archive/task-v1.yaml` · `config.load(name, version=)` — **지형은 미룸**(FlyGym 1.x OdorArena 는 평지)
+- [x] 몸: 물체가 시작 고도에서 곧게 내려온다(3차원 거리로 크기) · 자세 `fly_euler_rad`(FlyGym ZYX) · 머리 높이 기록
+- [x] 인코더 `retinotopic`: LC 마다 고도 가우시안(좌표 없는 LC 는 1) · 시험 `test_retinotopic_encoder_prefers_lc_at_object_elevation`
+- [x] `config/channels.yaml` → channels-v2(`space` = EPG · PEN · PEG · Δ7 · PFN · hΔB · FC2 · PFL3 · HS · VS · 단위 instance) — 후각 · 판정 제외는 sim-v2 · stats-v2 로(I v1.2)
+- [x] 참값에 3차원 칸(`looming_elevation_deg` · `heading_deg` · `pos_xy` · `body_euler_deg`) — 캡션 서식은 그대로
+- [x] 시험: 위 물체 → 고도 높은 LC 가 더 셈 · task-v2 가 v1 의 뽑기를 지킨다. (뒤섞은 대응표 대조는 자료 v2 판정 때)
 
 ## Task 3: 자료 v2 (F-002)
 
-- [ ] `collect --rewired-seeds` · `stim.npz` · `collect-probe`
-- [ ] 작은 측정 → **요구자 확인** → 수집 → `dataset pack fly-loop-v2` · 백업
+- [x] `collect --rewired-seeds` · `stim.npz`(묶기에도) · `collect-probe`
+- [x] 작은 측정 `runs/collect-probe-20260923-111821.json`: 뇌 6 · **결정당 12.0 s**(몸 3.1 + 뇌 9.0) · 일꾼 하나 3.4~3.6 GB(최대 4.3) · 추정 학습 300 에피소드 3.3 h + 평가 40 에피소드 0.45 h(일꾼 3)
+- [ ] **요구자 확인** → 수집 → `dataset pack fly-loop-v2` · 백업
 
 ## Task 4: 압축 · 관문 (F-004)
 

@@ -64,6 +64,12 @@ def _cmd_collect(args: argparse.Namespace) -> int:
     return collect.main(args)
 
 
+def _cmd_collect_probe(args: argparse.Namespace) -> int:
+    from .loop import collect
+
+    return collect.probe(args)
+
+
 def _cmd_mcp(args: argparse.Namespace) -> int:
     from . import mcp_server
 
@@ -99,9 +105,18 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seeds", default="0-9", help="예: 0-49 또는 1,3,5")
     p.add_argument("--graph", default="traced-v1")
     p.add_argument("--rewired-seed", type=int, default=0)
+    p.add_argument("--rewired-seeds", default="",
+                   help="재배선 여럿(예: 0-4) — 뇌마다 features-rewired-s<K>.npz(R-7469 F-002)")
     p.add_argument("--workers", type=int, default=1, help="씨앗을 나눠 돌릴 자식 프로세스 수")
     p.add_argument("--threads", type=int, default=0, help="일꾼마다 torch 스레드 수(0 = 기본)")
     p.set_defaults(func=_cmd_collect)
+
+    p = sub.add_parser("collect-probe",
+                       help="자료 모으기 작은 측정 — 결정당 시간 · 메모리(저장 없음)")
+    p.add_argument("--seeds", default="0-1")
+    p.add_argument("--rewired-seeds", default="0-4")
+    p.add_argument("--graph", default="traced-v1")
+    p.set_defaults(func=_cmd_collect_probe)
 
     p = sub.add_parser("mcp", help="MCP 도구 서버(stdio)")
     p.set_defaults(func=_cmd_mcp)

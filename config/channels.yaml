@@ -2,7 +2,7 @@
 # 요구자(2026-09-21): "초파리의 다양한 신호 데이터를 벡터화해서 LLM" · "성적인 전기신호 데이터까지도 · 시신경 · 촉각"
 # 뉴런은 주석 칸으로만 고른다(손으로 고른 목록 없음 → 채운 수 0). 단위 = unit 칸들의 조합 × 좌우.
 # 전기 신호 = 창을 bins 로 나눈 구간마다 ① 발화율(Hz) ② 평균 탈분극(mV, v − v0).
-version: channels-v1
+version: channels-v2   # 2026-09-23 — channels-v1 + space(중심복합체 · 운동 감지 수평/수직계 · R-7469 F-008). 옛 판 config/archive/channels-v1.yaml
 window_ms: 300
 bins: 3
 rate_scale_hz: 20.0     # log1p(rate) / log1p(scale) 로 정규화
@@ -38,3 +38,8 @@ channels:
   motor:       # 하강 뉴런(뇌 → 신경삭) — 회로가 스스로 내는 운동 명령
     select: {superclass: [descending_neuron]}
     unit: [type]
+  space:       # 공간 — 중심복합체 나침반(EPG · PEN · PEG · Δ7) · 이동 벡터(PFN · hΔB) · 목표/조향(FC2 · PFL3) · 회전(HS · VS)
+    # 단위 = instance(PB 사구체 · 구획을 지킨다 — 봉우리 위상을 읽으려면 구획이 필요하다)
+    select: {type: [EPG, EPGt, PEN_a(PEN1), PEN_b(PEN2), PEG, Delta7, PFNa, PFNd, PFNm_a, PFNm_b, PFNp_a, PFNp_b,
+                    hDeltaB, FC2A, FC2B, FC2C, PFL3, HSN, HSE, HSS, VS]}
+    unit: [instance]

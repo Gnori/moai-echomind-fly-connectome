@@ -1,0 +1,40 @@
+# 채널 표 (R-3340 F-012 · I §3.2) — LLM 에 넣는 초파리 신경 신호 묶음.
+# 요구자(2026-09-21): "초파리의 다양한 신호 데이터를 벡터화해서 LLM" · "성적인 전기신호 데이터까지도 · 시신경 · 촉각"
+# 뉴런은 주석 칸으로만 고른다(손으로 고른 목록 없음 → 채운 수 0). 단위 = unit 칸들의 조합 × 좌우.
+# 전기 신호 = 창을 bins 로 나눈 구간마다 ① 발화율(Hz) ② 평균 탈분극(mV, v − v0).
+version: channels-v1
+window_ms: 300
+bins: 3
+rate_scale_hz: 20.0     # log1p(rate) / log1p(scale) 로 정규화
+depol_scale_mV: 7.0     # 쉬는 전위에서 문턱까지(−52 → −45 mV)
+channels:
+  vision:      # 시신경 → 시각 투사 뉴런(LC · LPLC 등)
+    select: {superclass: [visual_projection]}
+    unit: [type]
+  touch:       # 다리 털 · 관절 · 날개 · 몸 기계감각
+    select: {class: [mechanosensory, mechanosensory_tactile, mechanosensory_proprioceptive]}
+    unit: [subclass, entryNerve]
+  hearing:     # 존스턴 기관 청각
+    select: {subclass: [auditory]}
+    unit: [type]
+  smell:       # 후각 투사 뉴런(촉각엽 → 측각 · 버섯체)
+    select: {class: [ALPN]}
+    unit: [type]
+  taste:       # 미각 감각 뉴런 · 접촉 페로몬(receptorType 에 ppk23 추정)
+    select: {class: [gustatory]}
+    unit: [subclass, receptorType]
+  courtship:   # 구애 · 성 회로 — fru/dsx 발현 추정 또는 암수 차이 표시(감각 뉴런은 뺀다)
+    select_any:
+      fruDsx: [fru_high, fru_low, coexpress_high, coexpress_low, dsx_high]
+      dimorphism: [male-specific, sexually dimorphic, potentially sexually dimorphic, potentially male-specific]
+    exclude_superclass: [cb_sensory, vnc_sensory, ol_sensory, sensory_ascending]
+    unit: [type]
+  value:       # 버섯체 출력(좋다/나쁘다 방향 — 학습 규칙이 없어 고정 편향만)
+    select: {class: [MBON]}
+    unit: [type]
+  body:        # 상행 뉴런(신경삭 → 뇌) — 몸 상태
+    select: {superclass: [ascending_neuron]}
+    unit: [type]
+  motor:       # 하강 뉴런(뇌 → 신경삭) — 회로가 스스로 내는 운동 명령
+    select: {superclass: [descending_neuron]}
+    unit: [type]

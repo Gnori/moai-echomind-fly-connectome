@@ -1,6 +1,6 @@
 # C 단계 과제 · 감각 인코더 · 행동 디코더 (R-3340 F-010 · F-011 · F-014)
 # 값마다 출처 또는 "선언" 을 적는다 — 선언한 값은 정직 목록에 그대로 실린다.
-version: task-v1
+version: task-v2   # 2026-09-23 — task-v1 + 물체 고도 · 시야 자리별(고도) LC 입력(R-7469 F-008). 옛 판 config/archive/task-v1.yaml
 
 episode:
   decision_ms: 300          # 결정 창(06 §5 시작값)
@@ -18,6 +18,7 @@ world:                      # 씨앗으로 뽑는다 — 선언
   looming_start_mm: 25.0
   looming_speed_mm_s: 25.0
   looming_radius_mm: 1.5
+  looming_elevation_deg: [-30, 60]  # 시작 고도(파리 머리 기준 · 위가 +) — 선언. 곧게 다가오므로 고도는 거의 그대로다
 
 encoder:
   vision:                   # 다가옴 → LC/LPLC(loom.yaml 의 Turner 2022 상대 세기 · peak_hz)
@@ -25,6 +26,8 @@ encoder:
                                    #   처음 200 은 '중간' 거리에서 LC/LPLC 자극이 거의 0 이었다(2026-09-22 pilot)
     gain_max: 3.0
     side_softness_deg: 15.0        # 앞쪽 물체는 두 눈에 나눠 준다(시그모이드 폭) — 선언
+    mode: retinotopic              # lr_sigmoid(task-v1: 좌우만) | retinotopic(좌우 × LC 마다 고도 가우시안 · retino-v1)
+    elevation_sigma_deg: 25.0      # LC 고도 조율 폭 — 선언(LC 수용장 수십 도). 좌표 없는 LC 는 조율 없이 1
   smell:                    # 먹이(식초) 냄새 → DM1 · VA2 사구체 ORN — Semmelhack & Wang 2009 Nature 459:218
     types: [ORN_DM1, ORN_VA2]
     rate_max_hz: 150.0             # Shiu 기본 자극 발화율

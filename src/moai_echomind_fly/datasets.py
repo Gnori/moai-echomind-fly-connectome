@@ -23,8 +23,6 @@ import numpy as np
 
 from . import paths
 
-BRAINS = ("real", "rewired")
-
 
 def store_dir() -> Path:
     return paths.root() / "data" / "datasets"
@@ -37,7 +35,9 @@ def shards(name: str) -> list[Path]:
 
 def _merge(parts: list[Path], out: Path) -> dict[str, Any]:
     out.mkdir(parents=True, exist_ok=True)
-    for brain in BRAINS:
+    brains = sorted(p.name.removeprefix("features-").removesuffix(".npz")
+                    for p in parts[0].glob("features-*.npz"))
+    for brain in brains:
         per: dict[str, list[np.ndarray]] = {}
         for p in parts:
             with np.load(p / f"features-{brain}.npz") as z:
@@ -45,6 +45,10 @@ def _merge(parts: list[Path], out: Path) -> dict[str, Any]:
                     per.setdefault(ch, []).append(z[ch])
         np.savez_compressed(out / f"features-{brain}.npz",
                             **{ch: np.concatenate(v) for ch, v in per.items()})
+    if all((p / "stim.npz").exists() for p in parts):      # 자료 v2 — 감각 입력(I-7469 §3.1)
+        stims = [np.load(p / "stim.npz") for p in parts]
+        np.savez_compressed(out / "stim.npz", rates=np.concatenate([z["rates"] for z in stims]),
+                            stim_idx=stims[0]["stim_idx"])
     rows, eps = [], []
     for p in parts:
         rows += [line for line in (p / "samples.jsonl").read_text().splitlines() if line]

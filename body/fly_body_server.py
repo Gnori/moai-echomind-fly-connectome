@@ -51,7 +51,7 @@ class Body:
         self.dead = False
 
     # 다가오는 물체 — 시작 시각에 파리 기준 방위 · 거리에서 출발해 파리 첫 자리를 향해 곧게 온다
-    def looming(self, head_xy: np.ndarray, heading: float) -> dict:
+    def looming(self, head_xy: np.ndarray, heading: float, head_z: float = 0.0) -> dict:
         lo = self.task.get("looming")
         if not lo or self.t_ms < lo["t0_ms"]:
             self.prev_size = None
@@ -60,6 +60,7 @@ class Body:
         if lo.get("origin_xy") is None:          # 출발 순간의 파리 자리 · 방향을 기준으로 잡는다
             lo["origin_xy"] = head_xy.tolist()
             lo["heading_at_t0"] = heading
+            lo["origin_z"] = head_z
         b = math.radians(lo["bearing_deg"]) + lo["heading_at_t0"]
         start = np.array(lo["origin_xy"]) + lo["start_mm"] * np.array([math.cos(b), math.sin(b)])
         target = np.array(lo["origin_xy"])
@@ -67,14 +68,22 @@ class Body:
         dirv = (target - start) / (np.linalg.norm(target - start) + 1e-9)
         pos = start + dirv * min(travel, lo["start_mm"] + lo.get("overshoot_mm", 10.0))
         rel = pos - head_xy
-        dist = float(np.linalg.norm(rel))
         ang = math.atan2(rel[1], rel[0]) - heading
         az = math.degrees(math.atan2(math.sin(ang), math.cos(ang)))
+        elev = 0.0
+        if "elevation_deg" in lo:               # task-v2 — 시작 고도에서 곧게(머리 첫 높이로) 내려온다
+            left = max(lo["start_mm"] - min(travel, lo["start_mm"]), 0.0)
+            z = lo["origin_z"] + left * math.tan(math.radians(lo["elevation_deg"]))
+            rz = z - head_z
+            elev = math.degrees(math.atan2(rz, float(np.linalg.norm(rel))))
+            dist = float(math.sqrt(float(np.dot(rel, rel)) + rz * rz))
+        else:
+            dist = float(np.linalg.norm(rel))
         size = math.degrees(2 * math.atan(lo["radius_mm"] / max(dist, lo["radius_mm"])))
         exp = 0.0 if self.prev_size is None else (size - self.prev_size) / (self.step_ms / 1000.0)
         self.prev_size = size
         return {"present": True, "azimuth_deg": az, "size_deg": size, "expansion_deg_s": exp,
-                "distance_mm": dist}
+                "distance_mm": dist, "elevation_deg": elev}
 
     def observe(self) -> dict:
         o = self.obs
@@ -88,8 +97,10 @@ class Body:
             "t_ms": self.t_ms, "pos": pos[:2].tolist(), "heading_rad": heading,
             "odor_sensors": odor.tolist(),
             "leg_contact": dict(zip(LEGS, per_leg.round(4).tolist())),
-            "looming": self.looming(pos[:2], heading),
+            "looming": self.looming(pos[:2], heading, float(pos[2])),
             "odor_xy": self.task["odor_xy"], "dead": self.dead,
+            "fly_euler_rad": np.asarray(o["fly"][2], dtype=float).round(5).tolist(),
+            "head_z_mm": round(float(pos[2]), 4),
         }
 
     def step(self, drive: list[float], ms: float) -> dict:

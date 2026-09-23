@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import math
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
@@ -28,6 +28,7 @@ class Obs:
     odor_xy: tuple[float, float]
     dead: bool
     wall_s: float
+    extra: dict[str, Any] = field(default_factory=dict)   # task-v2: 몸 자세(fly_euler_rad) 등
 
     @property
     def food_distance_mm(self) -> float:
@@ -50,6 +51,8 @@ def make_task(seed: int, cfg: dict[str, Any]) -> dict[str, Any]:
             "start_mm": w["looming_start_mm"], "speed_mm_s": w["looming_speed_mm_s"],
             "radius_mm": w["looming_radius_mm"], "origin_xy": None, "heading_at_t0": None,
         }
+        if "looming_elevation_deg" in w:   # task-v2 — 앞선 뽑기 순서를 지키려고 맨 뒤에 뽑는다
+            task["looming"]["elevation_deg"] = float(rng.uniform(*w["looming_elevation_deg"]))
     return task
 
 
@@ -72,7 +75,8 @@ class BodyClient:
         if "error" in o:
             raise RuntimeError(o["error"])
         return Obs(o["t_ms"], tuple(o["pos"]), o["heading_rad"], o["odor_sensors"],
-                   o["leg_contact"], o["looming"], tuple(o["odor_xy"]), o["dead"], o["wall_s"])
+                   o["leg_contact"], o["looming"], tuple(o["odor_xy"]), o["dead"], o["wall_s"],
+                   {k: o[k] for k in ("fly_euler_rad", "head_z_mm") if k in o})
 
     def reset(self, seed: int, task: dict[str, Any]) -> Obs:
         return self._ask({"cmd": "reset", "seed": seed, "task": task})
@@ -103,4 +107,8 @@ def truth_of(obs: Obs, sensors: dict[str, int]) -> Truth:
                                      obs.heading_rad),
         food_distance_mm=obs.food_distance_mm,
         legs_in_contact=int(sum(v > 0 for v in obs.leg_contact.values())) if c else 0,
+        looming_elevation_deg=float(lo.get("elevation_deg", 0.0)),
+        heading_deg=math.degrees(obs.heading_rad),
+        pos_xy=(float(obs.pos[0]), float(obs.pos[1])),
+        body_euler_deg=tuple(math.degrees(a) for a in obs.extra.get("fly_euler_rad", ())),
     )

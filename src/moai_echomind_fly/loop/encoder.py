@@ -24,6 +24,7 @@ class SensoryMap:
     stim_idx: np.ndarray                      # 자극받는 모든 감각 뉴런(엔진 set_poisson 순서)
     vision: dict[str, np.ndarray]             # "L"/"R" → (위치들, 상대 세기)
     vision_amp: dict[str, np.ndarray]
+    vision_elev: dict[str, np.ndarray]        # "L"/"R" → LC 마다 고도(°) · 좌표 없으면 NaN
     smell: dict[str, np.ndarray]              # "L"/"R" → 위치들
     touch: dict[str, np.ndarray]              # "LF"…"RH" → 위치들
 
@@ -44,7 +45,13 @@ def build_map(graph: Graph, cfg: dict[str, Any], loom: LoomSpec) -> SensoryMap:
         groups.append(idx)
         return np.arange(start, start + len(idx))
 
-    vision, vision_amp = {}, {}
+    elev_of = np.full(graph.n, np.nan)
+    if enc["vision"].get("mode", "lr_sigmoid") == "retinotopic":
+        from .. import retino
+
+        for n in retino.load(graph.meta.get("rewired_from", graph.name))["neurons"]:
+            elev_of[n["idx"]] = n["elevation_deg"]
+    vision, vision_amp, vision_elev = {}, {}, {}
     for s in ("L", "R"):
         idx, amp = [], []
         for typ, a in loom.amplitude.items():
@@ -52,8 +59,10 @@ def build_map(graph: Graph, cfg: dict[str, Any], loom: LoomSpec) -> SensoryMap:
             sel = sel[side[sel] == s]
             idx.append(sel)
             amp.append(np.full(len(sel), a))
-        vision[s] = take(np.concatenate(idx))
+        cat = np.concatenate(idx)
+        vision[s] = take(cat)
         vision_amp[s] = np.concatenate(amp)
+        vision_elev[s] = elev_of[cat]
     smell = {}
     for s in ("L", "R"):
         sel = graph.select(type=enc["smell"]["types"])
@@ -63,7 +72,7 @@ def build_map(graph: Graph, cfg: dict[str, Any], loom: LoomSpec) -> SensoryMap:
     for leg in ("LF", "LM", "LH", "RF", "RM", "RH"):
         sel = graph.select(klass=enc["touch"]["klass"], entryNerve=nerves[leg[1]])
         touch[leg] = take(sel[side[sel] == leg[0]])
-    return SensoryMap(np.concatenate(groups), vision, vision_amp, smell, touch)
+    return SensoryMap(np.concatenate(groups), vision, vision_amp, vision_elev, smell, touch)
 
 
 class Encoder:
@@ -80,8 +89,15 @@ class Encoder:
         if lo["present"] and lo["expansion_deg_s"] > 0:
             gain = min(v["gain_max"], lo["expansion_deg_s"] / v["expansion_ref_deg_s"])
             left = 1.0 / (1.0 + math.exp(-lo["azimuth_deg"] / v["side_softness_deg"]))
+            el = float(lo.get("elevation_deg", 0.0))
             for s, w in (("L", left), ("R", 1.0 - left)):
-                r[self.m.vision[s]] = self.m.vision_amp[s] * self.loom.peak_hz * gain * w
+                tune = 1.0
+                if v.get("mode", "lr_sigmoid") == "retinotopic":
+                    # LC 마다 고도 가우시안 — 좌표 없는 LC 는 조율 없이 1(I-7469 v1.3)
+                    ne = self.m.vision_elev[s]
+                    sig = float(v["elevation_sigma_deg"])
+                    tune = np.where(np.isnan(ne), 1.0, np.exp(-0.5 * ((el - ne) / sig) ** 2))
+                r[self.m.vision[s]] = self.m.vision_amp[s] * self.loom.peak_hz * gain * w * tune
         sm = self.enc["smell"]
         for s in ("L", "R"):
             c = obs.odor_sensors[sm["sensors"][s]]

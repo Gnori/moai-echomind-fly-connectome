@@ -115,3 +115,34 @@ def test_data_source_prefers_pack_then_runs_shards(tmp_path, monkeypatch):
     got = train_cli.data_source("pack-a")
     assert got["pack"] == "pack-a" and len(got["sha256sums"]) == 64
     assert "runs" in train_cli.data_source("no-such-pack")
+
+
+def test_retinotopic_encoder_prefers_lc_at_object_elevation():
+    """task-v2: 위에 있는 물체는 고도가 높은 LC 를 더 세게 · 좌표 없는 LC 는 조율 없이."""
+    from moai_echomind_fly.loop.encoder import Encoder, SensoryMap
+    from moai_echomind_fly.loop.world import Obs
+    from moai_echomind_fly.protocols import LoomSpec
+
+    smap = SensoryMap(np.arange(3), {"L": np.array([0, 1, 2]), "R": np.zeros(0, int)},
+                      {"L": np.ones(3), "R": np.zeros(0)},
+                      {"L": np.array([50.0, -40.0, np.nan]), "R": np.zeros(0)},
+                      {"L": np.zeros(0, int), "R": np.zeros(0, int)},
+                      {k: np.zeros(0, int) for k in ("LF", "LM", "LH", "RF", "RM", "RH")})
+    cfg = config.load("task")
+    enc = Encoder(smap, cfg, LoomSpec.from_config())
+    obs = Obs(0.0, (0.0, 0.0), 0.0, [0.0, 0.0], {}, {"present": True, "azimuth_deg": 90.0,
+              "size_deg": 20.0, "expansion_deg_s": 60.0, "elevation_deg": 45.0},
+              (10.0, 0.0), False, 0.0)
+    r = enc.rates(obs)
+    assert r[0] > r[1] > 0            # 위(50°) LC > 아래(−40°) LC
+    assert r[2] >= r[0]               # 좌표 없는 LC 는 조율 1(가장 셈)
+
+
+def test_task_v2_keeps_v1_draws_and_adds_elevation():
+    v1 = config.load("task", version="task-v1")
+    v2 = config.load("task")
+    seed = next(s for s in range(50) if "looming" in make_task(s, v1))
+    a, b = make_task(seed, v1), make_task(seed, v2)
+    assert a["odor_xy"] == b["odor_xy"]
+    assert a["looming"]["bearing_deg"] == b["looming"]["bearing_deg"]
+    assert -30 <= b["looming"]["elevation_deg"] <= 60 and "elevation_deg" not in a["looming"]
