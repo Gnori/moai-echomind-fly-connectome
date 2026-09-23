@@ -66,7 +66,8 @@ def teacher_policy(vectors, truth, obs, decision):
 
 
 class Loop:
-    def __init__(self, graphs: dict[str, Graph], primary: str, *, seed: int = 0) -> None:
+    def __init__(self, graphs: dict[str, Graph], primary: str, *, seed: int = 0,
+                 body: bool = True) -> None:
         self.cfg = config.load("task")
         self.loom = LoomSpec.from_config()
         self.params = LIFParams.from_config()
@@ -80,11 +81,12 @@ class Loop:
         self.brains = {name: Brain(g, self.params, self.table, self.smap, self.decoder, seed)
                        for name, g in graphs.items()}
         self.primary = primary
-        self.body = BodyClient()
+        self.body = BodyClient() if body else None      # 재주입(replay)은 몸 없이 뇌만
         self.bin_ms = self.table.window_ms / self.table.bins
 
     def close(self) -> None:
-        self.body.close()
+        if self.body is not None:
+            self.body.close()
 
     def episode(self, seed: int, policy: Policy, *, on_step=None) -> dict[str, Any]:
         ep = self.cfg["episode"]

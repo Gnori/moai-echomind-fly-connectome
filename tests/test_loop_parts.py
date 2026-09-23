@@ -146,3 +146,47 @@ def test_task_v2_keeps_v1_draws_and_adds_elevation():
     assert a["odor_xy"] == b["odor_xy"]
     assert a["looming"]["bearing_deg"] == b["looming"]["bearing_deg"]
     assert -30 <= b["looming"]["elevation_deg"] <= 60 and "elevation_deg" not in a["looming"]
+
+
+def test_retinotopic2_encoder_tunes_by_azimuth_and_elevation():
+    """retinotopic2 는 방위 · 고도 둘 다 — 좌표 없는 LC 는 1 · 방위 없는 LC 는 고도만."""
+    from moai_echomind_fly.loop.encoder import Encoder, SensoryMap
+    from moai_echomind_fly.protocols import LoomSpec
+
+    smap = SensoryMap(np.arange(3), {"R": np.array([0, 1, 2]), "L": np.zeros(0, int)},
+                      {"R": np.ones(3), "L": np.zeros(0)},
+                      {"R": np.array([0.0, 0.0, np.nan]), "L": np.zeros(0)},
+                      {"L": np.zeros(0, int), "R": np.zeros(0, int)},
+                      {k: np.zeros(0, int) for k in ("LF", "LM", "LH", "RF", "RM", "RH")},
+                      vision_az={"R": np.array([-90.0, -30.0, np.nan]), "L": np.zeros(0)})
+    cfg = config.load("task")
+    cfg["encoder"]["vision"] = {**cfg["encoder"]["vision"], "mode": "retinotopic2",
+                                "azimuth_sigma_deg": 30.0}
+    enc = Encoder(smap, cfg, LoomSpec.from_config())
+    t = enc.vision_tune("R", 0.0, -90.0)
+    assert t[0] > t[1] and t[2] == 1.0          # 방위 −90° 물체 → −90° LC 가 −30° LC 보다
+
+
+def test_replay_retune_keeps_other_senses_and_rescales_vision():
+    """재주입: 좌표 없는 LC 발화율에서 바탕값을 되찾아 새 조율을 곱한다 · 다른 감각은 그대로."""
+    from moai_echomind_fly.loop.encoder import Encoder, SensoryMap
+    from moai_echomind_fly.loop.replay import retune_vision
+    from moai_echomind_fly.protocols import LoomSpec
+
+    # 자극 뉴런 5: 시각 R 3(조율 없는 LC 하나 포함) · 후각 L 1 · 촉각 LF 1
+    smap = SensoryMap(np.arange(5), {"R": np.array([0, 1, 2]), "L": np.zeros(0, int)},
+                      {"R": np.array([1.0, 0.5, 1.0]), "L": np.zeros(0)},
+                      {"R": np.array([40.0, -40.0, np.nan]), "L": np.zeros(0)},
+                      {"L": np.array([3]), "R": np.zeros(0, int)},
+                      {"LF": np.array([4]), **{k: np.zeros(0, int)
+                                               for k in ("LM", "LH", "RF", "RM", "RH")}})
+    cfg = config.load("task")
+    cfg["encoder"]["vision"] = {**cfg["encoder"]["vision"], "mode": "retinotopic"}
+    enc = Encoder(smap, cfg, LoomSpec.from_config())
+    base = 7.0                                            # 5 Hz × 게인 × 좌우 가중
+    old = np.array([base * 1.0 * 0.5, base * 0.5 * 0.9, base * 1.0 * 1.0, 150.0, 33.0])
+    new = retune_vision(old, smap, enc, elevation_deg=40.0, azimuth_deg=90.0)
+    assert new[3] == 150.0 and new[4] == 33.0             # 후각 · 촉각 그대로
+    assert abs(new[2] - base) < 1e-9                      # 조율 없는 LC = 바탕값 × 상대 세기 1
+    assert abs(new[0] - base) < 1e-9                      # 고도 40° 물체 → 40° LC 조율 1
+    assert new[1] < base * 0.5 * 0.9                      # −40° LC 는 더 약해진다

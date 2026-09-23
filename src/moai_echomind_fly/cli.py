@@ -128,11 +128,12 @@ def main(argv: list[str] | None = None) -> int:
 
     from .bench import cli as bench_cli  # 무거운 의존을 필요할 때만 불러온다
     bench_cli.register(sub)
-    from .loop import compress, linear_probe, scorecard, train_cli
+    from .loop import compress, linear_probe, replay, scorecard, train_cli
     train_cli.register(sub)
     scorecard.register(sub)
     linear_probe.register(sub)
     compress.register(sub)
+    replay.register(sub)
     from . import datasets
     datasets.register(sub)
     from . import backup
