@@ -31,7 +31,7 @@ FOLDS = 5
 
 
 def _fit_predict(xtr: np.ndarray, ytr: np.ndarray, xte: np.ndarray, lam: float) -> np.ndarray:
-    """능선 회귀 이중 형태 — 한쪽 열이 한 종류인 목표(one-hot)에 대해 점수를 낸다."""
+    """능선 회귀 이중 형태(참조 구현 · 시험용) — one-hot 목표에 대해 점수를 낸다."""
     k = xtr @ xtr.T
     alpha = np.linalg.solve(k + lam * np.eye(len(k)), ytr)
     return (xte @ xtr.T) @ alpha
@@ -44,38 +44,73 @@ def _onehot(labels: list[str], classes: list[str]) -> np.ndarray:
     return y
 
 
-def _cv_lambda(x: np.ndarray, labels: list[str], classes: list[str], seed: int = 0) -> float:
-    rng = np.random.default_rng(seed)
-    order = rng.permutation(len(labels))
-    folds = np.array_split(order, FOLDS)
-    best, best_acc = LAMBDAS[0], -1.0
-    for lam in LAMBDAS:
-        hit = 0
-        for f in folds:
+class _Ridge:
+    """핵 행렬 K 의 고유분해 하나로 모든 λ · 목표를 푼다: (K + λI)⁻¹y = V diag(1/(w+λ)) Vᵀy."""
+
+    def __init__(self, k_tr: np.ndarray, k_te: np.ndarray) -> None:
+        self.w, self.v = np.linalg.eigh(k_tr)
+        self.k_te = k_te
+
+    def predict(self, ytr: np.ndarray, lam: float) -> np.ndarray:
+        vy = self.v.T @ ytr
+        return self.k_te @ (self.v @ (vy / (self.w + lam)[:, None]))
+
+
+class ProbeSet:
+    """한 특징 집합(채널 또는 전부)으로 여러 칸을 잰다 — 핵 · 고유분해를 칸끼리 나눠 쓴다.
+
+    2026-09-23: 자료 v2(결정 2,921)부터 칸마다 행렬을 다시 풀면 한 번에 1 시간 넘게 걸려
+    (재배선 5 × 채널 11 × 칸 7 × λ 7 × 겹 5), 특징 집합마다 한 번만 분해한다.
+    결과는 참조 구현과 같다(시험).
+    """
+
+    def __init__(self, xtr: np.ndarray, xte: np.ndarray, seed: int = 0) -> None:
+        mean = xtr.mean(0)                 # 중심화 — 안 하면 같은 자료에서도 크게 떨어진다(실측)
+        xtr, xte = xtr - mean, xte - mean
+        k = xtr @ xtr.T
+        self.n = len(xtr)
+        order = np.random.default_rng(seed).permutation(self.n)
+        self.folds = np.array_split(order, FOLDS)
+        self.fold_models = []
+        for f in self.folds:
             tr = np.setdiff1d(order, f)
-            pred = _fit_predict(x[tr], _onehot([labels[i] for i in tr], classes), x[f], lam)
-            hit += sum(classes[j] == labels[i] for i, j in zip(f, pred.argmax(1)))
-        acc = hit / len(labels)
-        if acc > best_acc:
-            best, best_acc = lam, acc
-    return best
+            self.fold_models.append(_Ridge(k[np.ix_(tr, tr)], k[np.ix_(f, tr)]))
+        self.full = _Ridge(k, xte @ xtr.T)
+        self.order = order
+
+    def _cv_lambda(self, labels: list[str], classes: list[str]) -> float:
+        best, best_acc = LAMBDAS[0], -1.0
+        y = _onehot(labels, classes)
+        for lam in LAMBDAS:
+            hit = 0
+            for f, m in zip(self.folds, self.fold_models):
+                tr = np.setdiff1d(self.order, f)
+                pred = m.predict(y[tr], lam)
+                hit += sum(classes[j] == labels[i] for i, j in zip(f, pred.argmax(1)))
+            acc = hit / len(labels)
+            if acc > best_acc:
+                best, best_acc = lam, acc
+        return best
+
+    def field(self, ytr: list[str], yte: list[str]) -> dict[str, Any]:
+        """칸 하나 — 정확도 · 찍기 · 고른 λ · 평가 결정마다 맞혔나(`correct`)."""
+        classes = sorted(set(ytr) | set(yte))
+        top = Counter(ytr).most_common(1)[0][0]
+        base = np.array([t == top for t in yte])
+        if len(classes) == 1:
+            return {"accuracy": 1.0, "baseline": 1.0, "lambda": None, "classes": 1,
+                    "correct": np.ones(len(yte), bool), "baseline_correct": base}
+        lam = self._cv_lambda(ytr, classes)
+        pred = self.full.predict(_onehot(ytr, classes), lam).argmax(1)
+        correct = np.array([classes[j] == t for j, t in zip(pred, yte)])
+        return {"accuracy": float(correct.mean()), "baseline": float(base.mean()),
+                "lambda": lam, "classes": len(classes), "correct": correct,
+                "baseline_correct": base}
 
 
 def probe_field(xtr: np.ndarray, ytr: list[str], xte: np.ndarray, yte: list[str]) -> dict[str, Any]:
-    """칸 하나의 선형 검사. 판정 통계를 위해 평가 결정마다 맞혔나(`correct`)도 돌려준다."""
-    mean = xtr.mean(0)                     # 중심화 — 안 하면 같은 자료에서도 크게 떨어진다(실측)
-    xtr, xte = xtr - mean, xte - mean
-    classes = sorted(set(ytr) | set(yte))
-    top = Counter(ytr).most_common(1)[0][0]
-    base = np.array([t == top for t in yte])
-    if len(classes) == 1:
-        return {"accuracy": 1.0, "baseline": 1.0, "lambda": None, "classes": 1,
-                "correct": np.ones(len(yte), bool), "baseline_correct": base}
-    lam = _cv_lambda(xtr, ytr, classes)
-    pred = _fit_predict(xtr, _onehot(ytr, classes), xte, lam).argmax(1)
-    correct = np.array([classes[j] == t for j, t in zip(pred, yte)])
-    return {"accuracy": float(correct.mean()), "baseline": float(base.mean()),
-            "lambda": lam, "classes": len(classes), "correct": correct, "baseline_correct": base}
+    """칸 하나의 선형 검사(특징 집합 하나에 칸 하나면 이것 · 여러 칸이면 ProbeSet 을 나눠 쓴다)."""
+    return ProbeSet(xtr, xte).field(ytr, yte)
 
 
 def _public(res: dict[str, Any]) -> dict[str, Any]:
@@ -111,8 +146,8 @@ def run(name: str, rule: dict[str, Any] | None = None,
         yte = [_sub(caption_fields(r["caption"])) for r in rte]
 
         def fields(a: np.ndarray, b: np.ndarray) -> dict[str, Any]:
-            return {f: probe_field(a, [y[f] for y in ytr], b, [y[f] for y in yte])
-                    for f in yte[0]}
+            ps = ProbeSet(a, b)                 # 특징 집합마다 분해 한 번 · 칸마다 나눠 쓴다
+            return {f: ps.field([y[f] for y in ytr], [y[f] for y in yte]) for f in yte[0]}
 
         xtr = np.concatenate([ftr[n] for n in names], axis=1).astype(np.float64)
         xte = np.concatenate([fte[n] for n in names], axis=1).astype(np.float64)

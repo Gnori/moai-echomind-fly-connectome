@@ -105,3 +105,16 @@ def test_scorecard_judge_needs_to_beat_every_rewired_and_be_significant():
     assert v["vector_beats_rewired"] is True and v["p_sign_flip"] < 0.05
     tie = judge({"vector": bad[0], "rewired-s0": good, "rewired-s1": bad[1], "rewired-s2": bad[2]})
     assert tie["vector_beats_rewired"] is False
+
+
+def test_probeset_matches_reference_solver():
+    """고유분해 능선(ProbeSet)이 참조 구현(_fit_predict · solve)과 같은 점수를 낸다."""
+    from moai_echomind_fly.loop.linear_probe import ProbeSet, _fit_predict, _onehot
+
+    rng = np.random.default_rng(3)
+    xtr, xte = rng.standard_normal((60, 20)), rng.standard_normal((15, 20))
+    ytr = ["a", "b", "c"] * 20
+    m = xtr.mean(0)
+    ref = _fit_predict(xtr - m, _onehot(ytr, ["a", "b", "c"]), xte - m, 1.0)
+    got = ProbeSet(xtr, xte).full.predict(_onehot(ytr, ["a", "b", "c"]), 1.0)
+    assert np.allclose(ref, got, atol=1e-8)
