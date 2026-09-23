@@ -25,6 +25,7 @@ import numpy as np
 from .. import config, paths
 from ..guard import GuardRefused, Watchdog, heavy
 from . import fly_prompt as fp
+from .collect import parse_seeds
 
 TRAIN_RULE = {
     # v2(2026-09-22): 행동 단계는 새 옵티마이저로 시작한다 — 캡션 단계 저장본에서 이어 가도
@@ -229,6 +230,12 @@ def train(args: argparse.Namespace) -> int:
             src = data_source(args.dataset, args.val)
             feats, rows = load_split(src, "train", args.brain)
             vfeats, vrows = load_split(src, "eval", args.brain)
+            if args.train_seeds:               # 학습 표본을 에피소드(씨앗)로 줄인다 — 시간(B 안)
+                keep = set(parse_seeds(args.train_seeds))
+                idx = np.array([i for i, r in enumerate(rows) if int(r["seed"]) in keep])
+                feats = {n: v[idx] for n, v in feats.items()}
+                rows = [rows[i] for i in idx]
+                src = {**src, "train_seeds": args.train_seeds, "train_samples": int(len(idx))}
             squeeze, passed = compress_for(rule, src, args.brain)
             if squeeze is not None:
                 feats, vfeats = squeeze(feats), squeeze(vfeats)
@@ -493,6 +500,8 @@ def register(sub) -> None:
     p.add_argument("--val", default="eval", help="조각으로 읽을 때만: 검증 조각 이름")
     p.add_argument("--resume-caption", default="",
                    help="캡션 단계 저장본(.safetensors)에서 이어 행동 단계만 돈다")
+    p.add_argument("--train-seeds", default="",
+                   help="학습에 쓸 에피소드 씨앗 범위(예: 0-119) — 비우면 전부")
     p.set_defaults(func=train)
     pr = sub.add_parser("train-probe", help="짧게 돌리며 걸음마다 메모리를 잰다(저장 없음)")
     pr.add_argument("--brain", type=_brain, default="real")

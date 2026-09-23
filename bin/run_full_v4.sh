@@ -17,6 +17,7 @@ VERSION="train-v4"
 BRAINS=(real rewired-s0 rewired-s1 rewired-s2)
 CONFIGS="vector,text,no_circuit,rewired-s0,rewired-s1,rewired-s2,no_llm"
 SEEDS="2000-2039"
+TRAIN_SEEDS="0-119"      # 학습 표본 = 에피소드 120(약 1,200 결정 · 요구자 2026-09-23 B 안 — 전부 쓰면 뇌 하나 약 16 h)
 
 SKIP_TRAIN=0
 [ "${1:-}" = "--skip-train" ] && SKIP_TRAIN=1
@@ -66,7 +67,7 @@ echo "--- $GATE_MSG" | tee -a "$LOG"
 # 3 · 4. 투영기 학습 — 진짜 + 재배선 3 · 같은 절차(대조군)
 if [ $SKIP_TRAIN -eq 0 ]; then
   for b in "${BRAINS[@]}"; do
-    run 80 train --brain "$b" --dataset "$DATASET"
+    run 80 train --brain "$b" --dataset "$DATASET" --train-seeds "$TRAIN_SEEDS"
   done
 else
   echo "--- 학습 건너뜀(--skip-train) — 기존 runs/projector-<뇌>-$VERSION 을 쓴다" | tee -a "$LOG"
