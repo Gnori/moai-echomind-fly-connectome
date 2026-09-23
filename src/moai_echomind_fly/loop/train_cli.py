@@ -351,7 +351,11 @@ def probe(args: argparse.Namespace) -> int:
         with heavy("train-probe",
                    min_free_percent=int(gcfg["training_min_free_percent"])) as guard:
             print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
-            feats, rows = load_split(data_source(args.dataset), "train", args.brain)
+            src = data_source(args.dataset)
+            feats, rows = load_split(src, "train", args.brain)
+            squeeze, _ = compress_for(rule, src, args.brain)      # v4: 학습과 같은 입력
+            if squeeze is not None:
+                feats = squeeze(feats)
             names = list(feats)
             q = QwenLM()
             emb = q.embed(mx.arange(1000, 3000)).astype(mx.float32)
@@ -359,7 +363,7 @@ def probe(args: argparse.Namespace) -> int:
                                  float(mx.sqrt(mx.mean(emb * emb))))
             cache = float(gcfg["training_cache_limit_gb"])
             trainer = Trainer(q, proj, lr=rule["lr"], cache_limit_gb=cache)
-            setup = _Setup(q, names, rule["k"])
+            setup = _Setup(q, names, rule["k"], rule.get("template_weight"))
             watchdog = Watchdog()
             rng = random.Random(1)
             print(f"[probe] {args.steps} 걸음 · 캐시 상한 {cache} GB · 기록 {out}", flush=True)
