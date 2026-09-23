@@ -103,7 +103,7 @@
 <div class="page">
 <h1 id="초파리-뇌-학습-안내서">초파리 뇌 학습 안내서</h1>
 <blockquote>
-<p>2026-09-23 · 저장소 <code>moai-echomind-fly-connectome</code> · 요구사항 R-3340.
+<p>2026-09-23 · 저장소 <code>moai-echomind-fly-connectome</code> · 요구사항 R-3340(C 단계 결과) · <strong>R-7469(다음 학습 · 진행 중)</strong>.
 이 안내서는 <strong>"초파리 뇌를 돌려 LLM 에 잇기까지 무엇을, 어떤 순서로, 어떻게 하는가"</strong> 를 처음부터 끝까지 적은 것이다.
 순서는 요구자가 정했다 — <strong>먼저 초파리 뇌(1부), 그다음 Qwen 연결(2부).</strong>
 숫자는 전부 실제 실행 기록(<code>runs/</code> · <code>data/</code>)에서 옮겼고, 어느 파일에서 왔는지 같이 적었다.</p>
@@ -124,11 +124,11 @@
 <td><strong>초파리 뇌</strong></td>
 <td>MaleCNS v1.0 연결 지도 16.5만 뉴런 · 2,556만 연결을 LIF 방정식으로 돌린 것</td>
 <td><strong>안 한다</strong></td>
-<td>공식 데이터를 그대로 <strong>만들고</strong>, 방정식을 기준 구현과 <strong>맞추고</strong>, 배율 하나(<code>w_scale</code>)를 미리 적은 규칙으로 <strong>고르고</strong>, 알려진 반사로 <strong>검산</strong>한다 — <a href="01-뇌-재료-공식-데이터와-그래프.html">1부</a></td>
+<td>공식 데이터를 그대로 <strong>만들고</strong>, 방정식을 기준 구현과 <strong>맞추고</strong>, 배율 하나(<code>w_scale</code>)를 미리 적은 규칙으로 <strong>고르고</strong>, 알려진 반사로 <strong>검산</strong>한다. 2026-09-23 부터 문헌 값 하나(같은 쪽 방출 × 1.4 · <code>sim-v2</code>)와 시야 자리 대응(<code>retino-v1</code> · 계산)이 더해졌다 — <a href="01-뇌-재료-공식-데이터와-그래프.html">1부</a></td>
 </tr>
 <tr>
 <td><strong>투영기</strong></td>
-<td>초파리 신호 벡터 → Qwen 입력 자리로 옮기는 작은 신경망(3,187만 매개변수)</td>
+<td>초파리 신호 벡터 → Qwen 입력 자리로 옮기는 작은 신경망 — 지금 결과(train-v2)는 2층 MLP 3,187만 매개변수 · 다음 판(train-v4)은 <strong>채널별 압축(PCA · 맞춤) → 선형</strong> 수십만</td>
 <td><strong>이것만 학습</strong></td>
 <td><a href="06-학습-자료-모으기.html">2부</a></td>
 </tr>
@@ -141,19 +141,19 @@
 </tbody>
 </table></div>
 <p>그래서 1부에서 말하는 "초파리 뇌 학습"은 정확히는 <strong>뇌를 준비하고 · 맞추고 · 검산하는 일</strong>이다.
-회로 자체를 배우게 하는 방법은 아직 구현되지 않았고, 후보만 <a href="05-회로를-학습시키려면.html">05장</a>에 정리했다.</p>
+회로 자체를 배우게 하는 방법은 아직 구현되지 않았고, 후보를 <a href="05-회로를-학습시키려면.html">05장</a>에, 정의를 R-7469 F-006 · F-007 에 두었다.</p>
 <h2 id="전체-흐름">전체 흐름</h2>
 <pre><code>[1부 초파리 뇌]
- 공식 파일 3개 ──► 그래프(진짜 배선 · 섞은 배선) ──► LIF 엔진 ──► w_scale 맞추기 ──► 도망 반사 검산
-   (01장)                (01장)                    (02장)          (03장)              (03장)
+ 공식 파일 3개 ──► 그래프(진짜 배선 · 재배선 여럿) ──► LIF 엔진(sim-v2) ──► w_scale 맞추기 ──► 도망 반사 검산
+   (01장)                (01장)                       (02장)              (03장)              (03장)
                                    │
-                                   ▼  감각 → 뇌 → 신호 벡터 9채널 (04장)
+                                   ▼  감각(고도 · 시야 자리) → 뇌 → 신호 벡터 10채널(공간 포함) (04장)
 [2부 Qwen 연결]
- 교사가 몸을 몰며 자료 모으기 ──► 투영기 ──► 2단계 학습(캡션 → 행동) ──► 캡션 평가 · 성적표 · 선형 검사
-        (06장)                    (07장)          (08장)                        (09장)
-                                                                                  │
-                                                                                  ▼
-                                                                    학습 기록 · 결과 · 다음 (10장)
+ 교사가 몸을 몰며 자료 모으기 ──► 판정(stats) · 압축 · 관문 ──► 투영기 ──► 2단계 학습(캡션 → 행동) ──► 캡션 평가 · 성적표(앙상블)
+        (06장)                        (09장)                  (07장)          (08장)                        (09장)
+                                                                                                             │
+                                                                                                             ▼
+                                                                                               학습 기록 · 결과 · 다음 (10장)
 </code></pre>
 <h2 id="읽는-순서">읽는 순서</h2>
 <div class="tbl"><table>
@@ -173,27 +173,27 @@
 <tr>
 <td>01</td>
 <td><a href="01-뇌-재료-공식-데이터와-그래프.html">뇌 재료 — 공식 데이터와 그래프</a></td>
-<td>공식 파일 3개를 받아 검증하고, 뉴런 · 부호 · 연결 표로 만든다. 대조군(섞은 배선)도 여기서</td>
+<td>공식 파일 3개를 받아 검증하고, 뉴런 · 부호 · 연결 표로 만든다. 대조군(재배선 · 여럿)도 여기서</td>
 </tr>
 <tr>
 <td>02</td>
 <td><a href="02-뇌-엔진-LIF.html">뇌 엔진 — LIF 방정식</a></td>
-<td>연결 지도에 붙이는 발화 방정식 · 매개변수와 출처 · 기준 구현(Brian2)과 발화 하나까지 맞추기</td>
+<td>연결 지도에 붙이는 발화 방정식 · 매개변수와 출처(sim-v2 의 같은 쪽 방출 포함) · 기준 구현(Brian2)과 발화 하나까지 맞추기</td>
 </tr>
 <tr>
 <td>03</td>
 <td><a href="03-뇌-맞추기와-검산.html">뇌 맞추기와 검산</a></td>
-<td>이 저장소가 정하는 값은 <code>w_scale</code> 하나 — 결과 보기 전에 적은 규칙으로 고르고, 도망 반사와 섞은 배선 침묵으로 확인</td>
+<td>이 저장소가 결과를 보고 정하는 값은 <code>w_scale</code> 하나 — 결과 보기 전에 적은 규칙으로 고르고, 도망 반사와 재배선 침묵으로 확인</td>
 </tr>
 <tr>
 <td>04</td>
 <td><a href="04-감각-넣기와-신호-읽기.html">감각 넣기와 신호 읽기</a></td>
-<td>몸 → 감각 뉴런 발화 → 회로 → 신호 벡터 9채널 · 행동 → 하강 뉴런. 결정 한 번(300 ms)의 흐름</td>
+<td>몸 → 감각 뉴런 발화(물체 고도 · LC 시야 자리) → 회로 → 신호 벡터 10채널(공간 채널) · 냄새 좌우 측정 · 행동 → 하강 뉴런</td>
 </tr>
 <tr>
 <td>05</td>
 <td><a href="05-회로를-학습시키려면.html">회로를 학습시키려면 (후보)</a></td>
-<td>지금 회로가 배우지 않는 까닭과, 배우게 할 수 있는 길 세 가지 · 각각의 대조군</td>
+<td>지금 회로가 배우지 않는 까닭과, 배우게 할 수 있는 길 세 가지 · 각각의 대조군 → R-7469 F-006 · F-007</td>
 </tr>
 <tr>
 <td>—</td>
@@ -203,36 +203,36 @@
 <tr>
 <td>06</td>
 <td><a href="06-학습-자료-모으기.html">학습 자료 모으기</a></td>
-<td>교사 규칙이 몸을 몰고, 진짜 · 섞은 배선 뇌 둘에 같은 입력 → 정답(캡션 · 행동)이 붙은 자료 <code>fly-loop-v1</code></td>
+<td>교사 규칙이 몸을 몰고, 진짜 · 재배선 뇌 여럿에 같은 입력 → 정답(캡션 · 행동)이 붙은 자료 <code>fly-loop-v1</code> · <strong><code>fly-loop-v2</code>(수집 중)</strong></td>
 </tr>
 <tr>
 <td>07</td>
 <td><a href="07-투영기와-Qwen-잇기.html">투영기와 Qwen 잇기</a></td>
-<td>Qwen 의 이미지 자리(vision_pad)에 초파리 신호를 끼우는 법 · 투영기 구조와 크기 · Qwen 을 얼리는 법</td>
+<td>Qwen 의 이미지 자리(vision_pad)에 초파리 신호를 끼우는 법 · 투영기 두 판(v2 MLP · v4 압축 → 선형) · Qwen 을 얼리는 법</td>
 </tr>
 <tr>
 <td>08</td>
 <td><a href="08-투영기-학습-절차.html">투영기 학습 절차</a></td>
-<td>2단계 학습 규칙(train-v2) · 손실 · 층별 역전파 · 메모리 가드 · 이어 가기 · 전체 순서 스크립트</td>
+<td>2단계 학습 규칙(train-v4 · 칸 값 토큰 가중) · 층별 역전파 · 메모리 가드 · 이어 가기 · 명령</td>
 </tr>
 <tr>
 <td>09</td>
 <td><a href="09-평가와-대조군.html">평가와 대조군</a></td>
-<td>캡션 칸별 정확도 · 다섯 구성 성적표 · 문구 규칙 · Qwen 없이 신호만 보는 선형 검사</td>
+<td>판정 규칙 stats-v2(재배선 앙상블 · 에피소드 순열 · Holm) · 선형 검사 · 압축 관문 · 캡션 평가 · 성적표(scorecard-v2) · 봉우리 검사</td>
 </tr>
 <tr>
 <td>10</td>
 <td><a href="10-학습-기록과-다음.html">학습 기록 · 결과 · 다음</a></td>
-<td>지금까지 돌린 학습 하나하나의 대장 · 결과 · 막힌 곳 · 다음 후보 · 백업</td>
+<td>학습 대장 · 판정 · 측정 대장 · 결과 · 막힌 곳 · R-7469 진행 · 백업</td>
 </tr>
 <tr>
 <td>11</td>
 <td><a href="11-명령-모음과-용어.html">명령 모음과 용어</a></td>
-<td>처음부터 다시 돌리는 명령 전체와 걸리는 시간 · 용어 풀이</td>
+<td>처음부터 다시 돌리는 명령 전체(새 명령 포함)와 걸리는 시간 · 판 번호 · 용어 풀이</td>
 </tr>
 </tbody>
 </table></div>
-<h2 id="지금-상태-2026-09-23">지금 상태 (2026-09-23)</h2>
+<h2 id="지금-상태-2026-09-23-1400">지금 상태 (2026-09-23 14:00)</h2>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -246,26 +246,31 @@
 <td>✅ 통과(조건부 — 청각 → 거대섬유가 생체와 다름)</td>
 </tr>
 <tr>
-<td>2부 — 자료 · 학습 · 평가 · 성적표</td>
+<td>2부 — 자료 · 학습 · 평가 · 성적표(v1 자료 · train-v2)</td>
 <td>✅ 다 돌았다 · ❌ <strong>진짜 배선이 섞은 배선을 이기지 못했다</strong>(먹이 도착 0.2 대 0.2)</td>
 </tr>
 <tr>
 <td>원인</td>
-<td>신호에는 정보가 있다(선형 검사에서 진짜 배선이 더 높음). <strong>3.2만 차원을 통째로 넣는 전달 방식</strong>이 그 차이를 묻는다 — <a href="10-학습-기록과-다음.html">10장</a></td>
+<td>신호에는 정보가 있다(선형 검사에서 진짜 배선이 더 높음 · 판정 규칙으로도 시각 두 칸 통과). <strong>3.2만 차원을 통째로 넣는 전달 방식</strong>이 그 차이를 묻는다 — <a href="10-학습-기록과-다음.html">10장</a></td>
+</tr>
+<tr>
+<td><strong>다음 학습(R-7469)</strong></td>
+<td>✅ 판정 기준(stats-v2) · 냄새 좌우(sim-v2 · 고칠 수 없음 기록) · 3차원 입력(task-v2 · retino-v1 · channels-v2) · 압축 관문(compress-v1) · 작은 투영기(train-v4) · 앙상블 성적표(scorecard-v2) <strong>코드 끝</strong> · ⏳ <strong>자료 v2 수집 중</strong>(11:21 시작 · 18:30 쯤) → 관문 → 측정 → 요구자 확인 → 학습</td>
 </tr>
 </tbody>
 </table></div>
 <blockquote>
-<p>이 결과 때문에 규칙(R 2.0-6)이 발동해 있다 — <strong>이 판의 결과로는 "초파리 뇌 덕분"이라고 쓰지 않는다.</strong></p>
+<p>이 결과 때문에 규칙(R 2.0-6)이 발동해 있다 — <strong>이 판의 결과로는 "초파리 뇌 덕분"이라고 쓰지 않는다.</strong> 다음 판부터는 재배선 <strong>앙상블</strong>을 이겨야 그 말을 쓴다(09장 6절).</p>
 </blockquote>
 <h2 id="다른-문서와의-관계">다른 문서와의 관계</h2>
 <ul>
-<li><strong>설계와 배경</strong>(왜 이렇게 만들었나)은 <a href="../research/fly-connectome/index.html">연구 노트</a> — 특히 <a href="../research/fly-connectome/06-설계-초파리-회로에-Qwen-뇌.html">06 설계</a> · <a href="../research/fly-connectome/09-LIF-모델.html">09 LIF</a> · <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">11 구현</a>.</li>
+<li><strong>설계와 배경</strong>(왜 이렇게 만들었나)은 <a href="../research/fly-connectome/index.html">연구 노트</a> — 특히 <a href="../research/fly-connectome/06-설계-초파리-회로에-Qwen-뇌.html">06 설계</a> · <a href="../research/fly-connectome/09-LIF-모델.html">09 LIF</a> · <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">11 구현</a> · <a href="../research/fly-connectome/12-다음-학습-조사.html">12 다음 학습 조사</a>.</li>
+<li><strong>정의</strong>(무엇을 왜 · 대조군 · 성공 기준)는 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> · 계약은 <a href="../requirements/20260923-104151-7469_fly-learning-next_interface-design.md">I-7469</a>.</li>
 <li><strong>증거</strong>(로그 원문)는 요구사항 산출물 — <a href="../requirements/20260921-233859-3340_fly-connectome-closed-loop-core_walkthrough.md">W core</a> · <a href="../requirements/20260921-233859-3340_fly-connectome-closed-loop-loop_walkthrough.md">W loop</a>.</li>
 <li><strong>학습 자료 형식</strong>은 <a href="../datasets.md">docs/datasets.md</a>.</li>
 <li><strong>진행 상황</strong>은 <a href="../requirements/echomind-fly-connectome-handoff.md">인수인계</a>.</li>
 </ul>
-<p>이 안내서는 위 문서들을 <strong>"하는 순서"</strong> 로 다시 엮은 것이다. 숫자가 어긋나면 실행 기록(<code>runs/</code>)이 정본이다.</p>
+<p>이 안내서는 위 문서들을 <strong>"하는 순서"</strong> 로 다시 엮은 것이다. 숫자가 어긋나면 실행 기록(<code>runs/</code>)과 코드 · 설정이 정본이다.</p>
 <p><strong>읽기용 HTML</strong>: <a href="index.html">index.html</a> — 고칠 때는 이 마크다운을 고치고
 <code>uv run --no-project --with markdown python docs/training/build.py</code> 로 다시 만든다.</p>
 <div class="pager"><span></span><a href="01-뇌-재료-공식-데이터와-그래프.html">01 · 뇌 재료 — 데이터와 그래프 →</a></div>

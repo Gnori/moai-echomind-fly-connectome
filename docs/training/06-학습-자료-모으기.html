@@ -104,7 +104,8 @@
 <h1 id="06-학습-자료-모으기">06. 학습 자료 모으기</h1>
 <blockquote>
 <p>2부 Qwen 연결 · 첫 장. 코드: <code>src/moai_echomind_fly/loop/{teacher,collect,episode}.py</code> · <code>datasets.py</code>.
-형식 정본: <a href="../datasets.md">docs/datasets.md</a> · 자료 카드 <code>data/datasets/fly-loop-v1/README.md</code>(git 밖).</p>
+형식 정본: <a href="../datasets.md">docs/datasets.md</a> · 자료 카드 <code>data/datasets/&lt;이름&gt;/README.md</code>(git 밖).</p>
+<p>▶ <strong>2026-09-23 자료 v2(<code>fly-loop-v2</code>)를 모으는 중</strong> — 요구사항 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> F-002. 지금 있는 결과는 전부 v1 로 낸 것이다(10장).</p>
 </blockquote>
 <h2 id="1-무엇을-모으나">1. 무엇을 모으나</h2>
 <p>투영기는 <strong>"이런 뇌 활동이면 이런 상황 · 이런 행동"</strong> 을 배운다. 그러려면 <strong>(뇌 신호, 정답)</strong> 짝이 필요하다.</p>
@@ -118,7 +119,7 @@
 <tbody>
 <tr>
 <td>뇌 신호</td>
-<td>04장의 채널 벡터 9개(31,950 차원) — <strong>진짜 배선 · 섞은 배선 두 뇌 모두</strong></td>
+<td>04장의 채널 벡터 — v1 은 9 채널 31,950 차원 · <strong>v2 는 10 채널 33,402 차원</strong>(공간 채널) — <strong>진짜 배선과 재배선 뇌 모두</strong>(v1 은 재배선 1 개 · v2 는 5 개)</td>
 </tr>
 <tr>
 <td>정답 ① 캡션</td>
@@ -128,11 +129,43 @@
 <td>정답 ② 행동</td>
 <td>세계 참값을 아는 <strong>교사 규칙</strong>이 낸 행동 JSON</td>
 </tr>
+<tr>
+<td>(v2) 감각 입력</td>
+<td>결정마다 자극 뉴런의 발화율(<code>stim.npz</code>) — 나중에 재배선을 더 늘릴 때 몸을 다시 안 돌리기 위해</td>
+</tr>
 </tbody>
 </table></div>
 <p><strong>정답은 사람이 쓰지 않는다.</strong> 몸 시뮬레이터가 아는 참값(물체가 어디 있나 · 냄새 원이 어느 쪽인가)에서 코드가 만든다.</p>
+<h3 id="왜-v2-인가--셋">왜 v2 인가 — 셋</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>까닭</th>
+<th>v1</th>
+<th>v2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>표본이 적다</strong> — 581 결정에 차원 31,950 · LLM 연결에 성공한 문헌 사례는 최소 수천 개(연구 노트 12 §2)</td>
+<td>학습 60 · 평가 12 에피소드</td>
+<td>학습 <strong>300</strong> · 평가 <strong>40</strong> 에피소드(결정 약 3 천 · 350)</td>
+</tr>
+<tr>
+<td><strong>대조군이 하나</strong> — 우연히 약한/강한 재배선을 골랐을 수 있다 · 재배선은 <strong>앙상블</strong>로 비교하는 것이 기준(연구 노트 12 §5)</td>
+<td>재배선 씨앗 0 하나</td>
+<td>재배선 씨앗 <strong>0~4 다섯</strong> · 같은 감각 입력</td>
+</tr>
+<tr>
+<td><strong>입력에 3차원이 없다</strong></td>
+<td>물체는 방위 · 크기 · 확대 속도만</td>
+<td>물체 <strong>고도</strong> · 시야 자리별 LC 입력 · 몸 자세 · 위치 · 방향 · 공간 채널(04장 · task-v2 · retino-v1 · channels-v2)</td>
+</tr>
+</tbody>
+</table></div>
+<p>여기에 냄새 좌우 규칙 <code>sim-v2</code>(02장 · 04장 3.2)도 v2 부터 들어간다.</p>
 <h2 id="2-교사-규칙--loopteacherpy">2. 교사 규칙 — <code>loop/teacher.py</code></h2>
-<p>교사가 몸을 모는 동안 결정 창마다 기록한다. 규칙은 전부 코드에 선언돼 있고 자료 <code>meta.json</code> 의 <code>teacher_rules</code> 에 그대로 실린다.</p>
+<p>교사가 몸을 모는 동안 결정 창마다 기록한다. 규칙은 전부 코드에 선언돼 있고 자료 <code>meta.json</code> 의 <code>teacher_rules</code> 에 그대로 실린다. <strong>v1 과 v2 가 같다.</strong></p>
 <h3 id="21-행동-정답-위에서부터-먼저-맞는-것">2.1 행동 정답 (위에서부터 먼저 맞는 것)</h3>
 <div class="tbl"><table>
 <thead>
@@ -204,14 +237,24 @@
 </tbody>
 </table></div>
 <p>예: <code>다가오는 물체: 왼쪽 · 중간 · 다가옴 / 먹이 냄새: 오른쪽 · 강함 / 다리 접촉: 6개 / 소리: 없음 / 암컷 대용 물체: 없음</code></p>
+<p>v2 에서도 캡션 서식은 그대로다 — 3차원 칸(물체 고도 · 몸 방향 · 위치 · 기울기)은 <strong>참값에만</strong> 남기고, 3차원 캡션(<code>caption-v2</code>)은 F-008 5단계에서.</p>
 <blockquote>
-<p>⚠️ <strong>교사 규칙이 곧 결과를 정한다.</strong> 규칙이 쉬우면 무엇이든 배우기 쉽다. 그래서 <strong>섞은 배선 벡터로 똑같이 학습한 대조군</strong>과 나란히 잰다(09장).</p>
+<p>⚠️ <strong>교사 규칙이 곧 결과를 정한다.</strong> 규칙이 쉬우면 무엇이든 배우기 쉽다. 그래서 <strong>재배선 벡터로 똑같이 학습한 대조군</strong>과 나란히 잰다(09장).</p>
 </blockquote>
 <h2 id="3-모으기--fly-connectome-collect">3. 모으기 — <code>fly-connectome collect</code></h2>
-<pre><code class="language-bash"># 학습용: 씨앗 0~59 (60 에피소드)
-uv run fly-connectome collect --name main --seeds 0-59 --workers 3 --threads 4
-# 평가용: 씨앗 1000~1011 (12 에피소드) — 학습에 쓰지 않는다
+<h3 id="31-먼저-작게-잰다--collect-probe">3.1 먼저 작게 잰다 — <code>collect-probe</code></h3>
+<p>새 종류의 무거운 실행은 작게 먼저 재고 무엇에 비례하는지 본다(CLAUDE.md). 뇌가 둘에서 여섯으로 늘었으니 시간 · 메모리를 먼저 쟀다.</p>
+<pre><code class="language-bash">uv run fly-connectome collect-probe --seeds 0-1 --rewired-seeds 0-4    # 저장 없음 · 약 4 분
+</code></pre>
+<p><code>runs/collect-probe-20260923-111821.json</code>: 뇌 6 · <strong>결정당 12.0 s</strong>(몸 3.1 + 뇌 8.9 · 혼자 돌 때) · 일꾼 하나 3.4~3.6 GB(최대 4.3) · 추정 학습 300 에피소드 3.3 h + 평가 40 에피소드 0.45 h(일꾼 3).
+→ 요구자 확인("지금 시작") 뒤 수집.</p>
+<h3 id="32-수집">3.2 수집</h3>
+<pre><code class="language-bash"># v1 (2026-09-22): 재배선 하나
+uv run fly-connectome collect --name main --seeds 0-59     --workers 3 --threads 4
 uv run fly-connectome collect --name eval --seeds 1000-1011 --workers 3 --threads 4
+# v2 (2026-09-23): 재배선 다섯 · 조각 이름은 v2main · v2eval (v1 조각을 덮지 않는다)
+uv run fly-connectome collect --name v2main --seeds 0-299     --rewired-seeds 0-4 --workers 3 --threads 4
+uv run fly-connectome collect --name v2eval --seeds 1000-1039 --rewired-seeds 0-4 --workers 3 --threads 4
 </code></pre>
 <div class="tbl"><table>
 <thead>
@@ -223,7 +266,7 @@ uv run fly-connectome collect --name eval --seeds 1000-1011 --workers 3 --thread
 <tbody>
 <tr>
 <td><code>--workers 3</code></td>
-<td>씨앗을 세 조각으로 나눠 자식 프로세스 셋이 돈다(부모가 무거운 실행 잠금을 쥔다) → <code>runs/dataset-main-w0 … w2</code></td>
+<td>씨앗을 세 조각으로 나눠 자식 프로세스 셋이 돈다(부모가 무거운 실행 잠금을 쥔다) → <code>runs/dataset-v2main-w0 … w2</code></td>
 </tr>
 <tr>
 <td><code>--threads 4</code></td>
@@ -231,22 +274,27 @@ uv run fly-connectome collect --name eval --seeds 1000-1011 --workers 3 --thread
 </tr>
 <tr>
 <td><code>--graph traced-v1</code> · <code>--rewired-seed 0</code></td>
-<td>두 뇌 = 진짜 배선 · 그 씨앗으로 섞은 배선</td>
+<td>v1: 두 뇌 = 진짜 배선 · 그 씨앗으로 섞은 배선</td>
+</tr>
+<tr>
+<td><code>--rewired-seeds 0-4</code></td>
+<td>v2: 진짜 + 재배선 다섯 — 뇌마다 <code>features-rewired-s&lt;K&gt;.npz</code></td>
 </tr>
 </tbody>
 </table></div>
 <p>한 번 도는 동안 한 에피소드에서 일어나는 일:</p>
 <ol>
-<li>씨앗으로 과제를 뽑는다(냄새 원 위치 · 다가오는 물체 유무 · 시각 · 방향).</li>
-<li>몸을 초기화하고, 결정마다 <strong>두 뇌에 같은 감각 입력</strong>을 넣는다. 몸은 진짜 배선 뇌의 하강 뉴런을 따른다.</li>
-<li>창이 끝나면 두 뇌의 채널 특징 · 세계 참값 · 캡션 · 교사 행동을 한 줄로 남긴다(<code>DatasetWriter</code>).</li>
+<li>씨앗으로 과제를 뽑는다(냄새 원 위치 · 다가오는 물체 유무 · 시각 · 방향 · v2: 고도).</li>
+<li>몸을 초기화하고, 결정마다 <strong>모든 뇌에 같은 감각 입력</strong>을 넣는다. 몸은 진짜 배선 뇌의 하강 뉴런을 따른다.</li>
+<li>창이 끝나면 뇌마다 채널 특징 · 세계 참값 · 캡션 · 교사 행동 · (v2) 감각 입력을 한 줄로 남긴다(<code>DatasetWriter</code>).</li>
 <li>교사 행동이 다음 결정의 명령이 된다.</li>
 </ol>
-<p>시간: 학습용 60 에피소드 약 25 분(일꾼 3). 가드: 평소 문턱(메모리 여유 40 %) · 가벼움.</p>
+<p>시간: v1 학습용 60 에피소드 약 25 분(일꾼 3). <strong>v2 는 일꾼 셋이 같이 돌면 결정당 17~18 s</strong>(혼자 잰 12 s 보다 느리다 — CPU 를 나눠 쓴다) · 시간당 약 48 에피소드 ·
+2026-09-23 11:21 시작 → 14:07 에 147/300 · 18:30 쯤 끝 예상(<code>runs/collect-v2-*.log</code>). 가드: 평소 문턱(메모리 여유 40 %) · 한 번에 하나(<code>runs/.heavy.lock</code>). 띄웠으면 수십 분 간격으로 본다.</p>
 <h2 id="4-묶기--오래-둘-자리로">4. 묶기 — 오래 둘 자리로</h2>
 <p><code>runs/</code> 는 실행 기록을 쌓는 임시 자리다. 조각을 합쳐 <strong><code>data/datasets/&lt;이름&gt;/</code></strong> 에 묶는다.</p>
-<pre><code class="language-bash">uv run fly-connectome dataset pack --name fly-loop-v1 --train main --eval eval
-uv run fly-connectome dataset verify fly-loop-v1      # 체크섬 대조 — &quot;온전&quot;
+<pre><code class="language-bash">uv run fly-connectome dataset pack --name fly-loop-v2 --train v2main --eval v2eval
+uv run fly-connectome dataset verify fly-loop-v2      # 체크섬 대조 — &quot;온전&quot;
 uv run fly-connectome dataset list
 </code></pre>
 <div class="tbl"><table>
@@ -254,67 +302,115 @@ uv run fly-connectome dataset list
 <tr>
 <th>파일</th>
 <th>내용</th>
+<th>v2 에서 달라진 것</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>train/</code> · <code>eval/</code> <code>features-real.npz</code> · <code>features-rewired.npz</code></td>
+<td><code>train/</code> · <code>eval/</code> <code>features-real.npz</code></td>
 <td>채널 이름 → float32 [결정 수, 차원]</td>
+<td>채널 10 개</td>
+</tr>
+<tr>
+<td><code>features-rewired.npz</code> / <code>features-rewired-s&lt;K&gt;.npz</code></td>
+<td>재배선 뇌의 같은 것</td>
+<td>v1 은 하나(= s0) · v2 는 씨앗마다 하나. <strong>읽기는 둘 다 받는다</strong>(<code>rewired</code> → s0)</td>
+</tr>
+<tr>
+<td><code>stim.npz</code></td>
+<td><code>rates</code> float32 [결정, 구간 3, 자극 뉴런] · <code>stim_idx</code></td>
+<td><strong>새로</strong> — 감각 입력</td>
 </tr>
 <tr>
 <td><code>samples.jsonl</code></td>
 <td>결정마다 <code>seed</code> · <code>decision</code> · <code>t_ms</code> · <code>truth</code> · <code>caption</code> · <code>teacher_action</code> · <code>reflex_bins</code></td>
+<td><code>truth</code> 에 <code>looming_elevation_deg</code> · <code>heading_deg</code> · <code>pos_xy</code> · <code>body_euler_deg</code></td>
 </tr>
 <tr>
 <td><code>episodes.jsonl</code></td>
 <td>에피소드마다 도착 · 시간 · 물체 · 부딪힘</td>
+<td>같음</td>
 </tr>
 <tr>
 <td><code>meta.json</code></td>
 <td>판 번호 · 코드 커밋 · 채널 단위 이름 · 감각 대응표 · 교사 규칙</td>
+<td><code>rewired_seeds</code> 목록 · 판에 <code>retino</code> 추가</td>
 </tr>
 <tr>
 <td><code>README.md</code> · <code>SHA256SUMS</code></td>
 <td>자료 카드 · 체크섬</td>
+<td>같음</td>
 </tr>
 </tbody>
 </table></div>
-<p>같은 이름은 덮어쓰지 않는다(<code>pack</code> 이 거부). <strong>설정 판이나 채널 표가 바뀌면 새 이름</strong>으로 묶는다(<code>fly-loop-v2</code> …).</p>
-<h2 id="5-지금-있는-자료--fly-loop-v1">5. 지금 있는 자료 — <code>fly-loop-v1</code></h2>
+<pre><code class="language-python">from moai_echomind_fly import datasets
+feats, rows = datasets.load(&quot;fly-loop-v2&quot;, &quot;train&quot;, &quot;rewired-s3&quot;)   # &quot;real&quot; · &quot;rewired&quot;(= s0) · &quot;rewired-s&lt;K&gt;&quot;
+datasets.rewired_brains(&quot;fly-loop-v2&quot;)                              # [&quot;rewired-s0&quot;, …, &quot;rewired-s4&quot;]
+</code></pre>
+<p>같은 이름은 덮어쓰지 않는다(<code>pack</code> 이 거부). <strong>설정 판이나 채널 표가 바뀌면 새 이름</strong>으로 묶는다.</p>
+<h2 id="5-지금-있는-자료">5. 지금 있는 자료</h2>
 <div class="tbl"><table>
 <thead>
 <tr>
+<th>묶음</th>
 <th>나눔</th>
 <th>결정 수</th>
 <th>에피소드</th>
 <th>씨앗</th>
+<th>재배선</th>
 <th>교사 도착</th>
-<th>다가오는 물체</th>
-<th>부딪힘</th>
+<th>판</th>
+<th>상태</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td><code>fly-loop-v1</code></td>
 <td>train</td>
 <td><strong>581</strong></td>
 <td>60</td>
 <td>0~59</td>
-<td>60/60</td>
-<td>39</td>
-<td>1</td>
+<td>s0</td>
+<td>60/60(물체 39 · 부딪힘 1)</td>
+<td>sim-v1 · loom-v1 · task-v1 · channels-v1</td>
+<td>✅ 2026-09-22 · 코드 <code>4ac4635</code> · 75 MB</td>
 </tr>
 <tr>
+<td></td>
 <td>eval</td>
 <td><strong>105</strong></td>
 <td>12</td>
 <td>1000~1011</td>
-<td>12/12</td>
-<td>9</td>
-<td>0</td>
+<td>s0</td>
+<td>12/12(물체 9)</td>
+<td>같음</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>fly-loop-v2</code></td>
+<td>train</td>
+<td>약 3 천(예정)</td>
+<td>300</td>
+<td>0~299</td>
+<td>s0~s4</td>
+<td>14:07 기준 147 에피소드 · <strong>도착 147/147</strong> · 물체 90</td>
+<td>sim-v2 · loom-v1 · task-v2 · channels-v2 · retino-v1</td>
+<td>⏳ <strong>수집 중</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>eval</td>
+<td>약 350(예정)</td>
+<td>40</td>
+<td>1000~1039</td>
+<td>s0~s4</td>
+<td>—</td>
+<td>같음</td>
+<td>⏳ 학습 나눔 뒤</td>
 </tr>
 </tbody>
 </table></div>
-<p>모은 코드 <code>4ac4635</code> · 판 sim-v1 · loom-v1 · task-v1 · channels-v1 · 75 MB · 2026-09-22.</p>
+<p><code>fly-loop-v1</code> 은 그대로 남긴다(옛 결과를 다시 돌릴 수 있게 · <code>config/archive/</code> 의 옛 판과 짝).</p>
 <p>⚠️ <strong>"평가용"이 둘이다 — 헷갈리지 않게:</strong></p>
 <div class="tbl"><table>
 <thead>
@@ -327,27 +423,31 @@ uv run fly-connectome dataset list
 <tbody>
 <tr>
 <td>자료의 <code>eval</code> 나눔</td>
-<td>1000~1011</td>
-<td>학습 중 검증 손실(앞 24 개) · 캡션 평가(105 개 전부) · 선형 검사</td>
+<td>v1 1000~1011 · v2 1000~1039</td>
+<td>학습 중 검증 손실(앞 24 개) · 캡션 평가(전부) · 선형 검사 · 압축 관문</td>
 </tr>
 <tr>
 <td>성적표 씨앗</td>
-<td>2000~2009</td>
+<td>2000~2009(v2 뒤에는 40 개로 늘릴 예정)</td>
 <td>09장 성적표 — 자료로 모으지 않고 그때 새로 돌린다</td>
 </tr>
 </tbody>
 </table></div>
-<h2 id="6-이-자료의-한계-10장의-원인과-이어진다">6. 이 자료의 한계 (10장의 원인과 이어진다)</h2>
+<h2 id="6-이-자료의-한계">6. 이 자료의 한계</h2>
 <ul>
-<li><strong>표본이 적다</strong> — 581 결정에 차원 31,950. 차원이 표본의 55 배다.</li>
-<li><strong>칸마다 답이 치우쳐 있다</strong> — 예: 평가 자료에서 "물체 있음"의 최빈값이 0.667, "냄새 쪽"이 0.543. 찍기만 해도 이만큼 나온다.</li>
+<li>v1: <strong>표본이 적다</strong>(581 결정에 차원 31,950 — 55 배) · v2 로 약 5 배 늘지만 차원(33,402)에는 여전히 못 미친다 → 그래서 <strong>채널별 압축 + 관문</strong>(09장)을 거쳐 투영기에 넣는다.</li>
+<li><strong>칸마다 답이 치우쳐 있다</strong> — 예: v1 평가 자료에서 "물체 있음"의 최빈값이 0.667, "냄새 쪽"이 0.543. 찍기만 해도 이만큼 나온다.</li>
 <li>소리 · 암컷 칸은 늘 "없음"이라 배울 것이 없다.</li>
+<li><strong>냄새 쪽은 한 창에서 입력부터 좌우가 잡음 아래</strong>(04장 3.2) — v2 에서도 판정에서 뺀다.</li>
+<li>같은 에피소드 안의 결정들은 독립 표본이 아니다 → 판정은 <strong>에피소드 단위</strong>(09장 stats).</li>
 </ul>
 <h2 id="7-확인-체크리스트">7. 확인 체크리스트</h2>
 <ul>
+<li>[ ] <code>collect-probe</code> 로 결정당 시간 · 메모리를 먼저 쟀다(뇌 수가 바뀌었을 때)</li>
 <li>[ ] 교사 도착 = 에피소드 수(교사가 과제를 풀 수 있어야 정답이 의미가 있다)</li>
 <li>[ ] <code>dataset verify</code> → 온전</li>
-<li>[ ] <code>meta.json</code> 의 판 번호가 지금 <code>config/*.yaml</code> 과 같다</li>
+<li>[ ] <code>meta.json</code> 의 판 번호가 지금 <code>config/*.yaml</code> 과 같다 · <code>rewired_seeds</code> 가 의도한 목록</li>
+<li>[ ] 묶은 뒤 <code>uv run fly-connectome backup</code></li>
 </ul>
 <p>이전: <a href="05-회로를-학습시키려면.html">05. 회로를 학습시키려면</a> · 다음: <a href="07-투영기와-Qwen-잇기.html">07. 투영기와 Qwen 잇기</a></p>
 <div class="pager"><a href="05-회로를-학습시키려면.html">← 05 · 회로를 학습시키려면(후보)</a><a href="07-투영기와-Qwen-잇기.html">07 · 투영기와 Qwen 잇기 →</a></div>

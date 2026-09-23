@@ -105,6 +105,7 @@
 <blockquote>
 <p>2부 Qwen 연결 · 셋째 장. 코드: <code>src/moai_echomind_fly/loop/train.py</code>(한 걸음) · <code>train_cli.py</code>(순서 · 규칙) · <code>guard.py</code> · <code>bin/run_full.sh</code> · 설정 <code>config/guard.yaml</code>.
 증거: <a href="../requirements/20260921-233859-3340_fly-connectome-closed-loop-loop_walkthrough.md">W loop 2 · 3.1 · 3.2</a>.</p>
+<p>▶ <strong>2026-09-23 규칙 판이 <code>train-v4</code> 로 올랐다</strong>(R-7469 F-005 · 코드만 · 학습은 자료 v2 · 관문 · <code>train-probe</code> · 요구자 확인 뒤). 지금 있는 결과는 <code>train-v2</code>.</p>
 </blockquote>
 <h2 id="1-한눈에">1. 한눈에</h2>
 <div class="tbl"><table>
@@ -113,7 +114,7 @@
 <th>단계</th>
 <th>질문 → 정답</th>
 <th>바퀴</th>
-<th>걸음 수</th>
+<th>걸음 수(v1 자료)</th>
 <th>옵티마이저</th>
 </tr>
 </thead>
@@ -134,13 +135,15 @@
 </tr>
 </tbody>
 </table></div>
-<p>한 걸음 = 예시 <strong>하나</strong>(배치 1). 진짜 배선과 섞은 배선을 <strong>똑같은 절차 · 같은 씨앗 순서</strong>로 따로 학습한다 — 대조군.</p>
-<h2 id="2-학습-규칙--train_rule판-train-v3">2. 학습 규칙 — <code>TRAIN_RULE</code>(판 <code>train-v3</code>)</h2>
+<p>한 걸음 = 예시 <strong>하나</strong>(배치 1). 진짜 배선과 재배선을 <strong>똑같은 절차 · 같은 씨앗 순서</strong>로 따로 학습한다 — 대조군. v4 부터는 재배선을 <strong>여럿</strong>(최소 3 · <code>rewired-s0</code> … <code>s2</code>) 학습한다.
+v2 자료(결정 약 3 천)면 걸음 수도 약 5 배가 된다.</p>
+<h2 id="2-학습-규칙--train_rule판-train-v4">2. 학습 규칙 — <code>TRAIN_RULE</code>(판 <code>train-v4</code>)</h2>
 <pre><code class="language-python">TRAIN_RULE = {
-    &quot;version&quot;: &quot;train-v3&quot;,
-    &quot;k&quot;: 2, &quot;width&quot;: 256, &quot;kind&quot;: &quot;mlp2&quot;, &quot;lr&quot;: 2e-4,
+    &quot;version&quot;: &quot;train-v4&quot;,
+    &quot;input&quot;: &quot;compress&quot;, &quot;compress&quot;: &quot;compress-v1&quot;,
+    &quot;k&quot;: 1, &quot;width&quot;: 0, &quot;kind&quot;: &quot;linear&quot;, &quot;lr&quot;: 2e-4,
     &quot;caption_epochs&quot;: 2, &quot;action_epochs&quot;: 1, &quot;caption_rehearsal&quot;: 0.3,
-    &quot;val_samples&quot;: 24, &quot;seed&quot;: 0, &quot;init_seed&quot;: 0,
+    &quot;val_samples&quot;: 24, &quot;seed&quot;: 0, &quot;init_seed&quot;: 0, &quot;template_weight&quot;: 0.1,
 }
 </code></pre>
 <div class="tbl"><table>
@@ -151,6 +154,14 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>input</code> · <code>compress</code></td>
+<td>입력 = <strong>압축 관문을 통과한 채널의 압축 벡터</strong>(09장 4절 · <code>runs/compress-&lt;자료&gt;-compress-v1/</code>). 통과 채널이 0 이면 학습하지 않는다</td>
+</tr>
+<tr>
+<td><code>kind</code> · <code>k</code> · <code>width</code></td>
+<td>채널당 <strong>선형 → 토큰 1 개</strong>(07장 4.2)</td>
+</tr>
 <tr>
 <td><code>lr</code> 2e-4</td>
 <td>AdamW 학습률 · 가중치 감쇠 0.01</td>
@@ -171,13 +182,13 @@
 <td><code>init_seed</code> 0</td>
 <td>투영기 <strong>초기값</strong>의 씨앗(train-v3 부터) — 같은 규칙이면 같은 초기값에서 시작한다</td>
 </tr>
+<tr>
+<td><strong><code>template_weight</code></strong> 0.1</td>
+<td>손실 가중 — <strong>칸 값 토큰 1 · 틀 토큰 0.1</strong>(3절)</td>
+</tr>
 </tbody>
 </table></div>
-<p><strong>판 변천</strong>: <code>train-v1</code> 은 행동 단계가 캡션 단계의 옵티마이저를 이어 썼다. v1 캡션 저장본에는 옵티마이저 상태가 없어서, 진짜 배선만 이어 돌리면
-대조군과 절차가 달라진다 → <code>train-v2</code> 는 <strong>두 뇌 모두 행동 단계를 새 옵티마이저로</strong> 시작한다. 캡션 단계는 v1 과 같다.
-<code>train-v3</code>(2026-09-23)은 v2 에 <strong>초기값 씨앗</strong>만 더했다 — v2 까지는 초기값이 실행마다 달라 같은 설정으로도 같은 저장본이 나오지 않았다.
-초기값이 같다는 것은 시험(<code>test_projector_init_seed_makes_same_weights</code>)으로 확인한다. 다만 GPU 는 계산 순서에 따라 기울기가 조금씩 흔들릴 수 있어서
-(4.2 의 시험 머리말), <strong>학습이 끝난 저장본까지 비트 단위로 같은지는 아직 재 보지 않았다.</strong></p>
+<p><strong>판 변천</strong>:</p>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -194,23 +205,56 @@
 </tr>
 <tr>
 <td>train-v2</td>
-<td>행동 단계는 새 옵티마이저</td>
+<td>행동 단계는 새 옵티마이저(v1 캡션 저장본에 옵티마이저 상태가 없어 진짜 배선만 이어 가면 대조군과 절차가 달라지기 때문)</td>
 <td><code>runs/projector-{real,rewired}-train-v2</code> — <strong>지금 결과</strong></td>
 </tr>
 <tr>
 <td>train-v3</td>
-<td>+ 초기값 씨앗 · 묶음 자료를 직접 읽음</td>
-<td>아직 돌리지 않음</td>
+<td>+ 초기값 씨앗 · 묶음 자료를 직접 읽음(v2 까지는 초기값이 실행마다 달라 같은 설정으로도 같은 저장본이 나오지 않았다 — 시험 <code>test_projector_init_seed_makes_same_weights</code>)</td>
+<td>돌리지 않음</td>
+</tr>
+<tr>
+<td><strong>train-v4</strong></td>
+<td>+ <strong>압축 입력 · 채널당 선형 토큰 1 · 칸 값 토큰 가중 · 재배선 <code>rewired-s&lt;K&gt;</code> · 기본 자료 <code>fly-loop-v2</code></strong></td>
+<td><code>runs/projector-{real,rewired-s0,…}-train-v4</code> — 자료 v2 뒤</td>
 </tr>
 </tbody>
 </table></div>
-<h2 id="3-손실--정답-글-토큰의-교차-엔트로피">3. 손실 — 정답 글 토큰의 교차 엔트로피</h2>
-<pre><code>입력 임베딩 = [ 프롬프트(자리 표시 18 개 → 투영기 출력) , 정답 토큰 (마지막 하나 뺌) ]
-손실       = 프롬프트 끝부터 나오는 로짓 vs 정답 토큰 + &lt;|im_end|&gt;   의 평균 교차 엔트로피
+<p>GPU 는 계산 순서에 따라 기울기가 조금씩 흔들릴 수 있어서(4.2 의 시험 머리말), <strong>학습이 끝난 저장본까지 비트 단위로 같은지는 아직 재 보지 않았다.</strong></p>
+<h2 id="3-손실--정답-글-토큰의-교차-엔트로피-v4-칸-값에-가중">3. 손실 — 정답 글 토큰의 교차 엔트로피 (v4: 칸 값에 가중)</h2>
+<pre><code>입력 임베딩 = [ 프롬프트(자리 표시 → 투영기 출력) , 정답 토큰 (마지막 하나 뺌) ]
+손실(v2)   = 프롬프트 끝부터 나오는 로짓 vs 정답 토큰 + &lt;|im_end|&gt;   의 평균 교차 엔트로피
+손실(v4)   = Σ(토큰마다 교차 엔트로피 × 가중) ÷ Σ 가중        가중 = 칸 값 토큰 1 · 그 밖 0.1
 </code></pre>
 <p>기울기는 Qwen 을 <strong>거꾸로 지나</strong> 투영기에만 닿는다. Qwen 은 얼려 있어 지나가기만 한다.</p>
-<p>⚠️ 캡션 손실은 <strong>서식 글자까지 전부</strong> 맞히는 손실이다. "다가오는 물체: … / 먹이 냄새: …" 의 틀 글자는 매번 같아서 쉽게 맞히고,
-정작 가려야 할 칸(왼쪽/오른쪽 · 개수)은 토큰 몇 개뿐이다 — 손실이 0.1 까지 내려가도 칸은 못 맞힐 수 있다(09장 · 10장).</p>
+<p>⚠️ <strong>왜 가중인가</strong> — v2 의 캡션 손실은 <strong>서식 글자까지 전부</strong> 맞히는 손실이다. "다가오는 물체: … / 먹이 냄새: …" 의 틀 글자는 입력과 무관한 상수라 쉽게 맞히고,
+정작 가려야 할 칸(왼쪽/오른쪽 · 개수)은 토큰 몇 개뿐이다 — 손실이 0.1 까지 내려가도 칸은 못 맞혔고, 섞은 배선의 손실이 오히려 낮았다(10장). 이것이 틀 손실로 설명된다(연구 노트 12 §4).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>v4 가중 규칙</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>칸 값 구간</td>
+<td>캡션은 <code>: 값 /</code>(<code>:</code> 뒤부터 <code>/</code> 앞까지) · 행동 JSON 은 <code>:값</code>(<code>:</code> 뒤부터 <code>,</code> 나 <code>}</code> 앞까지) — <code>train_cli.value_spans</code></td>
+</tr>
+<tr>
+<td>토큰에 옮기기</td>
+<td>토크나이저의 글자 위치(<code>offset_mapping</code>)로 — 값 구간과 겹치는 토큰이 1, 아니면 <code>template_weight</code> · 끝 표시 <code>&lt;|im_end|&gt;</code> 도 0.1</td>
+</tr>
+<tr>
+<td>왜 0 이 아니라 0.1</td>
+<td>시스템 글에 캡션 서식이 없어 <strong>서식을 배울 곳이 정답뿐</strong>이다 — 0 으로 두면 서식을 못 배운다(I-7469 v1.5)</td>
+</tr>
+<tr>
+<td>시험</td>
+<td>칸 구간이 맞는가 · 가중이 전부 같으면 균등 평균과 같은가 · 0 가중 토큰은 무시되는가(<code>tests/test_train_layerwise.py</code> · <code>test_stats.py</code>)</td>
+</tr>
+</tbody>
+</table></div>
 <h2 id="4-한-걸음-안에서--층별-역전파">4. 한 걸음 안에서 — 층별 역전파</h2>
 <h3 id="41-왜-필요했나">4.1 왜 필요했나</h3>
 <p>처음엔 mlx 의 보통 방식(한 번에 미분)으로 돌렸다. 한 걸음 최대 메모리가 <strong>토큰당 약 0.32 GB</strong> 였다(226 토큰 → 102 GB · 191 토큰 → 90 GB).
@@ -219,7 +263,7 @@ mlx-lm 의 층별 재계산(<code>grad_checkpoint</code>)은 전체를 한 번�
 <h3 id="42-어떻게-하나--trainergrads">4.2 어떻게 하나 — <code>Trainer.grads</code></h3>
 <pre><code>1. 투영기로 입력 임베딩 x 를 만든다(여기서는 기울기를 끊는다)
 2. 앞으로: Qwen 을 평가 모드(전용 커널 · 빠름)로 한 층씩 — 층마다 입력만 저장하고 즉시 평가
-3. 머리: 마지막 은닉 → 정규화 → lm_head → 손실, 마지막 은닉에 대한 기울기(cot)
+3. 머리: 마지막 은닉 → 정규화 → lm_head → 손실(v4: 가중), 마지막 은닉에 대한 기울기(cot)
 4. 거꾸로: 학습 모드로 바꿔 마지막 층부터 한 층씩 vjp(저장한 입력으로) — 층마다 평가해 끊는다
 5. 임베딩에 대한 기울기(cot)를 얻으면 ⟨투영기 임베딩, cot⟩ 의 기울기 = 투영기 기울기
 </code></pre>
@@ -253,6 +297,7 @@ mlx-lm 의 층별 재계산(<code>grad_checkpoint</code>)은 전체를 한 번�
 </tr>
 </tbody>
 </table></div>
+<p>v4 는 입력 토큰이 줄어(자리 18 → 통과 채널 수) 걸음당 메모리가 이보다 작을 것으로 보지만 <strong><code>train-probe</code> 로 먼저 잰다.</strong></p>
 <h2 id="5-메모리-가드--학습-전용-규칙">5. 메모리 가드 — 학습 전용 규칙</h2>
 <p>맥 한 대의 통합 메모리를 요구자 화면 · 에코마인드 라이브 · 다른 세션과 같이 쓴다. 정본은 <code>config/guard.yaml</code>.</p>
 <div class="tbl"><table>
@@ -283,21 +328,24 @@ mlx-lm 의 층별 재계산(<code>grad_checkpoint</code>)은 전체를 한 번�
 </table></div>
 <h2 id="6-명령">6. 명령</h2>
 <pre><code class="language-bash"># 새 종류의 무거운 실행 전에는 먼저 짧게 잰다 (저장 없음 · 기록 runs/train-probe-*.jsonl)
-uv run fly-connectome train-probe --steps 12
+uv run fly-connectome train-probe --steps 12                       # 기본 --brain real --dataset fly-loop-v2
 
-# 한 뇌씩
-uv run fly-connectome train --brain real      # 기본 --dataset fly-loop-v1 (data/datasets/ 묶음)
-uv run fly-connectome train --brain rewired
+# 한 뇌씩 — v4: 진짜 + 재배선 최소 3
+uv run fly-connectome train --brain real                            # 기본 --dataset fly-loop-v2
+uv run fly-connectome train --brain rewired-s0
+uv run fly-connectome train --brain rewired-s1
+uv run fly-connectome train --brain rewired-s2
+# v1 자료 · v2 판을 다시 돌릴 때는 --dataset fly-loop-v1 --brain rewired (= s0)
 
 # 캡션 단계 저장본에서 이어 행동 단계만
 uv run fly-connectome train --brain real --resume-caption runs/projector-real-train-v1/stage1-caption.safetensors
 
-# 전체 순서: 학습 둘 → 캡션 평가 넷 → 성적표 (단계마다 메모리 여유가 돌아올 때까지 30 분까지 기다림)
+# 전체 순서 스크립트 — ⚠️ 아직 v2 순서(진짜 · 재배선 하나 · 성적표 5 구성)다. v4 는 위 명령을 하나씩 · 성적표는 09장 3절
 bin/run_full.sh
 bin/run_full.sh --resume-real &lt;진짜 배선 캡션 저장본&gt;
 </code></pre>
-<p><code>--dataset</code> 은 <strong>묶음 이름</strong>(<code>data/datasets/&lt;이름&gt;</code>)이다 — 묶음이 있으면 그 <code>train</code> · <code>eval</code> 나눔을 읽고, 없으면 예전처럼
-<code>runs/dataset-&lt;이름&gt;</code> 조각(검증은 <code>--val</code>)을 읽는다. 어느 쪽을 읽었는지는 <code>meta.json</code> 의 <code>data</code> 에 남는다(묶음이면 <code>SHA256SUMS</code> 의 해시까지).
+<p><code>--brain</code> 은 <code>real</code> · <code>rewired</code>(= s0) · <code>rewired-s&lt;K&gt;</code>. <code>--dataset</code> 은 <strong>묶음 이름</strong>(<code>data/datasets/&lt;이름&gt;</code>)이다 — 묶음이 있으면 그 <code>train</code> · <code>eval</code> 나눔을 읽고, 없으면 예전처럼
+<code>runs/dataset-&lt;이름&gt;</code> 조각(검증은 <code>--val</code>)을 읽는다. 어느 쪽을 읽었는지는 <code>meta.json</code> 의 <code>data</code> 에 남는다(묶음이면 <code>SHA256SUMS</code> 의 해시 · v4 는 압축기 폴더와 통과 채널까지).
 <code>fly-loop-v1</code> 묶음과 <code>runs/</code> 조각은 특징 · 순서 · 정답이 <strong>전부 같다</strong>(2026-09-23 대조).</p>
 <p>⚠️ <strong>끝난 학습은 덮어쓰지 않는다</strong> — 결과 폴더에 <code>final.safetensors</code> 가 있으면 <code>train</code> 이 시작하지 않는다(끝 코드 2).
 같은 판으로 다시 돌리려면 폴더를 옮긴 뒤, 규칙을 바꿨으면 판을 올린다.</p>
@@ -314,7 +362,7 @@ bin/run_full.sh --resume-real &lt;진짜 배선 캡션 저장본&gt;
 <tbody>
 <tr>
 <td><code>stage1-caption.safetensors</code></td>
-<td>캡션 단계 끝의 투영기(122 MB)</td>
+<td>캡션 단계 끝의 투영기(v2 122 MB · v4 는 수 MB)</td>
 </tr>
 <tr>
 <td><code>final.safetensors</code></td>
@@ -322,7 +370,7 @@ bin/run_full.sh --resume-real &lt;진짜 배선 캡션 저장본&gt;
 </tr>
 <tr>
 <td><code>meta.json</code></td>
-<td>뇌 · 자료 · 규칙 · 캡션 저장본 출처 · 투영기 모양 · 채널 차원 · <strong>Qwen 지문</strong> · 설정 판</td>
+<td>뇌 · 자료 · 규칙 · 캡션 저장본 출처 · 투영기 모양 · 채널 차원 · <strong>Qwen 지문</strong> · 설정 판 · (v4) 압축기 · 통과 채널 · 손실 가중 규칙</td>
 </tr>
 <tr>
 <td><code>train.log</code></td>
@@ -334,7 +382,7 @@ bin/run_full.sh --resume-real &lt;진짜 배선 캡션 저장본&gt;
 </tr>
 </tbody>
 </table></div>
-<h2 id="8-걸리는-시간-실측--2026-09-2223">8. 걸리는 시간 (실측 · 2026-09-22~23)</h2>
+<h2 id="8-걸리는-시간-실측--2026-09-2223--train-v2--v1-자료">8. 걸리는 시간 (실측 · 2026-09-22~23 · train-v2 · v1 자료)</h2>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -361,11 +409,14 @@ bin/run_full.sh --resume-real &lt;진짜 배선 캡션 저장본&gt;
 </tr>
 </tbody>
 </table></div>
-<p>오래 도는 것을 띄웠으면 <strong>수십 분 간격으로</strong> <code>train.log</code> 의 <code>[mem]</code> 줄과 <code>memory_pressure</code> 를 확인한다.</p>
+<p>v4 는 <strong>아직 재지 않았다</strong> — 자료가 약 5 배(걸음 수도) · 뇌 4 개 · 성적표 씨앗 40 × 구성 7. <code>train-probe</code> 로 걸음당 시간 · 메모리를 잰 뒤 전체 시간을 산정해 요구자 확인.
+오래 도는 것을 띄웠으면 <strong>수십 분 간격으로</strong> <code>train.log</code> 의 <code>[mem]</code> 줄과 <code>memory_pressure</code> 를 확인한다.</p>
 <h2 id="9-확인-체크리스트">9. 확인 체크리스트</h2>
 <ul>
-<li>[ ] 시작 전 <code>memory_pressure | tail -1</code> ≥ 80 % · <code>ollama ps</code> 로 다른 큰 모델이 없는지</li>
-<li>[ ] <code>train.log</code> 의 <code>[mem]</code> 이 평탄(peak 약 32 GB · cache &lt; 1 GB)</li>
+<li>[ ] 시작 전 <code>memory_pressure | tail -1</code> ≥ 80 % · <code>ollama ps</code> 로 다른 큰 모델이 없는지 · <code>runs/.heavy.lock</code> 이 비어 있는지</li>
+<li>[ ] v4: <code>compress fit</code> · <code>compress gate</code> 를 먼저 돌려 통과 채널이 있다(09장 4절)</li>
+<li>[ ] <code>train-probe</code> 기록이 있다(새 판 · 새 자료마다)</li>
+<li>[ ] <code>train.log</code> 의 <code>[mem]</code> 이 평탄(peak 약 32 GB 이하 · cache &lt; 1 GB)</li>
 <li>[ ] 끝나면 <code>meta.json</code> 의 <code>qwen_fingerprint.unchanged: true</code></li>
 <li>[ ] 학습 규칙을 바꿨으면 <code>TRAIN_RULE.version</code> 을 올렸다(결과 폴더 이름이 바뀐다)</li>
 </ul>

@@ -206,7 +206,8 @@ v &gt; v_th 이면 발화 → v = v_reset, g = 0, A += b_adapt, 불응기 t_rfc 
 </tr>
 </tbody>
 </table></div>
-<p>⚠️ 이 값들은 <strong>판 번호로 잠근다.</strong> 하나라도 바꾸면 <code>version</code> 을 올리고, 03장의 검산을 다시 돌리고, 그 판으로 모은 학습 자료(06장)도 새로 모아야 한다(채널 벡터가 달라진다).</p>
+<p>⚠️ 이 값들은 <strong>판 번호로 잠근다.</strong> 하나라도 바꾸면 <code>version</code> 을 올리고, 03장의 검산을 다시 돌리고, 그 판으로 모은 학습 자료(06장)도 새로 모아야 한다(채널 벡터가 달라진다).
+<code>sim-v1 → v2</code>(2026-09-23)는 후각 수용 뉴런에서 <strong>나가는</strong> 연결만 바꾼다 — 도망 반사 검산(시각 → 거대섬유)에는 후각 뉴런이 침묵이라 영향이 없고, 다시 돌리지 않았다. 학습 자료는 새로 모은다(<code>fly-loop-v2</code> · 06장). 시험 <code>tests/test_sim_ipsi.py</code> 가 규칙이 걸리는 연결만 바뀌는지 확인한다.</p>
 <h2 id="4-기준-구현과-발화-하나까지-맞추기">4. 기준 구현과 "발화 하나까지" 맞추기</h2>
 <p>새로 짠 엔진이 Shiu 모델과 같은지 확인하는 것이 뇌를 쓰기 전 첫 관문이다.
 작은 그래프에서 Brian2(Shiu 가 쓴 시뮬레이터) 판과 우리 엔진을 같은 씨앗으로 돌려 <strong>발화 (시각, 뉴런) 목록 전체</strong>를 비교한다(<code>tests/test_sim_parity.py</code>).</p>
@@ -293,14 +294,19 @@ v &gt; v_th 이면 발화 → v = v_reset, g = 0, A += b_adapt, 불응기 t_rfc 
 <tr>
 <td>학습 · 신경조절이 없다</td>
 <td>연결 지도에 시냅스를 바꾸는 규칙이 없다</td>
-<td><a href="05-회로를-학습시키려면.html">05장</a></td>
+<td><a href="05-회로를-학습시키려면.html">05장</a> · R-7469 F-006 · F-007</td>
+</tr>
+<tr>
+<td>냄새 <strong>좌우</strong>를 한 결정 창(300 ms)에서 못 읽는다</td>
+<td>후각 수용 뉴런이 양쪽 촉각엽으로 반반 간다(같은 쪽 51.7 % · 반대쪽 47.7 %). <code>sim-v2</code> 로 같은 쪽 방출을 올려도(× 1.4) 실제 입력의 좌우 차(두 더듬이 상대 차 중앙 4.4 %)가 발화 잡음보다 작다 — 투사 뉴런 좌우 부호 0.508(v1 · v2 같음)</td>
+<td>냄새 쪽 칸을 판정에서 뺀다(<code>stats-v2</code>) · 측정은 <a href="04-감각-넣기와-신호-읽기.html">04장 3.2</a> · 시간을 두고 읽는 방식은 후보</td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="7-확인-체크리스트">7. 확인 체크리스트</h2>
 <ul>
 <li>[ ] <code>uv run pytest tests/test_sim_parity.py</code> 통과(Brian2 가 설치된 개발 환경)</li>
-<li>[ ] <code>config/sim.yaml</code> 의 <code>version</code> 이 학습 자료 · 투영기 <code>meta.json</code> 의 <code>versions.sim</code> 과 같다</li>
+<li>[ ] <code>config/sim.yaml</code> 의 <code>version</code> 이 학습 자료 · 투영기 <code>meta.json</code> 의 <code>versions.sim</code> 과 같다(v1 자료는 <code>sim-v1</code> · v2 자료는 <code>sim-v2</code>) · 옛 판은 <code>config/archive/sim-v1.yaml</code></li>
 </ul>
 <p>이전: <a href="01-뇌-재료-공식-데이터와-그래프.html">01. 뇌 재료</a> · 다음: <a href="03-뇌-맞추기와-검산.html">03. 뇌 맞추기와 검산</a></p>
 <div class="pager"><a href="01-뇌-재료-공식-데이터와-그래프.html">← 01 · 뇌 재료 — 데이터와 그래프</a><a href="03-뇌-맞추기와-검산.html">03 · 뇌 맞추기와 검산 →</a></div>

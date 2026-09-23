@@ -115,6 +115,7 @@ MaleCNS 는 Shiu 가 맞춘 FlyWire 와 시냅스를 세는 방식이 달라서,
 <p>⚠️ <strong>규칙은 결과를 보기 전에 적는다.</strong> 결과를 보고 규칙을 바꾸면 "맞춘 것"이 아니라 "고른 것"이 된다.
 고른 값은 판 번호(<code>sim-v1</code>)로 잠그고, 바꾸려면 규칙 판을 올린다.</p>
 </blockquote>
+<p>(2026-09-23 <code>sim-v2</code> 는 <code>w_scale</code> 을 건드리지 않았다 — 문헌 값 하나(후각 수용 뉴런 같은 쪽 방출 × 1.4 · Gaudry 2013)를 그대로 넣은 것이라 "맞춘 값"이 아니다. 02장 3절.)</p>
 <h2 id="2-무엇으로-맞추나--도망-반사">2. 무엇으로 맞추나 — 도망 반사</h2>
 <p>기준 행동은 초파리의 <strong>도망 반사</strong>다: 물체가 빠르게 다가오면(looming) 시각 투사 뉴런 LC/LPLC 가 발화하고, 그것이
 <strong>거대섬유(GF = DNp01)</strong> 를 발화시켜 뛰어오른다. 생리 기록이 많아 채점 기준을 숫자로 적을 수 있다(von Reyn et al. 2014 등).</p>
@@ -350,7 +351,7 @@ MaleCNS 는 Shiu 가 맞춘 FlyWire 와 시냅스를 세는 방식이 달라서,
 </table></div>
 <h2 id="6-이-장이-뒤에-넘기는-것">6. 이 장이 뒤에 넘기는 것</h2>
 <ul>
-<li><strong><code>sim-v1</code>(w_scale 0.25) · <code>loom-v1</code>(peak 5 Hz)</strong> — 06장의 학습 자료와 10장의 투영기 <code>meta.json</code> 에 이 판 번호가 찍힌다.</li>
+<li><strong><code>sim-v1</code>(w_scale 0.25) · <code>loom-v1</code>(peak 5 Hz)</strong> — 06장의 학습 자료와 10장의 투영기 <code>meta.json</code> 에 이 판 번호가 찍힌다. 지금 판은 <strong><code>sim-v2</code></strong>(w_scale 0.25 그대로 + 같은 쪽 방출) · v1 자료는 <code>sim-v1</code> 으로 남는다(<code>config/archive/</code>).</li>
 <li><strong>"섞은 배선은 침묵한다"</strong> — 2부의 대조군이 의미를 갖는 전제.</li>
 <li><strong>시각은 LC/LPLC 로 넣는다</strong> — 04장의 감각 인코더.</li>
 </ul>
@@ -358,7 +359,7 @@ MaleCNS 는 Shiu 가 맞춘 FlyWire 와 시냅스를 세는 방식이 달라서,
 <ul>
 <li>[ ] 규칙(<code>FIT_RULE</code>)을 바꿨다면 <code>version</code> 을 올렸다</li>
 <li>[ ] <code>bench escape --trials 40</code> 다섯 항목 통과 · 섞은 배선 반응 &lt; 0.1</li>
-<li>[ ] 값을 바꿨다면 <code>config/sim.yaml</code> 판을 올리고 <strong>학습 자료를 새 이름으로 다시 모은다</strong>(06장)</li>
+<li>[ ] 값을 바꿨다면 <code>config/sim.yaml</code> 판을 올리고 옛 판을 <code>config/archive/</code> 에 남기고 <strong>학습 자료를 새 이름으로 다시 모은다</strong>(06장)</li>
 </ul>
 <p>이전: <a href="02-뇌-엔진-LIF.html">02. 뇌 엔진</a> · 다음: <a href="04-감각-넣기와-신호-읽기.html">04. 감각 넣기와 신호 읽기</a></p>
 <div class="pager"><a href="02-뇌-엔진-LIF.html">← 02 · 뇌 엔진 — LIF</a><a href="04-감각-넣기와-신호-읽기.html">04 · 감각 넣기와 신호 읽기 →</a></div>

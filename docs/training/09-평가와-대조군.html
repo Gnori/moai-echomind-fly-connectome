@@ -103,11 +103,12 @@
 <div class="page">
 <h1 id="09-평가와-대조군">09. 평가와 대조군</h1>
 <blockquote>
-<p>2부 Qwen 연결 · 넷째 장. 코드: <code>src/moai_echomind_fly/loop/train_cli.py</code>(<code>eval-caption</code>) · <code>scorecard.py</code> · <code>linear_probe.py</code>.
-증거: <a href="../requirements/20260921-233859-3340_fly-connectome-closed-loop-loop_walkthrough.md">W loop 3.3 ~ 3.5</a>.</p>
+<p>2부 Qwen 연결 · 넷째 장. 코드: <code>src/moai_echomind_fly/loop/train_cli.py</code>(<code>eval-caption</code>) · <code>scorecard.py</code> · <code>linear_probe.py</code> · <strong><code>stats.py</code></strong> · <strong><code>compress.py</code></strong> · <code>bump.py</code>.
+증거: <a href="../requirements/20260921-233859-3340_fly-connectome-closed-loop-loop_walkthrough.md">W loop 3.3 ~ 3.5</a> · 근거: <a href="../research/fly-connectome/12-다음-학습-조사.html">연구 노트 12 §5</a>.</p>
+<p>▶ <strong>2026-09-23 판정 규칙이 코드가 됐다</strong> — <code>stats-v2</code>(재배선 앙상블 · 에피소드 순열 · Holm · 부트스트랩) · <code>compress-v1</code>(채널별 압축 + 선형 관문) · <code>scorecard-v2</code>(재배선 투영기 여럿). R-7469 F-001 · F-003 · F-004.</p>
 </blockquote>
-<h2 id="1-세-가지-잣대">1. 세 가지 잣대</h2>
-<p>손실이 내려갔다는 것만으로는 아무것도 말할 수 없다(08장 3절 — 틀 글자만 맞혀도 내려간다). 그래서 세 가지로 잰다.</p>
+<h2 id="1-네-가지-잣대">1. 네 가지 잣대</h2>
+<p>손실이 내려갔다는 것만으로는 아무것도 말할 수 없다(08장 3절 — 틀 글자만 맞혀도 내려간다). 그래서 네 가지로 잰다.</p>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -119,6 +120,18 @@
 </thead>
 <tbody>
 <tr>
+<td><strong>선형 검사</strong></td>
+<td>신호 <strong>자체에</strong> 정보가 있나(Qwen · 투영기 없이) — 그리고 <strong>재배선 앙상블보다 나은가</strong></td>
+<td>안 씀</td>
+<td>CPU 약 30 s(v1 · 재배선 1)</td>
+</tr>
+<tr>
+<td><strong>압축 관문</strong></td>
+<td>채널별로 줄인 벡터에서도 그런가 → 어느 채널을 투영기에 넣나</td>
+<td>안 씀</td>
+<td>CPU</td>
+</tr>
+<tr>
 <td><strong>캡션 평가</strong></td>
 <td>Qwen 이 신호를 읽어 <strong>상황을 말하나</strong></td>
 <td>씀</td>
@@ -128,137 +141,63 @@
 <td><strong>성적표</strong></td>
 <td>신호로 <strong>몸을 잘 움직이나</strong> · 다른 방식보다 나은가</td>
 <td>씀</td>
-<td>29 GB · 약 1.5 시간</td>
-</tr>
-<tr>
-<td><strong>선형 검사</strong></td>
-<td>신호 <strong>자체에</strong> 정보가 있나(Qwen · 투영기 없이)</td>
-<td>안 씀</td>
-<td>CPU 약 30 s</td>
+<td>29 GB · 약 1.5 시간(5 구성 × 10 씨앗)</td>
 </tr>
 </tbody>
 </table></div>
-<p>그리고 모든 잣대에서 <strong>진짜 배선을 섞은 배선과 나란히</strong> 놓는다.</p>
-<h2 id="2-캡션-평가--fly-connectome-eval-caption">2. 캡션 평가 — <code>fly-connectome eval-caption</code></h2>
-<pre><code class="language-bash">uv run fly-connectome eval-caption --brain real    --checkpoint stage1-caption
-uv run fly-connectome eval-caption --brain rewired --checkpoint final
-</code></pre>
-<ol>
-<li>학습에 안 쓴 씨앗(<code>eval</code> 나눔 · 105 결정)마다 캡션을 <strong>생성</strong>시킨다(탐욕 · 최대 60 토큰).</li>
-<li>생성 글과 정답 글을 칸으로 쪼갠다(<code>caption_fields</code> · <code>_sub</code>).</li>
-<li>칸마다 정확도를 재고, <strong>최빈값 기준선</strong>(가장 흔한 답만 계속 말하면 몇 점인가)과 나란히 적는다.</li>
-</ol>
+<p>그리고 모든 잣대에서 <strong>진짜 배선을 재배선과 나란히</strong> 놓는다 — v1 은 재배선 하나, v2 부터는 <strong>앙상블</strong>(선형 검사 · 관문 5 개 · 투영기 ≥ 3 개).</p>
+<h2 id="2-판정-규칙--statsstats_rule판-stats-v2">2. 판정 규칙 — <code>stats.STATS_RULE</code>(판 <code>stats-v2</code>)</h2>
+<p>"진짜 배선이 앞선다"를 코드로 정해 두었다. 결과를 보기 전에 적은 규칙이다(R-7469 F-001).</p>
 <div class="tbl"><table>
 <thead>
 <tr>
-<th>칸</th>
-<th>뜻</th>
+<th>요소</th>
+<th>규칙</th>
+<th>왜</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>loom_present</code></td>
-<td>다가오는 물체가 있나</td>
+<td>비교 대상</td>
+<td>자료에 든 <strong>모든 재배선 뇌</strong>(앙상블)</td>
+<td>하나면 우연히 약한/강한 재배선을 골랐을 수 있다(연구 노트 12 [19])</td>
 </tr>
 <tr>
-<td><code>loom_side</code> · <code>loom_distance</code> · <code>loom_motion</code></td>
-<td>물체의 쪽 · 거리 · 움직임</td>
+<td>통계 단위</td>
+<td><strong>에피소드</strong>(씨앗) — 결정들은 몇 에피소드에 몰려 독립이 아니다</td>
+<td>결정 단위로 세면 p 가 과장된다</td>
 </tr>
 <tr>
-<td><code>odor_side</code> · <code>odor_level</code></td>
-<td>냄새 쪽 · 세기</td>
+<td>p 값</td>
+<td>같은 평가 결정에서 (진짜 맞힘 0/1 − 재배선들이 맞힌 비율)을 에피소드마다 합 → <strong>부호 뒤집기 순열</strong>(한쪽) · 에피소드 ≤ 16 이면 2ⁿ 경우를 전부 센다(정확) · 많으면 몬테카를로 10,000</td>
+<td>귀무가설(차이 없음)에서는 에피소드마다 부호가 뒤집혀도 같다</td>
 </tr>
 <tr>
-<td><code>legs</code></td>
-<td>다리 접촉 개수</td>
+<td>다중 비교</td>
+<td><strong>Holm</strong> 보정 — 가족 = 판정 대상 칸 전부</td>
+<td>채널 × 칸 수십 쌍을 한꺼번에 본다(우연한 "앞섬"이 섞인다)</td>
+</tr>
+<tr>
+<td>구간</td>
+<td>정확도 95 % 구간 = <strong>에피소드 부트스트랩</strong> 2,000 회</td>
+<td>표본 100 개의 오차는 약 ±10 %p(연구 노트 12 [18])</td>
+</tr>
+<tr>
+<td><strong>통과</strong></td>
+<td>앙상블 순위 <strong>≥ 95 %</strong> <strong>그리고</strong> Holm p <strong>&lt; 0.05</strong> <strong>그리고</strong> 찍기(최빈값)보다 높음</td>
+<td></td>
+</tr>
+<tr>
+<td>판정에서 빼는 것</td>
+<td><strong>운동 채널</strong>(하강 뉴런은 교사 명령을 받는 회로라 정답이 샐 수 있다 · 0.610 대 찍기 0.590) · <strong>냄새 쪽 칸</strong>(v2 · 한 창에서는 입력부터 좌우가 잡음 아래 — 04장 3.2) · <strong>전 채널 묶음</strong>(<code>all</code> · 운동을 품는다)</td>
+<td>판정 밖이어도 값은 파일에 남는다</td>
 </tr>
 </tbody>
 </table></div>
-<p>결과는 <code>runs/projector-&lt;뇌&gt;-&lt;판&gt;/eval-caption-&lt;저장본&gt;.json</code>(정확도 · 기준선 · 예시 8 개).
-<code>--version</code> 으로 어느 판의 투영기를 잴지 고른다(기본 = 지금 규칙 판 train-v3 · <strong>지금 있는 결과는 <code>--version train-v2</code></strong>). 성적표도 같다.</p>
-<p><strong>읽는 법</strong>: 기준선보다 확실히 높아야 "읽었다". 그리고 <strong>진짜 배선이 섞은 배선보다 높아야</strong> "초파리 배선 덕에 읽었다".</p>
-<h2 id="3-성적표--fly-connectome-scorecard">3. 성적표 — <code>fly-connectome scorecard</code></h2>
-<pre><code class="language-bash">uv run fly-connectome scorecard --seeds 2000-2009
-</code></pre>
-<p>같은 씨앗 10 개(학습 · 평가 자료에 없는 것)를 다섯 방식으로 돌린다.</p>
-<div class="tbl"><table>
-<thead>
-<tr>
-<th>구성</th>
-<th>앞(인코더)</th>
-<th>뒤</th>
-<th>가르는 것</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>vector</strong>(본 설계)</td>
-<td>진짜 배선 → 채널 벡터 → 투영기(학습)</td>
-<td>Qwen</td>
-<td>—</td>
-</tr>
-<tr>
-<td>text</td>
-<td>진짜 배선 → 글 요약(채널마다 발화율 상위 단위)</td>
-<td>Qwen(학습 없음)</td>
-<td>벡터가 글보다 나은가</td>
-</tr>
-<tr>
-<td>no_circuit</td>
-<td>세계의 원시 숫자(물체 방위 · 크기 · 냄새 농도 · 다리 힘)</td>
-<td>Qwen(학습 없음)</td>
-<td>초파리 뇌를 거치는 것이 도움이 되나</td>
-</tr>
-<tr>
-<td><strong>rewired</strong>(대조군)</td>
-<td>섞은 배선 → 채널 벡터 → 투영기(<strong>똑같이 학습</strong>)</td>
-<td>Qwen</td>
-<td><strong>초파리 배선 덕인가</strong></td>
-</tr>
-<tr>
-<td>no_llm</td>
-<td>진짜 배선 → 하강 뉴런 그대로(명령 없음)</td>
-<td>없음</td>
-<td>Qwen 이 더한 것이 있나</td>
-</tr>
-</tbody>
-</table></div>
-<div class="tbl"><table>
-<thead>
-<tr>
-<th>지표</th>
-<th>뜻</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>reach_rate</code></td>
-<td>먹이 도착률(<strong>주 지표</strong>)</td>
-</tr>
-<tr>
-<td><code>final_food_mm_mean</code></td>
-<td>끝났을 때 먹이까지 평균 거리</td>
-</tr>
-<tr>
-<td><code>avoid_rate</code></td>
-<td>다가오는 물체를 안 부딪힌 비율</td>
-</tr>
-<tr>
-<td><code>schema_violations</code></td>
-<td>행동 JSON 형식 위반(위반이면 직전 행동 유지)</td>
-</tr>
-</tbody>
-</table></div>
-<h3 id="문구-규칙--코드가-정한다-r-20-6">문구 규칙 — 코드가 정한다 (R 2.0-6)</h3>
-<pre><code class="language-python">beats = vector.reach_rate &gt; rewired.reach_rate  or  vector.avoid_rate &gt; rewired.avoid_rate
-wording = &quot;초파리 배선 벡터가 섞은 배선보다 나았다&quot; if beats \
-     else &quot;섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다&quot;
-</code></pre>
-<p><code>scorecard.json</code> 에 <code>vector_beats_rewired</code> 와 <code>wording</code> 이 그대로 남는다. 보고서는 이 문구를 따른다 — 사람이 고쳐 쓰지 않는다.</p>
-<p>⚠️ 정직 목록: no_circuit 에는 영상 이미지를 주지 않는다(mlx-lm 은 Qwen 의 글 부분만 올린다) · 걷기 리듬은 FlyGym 제어기가 만든다.</p>
-<h2 id="4-선형-검사--fly-connectome-linear-probe">4. 선형 검사 — <code>fly-connectome linear-probe</code></h2>
-<p>캡션 평가가 찍기 수준일 때 <strong>어디가 막혔는지</strong> 가르는 도구다.</p>
-<pre><code class="language-bash">uv run fly-connectome linear-probe --dataset fly-loop-v1     # CPU · 약 30 s · runs/linear-probe-*.json
+<p>시험 <code>tests/test_stats.py</code>(9 개): 부호 뒤집기 순열(정확 · 몬테카를로) · Holm 단조 · 심은 신호만 에피소드 단위로 통과 · 제외 칸은 보정 · 판정 밖 · 압축 k 규칙 · 봉우리 위상 · 칸 값 구간 · 성적표 앙상블 판정.</p>
+<h2 id="3-선형-검사--fly-connectome-linear-probe">3. 선형 검사 — <code>fly-connectome linear-probe</code></h2>
+<p>캡션 평가가 찍기 수준일 때 <strong>어디가 막혔는지</strong> 가르는 도구다 — 그리고 v2 부터는 2절 규칙으로 <strong>판정</strong>까지 한다.</p>
+<pre><code class="language-bash">uv run fly-connectome linear-probe --dataset fly-loop-v2 [--judge-only] [--permutations 10000]   # CPU · runs/linear-probe-*.json
 </code></pre>
 <div class="tbl"><table>
 <thead>
@@ -282,7 +221,11 @@ wording = &quot;초파리 배선 벡터가 섞은 배선보다 나았다&quot; i
 </tr>
 <tr>
 <td>정확도</td>
-<td>학습에 안 쓴 <code>eval</code> 나눔에서</td>
+<td>학습에 안 쓴 <code>eval</code> 나눔에서 · 진짜와 재배선 전부를 같은 방법으로</td>
+</tr>
+<tr>
+<td>파일</td>
+<td><code>brains</code>(뇌마다 전 채널 <code>fields</code> · 채널별 <code>per_channel</code>) + <strong><code>cells</code></strong>("채널|칸" 마다 진짜 · 찍기 · 재배선 분포(값 · 평균 · 5/95 %) · 순위 % · 순열 p · Holm p · 95 % 구간 · <code>judge</code> · <code>pass</code>)</td>
 </tr>
 </tbody>
 </table></div>
@@ -302,28 +245,279 @@ wording = &quot;초파리 배선 벡터가 섞은 배선보다 나았다&quot; i
 <td>찍기와 같다</td>
 <td>신호(또는 특징 만드는 법)에 정보가 없다 → <strong>앞쪽(1부)</strong> 을 고쳐야 한다</td>
 </tr>
+<tr>
+<td><strong>통과</strong>(2절)</td>
+<td>그 채널 · 칸에서 진짜 배선이 재배선 앙상블을 앞선다 — 이것만 "초파리 배선 덕"의 근거로 쓴다</td>
+</tr>
 </tbody>
 </table></div>
-<p>명령은 <strong>9 채널 전부를 한꺼번에</strong> 넣은 결과(<code>fields</code>)와 <strong>채널 하나씩</strong> 넣은 결과(<code>per_channel</code> · 채널 9 × 칸 7)를 함께 파일에 남긴다(2026-09-23 부터).
-그전에는 채널별 값이 W loop 3.5 에만 있었다 — 다시 재 보니 <strong>W 의 값과 소수 셋째 자리까지 같다</strong>(<code>runs/linear-probe-20260923-094302.json</code>).</p>
-<p>⚠️ 채널별 표는 <strong>54 쌍</strong>(채널 9 × 칸 6)을 105 개 표본으로 비교한다 — 우연히 한쪽이 높게 나오는 칸이 섞인다(예: 청각 → 물체 있음은 섞은 배선이 0.790 으로 더 높다).
-하나의 칸보다 <strong>여러 칸에서 같은 방향</strong>인지를 본다.</p>
-<h2 id="5-판정-순서">5. 판정 순서</h2>
-<pre><code>선형 검사가 찍기 수준?  ── 예 ──► 1부(신호 · 채널 · 인코더)를 고친다
+<h3 id="31-v1-자료로-먼저-돌린-것-runslinear-probe-20260923-105625json--stats-v1--cpu-32-s">3.1 v1 자료로 먼저 돌린 것 (<code>runs/linear-probe-20260923-105625.json</code> · stats-v1 · CPU 32 s)</h3>
+<p>재배선 1 개 · 에피소드 12 · 판정 칸 48. <strong>통과 2 칸</strong>:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>채널 → 칸</th>
+<th>진짜</th>
+<th>재배선</th>
+<th>찍기</th>
+<th>순열 p</th>
+<th>Holm p</th>
+<th>판정</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>시각 → 물체 거리</strong></td>
+<td><strong>0.771</strong></td>
+<td>0.581</td>
+<td>0.667</td>
+<td>0.001</td>
+<td><strong>0.047</strong></td>
+<td>✅ 통과</td>
+</tr>
+<tr>
+<td><strong>시각 → 물체 움직임</strong></td>
+<td><strong>0.781</strong></td>
+<td>0.571</td>
+<td>0.667</td>
+<td>0.001</td>
+<td><strong>0.047</strong></td>
+<td>✅ 통과</td>
+</tr>
+<tr>
+<td>시각 → 물체 쪽</td>
+<td>0.743</td>
+<td>0.590</td>
+<td>0.667</td>
+<td>0.025</td>
+<td>1.0</td>
+<td>Holm 뒤 탈락</td>
+</tr>
+<tr>
+<td>몸 → 다리 접촉</td>
+<td>0.590</td>
+<td>0.419</td>
+<td>0.333</td>
+<td>0.005</td>
+<td>0.220</td>
+<td>Holm 뒤 탈락</td>
+</tr>
+<tr>
+<td>시각 → 물체 있음</td>
+<td>0.810</td>
+<td>0.743</td>
+<td>0.667</td>
+<td>0.090</td>
+<td>1.0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>구애 → 냄새 쪽</td>
+<td>0.571</td>
+<td>0.457</td>
+<td>0.543</td>
+<td>0.002</td>
+<td>0.090</td>
+<td>(v2 부터 냄새 쪽은 판정 밖)</td>
+</tr>
+</tbody>
+</table></div>
+<p>⚠️ 재배선이 1 개라 "앙상블 순위"는 사실상 1:1 비교이고, 에피소드 12 로는 정확한 순열의 최소 p 가 1/4,096 이라 Holm(× 48)을 넘기 어렵다. <strong>v2(재배선 5 · 에피소드 40)에서 다시 판정한다.</strong>
+채널별 값(전 54 쌍)은 <code>runs/linear-probe-20260923-094302.json</code> 과 같다(10장 2.3).</p>
+<h2 id="4-압축-관문--fly-connectome-compress-fit--gate판-compress-v1">4. 압축 관문 — <code>fly-connectome compress fit</code> · <code>gate</code>(판 <code>compress-v1</code>)</h2>
+<p>3.2만 차원을 통째로 넣으면 선형 검사도 찍기 수준이 된다 · 채널별로 <strong>64 차원까지 줄여도 진짜 배선이 앞선다</strong>(연구 노트 12 §1.1 ① — 시각 → 물체 쪽 0.705/0.571 · 몸 → 다리 0.600/0.448) → 차원 ≫ 표본의 표준 처방(채널별 압축).</p>
+<pre><code class="language-bash">uv run fly-connectome compress fit  --dataset fly-loop-v2     # 뇌마다 · 채널마다 PCA(학습 나눔으로만) → runs/compress-fly-loop-v2-compress-v1/&lt;뇌&gt;.npz · meta.json
+uv run fly-connectome compress gate --dataset fly-loop-v2     # 압축 특징으로 2절 판정 → gate.json(통과 채널 · 칸)
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>규칙(<code>config/compress.yaml</code> · 결과 보기 전에 적음)</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>방법</td>
+<td>PCA · 중심화</td>
+</tr>
+<tr>
+<td>남길 차원 k</td>
+<td>설명 분산 ≥ <strong>0.95</strong> 인 가장 작은 k — 단 <strong>16 ≤ k ≤ 64</strong>(16 아래에서 차이가 흐려졌고 64 에서도 남았다)</td>
+</tr>
+<tr>
+<td>맞추는 자료</td>
+<td><strong>학습 나눔(train)만</strong> · 뇌마다 따로(재배선 5 개도 같은 규칙으로)</td>
+</tr>
+<tr>
+<td>관문</td>
+<td>압축 특징으로 선형 검사 + 2절 판정 → <strong>한 칸이라도 통과한 채널만</strong> train-v4 로 · 통과 0 이면 F-005 를 하지 않는다</td>
+</tr>
+<tr>
+<td>파일</td>
+<td><code>&lt;뇌&gt;.npz</code>(채널마다 <code>mean</code> · <code>components</code> [k, d] · <code>explained</code>) · <code>gate.json</code>(채널 × 칸 판정 · <code>passed_channels</code> · <code>passed_cells</code>) · <code>meta.json</code>(규칙 · 고른 k · 설명 분산 · 자료 체크섬)</td>
+</tr>
+</tbody>
+</table></div>
+<p>시험: k 규칙(<code>test_compress_fit_picks_k_by_variance_rule</code>) · 압축 관문은 선형 검사와 같은 판정 코드를 쓴다(<code>linear_probe.run(transform=)</code>).</p>
+<h2 id="5-캡션-평가--fly-connectome-eval-caption">5. 캡션 평가 — <code>fly-connectome eval-caption</code></h2>
+<pre><code class="language-bash">uv run fly-connectome eval-caption --brain real       --checkpoint stage1-caption     # 기본 --dataset fly-loop-v2
+uv run fly-connectome eval-caption --brain rewired-s0 --checkpoint final
+uv run fly-connectome eval-caption --brain real --version train-v2 --dataset fly-loop-v1   # 지금 있는 결과
+</code></pre>
+<ol>
+<li>학습에 안 쓴 씨앗(<code>eval</code> 나눔 · v1 105 결정 · v2 약 350)마다 캡션을 <strong>생성</strong>시킨다(탐욕 · 최대 60 토큰). v4 투영기면 <code>meta.json</code> 의 압축기를 <strong>학습 때와 똑같이</strong> 적용한다.</li>
+<li>생성 글과 정답 글을 칸으로 쪼갠다(<code>caption_fields</code> · <code>_sub</code>).</li>
+<li>칸마다 정확도를 재고, <strong>최빈값 기준선</strong>(가장 흔한 답만 계속 말하면 몇 점인가)과 나란히 적는다.</li>
+</ol>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>뜻</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>loom_present</code></td>
+<td>다가오는 물체가 있나</td>
+</tr>
+<tr>
+<td><code>loom_side</code> · <code>loom_distance</code> · <code>loom_motion</code></td>
+<td>물체의 쪽 · 거리 · 움직임</td>
+</tr>
+<tr>
+<td><code>odor_side</code> · <code>odor_level</code></td>
+<td>냄새 쪽 · 세기(냄새 쪽은 판정 밖 · 값은 남긴다)</td>
+</tr>
+<tr>
+<td><code>legs</code></td>
+<td>다리 접촉 개수</td>
+</tr>
+</tbody>
+</table></div>
+<p>결과는 <code>runs/projector-&lt;뇌&gt;-&lt;판&gt;/eval-caption-&lt;저장본&gt;.json</code>(정확도 · 기준선 · 예시 8 개).
+<code>--version</code> 으로 어느 판의 투영기를 잴지 고른다(기본 = 지금 규칙 판 <strong>train-v4</strong> · <strong>지금 있는 결과는 <code>--version train-v2</code></strong>). 성적표도 같다.</p>
+<p><strong>읽는 법</strong>: 기준선보다 확실히 높아야 "읽었다". 그리고 <strong>진짜 배선이 재배선들보다 높아야</strong>(2절 규칙 · 재배선 투영기 ≥ 3) "초파리 배선 덕에 읽었다".</p>
+<h2 id="6-성적표--fly-connectome-scorecard판-scorecard-v2">6. 성적표 — <code>fly-connectome scorecard</code>(판 <code>scorecard-v2</code>)</h2>
+<pre><code class="language-bash">uv run fly-connectome scorecard --seeds 2000-2009                                              # v2 결과 구성(재배선 하나)
+uv run fly-connectome scorecard --seeds 2000-2039 --configs vector,text,no_circuit,rewired-s0,rewired-s1,rewired-s2,no_llm   # v4 예정
+</code></pre>
+<p>같은 씨앗(학습 · 평가 자료에 없는 것)을 여러 방식으로 돌린다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>구성</th>
+<th>앞(인코더)</th>
+<th>뒤</th>
+<th>가르는 것</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>vector</strong>(본 설계)</td>
+<td>진짜 배선 → 채널 벡터 → (v4: 압축) → 투영기(학습)</td>
+<td>Qwen</td>
+<td>—</td>
+</tr>
+<tr>
+<td>text</td>
+<td>진짜 배선 → 글 요약(채널마다 발화율 상위 단위)</td>
+<td>Qwen(학습 없음)</td>
+<td>벡터가 글보다 나은가</td>
+</tr>
+<tr>
+<td>no_circuit</td>
+<td>세계의 원시 숫자(물체 방위 · 크기 · 냄새 농도 · 다리 힘)</td>
+<td>Qwen(학습 없음)</td>
+<td>초파리 뇌를 거치는 것이 도움이 되나</td>
+</tr>
+<tr>
+<td><strong>rewired</strong> / <strong>rewired-s<K></strong>(대조군)</td>
+<td>재배선 씨앗 K → 채널 벡터 → 투영기(<strong>똑같이 학습</strong>)</td>
+<td>Qwen</td>
+<td><strong>초파리 배선 덕인가</strong> — v4 는 최소 3 개</td>
+</tr>
+<tr>
+<td>no_llm</td>
+<td>진짜 배선 → 하강 뉴런 그대로(명령 없음)</td>
+<td>없음</td>
+<td>Qwen 이 더한 것이 있나</td>
+</tr>
+</tbody>
+</table></div>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>지표</th>
+<th>뜻</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reach_rate</code></td>
+<td>먹이 도착률(<strong>주 지표</strong> · 에피소드 부트스트랩 95 % 구간 <code>reach_ci95</code>)</td>
+</tr>
+<tr>
+<td><code>final_food_mm_mean</code></td>
+<td>끝났을 때 먹이까지 평균 거리</td>
+</tr>
+<tr>
+<td><code>avoid_rate</code></td>
+<td>다가오는 물체를 안 부딪힌 비율 — <strong>판정에 쓰지 않는다</strong>(가만히 있는 no_llm 만 0 · 움직이면 전부 1.0 · 가르는 힘 없음)</td>
+</tr>
+<tr>
+<td><code>schema_violations</code></td>
+<td>행동 JSON 형식 위반(위반이면 직전 행동 유지)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="문구-규칙--코드가-정한다-r-20-6--scorecardjudge">문구 규칙 — 코드가 정한다 (R 2.0-6 · <code>scorecard.judge</code>)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>재배선 투영기 수</th>
+<th>규칙</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>하나(v2 결과)</td>
+<td><code>scorecard-v1</code>: vector 의 도착률 또는 회피율이 rewired 보다 높으면 "앞섰다"</td>
+</tr>
+<tr>
+<td><strong>여럿</strong>(v4)</td>
+<td><code>scorecard-v2</code>: vector 의 도착률이 <strong>재배선 전부보다 높고</strong>(순위 100 %) 씨앗별 쌍 차이(vector − 재배선 평균)의 <strong>부호 뒤집기 순열 p &lt; 0.05</strong></td>
+</tr>
+</tbody>
+</table></div>
+<pre><code>wording = &quot;초파리 배선 벡터가 섞은 배선보다 나았다&quot; if beats \
+     else &quot;섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다&quot;
+</code></pre>
+<p><code>scorecard.json</code> 에 <code>judge</code>(규칙 · 순위 · p · 구간) · <code>vector_beats_rewired</code> · <code>wording</code> 이 그대로 남는다. 보고서는 이 문구를 따른다 — 사람이 고쳐 쓰지 않는다.</p>
+<p>⚠️ 정직 목록: no_circuit 에는 영상 이미지를 주지 않는다(mlx-lm 은 Qwen 의 글 부분만 올린다) · 걷기 리듬은 FlyGym 제어기가 만든다.</p>
+<h2 id="7-공간-채널--나침반-봉우리-검사-fly-connectome-inspect-bump---dataset-fly-loop-v2">7. 공간 채널 — 나침반 봉우리 검사 (<code>fly-connectome inspect bump --dataset fly-loop-v2</code>)</h2>
+<p>3차원(F-008)의 첫 판정이다. 공간 채널의 EPG 구획 위상이 참값 몸 방향을 따라가나 — 원형 상관 · 에피소드 순열 · 진짜 대 재배선 순위(04장 5.4). 통과든 실패든 <code>runs/bump-check-*.json</code> 에 기록한다.</p>
+<h2 id="8-판정-순서">8. 판정 순서</h2>
+<pre><code>선형 검사(stats)에서 통과 칸이 있나?  ── 없음 ──► 1부(신호 · 채널 · 인코더)를 고친다
+        │ 있음
+        ▼
+압축 관문 통과 채널이 있나?  ── 없음 ──► 압축 규칙 · 자료 양을 본다(F-005 를 하지 않는다)
+        │ 있음
+        ▼
+캡션 평가가 찍기 수준?  ── 예 ──► 2부 전달(투영기 · 손실 · 자료 양)을 고친다   ◄── v2 결과는 여기서 막혔다
         │ 아니오
         ▼
-캡션 평가가 찍기 수준?  ── 예 ──► 2부 전달(투영기 크기 · 입력 차원 · 손실 · 자료 양)을 고친다   ◄── 지금 여기
-        │ 아니오
-        ▼
-성적표에서 vector &gt; rewired?  ── 아니오 ──► 문구 규칙 발동 · 원인을 가른다
+성적표에서 vector 가 재배선 앙상블을 앞서나(scorecard-v2)?  ── 아니오 ──► 문구 규칙 발동 · 원인을 가른다
         │ 예
         ▼
 &quot;초파리 배선 벡터가 섞은 배선보다 나았다&quot; — 보고 가능
 </code></pre>
-<h2 id="6-확인-체크리스트">6. 확인 체크리스트</h2>
+<h2 id="9-확인-체크리스트">9. 확인 체크리스트</h2>
 <ul>
-<li>[ ] 캡션 평가는 저장본 둘(<code>stage1-caption</code> · <code>final</code>) × 뇌 둘 = 넷</li>
-<li>[ ] 성적표 씨앗이 학습 · 평가 자료 씨앗과 겹치지 않는다</li>
+<li>[ ] 선형 검사 · 관문 결과 파일에 <code>stats</code> 판과 <code>cells</code> 의 <code>pass</code> 가 있다</li>
+<li>[ ] 캡션 평가는 저장본 둘(<code>stage1-caption</code> · <code>final</code>) × 뇌 전부</li>
+<li>[ ] 성적표 씨앗이 학습 · 평가 자료 씨앗과 겹치지 않는다 · 재배선 구성이 학습한 투영기와 짝이 맞는다</li>
 <li>[ ] 보고서 문구가 <code>scorecard.json</code> 의 <code>wording</code> 과 같다</li>
 </ul>
 <p>이전: <a href="08-투영기-학습-절차.html">08. 투영기 학습 절차</a> · 다음: <a href="10-학습-기록과-다음.html">10. 학습 기록 · 결과 · 다음</a></p>

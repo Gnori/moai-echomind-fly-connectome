@@ -128,8 +128,14 @@
 <tr>
 <td>2</td>
 <td>뉴런 · 부호 · 연결 표로 컴파일</td>
-<td><code>uv run fly-connectome graph --rewired-seed 0</code></td>
-<td><code>data/graph/traced-v1.*</code> · <code>traced-v1.rewired-s0.*</code></td>
+<td><code>uv run fly-connectome graph --rewired-seed 0</code>(재배선 여럿은 <code>--rewired-seeds 0-4</code>)</td>
+<td><code>data/graph/traced-v1.*</code> · <code>traced-v1.rewired-s&lt;K&gt;.*</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>(2026-09-23) 시각 투사 뉴런마다 시야 고도를 연결 지도로 계산</td>
+<td><code>uv run fly-connectome retinotopy build</code></td>
+<td><code>data/graph/traced-v1.retino-v1.json</code> — <a href="04-감각-넣기와-신호-읽기.html">04장 3.1</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -274,9 +280,11 @@
 </table></div>
 <p>그래서 섞은 배선에서도 "시각 뉴런", "하강 뉴런" 같은 이름표와 개수는 그대로다 — <strong>누가 누구에게 이어졌나만</strong> 사라진다.
 시험 <code>test_rewired_preserves_in_and_out_degree</code> 가 들고 나는 연결 수 보존을 확인한다. 씨앗 0 을 기본으로 쓴다(<code>traced-v1.rewired-s0</code>).</p>
+<p><strong>재배선은 여럿이어야 한다</strong>(2026-09-23 · R-7469 F-001) — 하나와 비교하면 우연히 약한/강한 재배선을 골랐을 수 있다. <code>graph --rewired-seeds 0-19</code> 로 씨앗 범위를 한 번에 만들고(재배선 하나 수 초 · 파일 약 200 MB 씩 · 메타에 씨앗 · 규칙 · 자기 연결 수),
+자료 v2 는 씨앗 0~4 다섯을 같은 입력으로 돌린다(06장). 판정은 이 <strong>앙상블 분포</strong>와 비교한다(09장 2절). 자료를 모을 때는 그래프 파일을 미리 만들지 않아도 된다 — <code>collect</code> 가 <code>graph.rewire(g, seed)</code> 로 그때 만든다.</p>
 <blockquote>
 <p>이 대조군은 이 프로젝트 <strong>모든 단계</strong>에서 쓰인다 — 03장의 도망 반사(섞은 배선은 침묵해야 한다) ·
-06장의 학습 자료(두 뇌에 같은 입력) · 09장의 성적표(<code>rewired</code> 구성).</p>
+06장의 학습 자료(모든 뇌에 같은 입력) · 09장의 판정(앙상블) · 성적표(<code>rewired</code> · <code>rewired-s&lt;K&gt;</code> 구성).</p>
 </blockquote>
 <h2 id="5-확인-체크리스트">5. 확인 체크리스트</h2>
 <ul>

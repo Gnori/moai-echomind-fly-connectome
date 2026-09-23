@@ -103,13 +103,15 @@
 <div class="page">
 <h1 id="04-감각-넣기와-신호-읽기">04. 감각 넣기와 신호 읽기</h1>
 <blockquote>
-<p>1부 초파리 뇌 · 넷째 장. 코드: <code>src/moai_echomind_fly/loop/{world,encoder,signals,decoder,episode}.py</code> · <code>body/fly_body_server.py</code> ·
-설정 <code>config/task.yaml</code> · <code>config/channels.yaml</code>. 배경: <a href="../research/fly-connectome/06-설계-초파리-회로에-Qwen-뇌.html">연구 노트 06 §2 ~ §5</a> · <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">11 §4 · §5</a>.</p>
+<p>1부 초파리 뇌 · 넷째 장. 코드: <code>src/moai_echomind_fly/loop/{world,encoder,signals,decoder,episode}.py</code> · <code>retino.py</code> · <code>inspect.py</code> · <code>body/fly_body_server.py</code> ·
+설정 <code>config/task.yaml</code> · <code>config/channels.yaml</code> · <code>config/retino.yaml</code>. 배경: <a href="../research/fly-connectome/06-설계-초파리-회로에-Qwen-뇌.html">연구 노트 06 §2 ~ §5</a> · <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">11 §4 · §5</a> · <a href="../research/fly-connectome/12-다음-학습-조사.html">12 §9(3차원)</a>.</p>
+<p>▶ <strong>2026-09-23 판이 올랐다</strong> — <code>task-v2</code>(물체 고도 · 시야 자리별 입력) · <code>retino-v1</code>(시각 투사 뉴런의 고도) · <code>channels-v2</code>(공간 채널) · <code>sim-v2</code>(냄새 좌우 · 02장). 옛 판은 <code>config/archive/</code>.
+지금 있는 자료 <code>fly-loop-v1</code> 은 <strong>옛 판</strong>(task-v1 · channels-v1 · sim-v1)으로 모은 것이고, 새 판으로 모으는 <code>fly-loop-v2</code> 는 06장. 요구사항 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> F-003 · F-008.</p>
 </blockquote>
 <h2 id="1-이-장에서-하는-일">1. 이 장에서 하는 일</h2>
 <p>03장까지로 뇌는 "혼자 도는" 상태다. 이 장은 뇌를 <strong>몸과 세계에 잇는다.</strong></p>
 <pre><code>몸(FlyGym) ──관측──► 감각 인코더 ──발화율──► 초파리 뇌(LIF) ──► ① 하강 뉴런 발화 ──► 몸의 좌우 걸음
-                                                         └─► ② 채널 벡터 9개 ──► (2부) 투영기 → Qwen
+                                                         └─► ② 채널 벡터 10개 ──► (2부) 압축 · 관문 → 투영기 → Qwen
 행동 JSON ──► 행동 디코더 ──► 하강 뉴런 목표 발화율 ──► 초파리 뇌
 </code></pre>
 <p>①은 뇌가 몸을 직접 움직이는 길이고, ②가 2부에서 LLM 으로 넘기는 <strong>신호 벡터</strong>다.
@@ -145,7 +147,15 @@
 </tr>
 <tr>
 <td>다가오는 물체</td>
-<td><strong>계산된 물체</strong> — 몸과 부딪치지 않고 방위 · 각 크기 · 확대 속도만 계산한다</td>
+<td><strong>계산된 물체</strong> — 몸과 부딪치지 않고 방위 · 각 크기 · 확대 속도 · <strong>고도</strong>(task-v2)를 계산한다. 시작 고도에서 파리 머리 첫 높이를 향해 <strong>곧게</strong> 내려오고, 각 크기는 3차원 거리로 잰다</td>
+</tr>
+<tr>
+<td>몸 자세(task-v2)</td>
+<td>결정마다 몸의 오일러 각(FlyGym ZYX — 방향 · 앞뒤 기울기 · 좌우 기울기)과 머리 높이를 기록한다 — 자료에만 남긴다(캡션 서식은 그대로)</td>
+</tr>
+<tr>
+<td>지형</td>
+<td><strong>미룸</strong> — FlyGym 1.x 의 <code>OdorArena</code> 는 평지다. 블록 · 경사 지형은 F-008 뒤 단계</td>
 </tr>
 <tr>
 <td>속도</td>
@@ -154,7 +164,8 @@
 </tbody>
 </table></div>
 <p>과제는 씨앗으로 뽑는다(<code>world.make_task</code> · <code>config/task.yaml</code> 의 <code>world</code>):
-냄새 원 거리 20~30 mm · 방향 −90°~+90° · 60 % 확률로 다가오는 물체(0.6~2.4 s 에 25 mm 밖에서 25 mm/s 로).</p>
+냄새 원 거리 20~30 mm · 방향 −90°~+90° · 60 % 확률로 다가오는 물체(0.6~2.4 s 에 25 mm 밖에서 25 mm/s 로) ·
+<strong>물체 시작 고도 −30°~+60°</strong>(task-v2 · 선언 · 맨 뒤에 뽑아서 앞선 뽑기 순서가 v1 과 같다 — 시험 <code>test_task_v2_keeps_v1_draws_and_adds_elevation</code>).</p>
 <h2 id="3-감각-인코더--세계를-감각-뉴런-발화율로">3. 감각 인코더 — 세계를 감각 뉴런 발화율로</h2>
 <p>뉴런은 <strong>주석 칸으로만</strong> 고른다(손으로 고른 목록 없음 · 채운 수 0). 대응표는 <code>encoder.build_map</code> 이 만든다.</p>
 <div class="tbl"><table>
@@ -172,8 +183,8 @@
 <td><strong>시각(다가옴)</strong></td>
 <td>LC/LPLC 13종(<code>loom.yaml</code>)</td>
 <td>1,264 / 1,262</td>
-<td>상대 세기 × 5 Hz × 게인 × 좌우 가중. 게인 = min(3, 확대 속도 ÷ 60°/s). 좌우 = 방위의 시그모이드(폭 15°) — 앞쪽 물체는 두 눈에 나눠 준다</td>
-<td>Turner 2022 상대 세기 · 60°/s 는 교사의 위협 문턱에 맞춘 <strong>선언</strong></td>
+<td>상대 세기 × 5 Hz × 게인 × 좌우 가중 × <strong>고도 조율</strong>(task-v2). 게인 = min(3, 확대 속도 ÷ 60°/s). 좌우 = 방위의 시그모이드(폭 15°) — 앞쪽 물체는 두 눈에 나눠 준다. 고도 조율 = LC 마다 exp(−½((물체 고도 − LC 고도) / 25°)²) · 고도를 모르는 LC 는 1</td>
+<td>Turner 2022 상대 세기 · 60°/s 는 교사의 위협 문턱에 맞춘 <strong>선언</strong> · σ 25° 는 LC 수용장 수십 도에 맞춘 <strong>선언</strong></td>
 </tr>
 <tr>
 <td><strong>후각(먹이 냄새)</strong></td>
@@ -191,7 +202,99 @@
 </tr>
 </tbody>
 </table></div>
-<p>모든 상수는 <code>config/task.yaml</code>(판 <code>task-v1</code>)에 출처 또는 "선언"과 함께 있다 — 선언한 값은 결과 보고의 정직 목록에 그대로 실린다.</p>
+<p>모든 상수는 <code>config/task.yaml</code>(판 <code>task-v2</code>)에 출처 또는 "선언"과 함께 있다 — 선언한 값은 결과 보고의 정직 목록에 그대로 실린다.
+<code>vision.mode: lr_sigmoid</code> 로 두면 v1 방식(좌우만)이다.</p>
+<h3 id="31-시야-자리--lc-마다-고도-retino-v1--fly-connectome-retinotopy-build">3.1 시야 자리 — LC 마다 고도 (<code>retino-v1</code> · <code>fly-connectome retinotopy build</code>)</h3>
+<p>v1 은 LC/LPLC 를 <strong>왼쪽 · 오른쪽 두 덩어리</strong>로만 켰다 — 입력에 고도가 없으면 무엇을 배워도 3차원이 아니다.
+그런데 공식 주석의 기둥 좌표(<code>assignedOlHex1/2</code>)는 시각엽 <strong>기둥 뉴런 23,720 개에만</strong> 있고 LC/LPLC 에는 없다. 그래서 <strong>연결 지도로 계산</strong>한다(우리 제안 — 문헌에서 그대로 확인하지 못했다).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>단계</th>
+<th>무엇</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>시각 투사 뉴런마다 <strong>입력받는 기둥 뉴런들의 좌표를 시냅스 수로 가중 평균</strong>한다. T4/T5 는 좌표가 없어 한 단계 더 거슬러 쓴다</td>
+</tr>
+<tr>
+<td>2</td>
+<td>위 · 아래 축 확인 — <code>y = hex1 + hex2</code> 가 등 쪽(위)으로 커진다: 등 가장자리 광수용체 R7d/R8d 의 출력 기둥 y ≈ 64(전체 평균 38.8) · 수평계 HSN(위) 47 &gt; HSE(적도) 40 &gt; HSS(아래) 25</td>
+</tr>
+<tr>
+<td>3</td>
+<td>기둥 y [7, 72] 를 고도 [−70°, +90°] 로 <strong>선형</strong> 대응(근사 — 실제 눈 지도는 적도 근처가 촘촘하다 · 범위는 Zhao et al. 2025)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>좌표 있는 입력 시냅스가 20 개 미만이면 <code>missing</code> — <strong>입력에서 빼지 않고 고도 조율 없이 켠다</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>결과 <code>data/graph/traced-v1.retino-v1.json</code>(CPU 1 s · 2026-09-23):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>고도를 얻은 시각 투사 뉴런</td>
+<td><strong>4,096</strong> · 못 얻음(missing) 5,105</td>
+</tr>
+<tr>
+<td>전부 얻음</td>
+<td>LC4 126/126(중앙 7.5° · −38~54°) · LPLC2 185/185(9.8°) · LC16 182/182(−1.4°) · LPLC1 134/134</td>
+</tr>
+<tr>
+<td>반만</td>
+<td>LC12 249/498 · LC26 39/75 · LC11 38/143</td>
+</tr>
+<tr>
+<td>거의 못 얻음</td>
+<td><strong>LC17 9/353</strong> · LC6 5/124 · LC15 3/126 · LC9 · LC18 · LC21 0 — 다른 소엽 뉴런에게서 받아 기둥 좌표가 안 닿는다</td>
+</tr>
+<tr>
+<td>앞 · 뒤 축</td>
+<td><strong>확정 못 함</strong>(<code>x = hex2 − hex1</code> 의 방향을 공개 자료로 못 정했다) → 방위는 눈 단위(좌 / 우) 그대로 · 파일에 <code>azimuth_deg</code> 칸 없음</td>
+</tr>
+</tbody>
+</table></div>
+<p>⚠️ LC17 은 다가옴에 가장 세게 반응하는 종류인데 353 중 9 개만 좌표를 얻었다 — 그래서 missing 을 빼지 않는다(빼면 시각 입력이 크게 약해진다 · I-7469 v1.3).
+대조군 "LC 위치를 뒤섞은 대응표"는 자료 v2 판정 때 만든다.</p>
+<h3 id="32-냄새-좌우--회로에-정보가-남나-fly-connectome-inspect-laterality--r-7469-f-003">3.2 냄새 좌우 — 회로에 정보가 남나 (<code>fly-connectome inspect laterality</code> · R-7469 F-003)</h3>
+<p>C 단계 결과에서 <strong>냄새 쪽</strong> 칸은 두 뇌 모두 찍기 아래였다(09장). 투영기로는 없는 정보를 만들 수 없으니 1부에서 잰다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>잰 것</th>
+<th>결과</th>
+<th>파일</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ORN_DM1 · VA2 157 개(왼 68 · 오 80 · 가운데 9)의 시냅스 92,416 개가 어느 쪽으로 가나</td>
+<td><strong>같은 쪽 51.7 % · 반대쪽 47.7 %</strong> — 양쪽 촉각엽으로 반반 간다(DM1 투사 뉴런 60/40 · VA2 56/44). 2단계 72.6/25.6 · 3단계 76.8/21.9</td>
+<td><code>runs/inspect-laterality-20260923-105740.json</code>(CPU 0.8 s)</td>
+</tr>
+<tr>
+<td>생체는 어떻게 좌우를 만드나</td>
+<td>같은 쪽 가지가 스파이크마다 약 40 % 더 방출한다(Gaudry et al. 2013 Nature 493:424) → <strong><code>sim-v2</code></strong>(02장 <code>ipsi_release</code> · 같은 쪽 연결만 세기 × 1.4 · 연결 수는 그대로)</td>
+<td><code>config/sim.yaml</code></td>
+</tr>
+<tr>
+<td>그래서 읽히나</td>
+<td>극단 입력(150 대 60 Hz)은 같은 쪽 투사 뉴런이 높아진다(4/4). 그러나 <strong>실제 에피소드 입력</strong>은 두 더듬이 상대 차 중앙 <strong>4.4 %</strong> → 인코더(로그) 뒤 발화율 차 중앙 <strong>0.55 Hz</strong> · 기록 농도 65 쌍(차 20 % 이상)을 뇌에 넣어도 투사 뉴런 좌우 부호 <strong>0.508</strong>(v1 · v2 같음 · 차 크기 2.5 → 5.5 Hz)</td>
+<td><code>runs/ipsi-check2-20260923.json</code>(뇌만 약 8 분)</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ <strong>한 결정 창(300 ms)에서는 입력부터 좌우가 잡음보다 작다.</strong> 냄새 쪽 칸은 판정에서 뺀다(<code>stats-v2</code> · 09장). 생체처럼 <strong>시간을 두고</strong>(돌며 농도 변화) 읽는 방식은 후보로 남겼다.</p>
 <h2 id="4-행동-디코더--두-방향">4. 행동 디코더 — 두 방향</h2>
 <h3 id="41-행동--하강-뉴런명령">4.1 행동 → 하강 뉴런(명령)</h3>
 <p>LLM 이나 교사가 낸 행동 JSON <code>{"walk":0~1, "turn":"left|right|none", "turn_strength":0~1, "stop":bool, "groom":bool}</code> 을
@@ -231,9 +334,9 @@
 <p>명령을 넣었다고 바로 몸이 움직이는 것이 아니다. <strong>회로가 실제로 낸</strong> 하강 뉴런 발화를 읽어 구동을 정한다(<code>Decoder.drive</code>):
 걷기 = DNp09 평균 발화 ÷ 100 Hz · 돌기 = (왼 DNa02 − 오른 DNa02) ÷ 100 Hz × 0.8 → 좌우 구동(−0.5 ~ 1.5).</p>
 <p><strong>반사 우선</strong>: 그 구간에 거대섬유(DNp01)가 한 번이라도 발화하면 명령 대신 <strong>멈춘다</strong>(FlyGym 은 도약을 못 한다).</p>
-<h2 id="5-신호-읽기--채널-벡터-9개">5. 신호 읽기 — 채널 벡터 9개</h2>
-<p>2부에서 LLM 에 넘기는 것이 이것이다. 요구자: <em>"초파리의 다양한 신호 데이터를 벡터화해서 LLM"</em> · <em>"성적인 전기신호 데이터까지도 · 시신경 · 촉각"</em>.</p>
-<h3 id="51-채널--configchannelsyaml판-channels-v1">5.1 채널 — <code>config/channels.yaml</code>(판 <code>channels-v1</code>)</h3>
+<h2 id="5-신호-읽기--채널-벡터-10개">5. 신호 읽기 — 채널 벡터 10개</h2>
+<p>2부에서 LLM 에 넘기는 것이 이것이다. 요구자: <em>"초파리의 다양한 신호 데이터를 벡터화해서 LLM"</em> · <em>"성적인 전기신호 데이터까지도 · 시신경 · 촉각"</em> · <em>"3차원 공간은 어떻게 학습 시켜야해?"</em>.</p>
+<h3 id="51-채널--configchannelsyaml판-channels-v2--옛-판-configarchivechannels-v1yaml">5.1 채널 — <code>config/channels.yaml</code>(판 <code>channels-v2</code> · 옛 판 <code>config/archive/channels-v1.yaml</code>)</h3>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -319,16 +422,25 @@
 <td>5,694</td>
 </tr>
 <tr>
+<td><strong>space 공간</strong>(v2 새로)</td>
+<td>type = 중심복합체 나침반(EPG · EPGt · PEN · PEG · Delta7) · 이동 벡터(PFN 6종 · hΔB) · 목표/조향(FC2A/B/C · PFL3) · 회전(HSN · HSE · HSS · VS)</td>
+<td><strong>instance</strong>(PB 사구체 · 구획을 지킨다 — 봉우리 위상을 읽으려면 구획이 필요하다)</td>
+<td>656</td>
+<td>242</td>
+<td>1,452</td>
+</tr>
+<tr>
 <td><strong>합계</strong></td>
 <td></td>
 <td></td>
 <td></td>
 <td></td>
-<td><strong>31,950</strong></td>
+<td><strong>33,402</strong>(v1 31,950)</td>
 </tr>
 </tbody>
 </table></div>
-<p>좌우는 <code>somaSide</code> → 없으면 <code>rootSide</code>(감각 뉴런은 세포체가 밖이라 신경 뿌리 쪽) → 없으면 <code>instance</code> 끝의 <code>_L/_R</code> 로 정한다.</p>
+<p>좌우는 <code>somaSide</code> → 없으면 <code>rootSide</code>(감각 뉴런은 세포체가 밖이라 신경 뿌리 쪽) → 없으면 <code>instance</code> 끝의 <code>_L/_R</code> 로 정한다.
+공간 채널 수는 2026-09-23 뉴런 표에서 센 값(우리가 켜는 뉴런이 없어 5.3 의 제외와 무관하다). 판정에서 뺀 채널(운동)은 09장.</p>
 <h3 id="52-전기-신호--발화율--문턱-아래-막전위">5.2 "전기 신호" = 발화율 + 문턱 아래 막전위</h3>
 <p>결정 창 300 ms 를 100 ms 세 구간으로 나눠, <strong>단위마다</strong> 두 값을 잰다.</p>
 <pre><code>특징 = [ log1p(발화율 Hz) / log1p(20)   (구간 3 × 단위 수)
@@ -341,17 +453,23 @@
 <p>감각 입구(LC/LPLC · ORN · 다리 촉각 뉴런)와 명령용 하강 뉴런(DNp09 · DNa02)은 <strong>우리가 자극하는 뉴런</strong>이다.
 이것까지 벡터에 넣으면 LLM 이 초파리 뇌가 아니라 <strong>우리 입력을 되읽게</strong> 된다. 그래서 <code>ChannelTable.build(exclude=…)</code> 가 빼고,
 벡터에는 <strong>회로를 거쳐 생긴 활동만</strong> 남는다. 위 표의 뉴런 수는 뺀 뒤의 수다.</p>
+<h3 id="54-공간-채널로-무엇을-보나--나침반-봉우리-검사-fly-connectome-inspect-bump---dataset-fly-loop-v2">5.4 공간 채널로 무엇을 보나 — 나침반 봉우리 검사 (<code>fly-connectome inspect bump --dataset fly-loop-v2</code>)</h3>
+<p>초파리의 몸 방향은 중심복합체 EPG 집단의 <strong>활동 봉우리 하나</strong>가 따라간다(Seelig &amp; Jayaraman 2015). EPG 인스턴스 이름에 PB 구획이 있어(예: <code>EPG(PB08)_L3</code>),
+구획 1~8 에 45° 간격을 주고 결정마다 발화 가중 벡터 합의 <strong>위상</strong>과 <strong>길이</strong>(한쪽에 몰렸나)를 구한 뒤, 위상과 참값 몸 방향(<code>heading_deg</code>)의 <strong>원형 상관</strong>을 잰다.
+귀무 = 에피소드 단위로 방향 줄을 바꾼다 · 진짜 대 재배선 순위. <strong>자료 v2 가 있어야</strong> 돌 수 있다(06장) — 뇌만 돌리는 방향 회전 검사는 하지 않는다(시각 입구가 다가옴뿐이라 방향 단서가 없다).</p>
+<p>⚠️ 이 모델(쉬는 상태 침묵 · 신경조절 · 전기 시냅스 없음)에서 봉우리가 서리라는 보장은 없다 — <strong>실패도 그대로 기록</strong>하고 F-006(회로 학습)의 목표로 넘긴다. "단서를 끈 뒤 유지"는 자료로 못 잰다.</p>
 <h2 id="6-결정-하나의-흐름-300-ms--loopepisodepy">6. 결정 하나의 흐름 (300 ms) — <code>loop/episode.py</code></h2>
 <ol>
 <li>행동(직전 결정) → 하강 뉴런 목표 발화율.</li>
 <li>구간 1 (100 ms): 몸 관측 → 인코더 → <strong>뇌 100 ms</strong> → 회로가 낸 하강 뉴런 발화 → 몸 구동 → <strong>몸 100 ms</strong>.</li>
 <li>구간 2, 3 도 같다.</li>
-<li>세 구간의 발화율 · 막전위 → <strong>채널 벡터 9개</strong>. 몸이 아는 <strong>세계 참값</strong>(<code>Truth</code>: 물체 방위 · 크기 · 냄새 농도 · 먹이 방향 · 다리 접촉 수)도 같이 남긴다.</li>
+<li>세 구간의 발화율 · 막전위 → <strong>채널 벡터 10개</strong>. 몸이 아는 <strong>세계 참값</strong>(<code>Truth</code>: 물체 방위 · 크기 · 냄새 농도 · 먹이 방향 · 다리 접촉 수 · <strong>task-v2: 물체 고도 · 몸 방향 · 세계 좌표 · 몸 오일러 각</strong>)도 같이 남긴다.
+   자료 v2 는 <strong>감각 입력(자극 발화율)</strong> 도 <code>stim.npz</code> 에 남긴다 — 나중에 재배선을 늘릴 때 몸을 다시 안 돌리기 위해.</li>
 <li>정책(교사 규칙 · 벡터 Qwen · 글 Qwen …)이 다음 행동을 정한다. <strong>비실시간</strong> — 정책이 생각하는 동안 세계는 멈춰 있다.</li>
 <li>먹이까지 2 mm 안이면 도착 · 최대 20 결정(6 s).</li>
 </ol>
-<p>자료를 모을 때는 <strong>뇌를 둘(진짜 · 섞은 배선) 동시에</strong> 돌린다 — 같은 감각 입력을 둘 다에 넣고, 몸은 진짜 배선 뇌를 따른다.
-그래서 두 뇌의 벡터가 <strong>정확히 같은 상황</strong>에 짝지어 남는다(06장). 결정 하나(뇌 둘) ≈ 7.5 s.</p>
+<p>자료를 모을 때는 <strong>뇌를 여럿 동시에</strong> 돌린다 — v1 은 둘(진짜 · 섞은 배선 s0), <strong>v2 는 여섯</strong>(진짜 + 재배선 씨앗 0~4). 같은 감각 입력을 전부에 넣고, 몸은 진짜 배선 뇌를 따른다.
+그래서 뇌들의 벡터가 <strong>정확히 같은 상황</strong>에 짝지어 남는다(06장). 결정 하나 ≈ 뇌 둘 7.5 s · 뇌 여섯 12 s(몸 3.1 + 뇌 8.9 · 혼자 돌 때 · 일꾼 셋이 같이 돌면 17~18 s).</p>
 <h2 id="7-실측으로-확인한-것">7. 실측으로 확인한 것</h2>
 <div class="tbl"><table>
 <thead>
@@ -369,12 +487,25 @@
 <td>닫힌 고리가 도나</td>
 <td>교사 규칙으로 먹이까지 2.7~3.0 s 에 도착(시험 에피소드 4/4)</td>
 </tr>
+<tr>
+<td>위 물체 → 고도 높은 LC 가 더 세나</td>
+<td>✅ 시험 <code>test_retinotopic_encoder_prefers_lc_at_object_elevation</code></td>
+</tr>
+<tr>
+<td>냄새 좌우가 채널에 남나</td>
+<td>❌ 한 창에서는 입력부터 잡음 아래(3.2) → 냄새 쪽 칸 판정 제외</td>
+</tr>
+<tr>
+<td>나침반 봉우리가 방향을 따라가나</td>
+<td>⏳ 자료 v2 뒤 <code>inspect bump</code></td>
+</tr>
 </tbody>
 </table></div>
 <h2 id="8-확인-체크리스트">8. 확인 체크리스트</h2>
 <ul>
 <li>[ ] 대응표 <code>describe()</code> 의 <code>filled</code> 가 0(손으로 채운 뉴런 없음)</li>
-<li>[ ] 채널 표를 바꿨다면 <code>channels.yaml</code> 판을 올리고, 차원이 바뀌므로 <strong>학습 자료를 새 이름으로</strong>(06장) · 연구 노트 11장 4절과 <code>docs/datasets.md</code> 갱신</li>
+<li>[ ] <code>data/graph/traced-v1.retino-v1.json</code> 이 있다(<code>retinotopy build</code> · 없으면 <code>vision.mode: retinotopic</code> 이 못 돈다)</li>
+<li>[ ] 채널 표를 바꿨다면 <code>channels.yaml</code> 판을 올리고, 차원이 바뀌므로 <strong>학습 자료를 새 이름으로</strong>(06장) · 연구 노트 11장 4절과 <code>docs/datasets.md</code> 갱신 · 옛 판은 <code>config/archive/</code></li>
 <li>[ ] 몸 환경: <code>cd body &amp;&amp; uv sync</code>(파이썬 3.12) — <code>networkx</code> 는 의존 목록에 빠져 있어 따로 들어 있다</li>
 </ul>
 <p>이전: <a href="03-뇌-맞추기와-검산.html">03. 뇌 맞추기와 검산</a> · 다음: <a href="05-회로를-학습시키려면.html">05. 회로를 학습시키려면</a></p>

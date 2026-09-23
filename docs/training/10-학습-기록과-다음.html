@@ -104,7 +104,8 @@
 <h1 id="10-학습-기록--결과--다음">10. 학습 기록 · 결과 · 다음</h1>
 <blockquote>
 <p>2부 Qwen 연결 · 마지막 장. 이 장의 대장은 <strong>학습을 새로 돌릴 때마다 한 줄씩 더한다.</strong>
-정본은 각 결과 폴더의 <code>meta.json</code> · <code>train.log</code> · <code>eval-caption-*.json</code> · <code>scorecard.json</code> 이고, 여기는 그것을 한곳에 모은 목록이다.</p>
+정본은 각 결과 폴더의 <code>meta.json</code> · <code>train.log</code> · <code>eval-caption-*.json</code> · <code>scorecard.json</code> 이고, 여기는 그것을 한곳에 모은 목록이다.
+판정 · 측정(선형 검사 · 관문 · 작은 측정)도 4절에 한 줄씩 남긴다.</p>
 </blockquote>
 <h2 id="1-학습-대장">1. 학습 대장</h2>
 <h3 id="11-투영기-학습">1.1 투영기 학습</h3>
@@ -144,13 +145,23 @@
 </tr>
 <tr>
 <td><code>projector-rewired-train-v2</code></td>
-<td>섞은</td>
+<td>섞은 s0</td>
 <td>train-v2</td>
 <td>같음</td>
 <td>09-22 23:37 → 09-23 02:52</td>
 <td>캡션 1,162 + 행동 755</td>
 <td>5.6~7.6 s · 32 GB</td>
 <td>✅</td>
+</tr>
+<tr>
+<td><code>projector-{real,rewired-s0,s1,s2}-train-v4</code></td>
+<td>진짜 + 재배선 3</td>
+<td><strong>train-v4</strong></td>
+<td><strong>fly-loop-v2</strong>(압축 관문 통과 채널)</td>
+<td>—</td>
+<td>약 5 배(결정 약 3 천)</td>
+<td><code>train-probe</code> 로 먼저 잰다</td>
+<td>⏳ <strong>자료 v2 → 관문 → 측정 → 요구자 확인 뒤</strong></td>
 </tr>
 </tbody>
 </table></div>
@@ -179,7 +190,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>→ 손실로는 <strong>섞은 배선이 오히려 낮다.</strong> 손실은 판정 잣대가 아니다(08장 3절).</p>
+<p>→ 손실로는 <strong>섞은 배선이 오히려 낮다.</strong> 손실은 판정 잣대가 아니다(08장 3절). v4 부터는 칸 값 토큰에 가중한 손실이라 <strong>v2 의 손실과 값을 나란히 견주지 않는다.</strong></p>
 <h3 id="13-저장본과-지문">1.3 저장본과 지문</h3>
 <div class="tbl"><table>
 <thead>
@@ -218,7 +229,7 @@
 </tbody>
 </table></div>
 <p>Qwen 가중치 지문: 두 학습 모두 전후 <code>a4cfcb8d…</code> <strong>같음</strong>(파인튜닝 아님). 설정 판: sim-v1 · loom-v1 · task-v1 · channels-v1 · llm-v1.</p>
-<h2 id="2-결과-2026-09-23-0449--전체-순서-끝-코드-0">2. 결과 (2026-09-23 04:49 · 전체 순서 끝 코드 0)</h2>
+<h2 id="2-결과-2026-09-23-0449--전체-순서-끝-코드-0--train-v2--fly-loop-v1">2. 결과 (2026-09-23 04:49 · 전체 순서 끝 코드 0 · train-v2 · fly-loop-v1)</h2>
 <h3 id="21-캡션-평가--학습에-안-쓴-105-결정">2.1 캡션 평가 — 학습에 안 쓴 105 결정</h3>
 <div class="tbl"><table>
 <thead>
@@ -324,7 +335,7 @@
 </tbody>
 </table></div>
 <p><code>vector_beats_rewired: false</code> → <strong>"섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다."</strong>
-⚠️ 회피율은 가르는 힘이 없다(가만히 있는 no_llm 만 0 · 움직이면 전부 1.0).</p>
+⚠️ 회피율은 가르는 힘이 없다(가만히 있는 no_llm 만 0 · 움직이면 전부 1.0) — scorecard-v2 부터 판정에서 뺐다.</p>
 <h3 id="23-원인-가르기--선형-검사">2.3 원인 가르기 — 선형 검사</h3>
 <div class="tbl"><table>
 <thead>
@@ -407,7 +418,7 @@
 <td>0.619</td>
 <td>0.457</td>
 <td>0.543</td>
-<td>⚠️ 하강 뉴런은 <strong>교사 명령</strong>(냄새 쪽으로 돌기)을 받는다 — 정답이 명령으로 새어 들어온 것일 수 있어 초파리가 냄새를 읽었다는 근거로 쓰지 않는다</td>
+<td>⚠️ 하강 뉴런은 <strong>교사 명령</strong>(냄새 쪽으로 돌기)을 받는다 — 정답이 명령으로 새어 들어온 것일 수 있어 초파리가 냄새를 읽었다는 근거로 쓰지 않는다(stats 판정 밖)</td>
 </tr>
 <tr>
 <td>운동 → 다리 접촉</td>
@@ -421,7 +432,7 @@
 <td>0.524</td>
 <td><strong>0.790</strong></td>
 <td>0.667</td>
-<td>섞은 배선이 높은 칸도 있다 — 54 쌍을 105 표본으로 비교하니 우연한 차이가 섞인다</td>
+<td>섞은 배선이 높은 칸도 있다 — 54 쌍을 105 표본으로 비교하니 우연한 차이가 섞인다 → Holm 보정(09장 2절)</td>
 </tr>
 </tbody>
 </table></div>
@@ -443,7 +454,7 @@
 <tr>
 <td>초파리 신호에 정보가 없나?</td>
 <td><strong>있다</strong> — 그리고 <strong>진짜 배선이 더 높다</strong></td>
-<td>채널별 선형 검사(시각 · 몸)</td>
+<td>채널별 선형 검사(시각 · 몸) · 판정 규칙으로도 시각 두 칸 통과(4.1)</td>
 </tr>
 <tr>
 <td>그럼?</td>
@@ -454,57 +465,138 @@
 </table></div>
 <p>덧붙여 두 가지:</p>
 <ul>
-<li><strong>캡션 손실이 틀 글자에 쏠린다</strong> — 손실 0.1 에서도 칸은 찍기 수준(2.1 의 예).</li>
-<li><strong>냄새 쪽은 두 뇌 모두 못 읽는다</strong> — 좌우 차이가 벡터에 남는지부터 봐야 한다. 감각 입구(ORN)를 벡터에서 뺀 것과 관련 있을 수 있다(04장 5.3).</li>
+<li><strong>캡션 손실이 틀 글자에 쏠린다</strong> — 손실 0.1 에서도 칸은 찍기 수준(2.1 의 예). → train-v4 의 칸 값 가중(08장 3절).</li>
+<li><strong>냄새 쪽은 두 뇌 모두 못 읽는다</strong> — 04장 3.2 에서 원인을 쟀다: 후각 수용 뉴런이 양쪽으로 반반 가고, 한 결정 창에서는 입력부터 좌우 차가 잡음 아래 → 판정에서 뺌(stats-v2).</li>
 </ul>
-<h2 id="4-다음-후보-요구자와-정한-뒤">4. 다음 후보 (요구자와 정한 뒤)</h2>
+<h2 id="4-다음--r-7469-진행-2026-09-23">4. 다음 — R-7469 진행 (2026-09-23)</h2>
 <blockquote>
-<p>▶ 2026-09-23 <strong>다음 학습의 정의는 요구사항 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a></strong> — 학습 대상 8 개(판정 · 자료 · 감각 · 압축 · 작은 투영기 · 종류 단위 회로 학습 · 버섯체 · 3차원 공간)마다 왜 · 어떻게 · 대조군 · 성공 기준.
-조사와 근거는 <a href="../research/fly-connectome/12-다음-학습-조사.html">연구 노트 12</a>. 아래 표는 그 전의 후보 목록이다.</p>
+<p>다음 학습의 정의는 요구사항 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> — 학습 대상 8 개(판정 · 자료 · 감각 · 압축 · 작은 투영기 · 종류 단위 회로 학습 · 버섯체 · 3차원 공간)마다 왜 · 어떻게 · 대조군 · 성공 기준.
+조사와 근거는 <a href="../research/fly-connectome/12-다음-학습-조사.html">연구 노트 12</a>. 순서(G1 확정): F-001 → F-003 → F-008 1~3 → F-002 → F-004 → F-005 → (판정) → F-006 → F-007 → F-008 4~5.</p>
 </blockquote>
+<h3 id="41-판정--측정-대장-학습이-아닌-실행--한-줄씩">4.1 판정 · 측정 대장 (학습이 아닌 실행 — 한 줄씩)</h3>
 <div class="tbl"><table>
 <thead>
 <tr>
-<th>후보</th>
+<th>날짜</th>
 <th>무엇</th>
-<th>기대</th>
-<th>비용</th>
+<th>판</th>
+<th>결과</th>
+<th>파일</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>① 넣는 숫자 줄이기</strong></td>
-<td>채널마다 요약(주성분 · 단위 평균 등)해서 수십 차원으로 · 또는 정보가 보인 채널(시각 · 몸)만 · 투영기도 그만큼 작게</td>
-<td>선형 검사의 차이를 투영기가 살릴 수 있게</td>
-<td>학습 새 판(train-v4) · 자료는 그대로 쓸 수 있다</td>
+<td>09-23 09:43</td>
+<td>선형 검사 채널별</td>
+<td>—</td>
+<td>W loop 3.5 값 재현 · 시각 거리 0.771/0.581 · 움직임 0.781/0.571</td>
+<td><code>runs/linear-probe-20260923-094302.json</code></td>
 </tr>
 <tr>
-<td>② 손실을 칸에 쏠리게</td>
-<td>틀 글자 토큰의 가중을 낮추고 칸 글자에 가중</td>
-<td>칸 정확도</td>
-<td>손실 코드 · 새 판</td>
+<td>09-23 10:41</td>
+<td>왜 분석(PCA 64 · 냄새 좌우 부호 · 운동 누설)</td>
+<td>—</td>
+<td>64 차원에서도 진짜 &gt; 섞은(시각 0.705/0.571 · 몸 0.600/0.448) · 냄새 좌우 부호 0.48~0.50 · 운동 0.610(찍기 0.590)</td>
+<td><code>runs/why-analysis-20260923.json</code></td>
 </tr>
 <tr>
-<td>③ 자료 늘리기</td>
-<td>581 → 수천(씨앗 늘리기)</td>
-<td>과적합 완화</td>
-<td>모으기 수 시간 · <code>fly-loop-v2</code></td>
+<td>09-23 10:56</td>
+<td><strong>선형 검사 판정</strong>(F-001) · fly-loop-v1 · 재배선 1 · 에피소드 12</td>
+<td>stats-v1</td>
+<td>판정 칸 48 · <strong>통과 2</strong>(시각 → 거리 · 움직임 · Holm 0.047) · 물체 쪽 p 0.025 · 몸 → 다리 p 0.005 는 Holm 뒤 탈락</td>
+<td><code>runs/linear-probe-20260923-105625.json</code></td>
 </tr>
 <tr>
-<td>④ 냄새 따로</td>
-<td>후각 입구 좌우 차가 벡터에 남는지 먼저 검사</td>
-<td>냄새 쪽 칸</td>
-<td>가벼운 분석</td>
+<td>09-23 10:57</td>
+<td>냄새 좌우 측정(F-003)</td>
+<td>—</td>
+<td>ORN_DM1 · VA2 시냅스 같은 쪽 51.7 % · 반대쪽 47.7 %</td>
+<td><code>runs/inspect-laterality-20260923-105740.json</code></td>
+</tr>
+<tr>
+<td>09-23</td>
+<td>sim-v2 효과(F-003) · 기록 농도 65 쌍 · 뇌만 약 8 분</td>
+<td>sim-v1 · v2</td>
+<td>투사 뉴런 좌우 부호 <strong>0.508 둘 다</strong> · 차 크기 2.5 → 5.5 Hz → 냄새 쪽 판정 제외</td>
+<td><code>runs/ipsi-check2-20260923.json</code></td>
+</tr>
+<tr>
+<td>09-23</td>
+<td>시야 자리 대응(F-008 2)</td>
+<td>retino-v1</td>
+<td>4,096 개 고도 · missing 5,105 · LC17 9/353 · 앞뒤 축 미확정</td>
+<td><code>data/graph/traced-v1.retino-v1.json</code></td>
+</tr>
+<tr>
+<td>09-23 11:18</td>
+<td>수집 작은 측정(F-002)</td>
+<td>sim-v2 · task-v2 · channels-v2 · retino-v1</td>
+<td>뇌 6 · 결정당 12.0 s · 일꾼 3.4~3.6 GB · 추정 3.3 h + 0.45 h</td>
+<td><code>runs/collect-probe-20260923-111821.json</code></td>
+</tr>
+<tr>
+<td>09-23 11:21~</td>
+<td><strong>자료 v2 수집</strong>(F-002 · 요구자 "지금 시작")</td>
+<td>같음</td>
+<td>300 + 40 에피소드 · 재배선 s0~s4 · 일꾼 3 · 실측 결정당 17~18 s · 14:07 에 147/300 · 18:30 쯤 끝 예상</td>
+<td><code>runs/collect-v2-*.log</code> → <code>data/datasets/fly-loop-v2</code></td>
 </tr>
 </tbody>
 </table></div>
-<p>그 전에 할 작은 일 — <strong>2026-09-23 끝냄</strong>(요구자 "남은거 해바"):</p>
-<ul>
-<li>[x] 선형 검사가 채널별 결과도 파일로 남긴다 → W 에만 있던 값이 <strong>그대로 재현됨</strong>(2.3 절)</li>
-<li>[x] 투영기 초기값에 씨앗(<code>init_seed</code>) → 규칙 판 <strong>train-v3</strong>(08장 2절) · 끝난 학습 폴더는 덮어쓰지 않는다</li>
-<li>[x] <code>train</code> · <code>eval-caption</code> · <code>train-probe</code> 가 묶음 <code>data/datasets/fly-loop-v1</code> 을 직접 읽는다(조각과 전부 같음을 대조)</li>
-<li>지금 있는 결과(train-v2)를 다시 평가할 때는 <code>--version train-v2</code> 를 붙인다(<code>eval-caption</code> · <code>scorecard</code>).</li>
-</ul>
+<h3 id="42-기능별-상태">4.2 기능별 상태</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>기능</th>
+<th>무엇</th>
+<th>상태</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-001 판정 기준</td>
+<td>stats-v1 → v2 · linear-probe 판정 · <code>graph --rewired-seeds</code> · scorecard-v2 앙상블</td>
+<td>✅ 코드 · v1 자료 판정 기록 · v2 재판정 대기</td>
+</tr>
+<tr>
+<td>F-003 냄새 좌우</td>
+<td>inspect laterality · <strong>sim-v2</strong> · 냄새 쪽 판정 제외</td>
+<td>✅ (고칠 수 없음을 기록 — 시간을 두고 읽기는 후보)</td>
+</tr>
+<tr>
+<td>F-008 1~3 3차원</td>
+<td>task-v2(고도) · retino-v1 · channels-v2(공간) · inspect bump</td>
+<td>✅ 코드 · 봉우리 검사는 자료 v2 뒤 · 지형 미룸</td>
+</tr>
+<tr>
+<td>F-002 자료 v2</td>
+<td>collect-probe · collect --rewired-seeds · stim.npz</td>
+<td>⏳ <strong>수집 중</strong> → pack · verify · backup</td>
+</tr>
+<tr>
+<td>F-004 압축 관문</td>
+<td>compress-v1 · fit/gate</td>
+<td>✅ 코드 · 자료 v2 뒤 실행</td>
+</tr>
+<tr>
+<td>F-005 작은 투영기</td>
+<td>train-v4 · 칸 값 가중 · rewired-s<K></td>
+<td>✅ 코드 · train-probe → 요구자 확인 → 학습 4 · 평가 · 성적표</td>
+</tr>
+<tr>
+<td>F-006 종류 단위 회로 학습 · F-007 버섯체 · F-008 4~5</td>
+<td>I v2 에서 계약</td>
+<td>⏳ 조사 중(연구 노트 13 예정)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="43-자료-v2-가-오면-하는-순서-전부-cpu--qwen-없음--마지막만-qwen">4.3 자료 v2 가 오면 하는 순서 (전부 CPU · Qwen 없음 → 마지막만 Qwen)</h3>
+<pre><code>dataset pack fly-loop-v2 · verify · backup
+linear-probe --dataset fly-loop-v2          # F-001 재판정 — 재배선 5 · 에피소드 40
+inspect bump --dataset fly-loop-v2          # F-008 3 — 봉우리
+compress fit · compress gate                # F-004 — 통과 채널
+train-probe → [요구자 확인] → train ×4 → eval-caption → scorecard --seeds 2000-2039 --configs …,rewired-s0,s1,s2,…   # F-005
+</code></pre>
 <h2 id="5-백업--git-밖에-있는-것">5. 백업 — git 밖에 있는 것</h2>
 <p><code>data/</code> 와 <code>runs/</code> 는 <code>.gitignore</code> 로 빠져 있다 — 커밋되지 않고, <strong>이 맥에만 있다.</strong></p>
 <div class="tbl"><table>
@@ -523,13 +615,18 @@
 </tr>
 <tr>
 <td><code>data/graph/</code>(397 MB)</td>
-<td>✅ <code>graph --rewired-seed 0</code></td>
-<td>약 22 s</td>
+<td>✅ <code>graph --rewired-seed 0</code> · <code>retinotopy build</code></td>
+<td>약 22 s · 1 s</td>
 </tr>
 <tr>
 <td><code>data/datasets/fly-loop-v1/</code>(75 MB)</td>
 <td>⚠️ 같은 커밋 · 같은 판이면 같은 자료</td>
 <td>약 30 분</td>
+</tr>
+<tr>
+<td><code>data/datasets/fly-loop-v2/</code>(예정)</td>
+<td>⚠️ 같음</td>
+<td>약 7 시간(일꾼 3)</td>
 </tr>
 <tr>
 <td><code>runs/projector-*/</code>(투영기 · 로그)</td>
@@ -542,7 +639,7 @@
 <td>1.5 시간</td>
 </tr>
 <tr>
-<td><code>runs/linear-probe-*</code></td>
+<td><code>runs/linear-probe-*</code> · <code>compress-*</code> · <code>bump-check-*</code></td>
 <td>✅ 자료만 있으면 된다 — 2026-09-23 다시 재어 <strong>같은 값</strong> 확인</td>
 <td>약 30 s</td>
 </tr>
@@ -570,14 +667,15 @@
 <p>대상은 <code>data/datasets</code> 와 <code>runs</code>(공식 파일 · 그래프는 다시 만들 수 있어 뺀다). 복사는 <strong>지우지 않고</strong>(원본에서 지운 파일도 남는다),
 복사 뒤 파일마다 SHA-256 을 원본과 대조해 둘 곳에 <code>MANIFEST.sha256</code> · <code>BACKUP.md</code> 를 남긴다.
 첫 백업 2026-09-23 10:39 — 198 개 · 801 MB · 두 곳 모두 <strong>198/198 같음</strong>(USB 52 s).
-<strong>학습 · 평가 · 성적표를 새로 돌린 뒤에는 한 번 돌린다</strong>(6절).</p>
+<strong>학습 · 평가 · 성적표를 새로 돌린 뒤에는 한 번 돌린다</strong>(6절) — 자료 v2 를 묶은 뒤에도.</p>
 <p>되살리기: <code>rsync -rlt &lt;백업&gt;/runs/ runs/</code> · <code>rsync -rlt &lt;백업&gt;/data/datasets/ data/datasets/</code> → 저장소 뿌리에서 <code>shasum -a 256 -c &lt;백업&gt;/MANIFEST.sha256</code>.</p>
 <h2 id="6-이-대장을-쓰는-법">6. 이 대장을 쓰는 법</h2>
 <p>학습을 새로 돌리면:</p>
 <ol>
 <li>1.1 표에 한 줄 — 이름 · 뇌 · 규칙 판 · 자료 · 시각 · 걸음 · 메모리 · 상태</li>
 <li>1.2 · 1.3 에 손실과 저장본 sha256(<code>shasum -a 256 runs/projector-*/*.safetensors</code>)</li>
-<li>평가 · 성적표를 돌렸으면 2 절에 — <strong>섞은 배선과 나란히</strong></li>
+<li>평가 · 성적표를 돌렸으면 2 절에 — <strong>재배선과 나란히</strong> · <code>scorecard.json</code> 의 <code>judge</code> 와 <code>wording</code> 그대로</li>
+<li>판정 · 측정(선형 검사 · 관문 · 봉우리 · 작은 측정)은 4.1 표에 한 줄 — 파일 경로와 함께</li>
 <li>연구 노트 11장 8.5 절과 인수인계에도 한 줄(같은 커밋에서 HTML 다시 만들기)</li>
 <li><code>uv run fly-connectome backup</code> — 새 저장본을 두 곳에 복사 · 대조</li>
 </ol>
