@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# R-7469 F-004 · F-005 전체 — 압축 · 관문(compress-v1) → 투영기 학습 train-v4(진짜 + 재배선 3) → 캡션 평가 8 → 성적표(씨앗 40 · 7 구성).
+# ⚠️ 요구자 확인 뒤 실행한다. 그 전에 `fly-connectome train-probe --steps 12` 로 걸음당 시간 · 최대 메모리를 먼저 잰다(CLAUDE.md 무거운 실행 규약).
+# 학습은 시작 전 시스템 메모리 여유 80 % 이상(학습만의 예외 · 요구자 2026-09-22) · 평가 · 성적표는 65 % · 압축 · 관문은 40 %.
+# 관문을 통과한 채널이 하나도 없으면 v4 학습을 하지 않는다(F-004 규칙 · 끝 코드 4).
+# 단계마다 메모리 여유가 문턱 위로 돌아올 때까지 기다린다 — 큰 프로세스가 끝난 직후엔 회수가 늦다. 30 분 넘게 안 돌아오면 중단(끝 코드 3).
+#
+# 사용법:
+#   bin/run_full_v4.sh                # 압축 · 관문 → 학습 4 → 캡션 평가 8 → 성적표
+#   bin/run_full_v4.sh --skip-train   # 투영기가 이미 있을 때: 압축 · 관문 → 캡션 평가 8 → 성적표
+# v2 순서(진짜 · 재배선 하나 · 성적표 5 구성)는 bin/run_full.sh 그대로.
+set -u
+cd "$(dirname "$0")/.."
+LOG="runs/full-v4-$(date +%Y%m%d-%H%M%S).log"
+DATASET="fly-loop-v2"
+VERSION="train-v4"
+BRAINS=(real rewired-s0 rewired-s1 rewired-s2)
+CONFIGS="vector,text,no_circuit,rewired-s0,rewired-s1,rewired-s2,no_llm"
+SEEDS="2000-2039"
+
+SKIP_TRAIN=0
+[ "${1:-}" = "--skip-train" ] && SKIP_TRAIN=1
+
+free_pct() { memory_pressure | sed -n 's/.*free percentage: \([0-9]*\)%.*/\1/p'; }
+
+wait_free() {  # $1 = 문턱 %
+  local need=$1 i=0
+  while [ "$(free_pct)" -lt "$need" ]; do
+    [ $i -eq 0 ] && echo "--- 메모리 여유 $(free_pct)% < $need% — 기다림" | tee -a "$LOG"
+    i=$((i + 1)); [ $i -gt 60 ] && { echo "--- 30 분 기다려도 안 됨 — 중단" | tee -a "$LOG"; exit 3; }
+    sleep 30
+  done
+}
+
+run() {  # $1 = 문턱 %, 나머지 = fly-connectome 인자
+  local need=$1; shift
+  wait_free "$need"
+  echo "=== $(date '+%F %T') 여유 $(free_pct)% · $*" | tee -a "$LOG"
+  .venv/bin/fly-connectome "$@" >>"$LOG" 2>&1
+  echo "=== $(date '+%F %T') 끝 코드 $? · $*" | tee -a "$LOG"
+}
+
+echo "=== $(date '+%F %T') 시작 · 자료 $DATASET · 판 $VERSION · 학습 건너뜀 $SKIP_TRAIN · 로그 $LOG" | tee -a "$LOG"
+
+# 1 · 2. 압축(뇌마다 · 채널마다 PCA · 학습 나눔으로만) → 관문(압축 특징으로 stats 판정)
+run 40 compress fit  --dataset "$DATASET"
+run 40 compress gate --dataset "$DATASET"
+
+# 관문 확인 — gate.json 의 passed_channels 가 비어 있으면 v4 학습을 하지 않는다(jq 없이 python3 로).
+GATE_MSG=$(.venv/bin/python - "$DATASET" <<'PY'
+import json, sys
+from moai_echomind_fly.loop import compress
+path = compress.out_dir(sys.argv[1]) / "gate.json"
+if not path.exists():
+    print(f"관문 결과 없음 — {path}"); sys.exit(4)
+passed = json.loads(path.read_text(encoding="utf-8")).get("passed_channels") or []
+if not passed:
+    print(f"관문 통과 채널 없음 — v4 학습을 하지 않는다 ({path})"); sys.exit(4)
+print(f"관문 통과 채널 {passed} ({path})")
+PY
+)
+GATE_RC=$?
+echo "--- $GATE_MSG" | tee -a "$LOG"
+[ $GATE_RC -ne 0 ] && { echo "=== $(date '+%F %T') 중단(끝 코드 4) · 로그 $LOG" | tee -a "$LOG"; exit 4; }
+
+# 3 · 4. 투영기 학습 — 진짜 + 재배선 3 · 같은 절차(대조군)
+if [ $SKIP_TRAIN -eq 0 ]; then
+  for b in "${BRAINS[@]}"; do
+    run 80 train --brain "$b" --dataset "$DATASET"
+  done
+else
+  echo "--- 학습 건너뜀(--skip-train) — 기존 runs/projector-<뇌>-$VERSION 을 쓴다" | tee -a "$LOG"
+fi
+
+# 5. 캡션 평가 — 뇌 4 × 저장본 2
+for ck in stage1-caption final; do
+  for b in "${BRAINS[@]}"; do
+    run 65 eval-caption --brain "$b" --checkpoint "$ck" --version "$VERSION"
+  done
+done
+
+# 6. 성적표 — 재배선 투영기 셋과 앙상블 비교(scorecard-v2)
+run 65 scorecard --seeds "$SEEDS" --configs "$CONFIGS" --version "$VERSION"
+
+echo "=== $(date '+%F %T') 전체 끝 · 로그 $LOG" | tee -a "$LOG"

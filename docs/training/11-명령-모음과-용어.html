@@ -267,7 +267,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tbody>
 </table></div>
 <p>v1 자료 · v2 판을 다시 돌릴 때(지금 있는 결과): <code>--dataset fly-loop-v1 --brain rewired</code> · 평가 · 성적표에 <strong><code>--version train-v2</code></strong> — 기본은 지금 규칙 판(train-v4)이다.
-<code>bin/run_full.sh</code> 는 아직 v2 순서(학습 둘 → 캡션 평가 넷 → 성적표 5 구성)다.
+<strong><code>bin/run_full_v4.sh</code></strong> 가 15~19 를 한 번에 돈다(압축 · 관문 → 학습 4 → 캡션 평가 8 → 성적표 7 구성 × 40 씨앗 · 관문 통과 채널이 없으면 끝 코드 4 · <code>--skip-train</code> 은 평가 · 성적표만 · 단계마다 메모리 여유 문턱을 기다림). <code>bin/run_full.sh</code> 는 v2 순서(학습 둘 → 캡션 평가 넷 → 성적표 5 구성) 그대로다.
 학습은 끝난 폴더를 덮어쓰지 않는다(<code>final.safetensors</code> 가 있으면 시작하지 않음).</p>
 <p>⚠️ <strong>무거운 실행은 요구자께 먼저 말씀드린 뒤.</strong> 한 번에 하나(<code>runs/.heavy.lock</code>). 새 종류는 작은 측정(<code>collect-probe</code> · <code>train-probe</code>)부터. 띄웠으면 수십 분 간격으로 확인한다.</p>
 <h2 id="3-판-번호--무엇을-바꾸면-무엇을-다시-하나">3. 판 번호 — 무엇을 바꾸면 무엇을 다시 하나</h2>

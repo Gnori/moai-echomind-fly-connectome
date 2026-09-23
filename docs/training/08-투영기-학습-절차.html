@@ -340,8 +340,10 @@ uv run fly-connectome train --brain rewired-s2
 # 캡션 단계 저장본에서 이어 행동 단계만
 uv run fly-connectome train --brain real --resume-caption runs/projector-real-train-v1/stage1-caption.safetensors
 
-# 전체 순서 스크립트 — ⚠️ 아직 v2 순서(진짜 · 재배선 하나 · 성적표 5 구성)다. v4 는 위 명령을 하나씩 · 성적표는 09장 3절
-bin/run_full.sh
+# 전체 순서 스크립트 v4 — 압축 · 관문 → 학습 4 → 캡션 평가 8 → 성적표(씨앗 40 · 7 구성). 관문 통과 채널이 없으면 끝 코드 4 로 멈춘다
+bin/run_full_v4.sh
+bin/run_full_v4.sh --skip-train                       # 투영기가 이미 있을 때 — 압축 · 관문 → 평가 · 성적표만
+# v2 순서(진짜 · 재배선 하나 · 성적표 5 구성)는 bin/run_full.sh 그대로
 bin/run_full.sh --resume-real &lt;진짜 배선 캡션 저장본&gt;
 </code></pre>
 <p><code>--brain</code> 은 <code>real</code> · <code>rewired</code>(= s0) · <code>rewired-s&lt;K&gt;</code>. <code>--dataset</code> 은 <strong>묶음 이름</strong>(<code>data/datasets/&lt;이름&gt;</code>)이다 — 묶음이 있으면 그 <code>train</code> · <code>eval</code> 나눔을 읽고, 없으면 예전처럼

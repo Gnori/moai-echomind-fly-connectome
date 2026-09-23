@@ -59,6 +59,7 @@ uv run fly-connectome compress fit --dataset fly-loop-v2 && uv run fly-connectom
 uv run fly-connectome train-probe --steps 12                        # 학습 작은 측정(Qwen · 여유 80 %)
 uv run fly-connectome train --brain real                            # 투영기 학습(train-v4 · Qwen 얼림) · --brain rewired-s0 …
 uv run fly-connectome scorecard --seeds 2000-2039 --configs vector,text,no_circuit,rewired-s0,rewired-s1,rewired-s2,no_llm
+bin/run_full_v4.sh                                                  # v4 전체: 압축 · 관문 → 학습 4 → 캡션 평가 8 → 성적표(--skip-train 은 평가만)
 bin/run_full.sh                                                     # (v2 순서) 학습 둘 → 캡션 평가 → 성적표
 uv run fly-connectome backup                                        # git 밖 결과를 두 곳에 복사 · 대조
 ```
