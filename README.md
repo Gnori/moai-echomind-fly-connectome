@@ -30,6 +30,9 @@
 | 채널 | LLM 에 넣는 신경 신호 묶음(시각 · 촉각 · 청각 · 후각 · 미각 · 구애/성 회로 · 가치 · 몸 · 운동) |
 | 투영기(projector) | 채널 벡터 → Qwen 은닉 5,120 차원 소프트 토큰. 학습되는 것은 이것뿐 |
 | 정직 목록 | 결과마다 "배선이 낸 것 / 코드가 더한 것"을 나눈 기록 |
+| 같은 쪽 방출(ipsi_release) | `sim-v2` — 후각 수용 뉴런의 같은 쪽 연결만 세기 × 1.4(Gaudry 2013). 연결 수는 그대로 |
+| 판 번호 | 설정 · 규칙을 잠그는 이름(`sim-v2` · `stats-v2` · `train-v3` …). 옛 설정 판은 `config/archive/<판>.yaml` |
+| 학습 안내서 | [docs/training/](docs/training/README.md) · 다음 학습 정의 [R-7469](docs/requirements/20260923-104151-7469_fly-learning-next_req.md) |
 
 ## 쓰는 법
 

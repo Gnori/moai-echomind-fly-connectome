@@ -121,6 +121,8 @@ def main(argv: list[str] | None = None) -> int:
     datasets.register(sub)
     from . import backup
     backup.register(sub)
+    from . import inspect as inspect_mod
+    inspect_mod.register(sub)
 
     args = parser.parse_args(argv)
     return int(args.func(args) or 0)

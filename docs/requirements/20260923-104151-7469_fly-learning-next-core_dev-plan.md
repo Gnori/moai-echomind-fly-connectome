@@ -17,8 +17,9 @@
 
 ## Task 2: 냄새 좌우 측정 (F-003)
 
-- [ ] `inspect laterality` — ORN → PN → 측각 · 버섯체 단계별 같은 쪽 / 반대쪽 시냅스 비율 · 기록
-- [ ] 결과로 고칠 판 결정(출처 있는 규칙만) → loop P Task 2 의 channels-v2 / task-v2
+- [x] `inspect laterality` — 단계별 같은 쪽 / 반대쪽 비율(CPU 0.8 s): 1단계 51.7 / 47.7 · 2단계 72.6 / 25.6 · 3단계 76.8 / 21.9
+- [x] 고칠 판 = **`sim-v2`**(`ipsi_release` · Gaudry 2013 · 옛 판 `config/archive/sim-v1.yaml`) · 시험 `tests/test_sim_ipsi.py`
+      · 효과 측정: 극단 입력(150 대 60 Hz)은 같은 쪽이 높아짐 · 실제 입력(65 쌍)은 부호 0.508 그대로 → 냄새 쪽 칸 판정 제외(stats-v2)
 
 ## Task 3: LC 시야 대응 retino-v1 (F-008 2단계)
 

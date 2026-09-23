@@ -21,7 +21,7 @@ from typing import Any
 import numpy as np
 
 STATS_RULE: dict[str, Any] = {
-    "version": "stats-v1",
+    "version": "stats-v2",   # v2(2026-09-23): 냄새 쪽 칸을 판정에서 뺀다(아래)
     "alpha": 0.05,
     "rank_pct": 95.0,               # 진짜가 재배선 앙상블의 몇 % 위에 있어야 하나
     "permutations": 10000,          # 에피소드가 많을 때 몬테카를로 횟수
@@ -32,6 +32,11 @@ STATS_RULE: dict[str, Any] = {
     # 정답이 샐 수 있다
     # (운동 → 교사 돌기 0.610 · 찍기 0.590 — 약하지만 근거로 쓰지 않는다 · R-7469 F-003)
     "exclude_from_judgement": ["motor"],
+    # 판정에서 빼는 칸 — 냄새 쪽: 한 결정 창(300 ms) 안에서는 **입력부터** 좌우 차가
+    # 발화 잡음보다 작다(두 더듬이 상대 차 중앙 4.4 % → 인코더 발화율 차 중앙 0.55 Hz ·
+    # 기록 농도 65 쌍을 뇌에 넣어도 투사 뉴런 좌우 차 부호 0.508 — sim-v1 · sim-v2 같음 ·
+    # runs/ipsi-check2-20260923.json · R-7469 F-003)
+    "exclude_fields_from_judgement": ["odor_side"],
 }
 
 

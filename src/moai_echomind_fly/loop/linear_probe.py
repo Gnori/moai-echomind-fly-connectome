@@ -129,7 +129,8 @@ def run(name: str, rule: dict[str, Any] | None = None) -> dict[str, Any]:
         cell = judge_cell(r["correct"], [raw[b][key]["correct"] for b in brains[1:]],
                           r["baseline_correct"], episodes, rule)
         # 전 채널("all")은 판정에서 뺀 채널(운동)을 품고 있어 판정에 넣지 않는다
-        cell["judge"] = ch not in excluded and ch != "all"
+        field_out = key.split("|", 1)[1] in rule.get("exclude_fields_from_judgement", [])
+        cell["judge"] = ch not in excluded and ch != "all" and not field_out
         cells[key] = cell
     finalize(cells, rule)
     out["cells"] = cells

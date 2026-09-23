@@ -1,0 +1,19 @@
+# LIF 매개변수 (R-3340 F-003) — Shiu et al. 2024 model.py 의 값. 출처는 값 옆에 적는다.
+# w_scale 과 적응(adaptation)만 이 저장소가 정하는 값이다 — F-004 규칙으로만 고르고, 고르면 version 을 올려 잠근다.
+version: sim-v1   # 2026-09-22 잠금 — w_scale 을 fit-v1 규칙으로 고름(아래)
+v0_mV: -52.0          # 쉬는 전위 — Kakaria & de Bivort 2017
+v_reset_mV: -52.0     # 발화 뒤 초기화 — 같음
+v_th_mV: -45.0        # 문턱 — 같음
+t_mbr_ms: 20.0        # 막 시간 상수 — 같음
+tau_syn_ms: 5.0       # 시냅스 입력 감쇠 — Jürgensen et al. 2021
+t_rfc_ms: 2.2         # 불응기 — Lazar et al. 2021
+t_dly_ms: 1.8         # 시냅스 전달 지연 — Paul et al. 2015
+w_syn_mV: 0.275       # 시냅스 하나의 세기 — Shiu 가 FlyWire 에 맞춘 자유 매개변수
+w_scale: 0.25         # MaleCNS 배율 — bench/escape.py FIT_RULE(fit-v1)로 고름. 후보 8개 중 통과 0.25·0.3 → 작은 쪽.
+                      #   확인(40 시행, 2026-09-22): GF 반응 0.65(95% 0.50–0.78) · 반응당 1.38 · 잠복 33.8 ms ·
+                      #   뇌 전체 0.0027 Hz · 섞은 배선 0.00 — runs 20260922-001555-escape-38c9 / -001742-escape-9016
+                      #   (FLYCNS 는 0.3 + GF 적응 30 mV. 우리는 적응 없이 통과)
+poisson_kick_mV: 68.75  # w_syn × f_poi(250) — Shiu: "250 is sufficient to cause spiking"
+dt_ms: 0.1            # Brian2 기본 시계(Shiu 가 따로 정하지 않음)
+tau_adapt_ms: 100.0   # 발화 적응 감쇠 — 적응은 아래 목록에 있는 종류에만 켠다
+adaptation: []        # [{type: DNp01, b_adapt_mV: 30.0, source: "..."}] — 출처 있는 것만

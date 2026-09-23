@@ -46,6 +46,7 @@ class LIFParams:
     dt_ms: float = 0.1
     tau_adapt_ms: float = 100.0
     adaptation: tuple[dict[str, Any], ...] = field(default_factory=tuple)
+    ipsi_release: tuple[dict[str, Any], ...] = field(default_factory=tuple)
 
     @classmethod
     def from_config(cls, name: str = "sim", **override: Any) -> LIFParams:
@@ -53,12 +54,14 @@ class LIFParams:
         known = {f.name for f in fields(cls)}
         values = {k: v for k, v in cfg.items() if k in known}
         values["adaptation"] = tuple(cfg.get("adaptation") or ())
+        values["ipsi_release"] = tuple(cfg.get("ipsi_release") or ())
         values.update(override)
         return cls(**values)
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         d["adaptation"] = list(self.adaptation)
+        d["ipsi_release"] = list(self.ipsi_release)
         return d
 
 
@@ -66,6 +69,24 @@ def resolve_device(name: str = "cpu") -> torch.device:
     if name == "mps" and not torch.backends.mps.is_available():
         raise RuntimeError("MPS 를 쓸 수 없다 — --device cpu 로 돌린다")
     return torch.device(name)
+
+
+def ipsi_scale(graph: Graph, rule: dict[str, Any]) -> np.ndarray:
+    """연결마다 곱할 값 — `rule["class"]` 뉴런에서 **같은 쪽(L/R)** 뉴런으로 가는 연결 × 배율.
+
+    같은 쪽 방출 비대칭(sim-v2 · Gaudry 2013). 연결 수 · 부호 · 상대는 그대로다.
+    섞은 배선에도 같은 규칙이 걸린다(출발은 그대로 · 도착이 섞였으므로 "같은 쪽"도 섞인 도착 기준).
+    """
+    from .loop.signals import side_of  # 늦게 — signals 가 sim 을 부른다
+
+    side = side_of(graph)
+    src = graph.src()
+    from_class = np.isin(graph.columns["class"][src], list(rule["class"]))
+    lr = np.isin(side[src], ["L", "R"])
+    same = from_class & lr & (side[src] == side[graph.dst])
+    out = np.ones(len(src))
+    out[same] = float(rule["ipsi_factor"])
+    return out
 
 
 class Engine:
@@ -107,6 +128,8 @@ class Engine:
         self.row_ptr = torch.as_tensor(graph.row_ptr, dtype=torch.int64, device=self.dev)
         self.dst = torch.as_tensor(graph.dst.astype(np.int64), device=self.dev)
         w = graph.sign[graph.src()].astype(np.float64) * graph.count
+        for rule in params.ipsi_release:
+            w *= ipsi_scale(graph, rule)
         self.w = torch.as_tensor(w * params.w_syn_mV * params.w_scale, dtype=dtype, device=self.dev)
 
         self.n_rfc = torch.full((n,), self.n_rfc_default, dtype=torch.int64, device=self.dev)

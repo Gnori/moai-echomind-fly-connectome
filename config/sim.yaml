@@ -1,6 +1,6 @@
 # LIF 매개변수 (R-3340 F-003) — Shiu et al. 2024 model.py 의 값. 출처는 값 옆에 적는다.
 # w_scale 과 적응(adaptation)만 이 저장소가 정하는 값이다 — F-004 규칙으로만 고르고, 고르면 version 을 올려 잠근다.
-version: sim-v1   # 2026-09-22 잠금 — w_scale 을 fit-v1 규칙으로 고름(아래)
+version: sim-v2   # 2026-09-23 — sim-v1 + 후각 수용 뉴런 같은 쪽 방출 비대칭(ipsi_release · R-7469 F-003). 옛 판 config/archive/sim-v1.yaml
 v0_mV: -52.0          # 쉬는 전위 — Kakaria & de Bivort 2017
 v_reset_mV: -52.0     # 발화 뒤 초기화 — 같음
 v_th_mV: -45.0        # 문턱 — 같음
@@ -17,3 +17,11 @@ poisson_kick_mV: 68.75  # w_syn × f_poi(250) — Shiu: "250 is sufficient to ca
 dt_ms: 0.1            # Brian2 기본 시계(Shiu 가 따로 정하지 않음)
 tau_adapt_ms: 100.0   # 발화 적응 감쇠 — 적응은 아래 목록에 있는 종류에만 켠다
 adaptation: []        # [{type: DNp01, b_adapt_mV: 30.0, source: "..."}] — 출처 있는 것만
+# 같은 쪽 방출 비대칭 — 연결 수는 그대로 두고 **세기만**: 출발 뉴런과 같은 쪽(L/R) 도착 연결 × ipsi_factor.
+# 초파리 후각 수용 뉴런은 축삭이 양쪽 촉각엽에 가서(우리 그래프: ORN_DM1·VA2 시냅스 같은 쪽 51.7 % · 반대쪽 47.7 %)
+# 시냅스 수만으로는 좌우가 지워진다 — 생체는 같은 쪽 가지가 스파이크마다 약 40 % 더 방출해 좌우를 만든다.
+ipsi_release:
+  - class: [olfactory]
+    ipsi_factor: 1.4
+    source: "Gaudry, Hong, Kain, de Bivort & Wilson 2013 Nature 493:424 — ipsilateral branch releases ~40% more per spike"
+
