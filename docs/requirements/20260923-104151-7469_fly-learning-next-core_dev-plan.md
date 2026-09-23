@@ -23,7 +23,9 @@
 
 ## Task 3: LC 시야 대응 retino-v1 (F-008 2단계)
 
-- [ ] `config/retino.yaml`(규칙 · 출처) · `retinotopy build` — LC/LPLC 마다 입력 기둥 뉴런(`assignedOlHex1/2`)의 시냅스 가중 평균 → 시야 자리 · 못 얻은 뉴런은 `missing`
+- [x] `config/retino.yaml`(규칙 · 출처 · 방향 근거) · `retinotopy build`(CPU 1 s) — 시각 투사 4,096 개 고도 · missing 5,105
+      · 위 · 아래 축 확인: R7d/R8d → 기둥 y ≈ 64 · HSN 47 > HSE 40 > HSS 25 · **앞 · 뒤 축은 미확정**(방위는 눈 단위)
+      · LC4 126/126 · LPLC2 185/185 · LC16 182/182 · LPLC1 134/134 · **LC17 9/353 · LC6 5/124**(다른 소엽 뉴런에게서 받음)
 - [ ] 시험: 작은 가짜 그래프에서 가중 평균이 맞다 · 뒤섞은 대응표 생성
 
 ## Task 4: 중심복합체 봉우리 검사 (F-008 3단계)
