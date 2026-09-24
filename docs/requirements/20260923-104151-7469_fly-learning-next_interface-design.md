@@ -13,6 +13,7 @@
 |---|---|---|---|
 | v1 | 2026-09-23 | 최초 — F-001 ~ F-005 · F-008 1~3단계는 확정 계약, F-006 · F-007 · F-008 4~5단계는 **자리만**(착수 전 이 문서 v2 로 계약) | — |
 | v2.1 | 2026-09-23 | 자료 v2 결과로 바뀐 것: ① **`compress-v2`** = 모든 뇌 · 채널에 같은 차원 64(v1 의 분산 0.95 규칙은 진짜 시각 16 · 재배선 64 로 절차가 달라졌고 시각 정보가 잘렸다 — 결과 뒤 고침 · 까닭은 `config/compress.yaml` 주석) · train-v4 의 `compress` 도 v2 ② `compress.out_dir/load(version=)` — 학습 규칙이 정한 판을 읽는다 ③ 봉우리 검사 결과: 진짜 배선 EPG 발화 0/3,297 — **봉우리 없음**(F-008 3단계 실패로 기록 · F-006 space 목표에 그대로) | §3.4 · §1 `compress-v1` |
+| v2.2 | 2026-09-24 | ① **`compress-v3`** = v2 + 채널마다 학습 나눔 압축 벡터의 평균 L2 크기로 나눠 **모든 뇌 · 채널 평균 크기 1**(`unit_scale` · `scale_floor`) — v2 는 크기가 뇌 · 채널마다 달라(시각 진짜 0.90 대 재배선 1.8~2.1 · 몸 8.3 대 1.6~2.1) 투영기의 편향을 벗어나는 속도가 달랐다(결과 뒤 고침 · 까닭은 `config/compress.yaml`) ② `<brain>.npz` 에 채널마다 `scale` 하나 더 · `apply` 가 나눈다(v1 · v2 모델은 그대로) ③ **`train-v5`** = train-v4 + `compress: compress-v3`(나머지 같음) · 결과 폴더 `runs/projector-<brain>-train-v5/` · `bin/run_full_v5.sh` | §3.4 · §3.5 `compress-v2` · `train-v4` |
 | **v2** | 2026-09-23 | **F-006 · F-007 · F-008 4~5단계 계약**(§7 ~ §9 · 재료 = [연구 노트 13](../research/fly-connectome/13-회로-학습-설계-조사.md)) + **retino-v2**(앞 · 뒤 축 확정 → 방위) · 새 판 `sim-v3` · `physiology-v1` · `plasticity-v1` · `task-v3` · `retino-v2` · `fit-probe` · `fit` · `plasticity-probe` 명령. 착수는 F-004 · F-005 판정 뒤 · 무거운 실행은 요구자 확인 | §5 "자리만" · §1 판 표 |
 | v1.5 | 2026-09-23 | F-005 코드: ① 손실은 틀 토큰을 **0 이 아니라 0.1 배**(`template_weight`) — 시스템 글에 캡션 서식이 없어 서식을 배울 곳이 정답뿐이다 · 칸 값 = 캡션 `: 값 /` · 행동 JSON `:값` (토크나이저 글자 위치로 가림) ② 투영기 `kind: linear` · 채널당 토큰 1 · 입력 = 관문 통과 채널의 압축 벡터 · 관문 통과 0 이면 학습하지 않는다 ③ `--brain rewired-s<K>` · 학습 · 평가 기본 자료 `fly-loop-v2` ④ eval-caption · scorecard 가 meta 의 압축을 똑같이 적용 · 성적표의 재배선 앙상블(여러 투영기)은 학습 뒤 추가 | §3.5 "틀 · 키 · 구두점은 가림" |
 | v1.4 | 2026-09-23 | ① `bump-check` 명령 → **`inspect bump --dataset`**(자료 v2 의 공간 채널과 참값 몸 방향으로 · 뇌만 돌리는 방향 회전 검사는 하지 않는다 — 시각 입구가 다가옴뿐이라 방향 단서가 없다) ② `linear_probe.run(transform=)` — 압축 관문이 같은 판정 코드를 쓴다 ③ 수집 조각 이름 `v2main` · `v2eval`(v1 조각 보호) | §2 `bump-check` |
@@ -103,13 +104,17 @@
 
 | 파일 | 내용 |
 |---|---|
-| `<brain>.npz` | 채널마다 `mean` · `components` [k, d] · (PLS 면 `weights`) |
+| `<brain>.npz` | 채널마다 `mean` · `components` [k, d] · (PLS 면 `weights`) · **v3: `scale`**(학습 나눔 압축 벡터 평균 L2 크기 · apply 가 나눈다) |
 | `gate.json` | 채널 × 칸 관문 결과(3.2 의 `pass` 기준 · 압축 뒤 값으로) · 통과 채널 목록 |
 | `meta.json` | 규칙 · 고른 k · 설명 분산 · 자료 체크섬 |
 
+판: v1(분산 0.95) → v2(같은 64) → **v3(같은 64 + 평균 크기 1)** — 폴더 `runs/compress-<dataset>-<판>/`.
+
 압축기는 **학습 나눔(train)으로만** 맞춘다 · 뇌마다 따로(재배선도 같은 규칙).
 
-### 3.5 투영기 train-v4 — `runs/projector-<brain>-train-v4/`
+### 3.5 투영기 train-v4 · **train-v5** — `runs/projector-<brain>-train-v{4,5}/`
+
+train-v5 = train-v4 + 입력 압축 compress-v3(크기 1). 아래는 둘에 같다.
 
 `meta.json` 에 더해지는 칸: `compress`(폴더 · 판 · 통과 채널) · `loss_mask`(칸 토큰 규칙) · `slots`(통과 채널 수 × 1).
 입력 글의 자리 표시는 **통과 채널만** `<채널>▢</채널>`(채널당 1 개). 손실은 캡션 칸 값 · 행동 JSON 값 토큰에만(틀 · 키 이름 · 구두점은 가림).
