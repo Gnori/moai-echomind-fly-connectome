@@ -258,7 +258,8 @@ def from_status(st: dict[str, Any]) -> dict[str, Any]:
             "state": st.get("state"), "reason": st.get("reason"), "source": "status"}
 
 
-def read_projectors(runs: Path, pattern: str, eval_pattern: str) -> list[dict[str, Any]]:
+def read_projectors(runs: Path, pattern: str, eval_pattern: str,
+                    stale_s: float = 3600.0) -> list[dict[str, Any]]:
     out = []
     for d in sorted(p for p in runs.glob(pattern) if p.is_dir()):
         rec: dict[str, Any] = {"dir": d.name, "log": None, "meta": None,
@@ -292,6 +293,12 @@ def read_projectors(runs: Path, pattern: str, eval_pattern: str) -> list[dict[st
                 rec["evals"].append({"file": ev.name, "checkpoint": None, "accuracy": {},
                                      "baseline": {}})
         out.append(rec)
+    # 끝나지 않았는데 오래 갱신이 없으면 = 멈춘 기록(도는 중 아님)
+    for rec in out:
+        rec["stale"] = (not rec["final"] and rec["log"] is not None
+                        and not rec["log"].get("saved")
+                        and rec["log"].get("state") not in ("aborted", "refused")
+                        and time.time() - rec["_mtime"] > stale_s)
     # 최근에 움직인 투영기가 위(요구자 2026-09-24 "투영기 날짜로 정렬") — 판이 섞여도 도는 것이 먼저
     out.sort(key=lambda r: r["_mtime"], reverse=True)
     return out
@@ -394,7 +401,8 @@ def collect(runs: Path | None = None, datasets_dir: Path | None = None,
         "version": cfg["version"], "now": time.strftime("%Y-%m-%d %H:%M:%S"), "runs": str(runs),
         "lock": read_lock(runs), "full": read_full(runs, g["full_jsonl"], g["full_log"]),
         "free": memory_free(),
-        "projectors": read_projectors(runs, g["projector"], g["eval_caption"]),
+        "projectors": read_projectors(runs, g["projector"], g["eval_caption"],
+                                      60.0 * float(cfg.get("stale_minutes", 60))),
         "probe": read_linear_probe(runs, g["linear_probe"]),
         "gates": read_gates(runs, g["compress"]),
         "bump": read_bump(runs, g["bump"]), "scorecard": read_scorecard(runs, g["scorecard"]),
@@ -561,6 +569,8 @@ def _train_row(p: dict[str, Any]) -> list[str]:
         state = _tag("ok", "끝(final)")
     elif lg["saved"]:
         state = _tag("ok", "저장됨")
+    elif p.get("stale"):
+        state = _tag("bad", f'멈춘 기록 · {_e(lg["stage"])} ep {lg["epoch"]}에서 끊김')
     elif lg["step"] is not None:
         state = _tag("warn", f'{_e(lg["stage"])} ep {lg["epoch"]}')
     else:
@@ -583,7 +593,8 @@ def _train_row(p: dict[str, Any]) -> list[str]:
         fp = lg["fingerprint_same"]
     fp_txt = "—" if fp is None else (_tag("ok", "같음") if fp else _tag("bad", "다름!"))
     return [name, state, prog, _f(lg["loss"]), _f(lg["sec_per_step"], 1),
-            "끝" if finished else _dur(lg["eta_s"]), mem_txt, val_txt, fp_txt]
+            "끝" if finished else "—" if p.get("stale") else _dur(lg["eta_s"]),
+            mem_txt, val_txt, fp_txt]
 
 
 def _section_train(d: dict[str, Any]) -> str:

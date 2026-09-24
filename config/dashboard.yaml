@@ -6,6 +6,7 @@ port: 8770               # --serve 기본 포트
 every_s: 30              # --serve 일 때 페이지를 다시 만드는 간격(초)
 out_dir: dashboard       # runs/<out_dir>/index.html · state.json (git 밖)
 state_file: state.json   # 화면과 같은 자료 덩어리(JSON) — 세션 · 스크립트는 이것을 읽는다
+stale_minutes: 60        # 끝(final)이 없는데 이만큼 갱신이 없으면 '멈춘 기록'(도는 중으로 보이지 않게 · 요구자 2026-09-24)
 train_rule: train-v5     # 지금 판(기록용) — 진행 칸은 아래 globs 로 v4 · v5 모두 보인다
 globs:                   # runs/ 안에서 읽을 자리(가장 최근 것을 고른다)
   full_jsonl: "full-v[0-9]-*.jsonl"   # 전체 순서 사건 파일(v5 부터 · 먼저)

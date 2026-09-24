@@ -242,3 +242,21 @@ def test_dashboard_command_stays_light_no_torch_and_rule_from_source(tmp_path):
     assert got["rc"] == 0 and got["heavy"] == [] and got["rule_ok"], got
     assert got["rss_mb"] < 120, got                       # 인수 기준 200 MB · 실측 약 30 MB
     assert (tmp_path / "runs" / "dashboard" / "index.html").exists()
+
+
+def test_old_unfinished_projector_is_shown_as_stopped_not_running(tmp_path, monkeypatch):
+    """끝이 없고 오래 갱신이 없는 폴더(예: v1 · 09-22 멈춤)는 '멈춘 기록' · 남은 시간 없음."""
+    import os
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    _fake_runs(runs)
+    log = runs / "projector-rewired-s0-train-v4" / "train.log"
+    old = log.stat().st_mtime - 3 * 3600
+    os.utime(log, (old, old))
+    monkeypatch.setenv("FLY_RUNS_DIR", str(runs))
+    d = dashboard.collect(datasets_dir=tmp_path / "x", backup_md=tmp_path / "y",
+                          memory_free=lambda: 60)
+    p = d["projectors"][0]
+    assert p["stale"] is True
+    row = dashboard._train_row(p)
+    assert "멈춘 기록" in row[1] and row[5] == "—"
