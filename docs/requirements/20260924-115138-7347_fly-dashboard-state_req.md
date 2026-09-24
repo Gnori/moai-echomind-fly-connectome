@@ -88,4 +88,4 @@ uv run fly-connectome dashboard          # runs/dashboard/state.json · index.ht
 - `runs/dashboard/state.json` 이 30 초마다 새로 써짐(`now` 11:57:08 → 11:57:38) · 화면과 같은 덩어리(잠금 · 전체 순서 · 투영기 · 결과 · 자료)
 - 옛 폴더(v1~v4) · v4 로그는 로그 파싱으로 그대로 보임(`source: log`) · 중단한 재배선 s0 는 로그에 끝 코드 143 · 중단 줄을 남겨 "중단"으로 표시
 - ⚠️ 남은 확인: v5 학습이 시작되면 `runs/projector-real-train-v5/status.json` 이 25 걸음마다 바뀌는지 · `full-v5-*.jsonl` 사건이 쌓이는지 → 확인 뒤 여기 한 줄
-- ⚠️ 대시보드 서버 메모리: dashboard-v2 서버(pid 51911)가 34 분에 RSS 229 MB(인수 기준 200 MB 초과) → 문서 세션에 원인 조사 · 고침 일감(12:4x)
+- ✅ 대시보드 서버 메모리: dashboard-v2 서버가 34 분에 RSS 229 MB 였던 것 → 원인은 새는 것이 아니라 `cli.py` 가 무거운 모듈(torch · numpy · pyarrow)을 올리던 것(문서 세션 `813f6e0`) · 고친 뒤 pid 74772 **30 분 RSS 29 MB**(시작 32 MB · 늘지 않음) — 인수 기준 < 200 MB 충족
