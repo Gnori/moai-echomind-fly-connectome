@@ -89,8 +89,50 @@ def read_lock(runs: Path) -> dict[str, Any]:
         return {"held": True, "text": "있음(내용을 못 읽음)"}
 
 
+def read_full_jsonl(path: Path) -> dict[str, Any]:
+    """전체 순서 사건 파일(`full-v*.jsonl` · R-7347) — 한 줄 = 한 사건.
+
+    사건: begin · start · end · abort · done.
+    """
+    steps: list[dict[str, Any]] = []
+    started = done = aborted = None
+    for ln in _lines(path):
+        try:
+            ev = json.loads(ln)
+        except ValueError:
+            continue
+        kind, ts = ev.get("event"), ev.get("ts")
+        if kind == "begin":
+            started = ts
+        elif kind == "done":
+            done = ts
+        elif kind == "abort":
+            aborted = f"{ts} 중단 · {ev.get('cmd', '')} · 끝 코드 {ev.get('code')}"
+        elif kind == "start":
+            steps.append({"cmd": ev.get("cmd"), "start": ts, "free": ev.get("free"),
+                          "end": None, "code": None})
+        elif kind == "end":
+            for st in reversed(steps):
+                if st["cmd"] == ev.get("cmd") and st["end"] is None:
+                    st["end"], st["code"] = ts, ev.get("code")
+                    break
+    current = next((s for s in reversed(steps) if s["end"] is None), None)
+    return {"path": path.name, "started": started, "done": done, "aborted": aborted,
+            "steps": steps, "current": current, "notes": [], "source": "jsonl",
+            "mtime": time.strftime("%m-%d %H:%M", time.localtime(path.stat().st_mtime))}
+
+
+def read_full(runs: Path, jsonl_pattern: str, log_pattern: str) -> dict[str, Any]:
+    """전체 순서 — 사건 파일(jsonl)이 로그보다 새로우면 그것, 아니면 로그 파싱(v4 까지 · 대체)."""
+    j = _latest(list(runs.glob(jsonl_pattern)))
+    lg = _latest(list(runs.glob(log_pattern)))
+    if j is not None and (lg is None or j.stat().st_mtime >= lg.stat().st_mtime):
+        return read_full_jsonl(j)
+    return read_full_log(runs, log_pattern)
+
+
 def read_full_log(runs: Path, pattern: str) -> dict[str, Any]:
-    """최신 전체 순서 로그 — 단계마다 시작 · 끝 코드, 지금 도는 단계, 기다림 줄."""
+    """최신 전체 순서 로그(대체 읽기) — 단계마다 시작 · 끝 코드, 지금 도는 단계, 기다림 줄."""
     path = _latest(list(runs.glob(pattern)))
     if path is None:
         return {"path": None}
@@ -121,7 +163,7 @@ def read_full_log(runs: Path, pattern: str) -> dict[str, Any]:
     notes = [ln for ln in lines[last_sep + 1:] if ln.startswith("--- ")]
     current = next((s for s in reversed(steps) if s["end"] is None), None)
     return {"path": path.name, "started": started, "done": done, "aborted": aborted,
-            "steps": steps, "current": current, "notes": notes[-3:],
+            "steps": steps, "current": current, "notes": notes[-3:], "source": "log",
             "mtime": time.strftime("%m-%d %H:%M", time.localtime(path.stat().st_mtime))}
 
 
@@ -144,7 +186,8 @@ def parse_train_log(lines: list[str]) -> dict[str, Any]:
     out: dict[str, Any] = {"brain": None, "n": None, "stage": None, "step": None, "loss": None,
                            "sec_per_step": None, "epoch": None, "mem": None, "val": None,
                            "before": None, "fingerprint_same": None, "saved": False,
-                           "total_steps": None, "done_steps": None, "eta_s": None}
+                           "total_steps": None, "done_steps": None, "eta_s": None,
+                           "state": None, "reason": None, "source": "log"}
     rule_text = None
     for ln in lines:
         if (m := _TRAIN_RE.match(ln)):
@@ -184,14 +227,33 @@ def parse_train_log(lines: list[str]) -> dict[str, Any]:
     return out
 
 
+def from_status(st: dict[str, Any]) -> dict[str, Any]:
+    """status.json(학습이 직접 씀 · R-7347) → 로그 파싱과 같은 모양(그리는 쪽이 하나만 알게)."""
+    step, total = st.get("step"), st.get("total_steps")
+    sps = st.get("sec_per_step")
+    eta = (max(total - step, 0) * sps) if (step is not None and total and sps) else None
+    return {"brain": st.get("brain"), "n": st.get("train_samples"), "stage": st.get("stage"),
+            "step": st.get("stage_step"), "loss": st.get("loss"), "sec_per_step": sps,
+            "epoch": st.get("epoch"), "mem": st.get("mem"), "val": st.get("val"),
+            "before": st.get("before"), "fingerprint_same": st.get("fingerprint_same"),
+            "saved": st.get("state") == "done", "total_steps": total, "done_steps": step,
+            "caption_steps": st.get("caption_steps"), "eta_s": eta,
+            "state": st.get("state"), "reason": st.get("reason"), "source": "status"}
+
+
 def read_projectors(runs: Path, pattern: str, eval_pattern: str) -> list[dict[str, Any]]:
     out = []
     for d in sorted(p for p in runs.glob(pattern) if p.is_dir()):
         rec: dict[str, Any] = {"dir": d.name, "log": None, "meta": None,
                                "final": (d / "final.safetensors").exists(), "evals": [],
                                "_mtime": d.stat().st_mtime}
-        log = d / "train.log"
-        if log.exists():
+        log, st_path = d / "train.log", d / "status.json"
+        st = _load_json(st_path) if st_path.exists() else None
+        if isinstance(st, dict) and st.get("state"):
+            rec["log"] = from_status(st)                     # 만드는 쪽이 쓴 상태(v5 부터)
+            rec["_mtime"] = st_path.stat().st_mtime
+            rec["log_mtime"] = time.strftime("%m-%d %H:%M", time.localtime(rec["_mtime"]))
+        elif log.exists():                                   # 옛 폴더(v1~v4) — 로그 파싱으로 대체
             rec["log"] = parse_train_log(_lines(log))
             rec["_mtime"] = log.stat().st_mtime
             rec["log_mtime"] = time.strftime("%m-%d %H:%M", time.localtime(rec["_mtime"]))
@@ -313,7 +375,7 @@ def collect(runs: Path | None = None, datasets_dir: Path | None = None,
     g = cfg["globs"]
     return {
         "version": cfg["version"], "now": time.strftime("%Y-%m-%d %H:%M:%S"), "runs": str(runs),
-        "lock": read_lock(runs), "full": read_full_log(runs, g["full_log"]),
+        "lock": read_lock(runs), "full": read_full(runs, g["full_jsonl"], g["full_log"]),
         "free": memory_free(),
         "projectors": read_projectors(runs, g["projector"], g["eval_caption"]),
         "probe": read_linear_probe(runs, g["linear_probe"]),
@@ -451,7 +513,7 @@ def _section_status(d: dict[str, Any]) -> str:
     full_txt, full_sub = _full_summary(full)
     out = '<div class="grid">' + "".join([
         _card("무거운 실행 잠금", _tag("warn" if lock["held"] else "ok", _e(lock["text"])), ""),
-        _card("전체 순서(run_full_v4)", full_txt, full_sub),
+        _card("전체 순서(run_full)", full_txt, full_sub),
         _card("시스템 메모리 여유", _tag(free_cls, free_txt), _guard_text()),
         _card("마지막 갱신", _e(d["now"]), f'{d["refresh_s"]} 초마다 새로 읽음'),
     ]) + "</div>"
@@ -475,7 +537,10 @@ def _train_row(p: dict[str, Any]) -> list[str]:
     if not lg:
         return [name, "로그 없음"] + ["—"] * 7
     finished = p["final"] or lg["saved"]
-    if p["final"]:
+    if lg.get("state") in ("aborted", "refused"):
+        what = "멈춤" if lg["state"] == "aborted" else "막음"
+        state = _tag("bad", f'{what} · {_e(lg.get("reason"))}')
+    elif p["final"]:
         state = _tag("ok", "끝(final)")
     elif lg["saved"]:
         state = _tag("ok", "저장됨")
@@ -619,7 +684,8 @@ def render(d: dict[str, Any]) -> str:
 </head>
 <body>
 <h1>초파리 실행 대시보드</h1>
-<p class="sub">{_e(d['version'])} · {_e(d['runs'])} · 읽기 전용 · {links}</p>
+<p class="sub">{_e(d['version'])} · {_e(d['runs'])} · 읽기 전용 · 자료 <code>state.json</code>
+ · {links}</p>
 <h2>지금 상태</h2>
 {_section_status(d)}
 <h2>학습 진행 (투영기 · 최근 순)</h2>
@@ -642,7 +708,14 @@ def build(runs: Path | None = None, datasets_dir: Path | None = None,
     runs = runs or paths.runs_dir()
     out = runs / cfg["out_dir"] / "index.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    page = render(collect(runs, datasets_dir, backup_md, cfg, memory_free))
+    state = collect(runs, datasets_dir, backup_md, cfg, memory_free)
+    # 자료 파일(R-7347 · 요구자 "데이터 파일로 가지고 있고 주기적으로 갱신") — 화면과 같은 덩어리를
+    # runs/<out_dir>/state.json 에 둔다. 세션 · 스크립트는 HTML 이 아니라 이것을 읽는다.
+    state_path = out.parent / cfg.get("state_file", "state.json")
+    tmp = state_path.with_name(state_path.name + ".tmp")
+    tmp.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(state_path)
+    page = render(state)
     tmp = out.with_suffix(".html.tmp")
     tmp.write_text(page, encoding="utf-8")
     tmp.replace(out)                    # 브라우저가 반쯤 쓰인 파일을 읽지 않게

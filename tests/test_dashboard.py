@@ -1,4 +1,5 @@
-"""대시보드 dashboard-v1 (R-7928) — 가짜 runs/ 로 기대 문자열이 들어가나 · 파일이 없어도 만들어지나.
+"""대시보드 dashboard-v1 (R-7928) · v2 자료 파일(R-7347) — 가짜 runs/ 로 기대 문자열이 들어가나 ·
+파일이 없어도 만들어지나 · status.json · jsonl 이 있으면 로그 대신 그것을 읽고 state.json 을 쓰나.
 
 runs 자리는 `FLY_RUNS_DIR` 로 바꾼다(paths.runs_dir) · 자료 · 백업 자리는 인자로 준다.
 memory_pressure 는 부르지 않는다(가짜 함수).
@@ -149,3 +150,62 @@ def test_server_redirects_root_and_serves_page(tmp_path, monkeypatch):
         srv.shutdown()
         srv.server_close()
     assert out.exists()
+
+
+def test_status_json_and_jsonl_win_over_logs_and_state_json_is_written(tmp_path, monkeypatch):
+    """v2(R-7347): status.json · 사건 jsonl 을 먼저 읽고, 같은 덩어리를 state.json 에 둔다."""
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    _fake_runs(runs)                                   # 옛 로그(v4)도 같이 있다
+    pj = runs / "projector-real-train-v5"
+    pj.mkdir()
+    (pj / "train.log").write_text("[caption] ep 0 step 25 loss 9.999 · 1.0 s/걸음\n",
+                                  encoding="utf-8")
+    (pj / "status.json").write_text(json.dumps(
+        {"brain": "real", "version": "train-v5", "state": "running", "stage": "action", "epoch": 0,
+         "stage_step": 100, "step": 2478, "total_steps": 3923, "caption_steps": 2378,
+         "loss": 0.777, "sec_per_step": 5.0, "train_samples": 1189,
+         "mem": {"peak_gb": 31.0, "cache_gb": 0.01, "sys_free_percent": 66},
+         "val": {"stage": "caption", "epoch": 1, "train": 2.9, "caption": 2.774, "action": 0.705},
+         "started": "2026-09-24 13:00:00", "updated": "2026-09-24 16:00:00"}), encoding="utf-8")
+    ab = runs / "projector-rewired-s0-train-v5"
+    ab.mkdir()
+    (ab / "status.json").write_text(json.dumps(
+        {"brain": "rewired-s0", "version": "train-v5", "state": "aborted",
+         "reason": "시스템 메모리 여유 21% < 25%", "stage": "caption", "step": 270,
+         "total_steps": 3923}), encoding="utf-8")
+    lines = [
+        {"ts": "2026-09-24 12:00:00", "event": "begin", "cmd": "run_full_v5", "free": 60,
+         "code": None},
+        {"ts": "2026-09-24 12:00:01", "event": "start", "cmd": "train --brain real", "free": 60,
+         "code": None},
+        {"ts": "2026-09-24 18:00:00", "event": "end", "cmd": "train --brain real", "free": 70,
+         "code": 0},
+        {"ts": "2026-09-24 18:00:01", "event": "start", "cmd": "train --brain rewired-s0",
+         "free": 70, "code": None},
+    ]
+    (runs / "full-v5-20260924-120000.jsonl").write_text(
+        "\n".join(json.dumps(x, ensure_ascii=False) for x in lines) + "\n", encoding="utf-8")
+    monkeypatch.setenv("FLY_RUNS_DIR", str(runs))
+    d = dashboard.collect(datasets_dir=tmp_path / "x", backup_md=tmp_path / "y",
+                          memory_free=lambda: 66)
+    assert d["full"]["source"] == "jsonl" and d["full"]["path"].endswith(".jsonl")
+    assert d["full"]["steps"][0]["code"] == 0
+    assert d["full"]["current"]["cmd"] == "train --brain rewired-s0"
+    by = {p["dir"]: p["log"] for p in d["projectors"]}
+    real = by["projector-real-train-v5"]
+    assert real["source"] == "status" and real["loss"] == 0.777          # 로그의 9.999 가 아니라
+    assert real["done_steps"] == 2478 and real["eta_s"] == (3923 - 2478) * 5.0
+    assert by["projector-rewired-s0-train-v5"]["state"] == "aborted"
+    assert by["projector-rewired-s0-train-v4"]["source"] != "status"     # 옛 폴더는 로그 파싱
+    page = dashboard.render(d)
+    for text in ("0.777", "2,478 / 3,923", "멈춤 · 시스템 메모리 여유 21%",
+                 "train --brain rewired-s0", "2.774"):
+        assert text in page, text
+    out = dashboard.build(datasets_dir=tmp_path / "x", backup_md=tmp_path / "y",
+                          memory_free=lambda: 66)
+    state = json.loads((out.parent / "state.json").read_text(encoding="utf-8"))
+    assert state["version"] == "dashboard-v2" and state["free"] == 66
+    assert state["full"]["current"]["cmd"] == "train --brain rewired-s0"
+    assert any(p["dir"] == "projector-real-train-v5" and p["log"]["loss"] == 0.777
+               for p in state["projectors"])
