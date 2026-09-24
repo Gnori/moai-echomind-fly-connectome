@@ -521,6 +521,70 @@ def eval_caption(args: argparse.Namespace) -> int:
     return 0
 
 
+def eval_scored(args: argparse.Namespace) -> int:
+    """채점 평가 eval-v2(빈칸 채우기 · 정답 접두 · 후보 첫 토큰 비교) — 서식과 무관하게 값을 잰다.
+
+    한 표본 = 앞으로 한 번(정답 캡션을 그대로 넣음). 결과 `eval-scored-<저장본>.json`.
+    """
+    import mlx.core as mx
+
+    from . import caption_score as cs
+    from .projector import ChannelProjector
+    from .qwen import QwenLM
+    from .train import Trainer
+
+    pdir = projector_dir(args.brain, args.version)
+    meta = json.loads((pdir / "meta.json").read_text())
+    try:
+        with heavy("eval-scored", extra_gb=float(config.load("llm")["weights_gb"])):
+            src = meta.get("data") or data_source(args.dataset, args.val)
+            vfeats, vrows = load_split(src, "eval", args.brain)
+            squeeze, _ = compress_for(meta["rule"], src, args.brain)
+            if squeeze is not None:                # 학습 때와 같은 압축
+                vfeats = squeeze(vfeats)
+            names = list(meta["dims"])
+            q = QwenLM()
+            pm = meta["projector"]
+            proj = ChannelProjector(meta["dims"], hidden=q.hidden, k=pm["k"], kind=pm["kind"],
+                                    width=meta["rule"]["width"], target_rms=pm["target_rms"])
+            proj.load_weights(str(pdir / f"{args.checkpoint}.safetensors"))
+            mx.eval(proj.parameters())
+            trainer = Trainer(q, proj)
+            setup = _Setup(q, names, pm["k"])
+
+            def encode(text: str) -> list[int]:
+                return list(q.tok.encode(text, add_special_tokens=False))
+
+            n = len(vrows) if not args.limit else min(args.limit, len(vrows))
+            truths, preds, examples, t0 = [], [], [], time.time()
+            for i in range(n):
+                slots = cs.slots_for(vrows[i]["caption"])
+                logits = trainer.target_logits(_sample(setup, vfeats, vrows, i, "cap"))
+                pred = cs.predict(slots, encode, lambda j: np.asarray(logits[j]))
+                truth = {s.name: s.truth for s in slots}
+                truths.append(cs.to_fields(slots, truth))
+                preds.append(cs.to_fields(slots, pred))
+                if i < 8:
+                    examples.append({"truth": vrows[i]["caption"], "pred": pred})
+                if (i + 1) % 50 == 0:
+                    print(f"[eval-scored] {i + 1}/{n} · {(time.time() - t0) / (i + 1):.2f} s/표본",
+                          flush=True)
+            cells = cs.score(truths, preds)
+            result = {"brain": args.brain, "checkpoint": args.checkpoint, "samples": n,
+                      "rule": cs.RULE, "cells": cells,
+                      "accuracy": {k: v["accuracy"] for k, v in cells.items()},
+                      "majority_baseline": {k: v["majority_baseline"] for k, v in cells.items()},
+                      "examples": examples, "elapsed_s": round(time.time() - t0, 1)}
+            (pdir / f"eval-scored-{args.checkpoint}.json").write_text(
+                json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+            print(json.dumps({k: v for k, v in result.items() if k != "examples"},
+                             ensure_ascii=False, indent=2))
+    except GuardRefused as err:
+        print(f"[guard] 막음 — {err}")
+        return 2
+    return 0
+
+
 def _brain(text: str) -> str:
     if not re.fullmatch(r"real|rewired|rewired-s\d+", text):
         raise argparse.ArgumentTypeError("real · rewired · rewired-s<K>")
@@ -553,3 +617,11 @@ def register(sub) -> None:
                    help=f"투영기 규칙 판(기본 {TRAIN_RULE['version']} · 예전 결과는 train-v2)")
     e.add_argument("--limit", type=int, default=0)
     e.set_defaults(func=eval_caption)
+    es = sub.add_parser("eval-scored", help="캡션 채점 평가 eval-v2 — 빈칸 채우기(서식 무관)")
+    es.add_argument("--brain", type=_brain, required=True)
+    es.add_argument("--checkpoint", default="final", choices=["stage1-caption", "final"])
+    es.add_argument("--dataset", default="fly-loop-v2", help="묶음 이름(eval 나눔을 쓴다)")
+    es.add_argument("--val", default="eval", help="조각으로 읽을 때만: 평가 조각 이름")
+    es.add_argument("--version", default=None, help="투영기 판(기본 = 지금 규칙의 판)")
+    es.add_argument("--limit", type=int, default=0, help="앞에서 N 표본만(0 = 전부)")
+    es.set_defaults(func=eval_scored)

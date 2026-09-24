@@ -113,6 +113,14 @@ class Trainer:
         mx.eval(loss)
         return float(loss)
 
+    def target_logits(self, s: Sample) -> mx.array:
+        """정답 자리마다 로짓 [len(target), vocab] — j 행이 target[j] 를 맞히는 자리(eval-v2)."""
+        self.qwen.model.eval()
+        h = self.qwen.lm.model(None, input_embeddings=self._embeddings(s)[None])
+        logits = self.qwen.lm.lm_head(h[0][len(s.prompt) - 1:])
+        mx.eval(logits)
+        return logits
+
     def generate(self, s: Sample, max_tokens: int = 80) -> str:
         self.qwen.model.eval()
         soft = self.proj({k: mx.array(v) for k, v in s.feats.items()})
