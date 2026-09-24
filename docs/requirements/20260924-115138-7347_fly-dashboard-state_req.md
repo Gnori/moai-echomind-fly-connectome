@@ -4,7 +4,7 @@
 
 - **ID**: 7347
 - **작성일**: 2026-09-24 11:51:38
-- **상태**: 확정
+- **상태**: 검증완료
   <!-- 허용값(enum, 자유 서술 금지): 접수 | 작성 | 상세화 | 확정 | 구현중 | 구현완료(검증대기) | 검증완료 | 아카이브 | 보류 -->
 - **우선순위**: 중간
 - **규모**: simple (간단)
@@ -56,16 +56,16 @@
 ## 2. 작업 체크리스트
 
 ### 2.1 구현
-- [ ] `loop/status.py` `StatusFile.update(**칸)` — 합쳐서 임시 파일 → 이름 바꾸기(원자적) · `updated` 시각
-- [ ] `train` 이 status.json 을 쓴다(시작 · 자료 · 25 걸음 · 회전 끝 · 끝 · 멈춤 · 막음) — `total_steps` = n × (캡션 회전 + 행동 회전) + 되새김 수
-- [ ] `run_full_v5.sh` `run()` · 시작 · 중단 · 전체 끝 → `.jsonl`
-- [ ] 대시보드: `collect()` 가 status.json · jsonl 을 먼저 읽고(없으면 로그) → `state.json` 저장 → `render(state)`
-- [ ] `config/dashboard.yaml` dashboard-v2 · `state_file` · globs 에 jsonl
+- [x] `loop/status.py` `StatusFile.update(**칸)` — 합쳐서 임시 파일 → 이름 바꾸기(원자적) · `updated` 시각
+- [x] `train` 이 status.json 을 쓴다(시작 · 자료 · 25 걸음 · 회전 끝 · 끝 · 멈춤 · 막음) — `total_steps` = n × (캡션 회전 + 행동 회전) + 되새김 수
+- [x] `run_full_v5.sh` `run()` · 시작 · 중단 · 전체 끝 → `.jsonl`
+- [x] 대시보드: `collect()` 가 status.json · jsonl 을 먼저 읽고(없으면 로그) → `state.json` 저장 → `render(state)`
+- [x] `config/dashboard.yaml` dashboard-v2 · `state_file` · globs 에 jsonl
 
 ### 2.2 검증
-- [ ] 가벼운 시험: status.json 왕복 · 가짜 runs/ 에 status.json + jsonl 만 있을 때 state.json 과 HTML 에 값이 들어감 · 옛 로그만 있을 때도 됨
-- [ ] `ruff` · 기존 대시보드 시험 통과
-- [ ] 실제 `--serve` 로 state.json 이 30 초마다 갱신되는지(갱신 시각) · v5 학습 status.json 이 걸음마다 바뀌는지
+- [x] 가벼운 시험: status.json 왕복 · 가짜 runs/ 에 status.json + jsonl 만 있을 때 state.json 과 HTML 에 값이 들어감 · 옛 로그만 있을 때도 됨
+- [x] `ruff` · 기존 대시보드 시험 통과
+- [x] 실제 `--serve` 로 state.json 이 30 초마다 갱신되는지(갱신 시각 11:57:08 → 11:57:38 확인) · v5 학습 status.json 이 걸음마다 바뀌는지는 **v5 시작 뒤 확인**(아래 4장에 추가)
 
 ---
 
@@ -83,4 +83,9 @@ uv run ruff check src tests && uv run pytest tests/test_dashboard.py tests/test_
 uv run fly-connectome dashboard          # runs/dashboard/state.json · index.html
 ```
 
-**결과**: (구현 뒤 채움)
+**결과**(2026-09-24 12:0x):
+- 커밋 `804d080`(status.py · train status.json · run_full_v5.sh jsonl · dashboard-v2 · 시험) — 시험 86 통과(가벼운 것 전부) · `ruff` 통과
+- `runs/dashboard/state.json` 이 30 초마다 새로 써짐(`now` 11:57:08 → 11:57:38) · 화면과 같은 덩어리(잠금 · 전체 순서 · 투영기 · 결과 · 자료)
+- 옛 폴더(v1~v4) · v4 로그는 로그 파싱으로 그대로 보임(`source: log`) · 중단한 재배선 s0 는 로그에 끝 코드 143 · 중단 줄을 남겨 "중단"으로 표시
+- ⚠️ 남은 확인: v5 학습이 시작되면 `runs/projector-real-train-v5/status.json` 이 25 걸음마다 바뀌는지 · `full-v5-*.jsonl` 사건이 쌓이는지 → 확인 뒤 여기 한 줄
+- ⚠️ 대시보드 서버 메모리: dashboard-v2 서버(pid 51911)가 34 분에 RSS 229 MB(인수 기준 200 MB 초과) → 문서 세션에 원인 조사 · 고침 일감(12:4x)
