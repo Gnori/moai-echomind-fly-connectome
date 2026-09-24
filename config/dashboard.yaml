@@ -15,7 +15,7 @@ globs:                   # runs/ 안에서 읽을 자리(가장 최근 것을 �
   compress: "compress-*"
   bump: "bump-check-*.json"
   scorecard: "scorecard-*"
-  eval_caption: "eval-caption-*.json"
+  eval_caption: "eval-*.json"        # eval-scored-*(채점 v2) · eval-caption-*(생성 v1) 둘 다
 datasets_glob: "*"       # data/datasets/<glob>/meta.json
 backup_md: "~/Backups/moai-echomind-fly-connectome/BACKUP.md"
 links:                   # 페이지 아래 링크 — runs/dashboard/index.html 기준 상대 경로

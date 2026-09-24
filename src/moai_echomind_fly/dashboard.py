@@ -45,8 +45,8 @@ CHANNEL_KO = {"vision": "시각", "touch": "촉각", "hearing": "청각", "smell
               "taste": "미각", "courtship": "구애", "value": "가치", "body": "몸",
               "motor": "운동", "space": "공간", "all": "전 채널"}
 FIELD_KO = {"loom_present": "물체 있음", "loom_side": "물체 쪽", "loom_distance": "물체 거리",
-            "loom_motion": "물체 움직임", "odor_side": "냄새 쪽", "odor_level": "냄새 세기",
-            "legs": "다리 접촉"}
+            "loom_motion": "물체 움직임", "odor_present": "냄새 있음", "odor_side": "냄새 쪽",
+            "odor_level": "냄새 세기", "legs": "다리 접촉", "sound": "소리", "female": "암컷 대용"}
 
 _FREE_RE = re.compile(r"free percentage:\s*(\d+)%")
 _FULL_RE = re.compile(r"^=== (\S+ \S+) (.*)$")
@@ -593,9 +593,12 @@ def _section_train(d: dict[str, Any]) -> str:
     evals = [(p["dir"], e) for p in d["projectors"] for e in p["evals"]]
     if not evals:
         return out + f'<h3>캡션 평가</h3><p class="muted">{NONE}</p>'
+    # 채점(eval-scored · v2 · 서식 무관)을 먼저, 자유 생성(eval-caption · v1 · 서식을 잰다)은 뒤에
+    evals.sort(key=lambda de: 0 if de[1]["file"].startswith("eval-scored") else 1)
     fields = [f for f in FIELD_KO if any(f in e["accuracy"] for _, e in evals)]
     erows = []
     for dname, e in evals:
+        how = "채점(v2)" if e["file"].startswith("eval-scored") else "생성(v1)"
         cells = []
         for f in fields:
             a, b = e["accuracy"].get(f), e["baseline"].get(f)
@@ -604,9 +607,10 @@ def _section_train(d: dict[str, Any]) -> str:
                 continue
             cls = "ok" if (b is not None and a > b + 0.05) else ""
             cells.append(f'{_tag(cls, _f(a))} <span class="muted">/ {_f(b)}</span>')
-        erows.append([f"<code>{_e(dname)}</code>", _e(e["checkpoint"])] + cells)
-    return (out + "<h3>캡션 평가 (정확도 / 찍기)</h3>"
-            + _table(["투영기", "저장본"] + [FIELD_KO[f] for f in fields], erows))
+        erows.append([f"<code>{_e(dname)}</code>", _e(e["checkpoint"]), how] + cells)
+    title = "캡션 평가 (정확도 / 찍기 — 채점 v2 는 해당 표본만 · 생성 v1 은 서식을 잰다)"
+    return (out + f"<h3>{title}</h3>"
+            + _table(["투영기", "저장본", "방식"] + [FIELD_KO[f] for f in fields], erows))
 
 
 def _section_probe(pr: dict[str, Any]) -> str:

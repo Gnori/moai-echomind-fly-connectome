@@ -50,6 +50,10 @@ def _fake_runs(runs: Path) -> None:
         {"brain": "rewired-s0", "checkpoint": "final",
          "accuracy": {"loom_side": 0.81, "legs": 0.5},
          "majority_baseline": {"loom_side": 0.73, "legs": 0.36}}))
+    (pj / "eval-scored-final.json").write_text(json.dumps(
+        {"brain": "rewired-s0", "checkpoint": "final", "rule": {"version": "eval-v2-scored"},
+         "accuracy": {"loom_side": 0.66, "legs": 0.55, "sound": 0.9},
+         "majority_baseline": {"loom_side": 0.5, "legs": 0.36, "sound": 0.9}}))
     (runs / "linear-probe-20260923-201422.json").write_text(json.dumps(
         {"dataset": "fly-loop-v2", "stats": {"version": "stats-v2"}, "rewired_brains": ["a", "b"],
          "cells": {"vision|loom_side": {"real": 0.801, "rewired": {"mean": 0.619},
@@ -113,6 +117,9 @@ def test_build_with_fake_runs_shows_progress_and_results(tmp_path, monkeypatch):
                  "vector", "섞은 배선 대조를 이기지 못했다", "2,921 결정 / 300 에피소드", "sim-v2",
                  "마지막 복사: 2026-09-23 20:22:50", "0.810", "/ 0.730"):
         assert text in page, text
+    eval_part = page.split("캡션 평가")[1].split("<h2>")[0]
+    assert eval_part.index("채점(v2)") < eval_part.index("생성(v1)")   # 채점이 먼저
+    assert "0.660" in eval_part and "소리" in eval_part
     probe_part = page.split("선형 검사 판정")[1].split("압축 관문")[0]
     assert "touch" not in probe_part                      # 불통 칸은 표에 없다
     out = dashboard.build(datasets_dir=tmp_path / "datasets", backup_md=bk, memory_free=lambda: 77)
