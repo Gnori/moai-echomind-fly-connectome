@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# R-7469 F-004 · F-005 전체 — 압축 · 관문(compress-v3 · 크기 1) → 투영기 학습 train-v5(진짜 + 재배선 3) → 캡션 평가 8 → 성적표(씨앗 40 · 7 구성).
+# R-7469 F-004 · F-005 전체 — 압축 · 관문(compress-v3 · 크기 1) → 투영기 학습 train-v5(진짜 + 재배선 3) → 캡션 평가(채점 8 + 생성 8) → 성적표(씨앗 40 · 7 구성).
 # v5(2026-09-24 · 요구자 결정 A): v4 는 뇌 · 채널마다 입력 크기가 달라 재배선이 먼저 배웠다 → compress-v3(채널마다 평균 크기 1) 로 4 뇌 다시.
 #   v4 진짜 배선 결과(runs/projector-real-train-v4 · 8 h 23 m)는 기록으로 남긴다. v4 순서 스크립트는 bin/run_full_v4.sh 그대로.
 # ⚠️ 요구자 확인 뒤 실행한다. 그 전에 `fly-connectome train-probe --steps 12` 로 걸음당 시간 · 최대 메모리를 먼저 잰다(CLAUDE.md 무거운 실행 규약).
@@ -95,8 +95,15 @@ else
   echo "--- 학습 건너뜀(--skip-train) — 기존 runs/projector-<뇌>-$VERSION 을 쓴다" | tee -a "$LOG"
 fi
 
-# 5. 캡션 평가 — 뇌 4 × 저장본 2
-for ck in stage1-caption final; do
+# 5. 캡션 평가 — 뇌 4 × 저장본 2 × 방식 2
+#   eval-scored(eval-v2 · 채점 · 서식 무관 · 표본당 0.3 s) 를 먼저, 자유 생성 eval-caption(v1 · 기록용) 은 뒤에.
+#   v4 진짜 배선에서 v1 은 서식만 쟀다(값은 맞히는데 틀을 안 배워 0 점 · 2026-09-24 요구자 결정 B).
+for ck in final stage1-caption; do
+  for b in "${BRAINS[@]}"; do
+    run 40 eval-scored --brain "$b" --checkpoint "$ck" --version "$VERSION"
+  done
+done
+for ck in final stage1-caption; do
   for b in "${BRAINS[@]}"; do
     run 40 eval-caption --brain "$b" --checkpoint "$ck" --version "$VERSION"
   done
