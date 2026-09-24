@@ -52,7 +52,9 @@ def test_predict_picks_the_candidate_with_the_highest_logit_at_its_slot():
 
     slots = cs.slots_for(CAP_OBJ)
     pred = cs.predict(slots, _encode, logits_at)
-    assert pred == {s.name: s.truth for s in slots}
+    assert {k: v for k, v in pred.items() if not k.endswith("_side")} == {
+        s.name: s.truth for s in slots}
+    assert pred["loom_head_side"] == "왼쪽" and pred["odor_head_side"] == "오른쪽"   # v2.1
 
     def wrong_at(j: int) -> np.ndarray:        # 다리 자리에서 "3" 이 더 높다
         row = logits_at(j)
@@ -62,6 +64,26 @@ def test_predict_picks_the_candidate_with_the_highest_logit_at_its_slot():
 
     pred2 = cs.predict(slots, _encode, wrong_at)
     assert pred2["legs"] == "3개" and pred2["loom_head"] == "왼쪽"
+
+
+def test_side_given_present_ignores_the_none_candidate():
+    """v2.1 — 물체 자리에서 '없음'이 가장 높아도, 있다고 알려 준 채 세 방향 중에서는 정답 쪽."""
+    truth_tokens = _encode(CAP_OBJ)
+    vocab = 0xD7A4
+    loom_pos = len(_encode("다가오는 물체:")) + 1
+
+    def logits_at(j: int) -> np.ndarray:
+        row = np.full(vocab, -10.0)
+        row[truth_tokens[j]] = 5.0
+        if j == loom_pos:
+            row[ord("없")] = 9.0                   # "없음"이 더 높다(v4 진짜 배선이 그랬다)
+        return row
+
+    slots = cs.slots_for(CAP_OBJ)
+    pred = cs.predict(slots, _encode, logits_at)
+    assert pred["loom_head"] == "없음" and pred["loom_head_side"] == "왼쪽"
+    fields = cs.to_fields(slots, pred)
+    assert fields["loom_present"] == "없음" and fields["loom_side"] == "왼쪽"
 
 
 def test_score_counts_only_applicable_samples_and_majority_on_the_same_subset():

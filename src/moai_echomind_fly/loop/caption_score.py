@@ -24,8 +24,13 @@ from typing import Any
 
 import numpy as np
 
-RULE = {"version": "eval-v2-scored", "method": "cloze · truth-prefix · first-token argmax",
-        "applicable_only": True}
+RULE = {"version": "eval-v2.1-scored", "method": "cloze · truth-prefix · first-token argmax",
+        "applicable_only": True,
+        # v2.1(2026-09-24 · v4 결과 뒤 · 까닭): 물체 쪽 · 냄새 쪽을 "없음"까지 넣고 고르면
+        # "있음/없음" 판단과 섞인다(v4 진짜: 물체 있는 표본에서 "없음"이라 해 쪽 0.078).
+        # → 쪽은 **있다고 알려 준 채** 세 방향(앞 · 왼쪽 · 오른쪽)만 놓고 고른다.
+        # 있음/없음은 따로(loom_present · odor_present).
+        "side_given_present": True}
 
 SIDES = ["없음", "앞", "왼쪽", "오른쪽"]
 DIST = ["가까움", "중간", "멀리"]
@@ -118,12 +123,19 @@ def discriminating_tokens(encode, prefix: str, candidates: list[str]) -> tuple[i
 
 
 def predict(slots: list[Slot], encode, logits_at) -> dict[str, str]:
-    """칸마다 예측 — `logits_at(j)` = 정답 글 j 번째 토큰을 맞히는 자리의 로짓(1차원)."""
+    """칸마다 예측 — `logits_at(j)` = 정답 글 j 번째 토큰을 맞히는 자리의 로짓(1차원).
+
+    쪽 칸(loom_head · odor_head)은 둘을 낸다: 후보 전부(없음 포함)에서 고른 것과,
+    **없음을 뺀 세 방향**에서 고른 것(`<이름>_side` · v2.1 · 있다고 알려 준 채 쪽만 묻기).
+    """
     pred: dict[str, str] = {}
     for s in slots:
         pos, ids = discriminating_tokens(encode, s.prefix, s.candidates)
         row = np.asarray(logits_at(pos), dtype=np.float64)
         pred[s.name] = s.candidates[int(np.argmax(row[ids]))]
+        if s.candidates is SIDES:
+            keep = [i for i, c in enumerate(s.candidates) if c != "없음"]
+            pred[f"{s.name}_side"] = s.candidates[keep[int(np.argmax(row[[ids[i] for i in keep]]))]]
     return pred
 
 
@@ -134,14 +146,14 @@ def to_fields(slots: list[Slot], values: dict[str, str]) -> dict[str, str]:
     if head is not None:
         out["loom_present"] = "없음" if head == "없음" else "있음"
         if any(s.name == "loom_distance" for s in slots):        # 정답에 물체가 있는 표본
-            out["loom_side"] = head
+            out["loom_side"] = values.get("loom_head_side", head)   # v2.1: 있다고 알려 준 채 쪽만
             out["loom_distance"] = values["loom_distance"]
             out["loom_motion"] = values["loom_motion"]
     oh = values.get("odor_head")
     if oh is not None:
         out["odor_present"] = "없음" if oh == "없음" else "있음"
         if any(s.name == "odor_level" for s in slots):
-            out["odor_side"] = oh
+            out["odor_side"] = values.get("odor_head_side", oh)
             out["odor_level"] = values["odor_level"]
     for k in ("legs", "sound", "female"):
         if k in values:
