@@ -26,6 +26,8 @@ from .. import config, paths
 from ..guard import GuardRefused, Watchdog, heavy
 from . import fly_prompt as fp
 from .collect import parse_seeds
+from .status import StatusFile
+from .status import now as status_now
 
 TRAIN_RULE = {
     # v2(2026-09-22): 행동 단계는 새 옵티마이저로 시작한다 — 캡션 단계 저장본에서 이어 가도
@@ -37,8 +39,11 @@ TRAIN_RULE = {
     # 채널당 **선형 토큰 1 개** · 손실 가중 = 칸 값 토큰 1 · 틀 토큰 `template_weight`.
     # 틀을 0 으로 두지 않는 까닭: 시스템 글에 캡션 서식이 없어 서식을 배울 곳이 정답뿐이다
     # (연구 노트 12 §4).
-    "version": "train-v4",
-    "input": "compress", "compress": "compress-v2",   # v1 은 두 뇌의 차원이 달라 v2(같은 64)로
+    # v5(2026-09-24): 입력 압축을 compress-v3(채널마다 평균 크기 1)으로 — v4 는 뇌 · 채널마다
+    # 입력 크기가 달라 입력이 2 배 큰 재배선이 먼저 배웠다(config/compress.yaml v3 주석 · 실측).
+    # 나머지는 v4 와 같다.
+    "version": "train-v5",
+    "input": "compress", "compress": "compress-v3",   # v1 차원 다름 → v2 같은 64 → v3 같은 크기
     "k": 1, "width": 0, "kind": "linear", "lr": 2e-4,
     "caption_epochs": 2, "action_epochs": 1, "caption_rehearsal": 0.3,
     "val_samples": 24, "seed": 0, "init_seed": 0, "template_weight": 0.1,
@@ -218,6 +223,9 @@ def train(args: argparse.Namespace) -> int:
         return 2
     out.mkdir(parents=True, exist_ok=True)
     log = (out / "train.log").open("a", encoding="utf-8")
+    # 상태 파일(R-7347) — 대시보드 · 다른 세션이 로그 대신 읽는다. 학습 규칙에는 영향 없음(기록만).
+    status = StatusFile(out / "status.json", brain=args.brain, version=rule["version"],
+                        rule=rule, state="running", stage="loading")
 
     def say(msg: str) -> None:
         print(msg, flush=True)
@@ -241,6 +249,7 @@ def train(args: argparse.Namespace) -> int:
                 feats, vfeats = squeeze(feats), squeeze(vfeats)
                 src = {**src, "compress": rule["compress"], "channels": passed}
             say(f"[data] {src}")
+            status.update(data=src)
             names = list(feats)
             q = QwenLM()
             fp_before = qwen_fingerprint(q)
@@ -258,6 +267,11 @@ def train(args: argparse.Namespace) -> int:
             say(f"[train] {args.brain} · 학습 {n} · 검증 {nv} · "
                 f"투영기 {proj.n_params():,} 매개변수 · "
                 f"입력 {len(setup.cap_prompt)}/{len(setup.act_prompt)} 토큰 · 규칙 {rule}")
+            cap_steps = n * int(rule["caption_epochs"])
+            status.update(train_samples=n, val_samples=nv, params=proj.n_params(),
+                          fingerprint_before=fp_before[:16], caption_steps=cap_steps,
+                          total_steps=cap_steps + n * int(rule["action_epochs"])
+                          + int(n * rule["caption_rehearsal"]), stage="before")
 
             def val(task: str) -> float:
                 return float(np.mean([trainer.loss_only(_sample(setup, vfeats, vrows, i, task))
@@ -282,14 +296,26 @@ def train(args: argparse.Namespace) -> int:
                                                 dict(tree_flatten(proj.parameters())))
                             say(f"[watchdog] 멈춤 — {why} · {watchdog.last} · {_mem()} · "
                                 f"저장 aborted-{stage}.safetensors")
+                            status.update(state="aborted", reason=why, finished=status_now(),
+                                          saved=f"aborted-{stage}.safetensors", exit_code=3,
+                                          mem={**_mem(), **watchdog.last})
                             raise TrainingAborted(why)
                         if step % 25 == 0:
                             say(f"[mem] {_mem()} · {watchdog.last}")
                             say(f"[{stage}] ep {ep} step {step} "
                                 f"loss {np.mean(losses[-25:]):.3f} · "
                                 f"{(time.time() - t0) / len(losses):.1f} s/걸음")
+                            status.update(stage=stage, epoch=ep, stage_step=step, step=total[0],
+                                          loss=float(np.mean(losses[-25:])),
+                                          sec_per_step=(time.time() - t0) / len(losses),
+                                          mem={**_mem(), **watchdog.last})
+                    vc, va = val("cap"), val("act")
                     say(f"[{stage}] ep {ep} 끝 · 학습 {np.mean(losses):.3f} · 검증 캡션 "
-                        f"{val('cap'):.3f} · 검증 행동 {val('act'):.3f}")
+                        f"{vc:.3f} · 검증 행동 {va:.3f}")
+                    status.update(stage=stage, epoch=ep, stage_step=step, step=total[0],
+                                  val={"stage": stage, "epoch": ep,
+                                       "train": float(np.mean(losses)), "caption": vc,
+                                       "action": va})
 
             caption_from = None
             if args.resume_caption:
@@ -304,10 +330,13 @@ def train(args: argparse.Namespace) -> int:
                 say(f"[resume] 캡션 단계 = {src} · sha256 {caption_from['sha256'][:16]} · "
                     f"검증 캡션 {val('cap'):.3f} · 검증 행동 {val('act'):.3f}")
             else:
-                say(f"[before] 검증 캡션 {val('cap'):.3f} · 검증 행동 {val('act'):.3f}")
+                vc, va = val("cap"), val("act")
+                say(f"[before] 검증 캡션 {vc:.3f} · 검증 행동 {va:.3f}")
+                status.update(before={"caption": vc, "action": va})
                 run_epochs([(i, "cap") for i in range(n)], "caption", rule["caption_epochs"])
                 mx.save_safetensors(str(out / "stage1-caption.safetensors"),
                                     dict(tree_flatten(proj.parameters())))
+                status.update(saved="stage1-caption.safetensors")
             trainer.reset_optimizer()   # 행동 단계는 새 옵티마이저(TRAIN_RULE v2 부터)
             reh = rng.sample(range(n), int(n * rule["caption_rehearsal"]))
             run_epochs([(i, "act") for i in range(n)] + [(i, "cap") for i in reh], "action",
@@ -316,6 +345,8 @@ def train(args: argparse.Namespace) -> int:
                                 dict(tree_flatten(proj.parameters())))
             fp_after = qwen_fingerprint(q)
             say(f"[qwen] 가중치 지문(학습 뒤) {fp_after[:16]} · 같음 {fp_after == fp_before}")
+            status.update(state="done", finished=status_now(), saved="final.safetensors",
+                          fingerprint_same=fp_after == fp_before, exit_code=0)
             (out / "meta.json").write_text(json.dumps({
                 "brain": args.brain, "data": src,
                 "rule": rule, "caption_stage_from": caption_from, "projector": proj.meta(),
@@ -328,6 +359,7 @@ def train(args: argparse.Namespace) -> int:
             say(f"[train] 저장 {out}")
     except GuardRefused as err:
         say(f"[guard] 막음 — {err}")
+        status.update(state="refused", reason=str(err), finished=status_now(), exit_code=2)
         return 2
     except TrainingAborted:
         return 3

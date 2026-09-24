@@ -1,4 +1,4 @@
-"""compress-v1 — 압축기 저장 · 불러오기 왕복 · 채널 건너뛰기 · 재배선 뇌 이름 순서.
+"""compress — 압축기 저장 · 불러오기 왕복 · 채널 건너뛰기 · 재배선 뇌 이름 순서 · v3 크기 맞춤.
 
 가벼운 시험 · 실제 자료 없음(임시 폴더에 가짜 묶음).
 """
@@ -68,3 +68,31 @@ def test_rewired_brains_orders_v1_name_first_then_seeds_numerically(tmp_path, mo
         np.savez(d / f"features-{b}.npz", a=np.zeros((1, 1), np.float32))
     monkeypatch.setattr(datasets, "store_dir", lambda: store)
     assert datasets.rewired_brains("toy") == ["rewired", "rewired-s2", "rewired-s10"]
+
+
+def test_unit_scale_makes_mean_norm_one_for_every_channel_and_brain():
+    """v3 — 크기가 다른 두 '뇌'를 같은 규칙으로 압축하면 학습 나눔의 평균 크기가 둘 다 1 이 된다."""
+    rng = np.random.default_rng(2)
+    base = rng.standard_normal((80, 20))
+    cfg = {"k_fixed": 8, "unit_scale": True, "scale_floor": 1e-6, "center": True}
+    for scale in (0.05, 7.0):                      # 진짜 0.9 대 재배선 1.8 · 몸 8.3 같은 상황
+        x = base * scale
+        m = compress.fit_channel(x, cfg)
+        z = compress.apply({"c": m}, {"c": x.astype(np.float32)})["c"]
+        assert z.shape == (80, 8)
+        np.testing.assert_allclose(np.linalg.norm(z, axis=1).mean(), 1.0, rtol=1e-4)
+    # 축 사이 비율은 그대로(백색화가 아니다): 첫 축이 여전히 가장 크다
+    assert z[:, 0].std() > z[:, -1].std()
+    # 크기를 맞추지 않으면(v2) 값이 그대로 — scale 이 없을 때 apply 는 나누지 않는다
+    m2 = compress.fit_channel(base, {"k_fixed": 8, "center": True})
+    assert "scale" not in m2
+    z2 = compress.apply({"c": m2}, {"c": base.astype(np.float32)})["c"]
+    assert abs(np.linalg.norm(z2, axis=1).mean() - 1.0) > 0.1
+
+
+def test_unit_scale_silent_channel_does_not_blow_up():
+    x = np.zeros((40, 10))
+    m = compress.fit_channel(x, {"k_fixed": 4, "unit_scale": True, "scale_floor": 1e-6,
+                                 "center": True})
+    z = compress.apply({"c": m}, {"c": x.astype(np.float32)})["c"]
+    assert np.isfinite(z).all() and float(np.abs(z).max()) == 0.0

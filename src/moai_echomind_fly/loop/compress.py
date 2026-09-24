@@ -31,13 +31,20 @@ def fit_channel(x: np.ndarray, cfg: dict[str, Any]) -> dict[str, np.ndarray]:
     else:                                           # compress-v1 — 설명 분산 규칙
         k = int(np.searchsorted(frac, cfg["var_target"]) + 1)
         k = int(np.clip(k, cfg["k_min"], min(cfg["k_max"], vt.shape[0])))
-    return {"mean": mean.astype(np.float32), "components": vt[:k].astype(np.float32),
-            "explained": np.float32(frac[k - 1])}
+    model = {"mean": mean.astype(np.float32), "components": vt[:k].astype(np.float32),
+             "explained": np.float32(frac[k - 1])}
+    if cfg.get("unit_scale"):                       # compress-v3 — 뇌 · 채널마다 평균 크기 1
+        z = (x - mean) @ vt[:k].T                   # 학습 나눔의 압축 벡터(학습 자료로만 잰다)
+        norm = float(np.linalg.norm(z, axis=1).mean())
+        model["scale"] = np.float32(max(norm, float(cfg.get("scale_floor", 1e-6))))
+    return model
 
 
 def apply(model: dict[str, dict[str, np.ndarray]], feats: dict[str, np.ndarray]
           ) -> dict[str, np.ndarray]:
-    return {ch: ((feats[ch] - m["mean"]) @ m["components"].T).astype(np.float32)
+    """압축 적용 — v3 모델(`scale` 있음)은 채널마다 그 크기로 나눈다(v1 · v2 모델은 그대로)."""
+    return {ch: (((feats[ch] - m["mean"]) @ m["components"].T) / float(m.get("scale", 1.0))
+                 ).astype(np.float32)
             for ch, m in model.items() if ch in feats}
 
 
