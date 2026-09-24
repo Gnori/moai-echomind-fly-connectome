@@ -188,11 +188,13 @@ def read_projectors(runs: Path, pattern: str, eval_pattern: str) -> list[dict[st
     out = []
     for d in sorted(p for p in runs.glob(pattern) if p.is_dir()):
         rec: dict[str, Any] = {"dir": d.name, "log": None, "meta": None,
-                               "final": (d / "final.safetensors").exists(), "evals": []}
+                               "final": (d / "final.safetensors").exists(), "evals": [],
+                               "_mtime": d.stat().st_mtime}
         log = d / "train.log"
         if log.exists():
             rec["log"] = parse_train_log(_lines(log))
-            rec["log_mtime"] = time.strftime("%m-%d %H:%M", time.localtime(log.stat().st_mtime))
+            rec["_mtime"] = log.stat().st_mtime
+            rec["log_mtime"] = time.strftime("%m-%d %H:%M", time.localtime(rec["_mtime"]))
         meta = d / "meta.json"
         if meta.exists():
             try:
@@ -211,6 +213,8 @@ def read_projectors(runs: Path, pattern: str, eval_pattern: str) -> list[dict[st
                 rec["evals"].append({"file": ev.name, "checkpoint": None, "accuracy": {},
                                      "baseline": {}})
         out.append(rec)
+    # 최근에 움직인 투영기가 위(요구자 2026-09-24 "투영기 날짜로 정렬") — 판이 섞여도 도는 것이 먼저
+    out.sort(key=lambda r: r["_mtime"], reverse=True)
     return out
 
 
@@ -618,7 +622,7 @@ def render(d: dict[str, Any]) -> str:
 <p class="sub">{_e(d['version'])} · {_e(d['runs'])} · 읽기 전용 · {links}</p>
 <h2>지금 상태</h2>
 {_section_status(d)}
-<h2>학습 v4 진행</h2>
+<h2>학습 진행 (투영기 · 최근 순)</h2>
 {_section_train(d)}
 <h2>결과</h2>
 {results}

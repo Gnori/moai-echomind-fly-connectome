@@ -5,10 +5,10 @@ refresh_s: 60            # 페이지의 <meta http-equiv="refresh"> 초
 port: 8770               # --serve 기본 포트
 every_s: 30              # --serve 일 때 페이지를 다시 만드는 간격(초)
 out_dir: dashboard       # runs/<out_dir>/index.html (git 밖)
-train_rule: train-v4     # 학습 진행 칸이 읽는 투영기 폴더 판 — runs/projector-*-<판>/
+train_rule: train-v5     # 지금 판(기록용) — 진행 칸은 아래 globs 로 v4 · v5 모두 보인다
 globs:                   # runs/ 안에서 읽을 자리(가장 최근 것을 고른다)
-  full_log: "full-v4-*.log"
-  projector: "projector-*-train-v4"
+  full_log: "full-v[0-9]-*.log"
+  projector: "projector-*-train-v[0-9]"
   linear_probe: "linear-probe-*.json"
   compress: "compress-*"
   bump: "bump-check-*.json"
