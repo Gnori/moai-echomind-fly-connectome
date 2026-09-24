@@ -117,8 +117,8 @@ class Trainer:
         """정답 자리마다 로짓 [len(target), vocab] — j 행이 target[j] 를 맞히는 자리(eval-v2)."""
         self.qwen.model.eval()
         h = self.qwen.lm.model(None, input_embeddings=self._embeddings(s)[None])
-        logits = self.qwen.lm.lm_head(h[0][len(s.prompt) - 1:])
-        mx.eval(logits)
+        logits = self.qwen.lm.lm_head(h[0][len(s.prompt) - 1:]).astype(mx.float32)
+        mx.eval(logits)                                # float32 — numpy 가 bfloat16 을 못 읽는다
         return logits
 
     def generate(self, s: Sample, max_tokens: int = 80) -> str:
