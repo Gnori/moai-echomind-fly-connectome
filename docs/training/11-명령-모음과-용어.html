@@ -233,21 +233,21 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 <td>16</td>
 <td><code>uv run fly-connectome train-probe --steps 12</code></td>
 <td>08</td>
-<td>v2 판 12 걸음 약 3~5 분 · v4 는 미측정</td>
-<td><strong>여유 80 %</strong></td>
+<td>12 걸음 약 2~5 분(v4 중앙 5.0 s/걸음 · 최대 31.4 GB)</td>
+<td>여유 40 %</td>
 </tr>
 <tr>
 <td>17</td>
-<td><code>uv run fly-connectome train --brain real</code> · <code>--brain rewired-s0</code> · <code>s1</code> · <code>s2</code></td>
+<td><code>uv run fly-connectome train --brain real --train-seeds 0-119</code> · <code>--brain rewired-s0</code> · <code>s1</code> · <code>s2</code></td>
 <td>08</td>
-<td>v2 판 한 뇌 3.3 시간(v1 자료) · v4 는 측정 뒤 산정</td>
-<td>여유 80 %</td>
+<td>뇌 하나 약 8 h 23 m(v4 실측 · 7.4 s/걸음 · 3,923 걸음)</td>
+<td>여유 40 %</td>
 </tr>
 <tr>
 <td>18</td>
-<td><code>uv run fly-connectome eval-caption --brain &lt;뇌&gt; --checkpoint stage1-caption\|final</code></td>
+<td><code>uv run fly-connectome eval-scored --brain &lt;뇌&gt; --checkpoint stage1-caption\|final</code> (채점 · 기준) · <code>eval-caption …</code>(생성 · 기록용)</td>
 <td>09</td>
-<td>한 번 약 6 분</td>
+<td>채점 표본당 약 0.3 s · 생성 한 번 약 6 분</td>
 <td>여유 40 % + 28 GB</td>
 </tr>
 <tr>
@@ -312,13 +312,18 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 <tr>
 <td>압축 · 관문 규칙</td>
-<td><code>config/compress.yaml</code> <strong>compress-v2</strong>(64 고정 · v1 은 결과 뒤 고침)</td>
+<td><code>config/compress.yaml</code> <strong>compress-v3</strong>(64 고정 + 채널마다 평균 크기 1 · v1 · v2 는 결과 뒤 고침)</td>
 <td>09 관문 → 08 학습</td>
 </tr>
 <tr>
 <td>학습 규칙</td>
-<td><code>train_cli.TRAIN_RULE</code> <strong>train-v4</strong></td>
+<td><code>train_cli.TRAIN_RULE</code> <strong>train-v5</strong>(v4 + compress-v3)</td>
 <td>08 → 09(결과 폴더 이름이 바뀐다)</td>
+</tr>
+<tr>
+<td>캡션 평가 규칙</td>
+<td><code>loop/caption_score.py</code> <strong>eval-v2-scored</strong>(빈칸 채우기 · 해당 표본만)</td>
+<td>09 채점</td>
 </tr>
 <tr>
 <td>성적표 판정</td>
@@ -473,7 +478,15 @@ python3 .claude/skills/dev/scripts/dispatch.py validate                         
 </tr>
 <tr>
 <td>칸 값 토큰 가중</td>
-<td>train-v4 — 칸 값 토큰의 손실 1 · 틀 토큰 0.1</td>
+<td>train-v4 부터 — 칸 값 토큰의 손실 1 · 틀 토큰 0.1</td>
+</tr>
+<tr>
+<td>입력 크기 맞춤(unit_scale)</td>
+<td>compress-v3 — 압축 뒤 채널마다 학습 나눔의 평균 크기로 나눠 모든 뇌 · 채널을 크기 1 로. 축 사이 비율은 그대로</td>
+</tr>
+<tr>
+<td>채점 평가(eval-v2)</td>
+<td>정답을 넣고 칸마다 후보의 첫 토큰 가능도를 비교하는 빈칸 채우기 — 서식을 배웠는지와 무관하게 값을 읽었는지만 잰다</td>
 </tr>
 <tr>
 <td>기울기 · 역전파</td>
@@ -521,7 +534,7 @@ python3 .claude/skills/dev/scripts/dispatch.py validate                         
 </tr>
 <tr>
 <td>판 번호</td>
-<td>설정 · 규칙을 잠그는 이름(<code>sim-v2</code> · <code>train-v4</code> …) — 바꾸면 올리고 옛 판은 <code>config/archive/</code></td>
+<td>설정 · 규칙을 잠그는 이름(<code>sim-v2</code> · <code>train-v5</code> …) — 바꾸면 올리고 옛 판은 <code>config/archive/</code></td>
 </tr>
 <tr>
 <td>가드 · 잠금</td>

@@ -103,7 +103,7 @@
 <div class="page">
 <h1 id="09-평가와-대조군">09. 평가와 대조군</h1>
 <blockquote>
-<p>2부 Qwen 연결 · 넷째 장. 코드: <code>src/moai_echomind_fly/loop/train_cli.py</code>(<code>eval-caption</code>) · <code>scorecard.py</code> · <code>linear_probe.py</code> · <strong><code>stats.py</code></strong> · <strong><code>compress.py</code></strong> · <code>bump.py</code>.
+<p>2부 Qwen 연결 · 넷째 장. 코드: <code>src/moai_echomind_fly/loop/train_cli.py</code>(<code>eval-scored</code> · <code>eval-caption</code>) · <strong><code>caption_score.py</code></strong> · <code>scorecard.py</code> · <code>linear_probe.py</code> · <strong><code>stats.py</code></strong> · <strong><code>compress.py</code></strong> · <code>bump.py</code>.
 증거: <a href="../requirements/20260921-233859-3340_fly-connectome-closed-loop-loop_walkthrough.md">W loop 3.3 ~ 3.5</a> · 근거: <a href="../research/fly-connectome/12-다음-학습-조사.html">연구 노트 12 §5</a>.</p>
 <p>▶ <strong>2026-09-23 판정 규칙이 코드가 됐다</strong> — <code>stats-v2</code>(재배선 앙상블 · 에피소드 순열 · Holm · 부트스트랩) · <code>compress-v1</code>(채널별 압축 + 선형 관문) · <code>scorecard-v2</code>(재배선 투영기 여럿). R-7469 F-001 · F-003 · F-004.</p>
 </blockquote>
@@ -421,7 +421,7 @@
 <li>판정 밖 참고(전 채널 묶음): 다리 0.593 대 0.476 · 냄새 쪽 0.580 대 0.541(찍기 0.556 · 냄새 쪽은 판정에서 뺐다 — 04장 3.2).</li>
 </ul>
 <p>→ R-7469 F-001 의 성공 기준("재배선 앙상블 상위 5 % 이고 보정 후 p &lt; 0.05")을 <strong>신호 단계에서는</strong> 시각 · 다리 칸이 채운다. Qwen 을 거친 뒤에도 그런지는 F-005 에서.</p>
-<h2 id="4-압축-관문--fly-connectome-compress-fit--gate판-compress-v2--v1-은-결과를-본-뒤-고쳤다">4. 압축 관문 — <code>fly-connectome compress fit</code> · <code>gate</code>(판 <code>compress-v2</code> · v1 은 결과를 본 뒤 고쳤다)</h2>
+<h2 id="4-압축-관문--fly-connectome-compress-fit--gate지금-판-compress-v3--v1--v2-는-결과를-본-뒤-고쳤다">4. 압축 관문 — <code>fly-connectome compress fit</code> · <code>gate</code>(지금 판 <code>compress-v3</code> · v1 · v2 는 결과를 본 뒤 고쳤다)</h2>
 <p>3.2만 차원을 통째로 넣으면 선형 검사도 찍기 수준이 된다 · 채널별로 <strong>64 차원까지 줄여도 진짜 배선이 앞선다</strong>(연구 노트 12 §1.1 ① — 시각 → 물체 쪽 0.705/0.571 · 몸 → 다리 0.600/0.448) → 차원 ≫ 표본의 표준 처방(채널별 압축).</p>
 <pre><code class="language-bash">uv run fly-connectome compress fit  --dataset fly-loop-v2     # 뇌마다 · 채널마다 PCA(학습 나눔으로만) → runs/compress-fly-loop-v2-compress-v1/&lt;뇌&gt;.npz · meta.json
 uv run fly-connectome compress gate --dataset fly-loop-v2     # 압축 특징으로 2절 판정 → gate.json(통과 채널 · 칸)
@@ -542,13 +542,104 @@ uv run fly-connectome compress gate --dataset fly-loop-v2     # 압축 특징으
 </tr>
 </tbody>
 </table></div>
-<p>통과 채널 <strong>시각 · 촉각 · 미각 · 몸</strong>(칸 7). 구애 → 다리 0.519 는 Holm 0.92 로 탈락 · 공간 · 후각 · 청각 · 가치 · 구애는 불통. 압축 뒤에도 3.2 의 값이 거의 그대로다(시각 0.851 → 0.838).</p>
+<p>통과 채널 <strong>시각 · 촉각 · 미각 · 몸</strong>(칸 7 · 2026-09-24 의 compress-v3 도 같다 — 크기를 맞춘 까닭은 <a href="07-투영기와-Qwen-잇기.html">07장 4.3</a>). 구애 → 다리 0.519 는 Holm 0.92 로 탈락 · 공간 · 후각 · 청각 · 가치 · 구애는 불통. 압축 뒤에도 3.2 의 값이 거의 그대로다(시각 0.851 → 0.838).</p>
 <p>⚠️ 정직하게: <strong>규칙을 결과 뒤 고쳤다.</strong> 고친 까닭과 v1 · v2 결과 파일을 모두 남기고(<code>config/compress.yaml</code> 주석 · I-7469 v2.1), 이래도 안 되면 목표를 보는 압축(PLS)을 v3 로 적는다. train-v4 는 v2 압축을 읽는다(08장).</p>
-<h2 id="5-캡션-평가--fly-connectome-eval-caption">5. 캡션 평가 — <code>fly-connectome eval-caption</code></h2>
-<pre><code class="language-bash">uv run fly-connectome eval-caption --brain real       --checkpoint stage1-caption     # 기본 --dataset fly-loop-v2
-uv run fly-connectome eval-caption --brain rewired-s0 --checkpoint final
-uv run fly-connectome eval-caption --brain real --version train-v2 --dataset fly-loop-v1   # 지금 있는 결과
+<h2 id="5-캡션-평가--채점-eval-scoredeval-v2--지금-기준--생성-eval-captionv1--기록용">5. 캡션 평가 — 채점 <code>eval-scored</code>(eval-v2 · 지금 기준) · 생성 <code>eval-caption</code>(v1 · 기록용)</h2>
+<pre><code class="language-bash">uv run fly-connectome eval-scored  --brain real       --checkpoint final          # 채점 — 먼저(표본당 약 0.3 s)
+uv run fly-connectome eval-scored  --brain rewired-s0 --checkpoint stage1-caption
+uv run fly-connectome eval-caption --brain real       --checkpoint final          # 생성 — 기록용
+uv run fly-connectome eval-caption --brain real --version train-v2 --dataset fly-loop-v1   # v1 자료 결과
 </code></pre>
+<p><code>bin/run_full_v5.sh</code> 는 뇌 4 × 저장본 2 마다 <strong>채점 8 번을 먼저</strong>, 생성 8 번을 뒤에 돈다.</p>
+<h3 id="51-왜-생성-평가v1로는-안-되나--서식을-쟀다">5.1 왜 생성 평가(v1)로는 안 되나 — 서식을 쟀다</h3>
+<p>v1 은 Qwen 에게 캡션을 <strong>자유롭게 쓰게 한 뒤</strong> 정답 서식("다가오는 물체: … / 먹이 냄새: …")으로 쪼개 칸을 비교한다.
+train-v4 진짜 배선은 손실을 칸 값 토큰에 두고 배웠다(틀 글자는 0.1 배 · 08장 3절). 그래서 <strong>값은 내는데 틀을 안 배웠다</strong> —
+생성 예: <code>&lt;state&gt;left&lt;/state&gt; &lt;taste&gt;strong&lt;/taste&gt; &lt;touch&gt;6&lt;/touch&gt;</code> = 왼쪽 · 강함 · 6개. 정답 서식으로 쪼갤 수 없으니 채점기가 <strong>냄새 쪽 · 다리 0.000</strong> 을 줬고,
+물체 칸은 "없음"을 맞힌 것으로 쳐서 찍기(0.726)와 같게 나왔다. v1 은 신호를 읽었는지가 아니라 <strong>서식을 배웠는지</strong>를 잰 것이다.
+또 v1 은 물체가 <strong>없는</strong> 표본에서도 물체 쪽 칸을 세어 "-" == "-" 를 맞힌 것으로 쳤다 — 물체 쪽 0.726 이 찍기와 같았던 까닭이다.</p>
+<p>→ 요구자 결정 B(2026-09-24 12:3x): <strong>채점 평가를 먼저 만들고 v4 로 확인한 뒤 v5.</strong></p>
+<h3 id="52-채점-평가-eval-v2--빈칸-채우기loopcaption_scorepy--규칙-eval-v2-scored">5.2 채점 평가 eval-v2 — 빈칸 채우기(<code>loop/caption_score.py</code> · 규칙 <code>eval-v2-scored</code>)</h3>
+<ol>
+<li>정답 캡션을 <strong>그대로</strong> 넣어 앞으로 한 번 돌린다(교사 강제 · 표본 하나에 한 번).</li>
+<li>칸마다 <strong>그 칸 앞까지는 정답</strong>인 자리에서 다음 토큰 분포를 본다.</li>
+<li>그 칸의 후보(없음/앞/왼쪽/오른쪽 · 가까움/중간/멀리 · 다가옴/머묾 · 강함/약함 · 0~6개 · 있음/없음)가 <strong>처음 갈라지는 토큰</strong>의 로짓을 비교해 가장 높은 후보를 예측으로 삼는다.
+   Qwen 토크나이저로 재 보니 접두가 토큰 경계에서 안정해서, 후보 하나 = 토큰 하나 비교로 충분하다(다리 개수는 공백 뒤 숫자).</li>
+<li>칸은 <strong>해당하는 표본에서만</strong> 센다 — 물체 쪽 · 거리 · 움직임은 물체가 있는 표본, 냄새 쪽 · 세기는 냄새가 있는 표본. 찍기 = <strong>같은 부분집합의 최빈값</strong>.</li>
+</ol>
+<p>서식과 무관하고 · 결정적(같은 입력이면 같은 답)이며 · 뇌마다 같은 절차다. 결과는 <code>runs/projector-&lt;뇌&gt;-&lt;판&gt;/eval-scored-&lt;저장본&gt;.json</code>(칸별 정확도 · 찍기 · 예시).</p>
+<h3 id="53-v4-진짜-배선-채점-결과-runsprojector-real-train-v4eval-scored-json--평가-376-결정">5.3 v4 진짜 배선 채점 결과 (<code>runs/projector-real-train-v4/eval-scored-*.json</code> · 평가 376 결정)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>최종본</th>
+<th>캡션 단계본</th>
+<th>찍기(같은 부분집합)</th>
+<th>읽는 법</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>다리 접촉</strong></td>
+<td><strong>0.505</strong></td>
+<td>0.133</td>
+<td>0.362</td>
+<td>찍기보다 높다 — 행동 단계까지 거치며 올랐다</td>
+</tr>
+<tr>
+<td><strong>물체 있음</strong></td>
+<td><strong>0.771</strong></td>
+<td>0.758</td>
+<td>0.726</td>
+<td>찍기보다 조금 높다</td>
+</tr>
+<tr>
+<td>물체 쪽</td>
+<td>0.078</td>
+<td>0.078</td>
+<td>0.505</td>
+<td><strong>찍기보다 훨씬 낮다</strong> — 한쪽 값으로 쏠렸다는 뜻(아래)</td>
+</tr>
+<tr>
+<td>물체 거리</td>
+<td>0.417</td>
+<td>0.019</td>
+<td>0.495</td>
+<td>찍기 아래</td>
+</tr>
+<tr>
+<td>물체 움직임</td>
+<td>0.524</td>
+<td>0.524</td>
+<td>0.524</td>
+<td>찍기와 같음</td>
+</tr>
+<tr>
+<td>냄새 쪽</td>
+<td>0.420</td>
+<td>0.128</td>
+<td>0.556</td>
+<td>찍기 아래(판정 밖 칸)</td>
+</tr>
+<tr>
+<td>냄새 있음 · 냄새 세기</td>
+<td>0.742 · 0.997</td>
+<td>0.210 · 0.434</td>
+<td>1.0 · 1.0</td>
+<td>평가 자료에 거의 한 값뿐이라 가르는 힘이 없다</td>
+</tr>
+<tr>
+<td>소리 · 암컷 대용</td>
+<td>1.0 · 1.0</td>
+<td>1.0 · 1.0</td>
+<td>1.0 · 1.0</td>
+<td>늘 "없음" — 무의미</td>
+</tr>
+</tbody>
+</table></div>
+<p>⚠️ 이것은 <strong>train-v4 의 진짜 배선 하나</strong>다. 재배선 투영기가 같은 절차로 끝나지 않았으므로(07장 4.3) <strong>"진짜가 재배선보다 낫다"는 말은 이 표로 하지 않는다.</strong>
+물체 쪽 0.078 처럼 찍기보다 크게 낮은 칸은 투영기가 입력과 상관없이 한 후보를 밀고 있다는 신호로 읽는다 — v5(크기를 맞춘 입력)에서 다시 본다.</p>
+<h3 id="54-생성-평가-v1-의-절차기록용">5.4 생성 평가 v1 의 절차(기록용)</h3>
 <ol>
 <li>학습에 안 쓴 씨앗(<code>eval</code> 나눔 · v1 105 결정 · v2 약 350)마다 캡션을 <strong>생성</strong>시킨다(탐욕 · 최대 60 토큰). v4 투영기면 <code>meta.json</code> 의 압축기를 <strong>학습 때와 똑같이</strong> 적용한다.</li>
 <li>생성 글과 정답 글을 칸으로 쪼갠다(<code>caption_fields</code> · <code>_sub</code>).</li>
@@ -581,8 +672,8 @@ uv run fly-connectome eval-caption --brain real --version train-v2 --dataset fly
 </tbody>
 </table></div>
 <p>결과는 <code>runs/projector-&lt;뇌&gt;-&lt;판&gt;/eval-caption-&lt;저장본&gt;.json</code>(정확도 · 기준선 · 예시 8 개).
-<code>--version</code> 으로 어느 판의 투영기를 잴지 고른다(기본 = 지금 규칙 판 <strong>train-v4</strong> · <strong>지금 있는 결과는 <code>--version train-v2</code></strong>). 성적표도 같다.</p>
-<p><strong>읽는 법</strong>: 기준선보다 확실히 높아야 "읽었다". 그리고 <strong>진짜 배선이 재배선들보다 높아야</strong>(2절 규칙 · 재배선 투영기 ≥ 3) "초파리 배선 덕에 읽었다".</p>
+<code>--version</code> 으로 어느 판의 투영기를 잴지 고른다(기본 = 지금 규칙 판 <strong>train-v5</strong> · v4 결과는 <code>--version train-v4</code> · v1 자료 결과는 <code>--version train-v2</code>). 채점 · 성적표도 같다.</p>
+<p><strong>읽는 법</strong>(채점 · 생성 모두): 기준선보다 확실히 높아야 "읽었다". 그리고 <strong>진짜 배선이 재배선들보다 높아야</strong>(2절 규칙 · 재배선 투영기 ≥ 3) "초파리 배선 덕에 읽었다".</p>
 <h2 id="6-성적표--fly-connectome-scorecard판-scorecard-v2">6. 성적표 — <code>fly-connectome scorecard</code>(판 <code>scorecard-v2</code>)</h2>
 <pre><code class="language-bash">uv run fly-connectome scorecard --seeds 2000-2009                                              # v2 결과 구성(재배선 하나)
 uv run fly-connectome scorecard --seeds 2000-2039 --configs vector,text,no_circuit,rewired-s0,rewired-s1,rewired-s2,no_llm   # v4 예정
@@ -732,9 +823,9 @@ uv run fly-connectome scorecard --seeds 2000-2039 --configs vector,text,no_circu
         │ 있음   (v2 자료: 8 칸 ✅ · 3.2)
         ▼
 압축 관문 통과 채널이 있나?  ── 없음 ──► 압축 규칙 · 자료 양을 본다(F-005 를 하지 않는다)
-        │ 있음   (v2 자료: 시각 · 촉각 · 미각 · 몸 ✅ · 4.1)   ◄── 지금 여기: train-probe → 요구자 확인 → 학습 4
+        │ 있음   (v2 자료: 시각 · 촉각 · 미각 · 몸 ✅ · 4.1 · compress-v3 도 같음)
         ▼
-캡션 평가가 찍기 수준?  ── 예 ──► 2부 전달(투영기 · 손실 · 자료 양)을 고친다   ◄── v1 자료 · train-v2 는 여기서 막혔다
+캡션 채점(eval-v2)이 찍기 수준?  ── 예 ──► 2부 전달(투영기 · 손실 · 자료 양 · 입력 크기)을 고친다   ◄── v1 자료 · train-v2 는 여기서 막혔다 · v5 는 지금 여기(학습 중)
         │ 아니오
         ▼
 성적표에서 vector 가 재배선 앙상블을 앞서나(scorecard-v2)?  ── 아니오 ──► 문구 규칙 발동 · 원인을 가른다
@@ -745,7 +836,8 @@ uv run fly-connectome scorecard --seeds 2000-2039 --configs vector,text,no_circu
 <h2 id="9-확인-체크리스트">9. 확인 체크리스트</h2>
 <ul>
 <li>[ ] 선형 검사 · 관문 결과 파일에 <code>stats</code> 판과 <code>cells</code> 의 <code>pass</code> 가 있다</li>
-<li>[ ] 캡션 평가는 저장본 둘(<code>stage1-caption</code> · <code>final</code>) × 뇌 전부</li>
+<li>[ ] 캡션 평가는 <strong>채점(eval-scored)</strong> 을 기준으로 · 저장본 둘(<code>stage1-caption</code> · <code>final</code>) × 뇌 전부 · 생성(eval-caption)은 기록용</li>
+<li>[ ] 뇌 사이를 비교하기 전에 같은 절차였는지(같은 압축 판 · 같은 입력 크기 · 같은 걸음 수) 확인한다</li>
 <li>[ ] 성적표 씨앗이 학습 · 평가 자료 씨앗과 겹치지 않는다 · 재배선 구성이 학습한 투영기와 짝이 맞는다</li>
 <li>[ ] 보고서 문구가 <code>scorecard.json</code> 의 <code>wording</code> 과 같다</li>
 </ul>
