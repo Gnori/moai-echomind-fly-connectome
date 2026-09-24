@@ -12,7 +12,13 @@
 읽기만 한다 — 어떤 실행도 시작하지 않고 잠금도 만지지 않는다. 표준 라이브러리만.
 남은 시간 = 실측 s/걸음 × 남은 걸음.
 총 걸음 = n × (caption_epochs + action_epochs) + int(n × caption_rehearsal) —
-n 은 `[train] <뇌> · 학습 n` 줄, 규칙은 그 줄의 `규칙 {...}`(없으면 `train_cli.TRAIN_RULE`).
+n 은 `[train] <뇌> · 학습 n` 줄, 규칙은 그 줄의 `규칙 {...}`(없으면 `train_cli.py` 소스의
+`TRAIN_RULE` 을 **import 없이** 읽는다 — torch · numpy 를 끌어오지 않으려고).
+
+가벼움의 근거(2026-09-24): 이 모듈만 올린 프로세스는 30 MB 인데, `fly-connectome` 명령으로 띄우면
+cli.py 가 다른 명령의 무거운 모듈(torch · numpy · pyarrow)까지 올려 237~249 MB 가 됐다
+(새지 않고 일정).
+그래서 `dashboard` 는 cli.py 에서 **빠른 길**로 이 모듈의 `cli()` 만 부른다.
 """
 
 from __future__ import annotations
@@ -22,6 +28,7 @@ import ast
 import html
 import json
 import re
+import resource
 import subprocess
 import threading
 import time
@@ -173,12 +180,22 @@ def _train_rule(text: str | None) -> dict[str, Any] | None:
             return ast.literal_eval(text)
         except (ValueError, SyntaxError):
             pass
+    return train_rule_from_source()
+
+
+def train_rule_from_source(path: Path | None = None) -> dict[str, Any] | None:
+    """`loop/train_cli.py` 의 `TRAIN_RULE = {...}` 를 **import 없이**(ast) 읽는다."""
+    path = path or Path(__file__).with_name("loop") / "train_cli.py"
     try:
-        # 무거운 의존 — 로그에 규칙이 없을 때만 불러온다
-        from .loop.train_cli import TRAIN_RULE
-        return dict(TRAIN_RULE)
-    except Exception:                                # noqa: BLE001 — 없으면 추정을 안 할 뿐
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in tree.body:
+            if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                    and getattr(node.targets[0], "id", None) == "TRAIN_RULE"):
+                rule = ast.literal_eval(node.value)
+                return rule if isinstance(rule, dict) else None
+    except (OSError, ValueError, SyntaxError):
         return None
+    return None
 
 
 def parse_train_log(lines: list[str]) -> dict[str, Any]:
@@ -761,8 +778,8 @@ def serve(port: int, every_s: int, cfg: dict[str, Any] | None = None) -> int:
                 print(f"[dashboard] 다시 만들기 실패: {err}", flush=True)
 
     threading.Thread(target=loop, daemon=True).start()
-    print(f"[dashboard] http://127.0.0.1:{port}/ → {rel} · {every_s} 초마다 다시 만듦 · Ctrl-C",
-          flush=True)
+    print(f"[dashboard] http://127.0.0.1:{port}/ → {rel} · {every_s} 초마다 다시 만듦 · Ctrl-C"
+          f" · RSS {process_rss_mb():.0f} MB", flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
@@ -771,6 +788,12 @@ def serve(port: int, every_s: int, cfg: dict[str, Any] | None = None) -> int:
         stop.set()
         srv.server_close()
     return 0
+
+
+def process_rss_mb() -> float:
+    """이 프로세스의 최대 RSS(MB) — 가벼움 확인용(맥은 바이트 · 리눅스는 KB)."""
+    raw = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return raw / 1e6 if raw > 1e7 else raw / 1e3
 
 
 def main(args: argparse.Namespace) -> int:
@@ -783,11 +806,23 @@ def main(args: argparse.Namespace) -> int:
     return 0
 
 
-def register(sub) -> None:
-    p = sub.add_parser("dashboard",
-                       help="R-7928 진행 · 메모리 · 결과 한 장(runs/ 읽기만 · 가벼움)")
+HELP = "R-7928 진행 · 메모리 · 결과 한 장(runs/ 읽기만 · 가벼움)"
+
+
+def _add_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--serve", nargs="?", const=-1, default=None, type=int,
                    help="로컬 HTTP 로 띄운다(127.0.0.1 · 포트 생략하면 설정 값)")
     p.add_argument("--every", type=int, default=None,
                    help="--serve 일 때 다시 만드는 간격 초(기본 설정 값)")
     p.set_defaults(func=main)
+
+
+def register(sub) -> None:
+    _add_args(sub.add_parser("dashboard", help=HELP))
+
+
+def cli(argv: list[str]) -> int:
+    """`fly-connectome dashboard …` 의 빠른 길 — 다른 명령의 무거운 모듈을 올리지 않는다."""
+    p = argparse.ArgumentParser(prog="fly-connectome dashboard", description=HELP)
+    _add_args(p)
+    return main(p.parse_args(argv))

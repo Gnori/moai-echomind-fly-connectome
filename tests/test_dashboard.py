@@ -209,3 +209,29 @@ def test_status_json_and_jsonl_win_over_logs_and_state_json_is_written(tmp_path,
     assert state["full"]["current"]["cmd"] == "train --brain rewired-s0"
     assert any(p["dir"] == "projector-real-train-v5" and p["log"]["loss"] == 0.777
                for p in state["projectors"])
+
+
+def test_dashboard_command_stays_light_no_torch_and_rule_from_source(tmp_path):
+    """`fly-connectome dashboard` 빠른 길 — torch · numpy · train_cli 를 올리지 않고
+    TRAIN_RULE 은 소스에서 읽는다. 새 프로세스에서 확인(이 프로세스는 이미 올렸을 수 있다)."""
+    import os
+    import subprocess
+    import sys
+
+    code = (
+        "import sys, json\n"
+        "from moai_echomind_fly import cli, dashboard\n"
+        "rc = cli.main(['dashboard'])\n"
+        "rule = dashboard.train_rule_from_source()\n"
+        "print(json.dumps({'rc': rc, 'heavy': [m for m in ('torch', 'numpy', 'pyarrow',"
+        " 'moai_echomind_fly.loop.train_cli') if m in sys.modules],"
+        " 'rule_ok': isinstance(rule, dict) and 'caption_epochs' in rule,"
+        " 'rss_mb': dashboard.process_rss_mb()}))\n")
+    env = {**os.environ, "FLY_RUNS_DIR": str(tmp_path / "runs")}
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env,
+                         timeout=60)
+    assert out.returncode == 0, out.stderr
+    got = json.loads(out.stdout.strip().splitlines()[-1])
+    assert got["rc"] == 0 and got["heavy"] == [] and got["rule_ok"], got
+    assert got["rss_mb"] < 120, got                       # 인수 기준 200 MB · 실측 약 30 MB
+    assert (tmp_path / "runs" / "dashboard" / "index.html").exists()

@@ -7,16 +7,21 @@ import json
 import sys
 import time
 
-from . import data, graph, paths
+from . import paths
 
 
 def _cmd_download(args: argparse.Namespace) -> int:
+    # numpy · pyarrow — 가벼운 명령(dashboard)이 안 올리게 여기서 늦게
+    from . import data
+
     result = data.download()
     print(json.dumps(result, indent=2))
     return 0
 
 
 def _cmd_graph(args: argparse.Namespace) -> int:
+    from . import graph
+
     t0 = time.time()
     g = graph.compile_graph(args.name)
     print(f"[graph] 저장: {paths.graph_dir()}/{g.name}.* ({time.time() - t0:.0f} s)")
@@ -78,6 +83,10 @@ def _cmd_mcp(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    args_in = sys.argv[1:] if argv is None else list(argv)
+    if args_in[:1] == ["dashboard"]:      # 가벼운 명령 — 아래 무거운 모듈(torch 등)을 안 올린다
+        from . import dashboard
+        return dashboard.cli(args_in[1:])
     parser = argparse.ArgumentParser(prog="fly-connectome")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
