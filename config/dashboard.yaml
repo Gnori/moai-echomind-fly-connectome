@@ -23,3 +23,30 @@ links:                   # 페이지 아래 링크 — runs/dashboard/index.html
   - ["학습 안내서", "../../docs/training/index.html"]
   - ["연구 노트", "../../docs/research/fly-connectome/index.html"]
   - ["요구사항 · 인수인계", "../../docs/requirements/"]
+
+# 지금 도는 전체 순서의 계획(bin/run_full_v5.sh --skip-compress) — 단계마다 무엇을 하는지.
+# 상태(완료 · 진행 중 · 남음)는 full-v5-*.jsonl 사건과 명령 앞부분(match)을 맞춰 대시보드가 센다.
+plan:
+  - name: "1. 학습 — 진짜 배선"
+    match: "train --brain real "
+    content: "실제 수컷 초파리 연결 지도(뉴런 16.5만 · 연결 2,556만)로 돌린 신호 → 투영기 학습. 자료 fly-loop-v2 에피소드 0~119(1,189 결정) · 입력 = 압축 v3 4 채널(시각 · 촉각 · 미각 · 몸, 채널마다 64 차원 · 크기 1) → 채널당 토큰 1 개 · 캡션 2 회전 → 행동 1 회전(+ 캡션 되새김 30 %) · Qwen 은 얼림(투영기 133 만 매개변수만)"
+  - name: "2. 학습 — 재배선 s0"
+    match: "train --brain rewired-s0 "
+    content: "1 과 모든 것이 같고 뇌만 다름 — 같은 뉴런 · 같은 연결 수, 연결 상대를 무작위로 섞은 가짜 뇌(섞는 씨앗 0). 대조군"
+  - name: "3. 학습 — 재배선 s1"
+    match: "train --brain rewired-s1 "
+    content: "2 와 같고 섞는 씨앗만 1 — 섞는 방식에 따른 흩어짐을 보려고 대조군을 셋 둔다"
+  - name: "4. 학습 — 재배선 s2"
+    match: "train --brain rewired-s2 "
+    content: "2 와 같고 섞는 씨앗만 2"
+  - name: "5. 채점 평가(판정용)"
+    match: "eval-scored "
+    count: 8
+    content: "뇌 4 × 저장본 2(캡션 단계 · 최종). 학습에 안 쓴 평가 376 표본에서 칸마다(물체 있음 · 쪽 · 거리 · 냄새 · 다리 …) 후보 값의 가능도를 비교해 고름 — 서식과 무관 · 찍기(최빈값)와 비교"
+  - name: "6. 생성 평가(기록용)"
+    match: "eval-caption "
+    count: 8
+    content: "뇌 4 × 저장본 2. Qwen 이 캡션을 직접 써 보게 함 — 서식까지 재므로 판정에는 쓰지 않고 예시 기록용"
+  - name: "7. 성적표"
+    match: "scorecard "
+    content: "몸(FlyGym)에 넣어 닫힌 고리로 씨앗 40 개(2000~2039) × 7 구성(vector · text · no_circuit · 재배선 s0~s2 · no_llm) — 먹이 도착률 · 회피. 진짜가 재배선 셋을 못 이기면 '초파리 뇌'라는 말을 쓰지 않는다"

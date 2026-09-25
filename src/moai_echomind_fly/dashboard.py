@@ -244,6 +244,18 @@ def parse_train_log(lines: list[str]) -> dict[str, Any]:
     return out
 
 
+def val_history(lines: list[str]) -> list[dict[str, Any]]:
+    """검증 손실 내력 — 학습 전(before) · 회전 끝마다(대조 비교 칸이 쓴다)."""
+    hist: list[dict[str, Any]] = []
+    for ln in lines:
+        if (m := re.match(r"^\[before\] 검증 캡션 ([\d.]+) · 검증 행동 ([\d.]+)", ln)):
+            hist.append({"at": "시작", "caption": float(m.group(1)), "action": float(m.group(2))})
+        elif (m := _END_RE.match(ln)):
+            hist.append({"at": f"{m.group(1)} {int(m.group(2)) + 1}회전 끝",
+                         "caption": float(m.group(4)), "action": float(m.group(5))})
+    return hist
+
+
 def from_status(st: dict[str, Any]) -> dict[str, Any]:
     """status.json(학습이 직접 씀 · R-7347) → 로그 파싱과 같은 모양(그리는 쪽이 하나만 알게)."""
     step, total = st.get("step"), st.get("total_steps")
@@ -275,6 +287,7 @@ def read_projectors(runs: Path, pattern: str, eval_pattern: str,
             rec["log"] = parse_train_log(_lines(log))
             rec["_mtime"] = log.stat().st_mtime
             rec["log_mtime"] = time.strftime("%m-%d %H:%M", time.localtime(rec["_mtime"]))
+        rec["history"] = val_history(_lines(log)) if log.exists() else []
         meta = d / "meta.json"
         if meta.exists():
             try:
@@ -397,9 +410,10 @@ def collect(runs: Path | None = None, datasets_dir: Path | None = None,
     datasets_dir = datasets_dir or paths.root() / "data" / "datasets"
     backup_md = backup_md or Path(cfg["backup_md"]).expanduser()
     g = cfg["globs"]
+    full = read_full(runs, g["full_jsonl"], g["full_log"])
     return {
         "version": cfg["version"], "now": time.strftime("%Y-%m-%d %H:%M:%S"), "runs": str(runs),
-        "lock": read_lock(runs), "full": read_full(runs, g["full_jsonl"], g["full_log"]),
+        "lock": read_lock(runs), "full": full,
         "free": memory_free(),
         "projectors": read_projectors(runs, g["projector"], g["eval_caption"],
                                       60.0 * float(cfg.get("stale_minutes", 60))),
@@ -409,6 +423,8 @@ def collect(runs: Path | None = None, datasets_dir: Path | None = None,
         "datasets": read_datasets(datasets_dir, cfg["datasets_glob"]),
         "backup": read_backup(backup_md),
         "links": cfg.get("links") or [], "refresh_s": int(cfg["refresh_s"]),
+        "train_rule": cfg.get("train_rule"),
+        "plan": plan_status(cfg.get("plan") or [], full),
     }
 
 
@@ -597,6 +613,141 @@ def _train_row(p: dict[str, Any]) -> list[str]:
             mem_txt, val_txt, fp_txt]
 
 
+BRAIN_KO = {"real": "진짜 배선 — 실제 수컷 초파리 연결 지도 그대로",
+            "rewired": "재배선 — 같은 뉴런 · 같은 연결 수, 연결 상대만 무작위로 섞음"}
+
+
+def _brain_of(dirname: str) -> str:
+    m = re.match(r"projector-(.+)-train-v\d+", dirname)
+    return m.group(1) if m else dirname
+
+
+def _section_compare(d: dict[str, Any]) -> str:
+    """진짜 대 재배선 — 지금 판(train_rule)의 투영기끼리 같은 칸을 나란히."""
+    ver = d.get("train_rule")
+    ps = [p for p in d["projectors"] if ver and p["dir"].endswith(f"-{ver}")]
+    if not ps:
+        return f'<p class="muted">{NONE}</p>'
+    ps.sort(key=lambda p: (0 if _brain_of(p["dir"]) == "real" else 1, p["dir"]))
+    intro = (f'<p>판 <code>{_e(ver)}</code> — <b>네 뇌 모두 같은 자료 · 같은 정답 · 같은 규칙 · '
+             '같은 초기값 · 같은 걸음 순서</b>로 학습하고, '
+             '<b>다른 것은 신호를 만든 뇌의 배선 하나</b>다. '
+             '진짜 배선이 재배선 셋보다 확실히 앞서야 "초파리 뇌 덕"이라 말한다(R 2.0-6). '
+             '손실은 참고 · 판정은 채점 평가 · 성적표.</p>')
+    ats = []
+    for p in ps:
+        for h in p.get("history") or []:
+            if h["at"] not in ats:
+                ats.append(h["at"])
+    rows, rew = [], {a: [] for a in ats}
+    for p in ps:
+        b = _brain_of(p["dir"])
+        kind = "real" if b == "real" else "rewired"
+        hist = {h["at"]: h for h in p.get("history") or []}
+        cells = []
+        for a in ats:
+            h = hist.get(a)
+            cells.append("—" if not h else f'{_f(h["caption"])} · {_f(h["action"])}')
+            if h and kind == "rewired":
+                rew[a].append(h)
+        lg = p.get("log") or {}
+        state = ("끝" if p["final"] else "멈춘 기록" if p.get("stale")
+                 else f'도는 중 {lg.get("done_steps") or 0:,}/{lg.get("total_steps") or 0:,}')
+        rows.append([f"<b>{_e(b)}</b><br><span class=\"muted\">{_e(BRAIN_KO[kind])}</span>",
+                     state] + cells)
+    real = next((p for p in ps if _brain_of(p["dir"]) == "real"), None)
+    rhist = {h["at"]: h for h in (real or {}).get("history") or []}
+    mean_cells, diff_cells = [], []
+    for a in ats:
+        hs = rew[a]
+        if not hs:
+            mean_cells.append("—")
+            diff_cells.append("—")
+            continue
+        mc = sum(h["caption"] for h in hs) / len(hs)
+        ma = sum(h["action"] for h in hs) / len(hs)
+        mean_cells.append(f"{_f(mc)} · {_f(ma)} <span class=\"muted\">({len(hs)} 뇌)</span>")
+        r = rhist.get(a)
+        if r:
+            dc = r["caption"] - mc
+            cls = "ok" if dc < -0.05 else "bad" if dc > 0.05 else "warn"
+            diff_cells.append(_tag(cls, f"{dc:+.3f}") + f' · {r["action"] - ma:+.3f}')
+        else:
+            diff_cells.append("—")
+    rows.append(["재배선 평균", ""] + mean_cells)
+    rows.append(["진짜 − 재배선 평균<br><span class=\"muted\">음수 = 진짜가 낮음(좋음)</span>", ""]
+                + diff_cells)
+    head = ["뇌", "상태"] + [f"{a} (캡션 · 행동)" for a in ats]
+    return intro + "<h3>검증 손실(같은 24 표본)</h3>" + _table(head, rows) + _compare_scored(ps)
+
+
+def _compare_scored(ps: list[dict[str, Any]]) -> str:
+    """채점 평가(eval-scored) — 칸마다 진짜 · 재배선 평균 · 찍기(저장본 final)."""
+    per: dict[str, dict[str, Any]] = {}
+    base: dict[str, float] = {}
+    for p in ps:
+        for e in p["evals"]:
+            if e["file"] == "eval-scored-final.json":
+                per[_brain_of(p["dir"])] = e["accuracy"]
+                base.update({k: v for k, v in e["baseline"].items() if v is not None})
+    if "real" not in per:
+        return '<h3>채점 평가(최종본)</h3><p class="muted">아직 없음 — 학습 4 개가 끝난 뒤</p>'
+    rews = [a for b, a in per.items() if b != "real"]
+    rows = []
+    for f in FIELD_KO:
+        if f not in per["real"]:
+            continue
+        r = per["real"][f]
+        vals = [a[f] for a in rews if f in a]
+        m = sum(vals) / len(vals) if vals else None
+        win = m is not None and r > max(vals) and r > (base.get(f) or 0) + 0.05
+        rows.append([FIELD_KO[f], _tag("ok" if win else "", _f(r)),
+                     "—" if m is None else f"{_f(m)} ({' · '.join(_f(v) for v in vals)})",
+                     _f(base.get(f))])
+    return ("<h3>채점 평가(최종본) — 진짜가 재배선 셋 모두 · 찍기보다 높으면 초록</h3>"
+            + _table(["칸", "진짜", "재배선 평균(각각)", "찍기"], rows))
+
+
+def plan_status(plan: list[dict[str, Any]], full: dict[str, Any]) -> list[dict[str, Any]]:
+    """계획(설정 파일) × 전체 순서 사건 → 단계마다 완료 · 진행 중 · 남음 · 실패."""
+    steps = full.get("steps") or []
+    out = []
+    for item in plan:
+        hit = [s for s in steps if (s.get("cmd") or "").startswith(item["match"])]
+        n = int(item.get("count", 1))
+        done = [s for s in hit if s["end"] is not None and s["code"] == 0]
+        bad = [s for s in hit if s["end"] is not None and s["code"] != 0]
+        running = [s for s in hit if s["end"] is None]
+        if bad:
+            state = "실패"
+        elif len(done) >= n:
+            state = "완료"
+        elif running or done:
+            state = "진행 중"
+        else:
+            state = "남음"
+        out.append({**item, "state": state, "done": len(done), "count": n,
+                    "start": hit[0]["start"] if hit else None,
+                    "end": done[-1]["end"] if state == "완료" else None})
+    return out
+
+
+def _section_plan(d: dict[str, Any]) -> str:
+    items = d.get("plan") or []
+    if not items:
+        return f'<p class="muted">{NONE}</p>'
+    tag = {"완료": "ok", "진행 중": "warn", "실패": "bad", "남음": ""}
+    rows = []
+    for it in items:
+        cnt = f' {it["done"]}/{it["count"]}' if it["count"] > 1 else ""
+        rows.append([f'<b>{_e(it["name"])}</b>', _tag(tag[it["state"]], it["state"] + cnt),
+                     _e(it["start"] or "—"), _e(it["end"] or "—"), _e(it["content"])])
+    n = {k: sum(1 for it in items if it["state"] == k) for k in ("완료", "진행 중", "남음", "실패")}
+    head = (f'<p>완료 <b>{n["완료"]}</b> · 진행 중 <b>{n["진행 중"]}</b> · 남음 <b>{n["남음"]}</b>'
+            + (f' · 실패 <b>{n["실패"]}</b>' if n["실패"] else "") + "</p>")
+    return head + _table(["단계", "상태", "시작", "끝", "무엇을 하나(학습 내용)"], rows)
+
+
 def _section_train(d: dict[str, Any]) -> str:
     head = ["투영기", "단계", "걸음", "손실", "s/걸음", "남은 시간(추정)", "메모리", "검증 손실",
             "Qwen 지문"]
@@ -720,6 +871,10 @@ def render(d: dict[str, Any]) -> str:
  · {links}</p>
 <h2>지금 상태</h2>
 {_section_status(d)}
+<h2>순서 — 완료 · 진행 중 · 남음</h2>
+{_section_plan(d)}
+<h2>진짜 대 재배선 (지금 판)</h2>
+{_section_compare(d)}
 <h2>학습 진행 (투영기 · 최근 순)</h2>
 {_section_train(d)}
 <h2>결과</h2>
