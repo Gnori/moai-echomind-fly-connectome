@@ -733,7 +733,7 @@ def _same_run_steps(runs: Path, full: dict[str, Any]) -> dict[str, Any]:
     """같은 판(full-v5-*) 사건 파일을 모두 합친 단계 — 중단 뒤 다시 띄워도 계획이 이어진다."""
     name = full.get("path") or ""
     m = re.match(r"(full-v\d+)-", name)
-    if not m or not name.endswith(".jsonl"):
+    if not m or not list(runs.glob(f"{m.group(1)}-*.jsonl")):   # 사건 파일이 없는 옛 판(v4)
         return full
     steps: list[dict[str, Any]] = []
     for f in sorted(runs.glob(f"{m.group(1)}-*.jsonl")):
