@@ -20,7 +20,7 @@ VERSION="train-v5"
 BRAINS=(real rewired-s0 rewired-s1 rewired-s2)
 CONFIGS="vector,text,no_circuit,rewired-s0,rewired-s1,rewired-s2,no_llm"
 SEEDS="2000-2039"
-QWEN_WAIT=64             # Qwen(28.6 GB ≈ 21 %)을 새로 올리는 평가 · 성적표는 여유가 40 % + 21 % 이상일 때까지 기다린다 —
+QWEN_WAIT=63             # Qwen(28.6 GB / 128 GB ≈ 22.3 % → 가드는 62.4 % 이상)을 새로 올리는 평가 · 성적표는 여유가 40 % + 21 % 이상일 때까지 기다린다 —
                          # 가드는 "올린 뒤 예상 여유 ≥ 40 %"를 보는데 스크립트가 40 % 만 기다려 2026-09-25 14:45 에 막혔다(여유 62 % → 예상 39 %)
 TRAIN_SEEDS="0-119"      # 학습 표본 = 에피소드 120(약 1,200 결정 · 요구자 2026-09-23 B 안 — 전부 쓰면 뇌 하나 약 16 h)
 
