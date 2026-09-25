@@ -39,6 +39,12 @@ LEVEL = ["강함", "약함"]
 LEGS = [f"{i}개" for i in range(7)]
 YESNO = ["있음", "없음"]
 
+# 판정 칸(2026-09-25 · v5 평가 **전에** 정함 — 평가 자료 fly-loop-v2 eval 을 세어 본 뒤):
+# 소리 · 암컷 · 냄새 있음 · 냄새 세기는 376 표본이 모두 한 값(정보 없음) ·
+# 냄새 쪽은 판정 제외(stats-v2) · 물체 거리는 "가까움" 1 개라 사실상 두 값이고
+# 물체 쪽 · 움직임과 같은 23 에피소드라 빼고 넷만 본다.
+JUDGE_FIELDS = ["loom_present", "loom_side", "loom_motion", "legs"]
+
 FIELD_ORDER = ["loom_present", "loom_side", "loom_distance", "loom_motion",
                "odor_present", "odor_side", "odor_level", "legs", "sound", "female"]
 
@@ -174,3 +180,36 @@ def score(truths: list[dict[str, str]], preds: list[dict[str, str]]) -> dict[str
                   "majority_baseline": float(np.mean([t == major for t, _ in pairs])),
                   "majority": major}
     return out
+
+
+def judge(per_brain: dict[str, list[dict[str, Any]]], rule: dict[str, Any] | None = None
+          ) -> dict[str, Any]:
+    """진짜 대 재배선 판정 — 표본별 기록(`per_sample`)으로 stats(선형 검사와 같은 규칙).
+
+    `per_brain` = {"real": [...], "rewired-s0": [...], ...} · 표본 순서는 모두 같아야 한다.
+    칸마다 그 칸이 있는 표본만 · 찍기 = 같은 부분집합 최빈값 · 에피소드 = 표본의 씨앗.
+    """
+    from . import stats
+
+    rule = rule or stats.STATS_RULE
+    real = per_brain["real"]
+    rews = [v for k, v in sorted(per_brain.items()) if k != "real"]
+    for r in rews:
+        if [x["seed"] for x in r] != [x["seed"] for x in real]:
+            raise ValueError("뇌마다 표본 순서가 다르다")
+    cells: dict[str, Any] = {}
+    for f in JUDGE_FIELDS:
+        idx = [i for i, x in enumerate(real) if f in x["truth"]]
+        if not idx:
+            continue
+        truth = [real[i]["truth"][f] for i in idx]
+        major = Counter(truth).most_common(1)[0][0]
+        ok = lambda recs: np.array([recs[i]["pred"].get(f) == recs[i]["truth"][f] for i in idx])  # noqa: E731
+        cells[f] = stats.judge_cell(ok(real), [ok(r) for r in rews],
+                                    np.array([t == major for t in truth], dtype=np.float64),
+                                    np.array([real[i]["seed"] for i in idx]), rule)
+        cells[f]["majority"] = major
+    stats.finalize(cells, rule)
+    return {"rule": {**RULE, "judge_fields": JUDGE_FIELDS, "stats": rule["version"]},
+            "brains": sorted(per_brain), "cells": cells,
+            "passed": [k for k, c in cells.items() if c.get("pass")]}

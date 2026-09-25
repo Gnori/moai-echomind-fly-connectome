@@ -425,6 +425,8 @@ def collect(runs: Path | None = None, datasets_dir: Path | None = None,
         "links": cfg.get("links") or [], "refresh_s": int(cfg["refresh_s"]),
         "train_rule": cfg.get("train_rule"),
         "plan": plan_status(cfg.get("plan") or [], full),
+        "caption_judge": _load_json(runs / f"caption-judge-{cfg.get('train_rule')}-final.json")
+        if (runs / f"caption-judge-{cfg.get('train_rule')}-final.json").exists() else None,
     }
 
 
@@ -678,7 +680,26 @@ def _section_compare(d: dict[str, Any]) -> str:
     rows.append(["진짜 − 재배선 평균<br><span class=\"muted\">음수 = 진짜가 낮음(좋음)</span>", ""]
                 + diff_cells)
     head = ["뇌", "상태"] + [f"{a} (캡션 · 행동)" for a in ats]
-    return intro + "<h3>검증 손실(같은 24 표본)</h3>" + _table(head, rows) + _compare_scored(ps)
+    return (intro + "<h3>검증 손실(같은 24 표본)</h3>" + _table(head, rows) + _compare_scored(ps)
+            + _compare_judge(d.get("caption_judge")))
+
+
+def _compare_judge(j: dict[str, Any] | None) -> str:
+    """판정(judge-captions · stats-v2 · Holm) — 판정 칸 넷."""
+    if not j:
+        return ('<h3>판정(에피소드 단위 검정 · Holm)</h3>'
+                '<p class="muted">아직 없음 — 채점 평가 8 뒤 '
+                '<code>fly-connectome judge-captions --version train-v5</code></p>')
+    rows = []
+    for k, c in j.get("cells", {}).items():
+        ok = c.get("pass")
+        rows.append([FIELD_KO.get(k, k), _f(c["real"]),
+                     " · ".join(_f(v) for v in c["rewired"]["values"]), _f(c["baseline"]),
+                     f'{c["episodes"]} / {c["decisions"]}', _f(c.get("p_holm")),
+                     _tag("ok" if ok else "bad", "통과" if ok else "불통")])
+    return ("<h3>판정(에피소드 단위 검정 · Holm · stats-v2)</h3>"
+            + _table(["칸", "진짜", "재배선 s0 · s1 · s2", "찍기", "에피소드 / 표본", "Holm p",
+                      "판정"], rows))
 
 
 def _compare_scored(ps: list[dict[str, Any]]) -> str:

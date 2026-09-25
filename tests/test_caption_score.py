@@ -99,3 +99,21 @@ def test_score_counts_only_applicable_samples_and_majority_on_the_same_subset():
     assert sc["legs"]["n"] == 2 and sc["legs"]["accuracy"] == 0.5
     assert sc["legs"]["majority_baseline"] == 0.5           # 5개 · 6개 → 최빈 하나 = 1/2
     assert "odor_side" in sc and sc["odor_side"]["n"] == 1
+
+
+def test_judge_passes_only_when_real_beats_every_rewired_brain():
+    """판정(stats-v2) — 진짜가 모든 에피소드에서 맞히고 재배선은 절반이면 통과 · 같으면 불통."""
+    recs_real, recs_rew = [], []
+    for ep in range(30):
+        for j in range(4):
+            truth = {"loom_present": "있음" if j % 2 else "없음", "legs": "6개"}
+            recs_real.append({"seed": ep, "truth": truth, "pred": dict(truth)})
+            wrong = dict(truth, loom_present="없음" if j % 2 else "있음")
+            recs_rew.append({"seed": ep, "truth": truth, "pred": wrong if j < 2 else dict(truth)})
+    out = cs.judge({"real": recs_real, "rewired-s0": recs_rew, "rewired-s1": recs_rew,
+                    "rewired-s2": recs_rew})
+    lp = out["cells"]["loom_present"]
+    assert lp["real"] == 1.0 and lp["rewired"]["mean"] == 0.5 and lp["pass"] is True
+    legs = out["cells"]["legs"]                       # 모두 맞힘 · 찍기도 1.0 → 불통
+    assert legs["pass"] is False
+    assert out["passed"] == ["loom_present"]

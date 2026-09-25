@@ -556,7 +556,7 @@ def eval_scored(args: argparse.Namespace) -> int:
                 return list(q.tok.encode(text, add_special_tokens=False))
 
             n = len(vrows) if not args.limit else min(args.limit, len(vrows))
-            truths, preds, examples, t0 = [], [], [], time.time()
+            truths, preds, examples, per_sample, t0 = [], [], [], [], time.time()
             for i in range(n):
                 slots = cs.slots_for(vrows[i]["caption"])
                 logits = trainer.target_logits(_sample(setup, vfeats, vrows, i, "cap"))
@@ -564,6 +564,8 @@ def eval_scored(args: argparse.Namespace) -> int:
                 truth = {s.name: s.truth for s in slots}
                 truths.append(cs.to_fields(slots, truth))
                 preds.append(cs.to_fields(slots, pred))
+                per_sample.append({"i": i, "seed": int(vrows[i]["seed"]),
+                                   "truth": truths[-1], "pred": preds[-1]})
                 if i < 8:
                     examples.append({"truth": vrows[i]["caption"], "pred": pred})
                 if (i + 1) % 50 == 0:
@@ -574,14 +576,41 @@ def eval_scored(args: argparse.Namespace) -> int:
                       "rule": cs.RULE, "cells": cells,
                       "accuracy": {k: v["accuracy"] for k, v in cells.items()},
                       "majority_baseline": {k: v["majority_baseline"] for k, v in cells.items()},
-                      "examples": examples, "elapsed_s": round(time.time() - t0, 1)}
+                      "examples": examples, "elapsed_s": round(time.time() - t0, 1),
+                      "per_sample": per_sample}   # 판정(judge-captions)이 쓴다
             (pdir / f"eval-scored-{args.checkpoint}.json").write_text(
                 json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-            print(json.dumps({k: v for k, v in result.items() if k != "examples"},
+            print(json.dumps({k: v for k, v in result.items()
+                              if k not in ("examples", "per_sample")},
                              ensure_ascii=False, indent=2))
     except GuardRefused as err:
         print(f"[guard] 막음 — {err}")
         return 2
+    return 0
+
+
+def judge_captions(args: argparse.Namespace) -> int:
+    """채점 평가 판정 — 진짜 대 재배선(표본별 기록 · stats · Holm). 가벼움(CPU · 파일만)."""
+    from . import caption_score as cs
+
+    brains = ["real", *[f"rewired-s{k}" for k in parse_seeds(args.rewired_seeds)]]
+    per = {}
+    for b in brains:
+        f = projector_dir(b, args.version) / f"eval-scored-{args.checkpoint}.json"
+        rec = json.loads(f.read_text(encoding="utf-8"))
+        if "per_sample" not in rec:
+            print(f"[judge] {f} 에 표본별 기록이 없다 — eval-scored 를 다시 돌린다")
+            return 2
+        per[b] = rec["per_sample"]
+    out = cs.judge(per)
+    out.update(version=args.version, checkpoint=args.checkpoint,
+               when=time.strftime("%Y-%m-%d %H:%M:%S"))
+    path = paths.runs_dir() / f"caption-judge-{args.version}-{args.checkpoint}.json"
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    for k, c in out["cells"].items():
+        print(f"[judge] {k:13s} 진짜 {c['real']:.3f} · 재배선 {c['rewired']['values']} · "
+              f"찍기 {c['baseline']:.3f} · Holm {c['p_holm']:.3f} · 통과 {c['pass']}")
+    print(f"[judge] 통과 {out['passed']} · 기록 {path}")
     return 0
 
 
@@ -625,3 +654,8 @@ def register(sub) -> None:
     es.add_argument("--version", default=None, help="투영기 판(기본 = 지금 규칙의 판)")
     es.add_argument("--limit", type=int, default=0, help="앞에서 N 표본만(0 = 전부)")
     es.set_defaults(func=eval_scored)
+    jc = sub.add_parser("judge-captions", help="채점 평가 판정 — 진짜 대 재배선(stats · Holm)")
+    jc.add_argument("--version", default=None)
+    jc.add_argument("--checkpoint", default="final", choices=["stage1-caption", "final"])
+    jc.add_argument("--rewired-seeds", default="0-2")
+    jc.set_defaults(func=judge_captions)
