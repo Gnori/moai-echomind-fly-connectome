@@ -20,6 +20,8 @@ VERSION="train-v5"
 BRAINS=(real rewired-s0 rewired-s1 rewired-s2)
 CONFIGS="vector,text,no_circuit,rewired-s0,rewired-s1,rewired-s2,no_llm"
 SEEDS="2000-2039"
+QWEN_WAIT=64             # Qwen(28.6 GB ≈ 21 %)을 새로 올리는 평가 · 성적표는 여유가 40 % + 21 % 이상일 때까지 기다린다 —
+                         # 가드는 "올린 뒤 예상 여유 ≥ 40 %"를 보는데 스크립트가 40 % 만 기다려 2026-09-25 14:45 에 막혔다(여유 62 % → 예상 39 %)
 TRAIN_SEEDS="0-119"      # 학습 표본 = 에피소드 120(약 1,200 결정 · 요구자 2026-09-23 B 안 — 전부 쓰면 뇌 하나 약 16 h)
 
 SKIP_TRAIN=0; SKIP_COMPRESS=0
@@ -100,16 +102,16 @@ fi
 #   v4 진짜 배선에서 v1 은 서식만 쟀다(값은 맞히는데 틀을 안 배워 0 점 · 2026-09-24 요구자 결정 B).
 for ck in final stage1-caption; do
   for b in "${BRAINS[@]}"; do
-    run 40 eval-scored --brain "$b" --checkpoint "$ck" --version "$VERSION"
+    run $QWEN_WAIT eval-scored --brain "$b" --checkpoint "$ck" --version "$VERSION"
   done
 done
 for ck in final stage1-caption; do
   for b in "${BRAINS[@]}"; do
-    run 40 eval-caption --brain "$b" --checkpoint "$ck" --version "$VERSION"
+    run $QWEN_WAIT eval-caption --brain "$b" --checkpoint "$ck" --version "$VERSION"
   done
 done
 
 # 6. 성적표 — 재배선 투영기 셋과 앙상블 비교(scorecard-v2)
-run 40 scorecard --seeds "$SEEDS" --configs "$CONFIGS" --version "$VERSION"
+run $QWEN_WAIT scorecard --seeds "$SEEDS" --configs "$CONFIGS" --version "$VERSION"
 
 echo "=== $(date '+%F %T') 전체 끝 · 로그 $LOG" | tee -a "$LOG"; ev done "run_full_v5"

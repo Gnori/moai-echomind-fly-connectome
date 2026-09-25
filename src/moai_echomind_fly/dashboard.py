@@ -424,7 +424,7 @@ def collect(runs: Path | None = None, datasets_dir: Path | None = None,
         "backup": read_backup(backup_md),
         "links": cfg.get("links") or [], "refresh_s": int(cfg["refresh_s"]),
         "train_rule": cfg.get("train_rule"),
-        "plan": plan_status(cfg.get("plan") or [], full),
+        "plan": plan_status(cfg.get("plan") or [], _same_run_steps(runs, full)),
         "caption_judge": _load_json(runs / f"caption-judge-{cfg.get('train_rule')}-final.json")
         if (runs / f"caption-judge-{cfg.get('train_rule')}-final.json").exists() else None,
     }
@@ -729,6 +729,18 @@ def _compare_scored(ps: list[dict[str, Any]]) -> str:
             + _table(["칸", "진짜", "재배선 평균(각각)", "찍기"], rows))
 
 
+def _same_run_steps(runs: Path, full: dict[str, Any]) -> dict[str, Any]:
+    """같은 판(full-v5-*) 사건 파일을 모두 합친 단계 — 중단 뒤 다시 띄워도 계획이 이어진다."""
+    name = full.get("path") or ""
+    m = re.match(r"(full-v\d+)-", name)
+    if not m or not name.endswith(".jsonl"):
+        return full
+    steps: list[dict[str, Any]] = []
+    for f in sorted(runs.glob(f"{m.group(1)}-*.jsonl")):
+        steps += read_full_jsonl(f)["steps"]
+    return {**full, "steps": steps}
+
+
 def plan_status(plan: list[dict[str, Any]], full: dict[str, Any]) -> list[dict[str, Any]]:
     """계획(설정 파일) × 전체 순서 사건 → 단계마다 완료 · 진행 중 · 남음 · 실패."""
     steps = full.get("steps") or []
@@ -739,7 +751,7 @@ def plan_status(plan: list[dict[str, Any]], full: dict[str, Any]) -> list[dict[s
         done = [s for s in hit if s["end"] is not None and s["code"] == 0]
         bad = [s for s in hit if s["end"] is not None and s["code"] != 0]
         running = [s for s in hit if s["end"] is None]
-        if bad:
+        if bad and len(done) < n and not running:
             state = "실패"
         elif len(done) >= n:
             state = "완료"
