@@ -749,9 +749,9 @@ def plan_status(plan: list[dict[str, Any]], full: dict[str, Any]) -> list[dict[s
         hit = [s for s in steps if (s.get("cmd") or "").startswith(item["match"])]
         n = int(item.get("count", 1))
         done = [s for s in hit if s["end"] is not None and s["code"] == 0]
-        bad = [s for s in hit if s["end"] is not None and s["code"] != 0]
         running = [s for s in hit if s["end"] is None]
-        if bad and len(done) < n and not running:
+        last = hit[-1] if hit else None           # 막힌 뒤 다시 돌아 끝났으면 실패가 아니다
+        if last is not None and last["end"] is not None and last["code"] != 0 and len(done) < n:
             state = "실패"
         elif len(done) >= n:
             state = "완료"
