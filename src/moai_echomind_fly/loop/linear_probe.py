@@ -125,10 +125,10 @@ def run(name: str, rule: dict[str, Any] | None = None,
     `transform(brain, feats)` 가 있으면 특징을 바꾼 뒤 잰다(F-004 압축 관문).
     """
     from .. import datasets
-    from .stats import STATS_RULE, finalize, judge_cell
+    from .stats import finalize, judge_cell, rule_for_dataset
     from .train_cli import _sub, caption_fields
 
-    rule = rule or STATS_RULE
+    rule = rule or rule_for_dataset(name)      # 자료 판에 맞는 규칙(stats-v2 · v3)
     brains = ["real", *datasets.rewired_brains(name)]
     out: dict[str, Any] = {"dataset": name, "when": time.strftime("%Y-%m-%d %H:%M:%S"),
                            "method": f"선형(능선 회귀) · 규제 {FOLDS}겹 교차검증",
