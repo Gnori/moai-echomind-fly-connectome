@@ -675,11 +675,123 @@
 <td><strong>작은 투영기 · 틀 덜 세게</strong></td>
 <td>통과 채널의 압축 벡터 → 채널당 <strong>선형 토큰 하나</strong>(3,187만 → 수십만) · 손실은 <strong>칸 값 글자 1 · 틀 글자 0.1</strong>(0 이 아닌 까닭: 서식을 배울 곳이 정답뿐) · 섞은 뇌 셋도 똑같이</td>
 <td><code>train-v4</code> · <code>scorecard-v2</code></td>
-<td>⏳ 코드 끝 · <strong>다음</strong>: 작은 측정(<code>train-probe</code>) → 요구자 확인 → 학습(진짜 + 섞은 셋) · 평가 · 성적표</td>
+<td>✅ 끝 — 입력 크기를 뇌마다 맞춘 <code>train-v5</code>(compress-v3)로 진짜 + 섞은 셋 학습 · 채점 평가 · 성적표 → <strong>결과는 8.7</strong></td>
 </tr>
 </tbody>
 </table></div>
 <p>순서와 결과 파일은 <a href="../../training/10-학습-기록과-다음.html">학습 안내서 10장 4절</a>. 이 판에서도 섞은 뇌 앙상블을 못 이기면 8.5 와 같은 문구로 적는다.</p>
+<h2 id="87-두-번째-판-결과--train-v5-2026-09-25--전부-끝남">8.7 두 번째 판 결과 — train-v5 (2026-09-25 · 전부 끝남)</h2>
+<p>결론부터. <strong>캡션에서는 처음으로 진짜 배선이 섞은 배선 셋을 이겼다. 행동(성적표)은 여전히 못 이겼다</strong> —
+그래서 성적표 쪽 결과로는 이번에도 "초파리 뇌"라는 말을 쓰지 않는다(R 2.0-6 · 두 번째 발동).</p>
+<h3 id="캡션--지금-무엇이-느껴지나-채점-평가--평가-376-결정--40-에피소드">캡션 — 지금 무엇이 느껴지나 (채점 평가 · 평가 376 결정 / 40 에피소드)</h3>
+<p>판정 칸은 평가 전에 정했다. 통과 = 진짜가 섞은 배선 셋 모두 위 · 에피소드 부호 뒤집기 검정(Holm 보정) &lt; 0.05 · 찍기보다 높음.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>진짜 배선</th>
+<th>섞은 배선 s0 · s1 · s2</th>
+<th>그냥 찍기</th>
+<th>판정</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>물체가 있나</td>
+<td><strong>0.806</strong></td>
+<td>0.729 · 0.729 · 0.739</td>
+<td>0.726</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>다리가 몇 개 닿았나</td>
+<td><strong>0.574</strong></td>
+<td>0.505 · 0.497 · 0.391</td>
+<td>0.362</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>물체가 어느 쪽인가</td>
+<td>0.573</td>
+<td>0.466 · 0.340 · 0.544</td>
+<td>0.505</td>
+<td>✅ 규칙상 · 찍기 대비 p 0.14 → <strong>찍기와 구별 안 됨</strong></td>
+</tr>
+<tr>
+<td>물체가 움직이나</td>
+<td>0.524</td>
+<td>0.524 · 0.524 · 0.563</td>
+<td>0.524</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table></div>
+<p>8.5 에서 "네 저장본 모두 찍기 수준"이던 캡션이 이번에는 두 칸에서 섞은 배선을 앞섰다 — 넣는 숫자를 줄이고(채널당 64 · 뇌마다 같은 크기)
+틀 글자를 덜 세게 한 것이 신호 단계의 차이를 Qwen 쪽까지 옮겼다. 캡션만 배운 단계의 저장본이 최종본보다 높다(물체 있음 0.851) —
+행동을 배우는 단계가 캡션을 조금 깎는다.</p>
+<h3 id="성적표--먹이-찾기-씨앗-20002039--40-상황--7-방식">성적표 — 먹이 찾기 (씨앗 2000~2039 · 40 상황 × 7 방식)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>방식</th>
+<th>먹이 도착</th>
+<th>끝났을 때 먹이까지</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>벡터</strong> (진짜 배선)</td>
+<td><strong>0.075</strong></td>
+<td>47.5 mm</td>
+</tr>
+<tr>
+<td>섞은 배선 s0 · s1 · s2</td>
+<td>0.075 · 0.025 · 0.075</td>
+<td>50.7 · 53.3 · 58.2 mm</td>
+</tr>
+<tr>
+<td>글</td>
+<td>0.075</td>
+<td>43.2 mm</td>
+</tr>
+<tr>
+<td><strong>회로 없음</strong></td>
+<td><strong>0.95</strong></td>
+<td>2.0 mm</td>
+</tr>
+<tr>
+<td>LLM 없음</td>
+<td>0.0</td>
+<td>25.2 mm</td>
+</tr>
+</tbody>
+</table></div>
+<p>진짜 배선은 섞은 배선 셋 가운데 가운데쯤이고(부호 뒤집기 p 0.42) → <strong>섞은 배선 대조를 이기지 못했다.</strong>
+파일: <code>runs/scorecard-20260925-175025/scorecard.json</code>(sha256 <code>4bbd8625b19836b1</code>) · 캡션 <code>runs/caption-judge-train-v5-final.json</code>.</p>
+<h3 id="그럼-이번엔-무엇이-문제인가">그럼 이번엔 무엇이 문제인가</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>물음</th>
+<th>답</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen 이 과제를 못 하나?</td>
+<td><strong>아니다</strong> — 숫자를 그대로 주면 0.95</td>
+</tr>
+<tr>
+<td>신호가 Qwen 까지 가나?</td>
+<td><strong>이번엔 간다</strong> — 캡션에서 진짜 배선이 물체 있음 · 다리를 섞은 배선보다 잘 읽는다</td>
+</tr>
+<tr>
+<td>그럼?</td>
+<td>먹이 찾기에 필요한 <strong>냄새 좌우</strong>가 어느 뇌 신호에도 없다(8.6 "냄새 좌우" 줄 · F-003) — 그래서 행동은 모든 뇌가 같이 못 한다</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ <strong>다음 병목 = 냄새 좌우 정보.</strong> 순서와 대장은 <a href="../../training/10-학습-기록과-다음.html">학습 안내서 10장 2.4 · 2.5</a>.</p>
 <h2 id="9-정직하게-적어-둘-한계">9. 정직하게 적어 둘 한계</h2>
 <ul>
 <li><strong>행동을 정하는 판단은 여전히 Qwen(과 교사 규칙)의 것이다</strong>(07 의 판정). 초파리 뇌는 감각을 처리해 신호를 만드는 인코더 자리다.</li>

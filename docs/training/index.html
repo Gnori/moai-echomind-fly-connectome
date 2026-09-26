@@ -232,7 +232,7 @@
 </tr>
 </tbody>
 </table></div>
-<h2 id="지금-상태-2026-09-24-1300">지금 상태 (2026-09-24 13:00)</h2>
+<h2 id="지금-상태-2026-09-26">지금 상태 (2026-09-26)</h2>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -255,12 +255,20 @@
 </tr>
 <tr>
 <td><strong>다음 학습(R-7469)</strong></td>
-<td>✅ 판정 기준(stats-v2) · 냄새 좌우(sim-v2 · 고칠 수 없음 기록) · 3차원 입력(task-v2 · retino-v1 · channels-v2) · 압축 관문(compress-v1) · 작은 투영기(train-v4) · 앙상블 성적표(scorecard-v2) <strong>코드 끝</strong> · ✅ <strong>자료 v2</strong> <code>fly-loop-v2</code>(2,921 + 376 결정 · 재배선 5 · 8.2 h) · ✅ <strong>판정 통과 8 칸</strong>(시각 4 · 다리 접촉 4 · 재배선 5 전부보다 위) · ✅ <strong>관문</strong>(compress-v2 · 64 고정 — v1 은 결과 뒤 고침) 통과 시각 · 촉각 · 미각 · 몸 · ❌ <strong>나침반 봉우리 없음</strong>(실패 기록 → 회로 학습 목표) · train-v4 는 진짜 배선만 끝냄 — <strong>입력 크기가 뇌마다 달라 재배선이 먼저 배웠다</strong> → compress-v3(크기 맞춤) · 자유 생성 평가가 서식만 재서 <strong>채점 평가 eval-v2</strong> 로 바꿈(v4 진짜: 다리 0.505/찍기 0.362 · 물체 있음 0.771/0.726) · ⏳ <strong>train-v5 학습 중</strong>(12:43 시작 · 뇌 4 · 채점 8 · 성적표 · <code>bin/run_full_v5.sh</code>)</td>
+<td>✅ 판정 기준(stats-v2) · 냄새 좌우(sim-v2 · 고칠 수 없음 기록) · 3차원 입력(task-v2 · retino-v1 · channels-v2) · 압축 관문(compress-v1) · 작은 투영기(train-v4) · 앙상블 성적표(scorecard-v2) <strong>코드 끝</strong> · ✅ <strong>자료 v2</strong> <code>fly-loop-v2</code>(2,921 + 376 결정 · 재배선 5 · 8.2 h) · ✅ <strong>판정 통과 8 칸</strong>(시각 4 · 다리 접촉 4 · 재배선 5 전부보다 위) · ✅ <strong>관문</strong>(compress-v2 · 64 고정 — v1 은 결과 뒤 고침) 통과 시각 · 촉각 · 미각 · 몸 · ❌ <strong>나침반 봉우리 없음</strong>(실패 기록 → 회로 학습 목표) · train-v4 는 진짜 배선만 끝냄 — <strong>입력 크기가 뇌마다 달라 재배선이 먼저 배웠다</strong> → compress-v3(크기 맞춤) · 자유 생성 평가가 서식만 재서 <strong>채점 평가 eval-v2</strong> 로 바꿈(v4 진짜: 다리 0.505/찍기 0.362 · 물체 있음 0.771/0.726) · ✅ <strong>train-v5 끝</strong>(뇌 4 · 채점 8 · 성적표 · <code>bin/run_full_v5.sh</code>)</td>
+</tr>
+<tr>
+<td><strong>train-v5 결과</strong></td>
+<td>✅ <strong>캡션</strong>: 처음으로 진짜 배선이 재배선 셋을 이겼다 — 물체 있음 0.806(재배선 0.729 · 0.729 · 0.739 · 찍기 0.726) · 다리 접촉 0.574(0.505 · 0.497 · 0.391 · 찍기 0.362) · 물체 쪽은 규칙상 통과지만 찍기 대비 p 0.14 → <strong>찍기와 구별 안 됨</strong> · 움직임 불통 · 캡션 단계본이 최종본보다 높다(물체 있음 0.851) · ❌ <strong>성적표(행동)</strong>: 먹이 도착 vector 0.075 = 재배선 0.075 · 0.025 · 0.075 · text 0.075 · no_circuit 0.95 · no_llm 0.0 · p 0.42 → <strong>섞은 배선 대조를 이기지 못했다</strong>(R 2.0-6 두 번째 발동) — <a href="10-학습-기록과-다음.html">10장 2.4 · 2.5</a></td>
+</tr>
+<tr>
+<td><strong>다음 병목</strong></td>
+<td>신호에 과제 정보가 있고 진짜 배선이 더 많다(캡션). 행동을 못 이긴 것은 먹이 찾기에 필요한 <strong>냄새 좌우</strong>가 어느 뇌 신호에도 없어서다(F-003 · 04장 3.2) → 다음 = 냄새 좌우 정보</td>
 </tr>
 </tbody>
 </table></div>
 <blockquote>
-<p>이 결과 때문에 규칙(R 2.0-6)이 발동해 있다 — <strong>이 판의 결과로는 "초파리 뇌 덕분"이라고 쓰지 않는다.</strong> 다음 판부터는 재배선 <strong>앙상블</strong>을 이겨야 그 말을 쓴다(09장 6절).</p>
+<p>이 결과 때문에 규칙(R 2.0-6)이 발동해 있다(train-v2 · train-v5 두 번) — <strong>성적표(행동) 결과로는 "초파리 뇌 덕분"이라고 쓰지 않는다.</strong> 재배선 <strong>앙상블</strong>을 이겨야 그 말을 쓴다(09장 6절). 캡션에서 이긴 것은 "신호 단계에서 진짜 배선이 더 읽혔다"까지만 말한다.</p>
 </blockquote>
 <h2 id="다른-문서와의-관계">다른 문서와의 관계</h2>
 <ul>
