@@ -239,7 +239,7 @@ def test_loo_threshold_accuracy_ignores_shared_bias():
 
 
 def test_task_v4_places_food_near_and_to_the_side():
-    """task-v4 — 먹이 6~10 mm · 첫 방위 |45~90°| · 좌우 반씩(노트 14 M4)."""
+    """task-v4 — 먹이 4~7 mm · 첫 방위 |45~90°| · 좌우 반씩(노트 14 M4)."""
     import math
 
     from moai_echomind_fly import config
@@ -251,6 +251,6 @@ def test_task_v4_places_food_near_and_to_the_side():
     for seed in range(200):
         x, y = make_task(seed, cfg)["odor_xy"]
         d, b = math.hypot(x, y), math.degrees(math.atan2(y, x))
-        assert 6.0 <= d <= 10.0 and 45.0 <= abs(b) <= 90.0
+        assert 4.0 <= d <= 7.0 and 45.0 <= abs(b) <= 90.0
         sides.append(b > 0)
     assert 0.35 < sum(sides) / len(sides) < 0.65
