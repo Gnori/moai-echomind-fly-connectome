@@ -43,7 +43,8 @@ TRAIN_RULE = {
     # 입력 크기가 달라 입력이 2 배 큰 재배선이 먼저 배웠다(config/compress.yaml v3 주석 · 실측).
     # 나머지는 v4 와 같다.
     # v6(2026-09-26 · 연구 노트 14 M4): 규칙은 v5 와 같고 자료만 fly-loop-v4
-    # (task-v4 냄새 맡기 구간 · 더듬이 센서 · channels-v3 smell_ln). 관문을 통과한 채널이 입력(냄새 LN 이 들 수 있다).
+    # (task-v4 냄새 맡기 구간 · 더듬이 센서 · channels-v3 smell_ln).
+    # 관문을 통과한 채널이 입력(냄새 LN 이 들 수 있다).
     "version": "train-v6",
     "input": "compress", "compress": "compress-v3",   # v1 차원 다름 → v2 같은 64 → v3 같은 크기
     "k": 1, "width": 0, "kind": "linear", "lr": 2e-4,
