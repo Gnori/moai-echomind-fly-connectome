@@ -5,7 +5,7 @@
 - **ID**: 5777
 - **작성일**: 2026-09-26 17:11:15
 - **작성자**: echomind-fly(조율 세션)
-- **상태**: 확정
+- **상태**: 구현완료(검증대기)
   <!-- 허용값(enum, 자유 서술 금지): 접수 | 작성 | 상세화 | 확정 | 구현중 | 구현완료(검증대기) | 검증완료 | 아카이브 | 보류 -->
 - **우선순위**: 중간
 - **규모**: standard (표준)
@@ -14,7 +14,7 @@
 - **관련 산출물** (같은 디렉토리·동일 프리픽스로 생성 — `/dev artifact <i|p|w>`):
   - I (인터페이스 계약): 생략 — 3.3 에 축약(자료 파일 형식 둘)
   - P (구현 플랜): 생략 — 4장 체크리스트로 대체
-  - W (검증 보고): 구현 뒤 `./20260926-171115-5777_fly-dashboard-debug-tool_walkthrough.md`
+  - W (검증 보고): [tool](./20260926-171115-5777_fly-dashboard-debug-tool_walkthrough.md)(2026-09-26 · 통과)
 - **관련 이슈/PR**: 없음
 
 > 표준: [/DEV_PROCESS.md](../../DEV_PROCESS.md) — 게이트: G1(2장 확정) → G3(모듈 테스트) → G4(W) → G5(문서 동기화)
@@ -137,16 +137,16 @@ runs/dashboard/samples.html · episodes.html     (F-001 · F-003 · 대시보드
 ### 4.1 기능 개발
 
 - [x] F-002 성적표 결정 기록(scorecard-v3) · 시험 — `decision_row` · `test_scorecard_decision_row_has_the_fields_the_dashboard_reads`
-- [ ] F-001 캡션 표본 페이지 · 시험(정확도 재계산 일치)
-- [ ] F-003 에피소드 · 결정 페이지 · 시험
-- [ ] 대시보드 메모리 측정 · 실제 v5 파일로 화면 확인
+- [x] F-001 캡션 표본 페이지 · 시험(정확도 재계산 일치) — doc 세션 `25587c2`
+- [x] F-003 에피소드 · 결정 페이지 · 시험 — `25587c2`
+- [x] 대시보드 메모리 측정(37 MB) · 실제 v5 파일로 화면 확인
 
 ### 4.2 코드 품질
-- [ ] `uv run ruff check src tests` · `uv run pytest -m "not heavy"`
+- [x] `uv run ruff check src tests` · `uv run pytest -m "not heavy"` — 106 통과
 
 ### 4.3 진행률
 
-**전체 진행률**: 0 / 3 = 0 %
+**전체 진행률**: 3 / 3 = 100 % — 남은 것: README 한 줄(G5) · 결정 표는 다음 성적표부터
 
 **누가**: 구현은 doc 세션(대시보드 코드 손질 담당 · R-7928 구현 전례) · F-002(성적표)는 loop 라 조율 세션 · 검토와 W 는 조율 세션.
 
@@ -166,8 +166,8 @@ runs/dashboard/samples.html · episodes.html     (F-001 · F-003 · 대시보드
 
 | 구분 | 결과 | 비고 |
 |------|------|------|
-| 모듈 단위 테스트 (각 W) | ⏳ | |
-| 통합 E2E | ⏳ | 실제 v5 파일로 세 화면 확인 |
+| 모듈 단위 테스트 (각 W) | ✅ | [W tool](./20260926-171115-5777_fly-dashboard-debug-tool_walkthrough.md) |
+| 통합 E2E | ✅ | 서버 8770 · samples · episodes 200 · 숫자 v5 파일과 일치 · RSS 37 MB |
 
 ---
 
