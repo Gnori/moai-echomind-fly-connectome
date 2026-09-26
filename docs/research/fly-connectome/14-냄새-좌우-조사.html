@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>냄새 좌우를 신호에 남기는 법 — 입력 · 시간 · 회로 · 과제 조사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li>
+<li><a href="12-다음-학습-조사.html">12 · 다음 학습 — 조사</a></li>
+<li><a href="13-회로-학습-설계-조사.html">13 · 회로 학습 설계 — 조사</a></li>
+<li><a href="14-냄새-좌우-조사.html" class="cur">14 · 냄새 좌우 — 조사</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="14-냄새-좌우-조사.md">14-냄새-좌우-조사.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="14-냄새-좌우를-신호에-남기는-법--입력--시간--회로--과제-조사">14. 냄새 좌우를 신호에 남기는 법 — 입력 · 시간 · 회로 · 과제 조사</h1>
+<blockquote>
+<p>2026-09-26 · 세션 <code>echomind-fly-research</code> · 조율 세션 일감(요구자 <em>"남은것중 가벼운것부터 하자"</em>).
+이 노트는 <strong>조사와 그래프 조회 · 파일 읽기</strong>만 했다. 뇌 시뮬레이션 · 선형 검사 · 수집은 하지 않았다(무거운 실행 = 조율 세션 몫) — 7절은 조율 세션이 돌릴 <strong>측정 계획</strong>이다.
+확인 수준: <strong>[P]</strong> 원문 본문 · <strong>[P*]</strong> 원문을 요약 도구로 읽음 · <strong>[A]</strong> 초록 · <strong>[S]</strong> 2차 · <strong>[X]</strong> 못 엶 · <strong>[코드]</strong> 설치된 FlyGym 소스를 읽거나 몸 환경에서 잼 · <strong>[그래프]</strong> 우리 연결 지도 조회.</p>
+</blockquote>
+<hr />
+<h2 id="0-한눈에--권하는-순서">0. 한눈에 — 권하는 순서</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>순서</th>
+<th>무엇</th>
+<th>왜(한 줄)</th>
+<th>무게</th>
+<th>요구자 확인</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0</strong></td>
+<td><strong>냄새 센서 번호 정하기</strong> — 지금 <code>sensors: {L: 0, R: 1}</code> 은 더듬이가 아니라 <strong>작은턱수염</strong>이다(3절)</td>
+<td>이것을 먼저 정하지 않으면 뒤의 모든 수치가 어느 센서 기준인지 모른다</td>
+<td>설정 한 줄(조율 세션)</td>
+<td>예 — 고치면 좌우 차가 약 1/3.5 로 <strong>줄어든다</strong></td>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>양성 대조</strong> — 한쪽 ORN 만 구동(Gaudry 식) → PN · 안테나엽 LN · DNa02 의 좌우 부호</td>
+<td>회로가 "좌우를 나를 수 있는가"를 입력 문제와 떼어 본다. 이것도 0.5 면 문제는 입력이 아니다</td>
+<td>중간(뇌만 · 약 45 분)</td>
+<td>예</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>여러 창 읽기</strong> — 이미 있는 <code>fly-loop-v2</code> 특징으로 좌우 차를 결정 1 · 3 · 5 · 10 개 누적, 시간 차(농도 변화 × 직전 회전) 특징</td>
+<td>입력 단계 이상적 상한이 0.61(100 ms) → 0.80(1 s)으로 오른다 · 시간 차 신호는 좌우 차보다 <strong>30 배</strong> 크다</td>
+<td>가벼움~중간(선형 검사 · CPU 수 분)</td>
+<td>아니오(선형 검사만)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>읽는 곳 옮기기</strong> — 안테나엽 LN(<code>v2LN3A1_b</code> · <code>lLN2X02</code> · <code>lLN15</code> · <code>lLN2F_b</code>)을 냄새 채널에 더함</td>
+<td>그래프 선형 전파에서 같은 쪽 편향 <strong>0.40~0.48</strong>(PN 0.08~0.15) — 3~5 배</td>
+<td>중간(stim 재생 · 약 1.5 시간)</td>
+<td>예(채널 차원이 바뀌면 자료 이름도)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>과제 기하 + 평가 규모</strong> — 먹이 5~10 mm · 방위 옆쪽 좌우 층화 · 평가 <strong>에피소드 단위 200</strong></td>
+<td>좌우 차는 1/거리 · sin(방위)에 비례 · 0.60 을 검출하려면 독립 판정 ~200</td>
+<td>무거움(수집 수 시간)</td>
+<td>예</td>
+</tr>
+<tr>
+<td>—</td>
+<td>하지 않을 것: 발화율 봉우리만 올리기 · 출처 없는 좌우 증폭 · 부채꼴체 · PFL3 · 버섯체를 좌우 채널로</td>
+<td>로그 인코딩에서 봉우리는 판별도를 거의 안 바꿈 · 셋은 좌우를 싣지 않음(문헌 · 그래프 둘 다)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>요지</strong>: 냄새 좌우는 <strong>입력에서 이미 잡음 아래</strong>다. 회로 어느 단계도 선형으로는 좌우 차를 키우지 못한다(같은 쪽 편향 ≤ 0.75).
+그래서 순서는 <strong>센서를 바로 정하고(0) → 회로가 나를 수 있는지 보고(1) → 시간을 모아 읽고(2) → 좌우 대비가 큰 자리를 읽고(3) → 과제를 좌우가 보이는 곳으로(4)</strong> 다.
+문헌도 같은 방향이다 — 걷는 성체는 정적인 먼 기울기에서 좌우 비교만으로 원천을 찾는다는 증거가 없고, <strong>시간 적분(0.6~2 s)</strong> 과 바람을 쓴다 [5][7][8].</p>
+<hr />
+<h2 id="1-출발점--이미-잰-값다시-재지-않음과-이번에-잰-값">1. 출발점 — 이미 잰 값(다시 재지 않음)과 이번에 잰 값</h2>
+<p><strong>조율 세션이 잰 값</strong>(R-7469 F-003 · v5 성적표):
+v5 성적표 <code>vector</code> 0.075 = 재배선(0.075/0.025/0.075) · <code>no_circuit</code> 0.95 → R 2.0-6 두 번째 발동. 캡션은 진짜 배선이 이김(물체 있음 · 다리).
+ORN_DM1 · VA2 → PN 시냅스 같은 쪽 51.7 % · 반대쪽 47.7 % · <code>sim-v2</code> 같은 쪽 방출 ×1.4(Gaudry 2013) · 더듬이 상대 차 중앙 4.4 % → 발화율 차 0.55 Hz → PN 좌우 부호 0.508.</p>
+<p><strong>이번에 잰 값</strong>(파일 읽기 · 그래프 조회 · 몸 환경 0.3 초 — 모두 가벼움):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>파일(git 밖)</th>
+<th>무엇</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runs/odor-lr-budget-20260926.json</code></td>
+<td><code>fly-loop-v2</code> 3,297 결정의 센서 값 → 좌우 차 · 발화율 · 포아송 이상적 관찰자 · 시간 차</td>
+</tr>
+<tr>
+<td><code>runs/odor-laterality-graph-20260926.json</code></td>
+<td>ORN_DM1 · VA2 좌/우에서 연결 지도 선형 전파 1~5 단계 · ORN 종류별 같은 쪽 비율</td>
+</tr>
+<tr>
+<td><code>runs/odor-laterality-candidates-20260926.json</code></td>
+<td>문헌 후보 종류 17 개의 같은 쪽 편향(전파 단계별 · 누적)</td>
+</tr>
+</tbody>
+</table></div>
+<p>스크립트는 세션 임시 폴더에 있었다(남지 않음) — 정의는 각 절에 적었다.</p>
+<hr />
+<h2 id="2-예산--좌우-정보는-어디서-사라지나-fly-loop-v2-센서-값">2. 예산 — 좌우 정보는 어디서 사라지나 (<code>fly-loop-v2</code> 센서 값)</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>양</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>센서 농도 중앙(10~90 %)</td>
+<td>2.9(0.8 ~ 197) · 먹이까지 거리 중앙 13.7 mm</td>
+</tr>
+<tr>
+<td>발화율 중앙(10~90 %)</td>
+<td>38.6 Hz(16.6 ~ 145.8) — <code>log1p(c)/log1p(200)</code> × 150 Hz</td>
+</tr>
+<tr>
+<td>좌우 상대 차 <code>(L−R)/평균</code> 중앙(10~90 %)</td>
+<td><strong>2.2 %</strong>(0.4 ~ 27.5 %) — 조율 세션의 4.4 % 는 다른 정의 · 표본(기록 65 쌍)이다</td>
+</tr>
+<tr>
+<td>발화율 좌우 차 중앙</td>
+<td><strong>0.30 Hz</strong></td>
+</tr>
+<tr>
+<td><strong>잡음 없는 센서 부호</strong>로 냄새 쪽 맞히기(정면 ±10° 제외)</td>
+<td><strong>1.000</strong> — 정보는 센서에 <strong>있다</strong></td>
+</tr>
+<tr>
+<td>ORN 한쪽 수</td>
+<td>왼 68 · 오른 80(+ 좌우 표시 없는 9 개는 자극되지 않음 — <code>ORN_*_unknown</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>이상적 관찰자</strong>(한쪽 ORN 전체 발화 합의 좌우 차 · 뉴런마다 독립 포아송 — <code>sim.py</code> 가 실제로 뉴런마다 따로 뽑음 확인):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>읽는 창</th>
+<th>0.1 s</th>
+<th>0.3 s</th>
+<th>1 s</th>
+<th>3 s</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>입력 단계 최선 정답률</td>
+<td><strong>0.614</strong></td>
+<td>0.670</td>
+<td>0.745</td>
+<td>0.821</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ <strong>100 ms 한 창은 ORN 에서도 최선이 0.61</strong> 이다. PN 의 0.508 은 이상하지 않다(회로 · 문턱 · 양쪽 투사가 더 깎음).
+양쪽 투사가 섞는 효과: 왼 촉각엽 ≈ 1.4·L + R · 오른 ≈ L + 1.4·R → 차이 0.4·(L−R) · 공통 2.4 배 → <strong>좌우 차/공통 비가 약 1/6</strong> [조사 계산].</p>
+<p><strong>발화율을 퍼뜨리는 다른 인코더도 소용없다</strong>(같은 계산 · 비교용 가정): 선형 <code>c/5</code> 0.576(0.1 s) · 로그 <code>ref 0.05</code> 0.536. 로그 압축은 웨버 법칙처럼 <strong>상대 차만</strong> 남긴다 — 봉우리(peak)를 올려도 판별도는 거의 그대로다.
+늘릴 수 있는 것은 <strong>기하(센서 간격 / 거리 · sin 방위) · 뉴런 수 · 읽는 시간</strong> 셋뿐이다.</p>
+<p><strong>시간 차는 크다</strong>: 연속 결정(300 ms) 사이 총 농도의 상대 변화 중앙 <strong>62 %</strong> 대 같은 표본 좌우 차 <strong>1.9 %</strong>(약 30 배).
+"직전에 왼쪽으로 돌았는데 농도가 올랐으면 냄새는 왼쪽" 규칙(잡음 없는 값)의 정답률 <strong>0.926</strong>(1,391 쌍 · 몸이 5° 넘게 돈 경우).
+⚠️ 교사가 냄새 쪽으로 몰고 가므로 회전 분포가 치우쳐 있다 — 규칙 자체는 물리적으로 맞지만 이 정답률은 <strong>교사 궤적 위의 값</strong>이다.</p>
+<hr />
+<h2 id="3-①-입력-쪽--세계와-인코더">3. ① 입력 쪽 — 세계와 인코더</h2>
+<h3 id="31--센서-0--1-은-작은턱수염이다-코드">3.1 ⚠️ 센서 0 · 1 은 작은턱수염이다 [코드]</h3>
+<ul>
+<li>FlyGym 1.x <code>flygym_gymnasium/config.yaml</code> 의 후각 센서 순서: <code>LMaxillaryPalp_sensor · RMaxillaryPalp_sensor · LAntenna_sensor · RAntenna_sensor</code>.
+  <code>fly.py</code> <code>_add_odor_sensors()</code> 가 이 순서대로 센서를 만들고 <code>odor_intensity</code> 의 4 칸이 이 순서다(직접 읽음).</li>
+<li>우리 <code>config/task.yaml</code> <code>encoder.smell.sensors: {L: 0, R: 1}</code> 의 주석은 "0 왼 더듬이 · 1 오른 더듬이 — 2026-09-22 실측"이다.
+  <strong>좌우 방향은 맞지만(0 = 왼쪽) 부위가 틀렸다.</strong> ORN_DM1(Or42b) · ORN_VA2(Or92a) 는 더듬이 ORN 이다 [S].</li>
+<li>몸 환경에서 다시 잼(원천 25 mm · 옆 90° · 시작 자세 · 0~300 ms):</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>센서 쌍</th>
+<th>좌우 간격</th>
+<th>좌우 상대 차</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>작은턱수염(0 · 1) — 지금 씀</td>
+<td><strong>0.600 mm</strong></td>
+<td><strong>4.8 %</strong></td>
+</tr>
+<tr>
+<td>더듬이(2 · 3)</td>
+<td><strong>0.171 mm</strong></td>
+<td><strong>1.37 %</strong>(식 <code>2·s·sinθ/d</code> 와 일치)</td>
+</tr>
+<tr>
+<td>실제 초파리 더듬이</td>
+<td>약 0.29~0.30 mm [4 · P*]</td>
+<td>(식으로 약 2.3 %)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>조율 세션의 <strong>4.4 %는 작은턱수염 기준</strong>이다. 더듬이로 바로잡으면 같은 과제에서 <strong>약 1~1.4 %</strong> — 좌우는 <strong>더 어려워진다</strong>.
+  작은턱수염 간격(0.6 mm)은 실제 더듬이의 두 배라 <strong>생물보다 유리한 쪽으로 틀려 있었다.</strong> 설정은 이 세션이 고치지 않는다(범위 밖) — 0 순서의 결정 사항.</li>
+<li>선택지(조율 세션 판단): (a) 더듬이 2 · 3 으로 바로잡고 옛 결과는 "작은턱수염 기준"으로 표시 — <strong>권함</strong> · (b) FlyGym 공식 냄새 주성 예제처럼 작은턱수염 : 더듬이 = 1 : 9 가중 평균 [1 · 코드] — 출처는 있으나 우리 ORN 이 더듬이 ORN 이라 (a) 가 맞다.</li>
+<li>FlyGym 냄새장은 <strong>정적 역제곱</strong>이다 — 확산 · 난류 · 시간 변화가 없고, 바람은 감각 입력으로 주어지지 않는다 [코드]. 플룸 예제는 격자 0.5 mm/칸이라 두 더듬이가 대개 같은 칸이다 [1 · 코드].
+  참고: 정지 공기 속 연속 원천의 정상 확산은 1/r 이라 역제곱은 좌우 차를 오히려 <strong>부풀리는</strong> 쪽이다(물리 일반론 · 문헌 확인 안 함).</li>
+</ul>
+<h3 id="32-실제-파리가-쓰는-좌우-차--문헌">3.2 실제 파리가 쓰는 좌우 차 — 문헌</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>출처</th>
+<th>수치</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gaudry 2013 [2]</td>
+<td>ORN 스파이크 하나가 같은 쪽 가지에서 <strong>약 40 % 더 방출</strong>(sEPSC 39 % · synaptobrevin 41 ± 16 %) · 같은 쪽 PN 발화 <strong>30~50 % 높음</strong> · 첫 스파이크 1.4~2.7 ms 먼저 · 회전 시작 <strong>약 70 ms</strong> · 초록의 "5 %" = <strong>한쪽 더듬이 100 % 자극 → 좌우 촉각엽 입력 차 5 %</strong>(더듬이 간 농도 차 5 % 가 아님)</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Álvarez-Salvado 2018 [5]</td>
+<td>좌우 감지 이득 추정 최대 약 40 °/s — 이 이득에서는 성공률에 기여 없음 · 300 °/s 면 67 → 76 % · 바람 감지가 없으면 좌우 비교만으로는 "almost no model flies find the source"</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Duistermars 2009 [3]</td>
+<td>한쪽 더듬이 3 절을 막으면 비행 중 플룸 추적 소실 · 노즐은 머리 약 5 mm 앞</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Borst &amp; Heisenberg 1982 [6]</td>
+<td>열린 고리에서 진한 쪽으로 돎 · 최소 농도비 <strong>확인 못 함</strong></td>
+<td>[S]</td>
+</tr>
+<tr>
+<td>Kadakia 2022 [4]</td>
+<td>좌우 더듬이 <strong>시간차</strong>(냄새 움직임) 필터 τ ≈ 25 ms · 걷는 파리의 회전은 농도 기울기와 <strong>상관 없음</strong></td>
+<td>[P*]</td>
+</tr>
+<tr>
+<td>Gomez-Marin 2011 [9] · 애벌레</td>
+<td>좌우 차는 "close to their physical limits" → <strong>머리 흔들기로 능동 표집</strong> · 회전 약 8 s 전부터 적분</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Louis 2008 [10] · 애벌레</td>
+<td>한쪽 ORN 하나로도 주화성 · 양쪽은 신호 대 잡음비를 올림</td>
+<td>[A]</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>걷는 성체에서 "더듬이 간 농도 차 X % 면 확실히 돈다"는 직접 측정은 찾지 못했다.</strong>
+좌우 비교가 강하게 드러난 실험은 모두 <strong>아주 가깝거나 한쪽만 자극한</strong> 조건이다(더듬이마다 관 · 5 mm 노즐 · 한쪽 광자극).
+20~30 mm 정적 역제곱 · 바람 없음은 <strong>좌우 비교가 가장 약한 영역</strong>이다.</p>
+<h3 id="33-orn-방출-비대칭14의-위치">3.3 ORN 방출 비대칭(×1.4)의 위치</h3>
+<ul>
+<li>시냅스 <strong>수</strong>는 같은 쪽 비 1.08(51.7/47.7)이고, Gaudry 의 40 % 는 <strong>스파이크당 방출</strong>이다 — 커넥톰에 없는 양이라 가중치 배율로만 넣을 수 있다(<code>sim-v2</code> 가 그렇게 함).
+  둘이 겹치는지(EM 시냅스 수가 이미 방출 차의 일부를 반영하는지)는 <strong>확인 못 함</strong>(Gaudry 는 주로 DM6).</li>
+<li>그래프에서 사구체별 ORN → PN 같은 쪽 비율 [그래프]: 53 종류 중앙 <strong>0.64</strong> · DM1 0.597 · VA2 0.571(둘 다 하위권) · 0.8 이상 여섯(<code>DP1l</code> · <code>VA1d</code> · <code>VA1v</code> · <code>VL2a</code> · <code>VL2p</code> · <code>VM6m</code>) · 최저 <code>DA3</code> 0.43.
+  종류 단위(PN 이름별): <code>DA1_lPN</code> 0.686 · <code>DC2_adPN</code> 0.607 · <code>VC1_lPN</code> 0.61 · <code>DM6_adPN</code> 0.602 · <code>DM1_lPN</code> 0.599 · <code>VA2_adPN</code> 0.562 — 방향은 문헌(DA1 59/41 [11] · DM6 연결당 시냅스 35 % 많음 [17])과 같다.</li>
+<li><strong>먹이 냄새 사구체 두 개가 좌우 비대칭이 약한 편</strong>이다. 다른 사구체로 바꾸는 것은 출처(식초 → DM1 · VA2 [12])를 버리는 일이라 권하지 않는다.</li>
+</ul>
+<hr />
+<h2 id="4-②-시간-쪽--한-창이-아니라-모아-읽기">4. ② 시간 쪽 — 한 창이 아니라 모아 읽기</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>출처</th>
+<th>시간 상수</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gaudry 2013 [2]</td>
+<td>좌우 비대칭 → 회전 약 70 ms</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Kadakia 2022 [4]</td>
+<td>좌우 시간차 τ ≈ 25 ms · 회전 150~300 ms 뒤</td>
+<td>[P*]</td>
+</tr>
+<tr>
+<td>Álvarez-Salvado 2018 [5]</td>
+<td>위바람 달리기 저역 필터 <strong>0.72 s</strong> · 적응 9.8 s · 탐색(OFF) 0.62 s / 4.84 s</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Demir 2020 [7]</td>
+<td>냄새 만남 빈도를 <strong>2 s</strong> 로 적분 · 급회전 약 1.3 회/s · 냄새는 회전 <strong>방향만</strong> 치우침</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>van Breugel 2014 [8]</td>
+<td>비행: 만남 뒤 190 ms 위바람 회전 · 잃은 뒤 450 ms 캐스팅</td>
+<td>[A]</td>
+</tr>
+<tr>
+<td>Gomez-Marin 2011 [9]</td>
+<td>입력 대리 = <strong>(1/C)·dC/dt</strong>(상대 변화) · 약 8 s 적분</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Jayaram 2022 [19]</td>
+<td>만남 빈도 + 간헐성 두 시간 특징을 함께 써야 견고</td>
+<td>[A]</td>
+</tr>
+<tr>
+<td>FlyGym 플룸 제어기 기본값 [1]</td>
+<td>만남 빈도 2 s · 급회전 1.33 /s</td>
+<td>[코드]</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>우리에게 옮기면</strong>(제안 · 문헌 값 자체가 아님):
+1. <strong>좌우 차 누적</strong>: 결정 3~7 개(0.9~2 s) 평균. 입력 단계 상한 0.67(0.3 s) → 0.75(1 s) → 0.82(3 s)(2절).
+2. <strong>시간 비교(클리노택시스)</strong>: 빠른 평균(0.3~0.6 s) − 느린 평균(2~5 s)의 상대 변화 × <strong>직전 회전 방향</strong> — 잡음 없는 규칙으로 0.926(2절). 몸 돌림이 곧 "능동 표집"이다.
+3. 한 창을 늘리는 것과 여러 창을 모으는 것은 LIF 에서 다르다 — 모으기는 <strong>읽는 쪽(특징 · 투영기)</strong> 일이고 회로를 바꾸지 않는다. 그래서 이미 모은 <code>fly-loop-v2</code> 특징만으로 먼저 잴 수 있다(7절 M2).
+⚠️ 시간 비교 특징에 <strong>직전 행동</strong>(회전)을 넣으면 교사 명령이 샐 수 있다 — F-003 의 운동 채널 누설과 같은 문제. 직전 회전은 교사 명령이 아니라 <strong>몸이 실제로 돈 각도</strong>(<code>heading_deg</code> 차)로 넣는다.</p>
+<hr />
+<h2 id="5-③-회로-쪽--좌우가-남는-단계-그래프--문헌">5. ③ 회로 쪽 — 좌우가 남는 단계 [그래프 · 문헌]</h2>
+<h3 id="51-그래프-선형-전파--정의">5.1 그래프 선형 전파 — 정의</h3>
+<p>ORN_DM1 · VA2 의 왼쪽 전부(= 1)와 오른쪽 전부(= 1)에서 각각 <strong>입력 비율로 정규화한 부호 있는 가중치</strong>(<code>시냅스 수 × 부호 / 받는 뉴런의 총 입력</code>)로 1~5 단계 전파.
+뉴런마다 <strong>같은 쪽 편향</strong> = (같은 쪽 더듬이 몫 − 반대쪽 몫) / (두 몫의 절대값 합) · 종류는 좌우 합으로. + 는 같은 쪽 더듬이가 더 흥분시킨다는 뜻.
+<strong>발화가 아니다</strong> — 문턱 · 포화 · 시간이 없다. 순위와 부호를 보는 도구다.</p>
+<h3 id="52-결과">5.2 결과</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>단계 · 종류</th>
+<th>뉴런</th>
+<th>처음 닿는 단계</th>
+<th>같은 쪽 편향(첫 단계 · 누적 5 단계)</th>
+<th>세기(첫 단계)</th>
+<th>문헌</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PN <code>DM1_lPN</code> · <code>VA2_adPN</code></td>
+<td>2 · 2</td>
+<td>1</td>
+<td>0.21 · 0.15 / 0.11 · 0.08</td>
+<td>1.4e-2 · 1.5e-2</td>
+<td>같은 쪽 우세 [2][11]</td>
+</tr>
+<tr>
+<td>다사구체 PN <code>M_lvPNm33</code></td>
+<td>5</td>
+<td>1</td>
+<td>0.15 · 0.11</td>
+<td>1.8e-2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>안테나엽 LN <code>v2LN3A1_b</code></td>
+<td>9</td>
+<td>1</td>
+<td><strong>0.59 · 0.43</strong></td>
+<td>1.0e-2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>LN <code>lLN2X02</code></td>
+<td>6</td>
+<td>1</td>
+<td><strong>0.62 · 0.47</strong></td>
+<td>5.6e-3</td>
+<td>—</td>
+</tr>
+<tr>
+<td>LN <code>lLN15</code></td>
+<td>7</td>
+<td>1</td>
+<td><strong>0.75 · 0.40</strong></td>
+<td>2.2e-3</td>
+<td>—</td>
+</tr>
+<tr>
+<td>LN <code>lLN2F_b</code></td>
+<td>4</td>
+<td>1</td>
+<td><strong>−0.50 · −0.32</strong>(반대쪽 우세)</td>
+<td>2.9e-3</td>
+<td>—</td>
+</tr>
+<tr>
+<td>양쪽 LN <code>il3LN6</code></td>
+<td>2</td>
+<td>1</td>
+<td>0.12 · 0.08</td>
+<td>1.6e-3</td>
+<td>문헌은 <strong>반대쪽 입력 5 배</strong>(DA1 기준) [11] — 5.3</td>
+</tr>
+<tr>
+<td>측각 <code>LHAV2a2</code> · <code>LHAD1g1</code></td>
+<td>9 · 2</td>
+<td>2</td>
+<td>0.30 · 0.04 / 0.06 · 0.06</td>
+<td>1.3e-4 · 1.1e-5</td>
+<td>"어디" 경로 — 좌우는 측정 안 됨 [11]</td>
+</tr>
+<tr>
+<td>버섯체 KC(상위 종류)</td>
+<td>수백</td>
+<td>2</td>
+<td>0.05~0.20</td>
+<td>큼</td>
+<td>성체 증거 없음 [16]</td>
+</tr>
+<tr>
+<td><code>MBON32</code></td>
+<td>2</td>
+<td>2</td>
+<td>누적 0.09</td>
+<td>6e-7</td>
+<td>냄새 → DNa02 최단 경로 [13]</td>
+</tr>
+<tr>
+<td><code>LAL010</code> · <code>LAL018</code> · <code>DNa03</code></td>
+<td>2 · 2 · 2</td>
+<td>2~3</td>
+<td>누적 0.23 · 0.32 · 0.43</td>
+<td>≤ 1e-6</td>
+<td>조향 전 단계 [13]</td>
+</tr>
+<tr>
+<td><strong><code>DNa02</code></strong> · <code>DNa01</code></td>
+<td>2 · 2</td>
+<td>2 · 3</td>
+<td>누적 <strong>+0.28</strong> · +0.28</td>
+<td>1e-6 · 1e-8</td>
+<td>같은 쪽 냄새 → 같은 쪽 DNa02 발화 ↑ · 회전 속도에 비례 [13]</td>
+</tr>
+<tr>
+<td><code>PFL3</code></td>
+<td>24</td>
+<td>3</td>
+<td><strong>0.00</strong></td>
+<td>5e-6</td>
+<td>목표 방향 오차 · 냄새 좌우 아님 [13]</td>
+</tr>
+<tr>
+<td>부채꼴체 <code>FB5AB</code> · <code>hDeltaC/K</code></td>
+<td>—</td>
+<td>—</td>
+<td>(재지 않음)</td>
+<td>—</td>
+<td>"encode odor, but not wind direction" [14]</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>어느 단계도 좌우 차를 키우지 못한다</strong> — 선형에서는 같은 쪽 편향이 1 을 넘을 수 없고, 실제 최대는 첫 단계 LN 의 0.6~0.75 다.
+  입력 좌우 차가 2 % 면 LN 의 좌우 차는 많아야 약 1.5 % 다. 좌우 대비를 <strong>키우는</strong> 것은 비선형(반대쪽 억제 · 문턱)이고, 그것은 발화 시뮬레이션으로만 볼 수 있다(7절 M1). 측각 3 차 뉴런이 반대쪽 억제로 좌우 대비를 키운다는 보고가 있으나 [18] 커넥톰 종류 이름이 없다.</li>
+<li>문헌이 꼽은 판독 자리 <code>DNa02</code> 는 우리 그래프에서도 <strong>같은 쪽 편향 +</strong>(문헌과 같은 방향)이지만, 냄새에서 닿는 세기가 PN 의 <strong>만분의 일</strong>이다. 냄새 전용도 아니다(열 · 머리 방향 · 시각이 섞임 [13]).
+  게다가 DNa02 는 <strong>디코더가 회전 명령을 넣는 뉴런</strong>이다(<code>config/task.yaml</code> <code>turn_left/right: DNa02</code>) — 채널로 읽으면 교사 명령이 샌다. <strong>채널 후보에서 뺀다.</strong></li>
+<li><code>PFL3</code> 0.00 은 문헌(냄새 좌우 없음)과 맞는다.</li>
+<li><strong>안테나엽 LN 네 종류(26 뉴런)</strong> 가 좌우 대비가 가장 크고 세기도 PN 에 버금간다 — 3 순서의 후보. 지금 냄새 채널은 <code>class: ALPN</code> 만 고른다(<code>config/channels.yaml</code>).
+  문헌에서 이 LN 들의 좌우 기능을 직접 잰 논문은 찾지 못했다 — <strong>근거는 그래프뿐</strong>이다.</li>
+</ul>
+<h3 id="53-맞지-않는-것--il3ln6">5.3 맞지 않는 것 — <code>il3LN6</code></h3>
+<p>Taisz 2023 [11]: <code>il3LN6</code> 은 양쪽에 걸친 GABA 뉴런이고 <strong>반대쪽 ORN 입력이 5 배</strong>(DA1: 1,901 대 359) · 막으면 PN 좌우 차가 줄어든다 [P].
+우리 그래프(ORN 좌우 = 신경 뿌리 쪽 <code>rootSide</code>): <code>il3LN6_R</code> 은 ORN 입력 왼 11,611 · 오른 23,082(<strong>같은 쪽 2 배</strong>) · <code>il3LN6_L</code> 은 왼 14,469 · 오른 15,550(비슷) · 출력은 반대쪽 PN 으로 몰림(<code>il3LN6_L</code> → PN 왼 1,956 · 오른 4,640).
+PN 쪽 비율은 문헌과 방향이 같으므로 ORN 좌우 표시가 통째로 뒤집혔다고 보기는 어렵다. 차이의 원인(수컷 대 암컷 FAFB · 판 차이 · ORN 좌우 표시 · 이름 대응)은 <strong>가르지 못했다</strong>.</p>
+<hr />
+<h2 id="6-④-과제-쪽--좌우가-보이게--판정할-수-있게">6. ④ 과제 쪽 — 좌우가 보이게 · 판정할 수 있게</h2>
+<h3 id="61-기하">6.1 기하</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>수단</th>
+<th>좌우 상대 차 변화(더듬이 기준)</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>먹이를 가깝게(25 → 5 mm)</td>
+<td>×5(1.4 → 6.5 %)</td>
+<td>역제곱에서 1/거리 [코드]</td>
+</tr>
+<tr>
+<td>방위를 옆쪽으로(30° → 90°)</td>
+<td>×2</td>
+<td>정면 근처는 원리적으로 0 — 지금 <code>odor_bearing_deg: [-90, 90]</code> 이라 정면 쪽이 많다</td>
+</tr>
+<tr>
+<td>봉우리 올리기</td>
+<td>거의 0</td>
+<td>로그 인코딩(2절)</td>
+</tr>
+<tr>
+<td>한쪽만 자극</td>
+<td>100 %</td>
+<td>양성 대조(M1)로만 — 과제가 아니다</td>
+</tr>
+<tr>
+<td>바람</td>
+<td>—</td>
+<td>FlyGym 1.x 에 감각 입력 없음 · 몸 코드가 필요</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ 과제 조정 제안: <strong>먹이 5~10 mm · 첫 방위 |45°~90°| 좌우 반씩 층화</strong>. 가까워지면 먹이 도착이 쉬워져 행동 채점의 난도가 바뀐다 — 성적표는 옛 과제와 <strong>따로</strong> 놓는다.</p>
+<h3 id="62-표본-판정력-정규-근사--정확-이항--α-005--검정력-08-조사-계산">6.2 표본 판정력 (정규 근사 + 정확 이항 · α 0.05 · 검정력 0.8) [조사 계산]</h3>
+<ul>
+<li>찍기 0.5 대 0.60: 독립 판정 <strong>양측 194 · 단측 153</strong>(0.65 면 85 · 0.70 이면 47).</li>
+<li>최소 검출 정답률(양측): <strong>40 → 0.715 · 100 → 0.638 · 200 → 0.598 · 400 → 0.570</strong>. 지금 40 에피소드에서 0.60 의 검정력은 <strong>0.21</strong>.</li>
+<li>진짜 배선 0.60 대 섞은 배선 0.50(독립 두 집단): <strong>배선당 약 387</strong>. 같은 씨앗으로 짝지어 돌리면(맥니마 검정) 줄지만 얼마인지는 불일치 비율에 달려 미리 계산 못 함.</li>
+<li><strong>에피소드 안 결정은 독립이 아니다</strong> — 먹이 방향이 에피소드 내내 거의 같다. 에피소드당 결정 9.4 · 안쪽 상관(ICC)이 1 에 가까우면 유효 표본 = 에피소드 수.
+  → <strong>냄새 쪽 칸은 에피소드당 한 표로 센다.</strong> 0.60 을 보려면 약 <strong>200 에피소드</strong>. 평가 40 → 100 은 <strong>0.64 이상만</strong> 가를 수 있다.</li>
+<li>R-7469 F-002 의 "평가 40 → 100+"와 묶을 수 있다: 같은 수집에서 기하 층화(6.1)를 함께 하면 한 번으로 끝난다. 다만 <strong>옛 과제와 새 과제를 한 표에 섞지 않는다.</strong></li>
+</ul>
+<hr />
+<h2 id="7-조율-세션이-돌릴-측정-계획-무엇을--몇-회--예상-시간">7. 조율 세션이 돌릴 측정 계획 (무엇을 · 몇 회 · 예상 시간)</h2>
+<p>시간 근거: <code>fly-loop-v2</code> 에피소드 기록의 뇌 시간(결정 10 개 · 뇌 둘에 133.9 s → <strong>뇌 하나 · 결정 하나(300 ms) 약 6.7 s</strong>) · 수집 실측 300 에피소드 8.2 h(뇌 여섯 · 일꾼 3).
+<code>stim.npz</code> 에 결정마다 100 ms 칸 셋의 자극 발화율(4,551 뉴런)이 남아 있어 <strong>몸 없이 뇌만 재생</strong>할 수 있다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>측정</th>
+<th>무엇을 · 몇 회</th>
+<th>판정</th>
+<th>예상 시간</th>
+<th>먼저 확인</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M0</td>
+<td>센서 번호 결정</td>
+<td>설정 한 줄 · 몸 0.3 s 로 네 센서 값을 적어 둔다</td>
+<td>—</td>
+<td>분</td>
+<td>요구자</td>
+</tr>
+<tr>
+<td><strong>M1</strong></td>
+<td><strong>양성 대조</strong>(한쪽 ORN)</td>
+<td>ORN_DM1+VA2 <strong>왼쪽만 / 오른쪽만</strong> × 발화율 {16, 40, 150 Hz} × 반복 10 × 창 1 s · 진짜 + 재배선 s0 → <strong>120 회</strong> · PN · LN 4 종 · DNa02 좌우 부호와 발화율 차</td>
+<td>진짜 배선의 부호 정답률이 0.9 이상이고 재배선보다 높으면 "회로는 나를 수 있다" · 0.5 면 입력 이전 문제가 아니다</td>
+<td>약 45 분(1 s ≈ 22 s × 120)</td>
+<td>요구자(뇌 반복)</td>
+</tr>
+<tr>
+<td>M1b</td>
+<td>약한 대조</td>
+<td>M1 과 같되 좌우 차 {2, 5, 10, 20 %}(공통 40 Hz) × 반복 10 × 창 {0.3, 1, 3 s} · 진짜만</td>
+<td>좌우 차 몇 % · 몇 초에서 0.75 를 넘나 — 2절 이상적 상한과 나란히</td>
+<td>약 1 시간</td>
+<td>요구자</td>
+</tr>
+<tr>
+<td><strong>M2</strong></td>
+<td><strong>여러 창 선형 검사</strong>(새 시뮬레이션 없음)</td>
+<td><code>fly-loop-v2</code> 특징에서 냄새 채널 좌우 차를 <strong>같은 에피소드의 직전 결정 1 · 3 · 5 · 10 개</strong> 평균 · + 시간 차 특징(총 PN 발화 변화 × 실제 회전 각) · 재배선 s0~s4 같게 · 에피소드 단위 블록 순열 · Holm</td>
+<td>냄새 쪽 칸이 찍기 · 재배선 앙상블 상위 5 % 를 넘나(F-001 기준) — <strong>에피소드당 한 표로도</strong></td>
+<td>CPU 수 분(자료 v2 판정 5 분 실측)</td>
+<td>아니오</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>LN 채널 재생</td>
+<td>평가 40 에피소드 376 결정을 <code>stim.npz</code> 로 뇌만 재생하며 LN 4 종(26 뉴런) 발화 기록 · 진짜 + 재배선 s0</td>
+<td>M2 와 같은 검사에 LN 을 더해 냄새 쪽이 오르나</td>
+<td>약 1.4 시간(376 × 6.7 s × 2)</td>
+<td>요구자</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>과제 v4 수집</td>
+<td>먹이 5~10 mm · 방위 층화 · <strong>평가 200 에피소드</strong>(+ 학습은 조율 세션 판단) · 진짜 + 재배선 s0~s4</td>
+<td>에피소드당 한 표 · 0.60 검출</td>
+<td>약 5.5 시간(8.2 h × 200/300)</td>
+<td>요구자</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>순서의 까닭</strong>: M2 는 공짜라 먼저 해도 되지만, <strong>M0 없이 하면 결과가 작은턱수염 기준</strong>이다(자료 v2 는 작은턱수염으로 모였다) — M2 결과에 그 사실을 적어 둔다.
+M1 이 실패하면(진짜 배선도 0.5) M3 · M4 는 미룬다 — 회로가 한쪽 100 % 자극도 못 나르면 과제를 바꿔도 소용없다.
+M1 · M2 모두 <strong>대조군(재배선)과 나란히</strong> 적는다(R 2.0-6).</p>
+<hr />
+<h2 id="8-확인하지-못한-것--정직-목록">8. 확인하지 못한 것 · 정직 목록</h2>
+<ul>
+<li>걷는 성체가 정적 농도 기울기(바람 없이 20~30 mm)에서 좌우 비교로 원천을 찾는 실험 — <strong>찾지 못함</strong>. Borst &amp; Heisenberg 1982 의 최소 농도비 — 초록 요약만.</li>
+<li>Gaudry 2013 의 40 % 방출 비대칭과 커넥톰 시냅스 비(1.08)가 겹치는지 · ×1.4 가 중복인지.</li>
+<li>FlyGym 작은턱수염 설정 <code>rel_pos</code> ±0.15 mm 인데 잰 간격이 0.6 mm 인 까닭(몸 크기 배율로 추정 · 확인 안 함).</li>
+<li>ORN_DM1 · VA2 가 더듬이 ORN 이라는 것은 일반 지식 [S] — 원문 인용 없음.</li>
+<li>안테나엽 LN 4 종의 좌우 기능 — 문헌 없음 · 근거는 그래프 선형 전파뿐.</li>
+<li><code>il3LN6</code> 불일치(5.3)의 원인 · Taisz 의 DA1 lvPN 에 해당하는 MaleCNS 이름 · Mohamed 2019 의 측각 3 차 뉴런(VLPn)의 커넥톰 이름 · Schlegel 2021 [15] 의 한쪽 전용 ORN 두 종류 이름(보충 표 못 엶).</li>
+<li>Frechter 2019 · Dolan 2019(측각 종류 목록) [X] · Matheson 2022 · Bhandawat 2010 · van Breugel 2014 · Louis 2008 은 초록 또는 2차.</li>
+<li>6.2 의 표본 수는 정규 근사 · 이항 계산이고, 에피소드 안 상관(ICC)은 <strong>재지 않았다</strong>(M2 에서 잴 수 있다).</li>
+<li>7절 시간은 에피소드 기록에서 나눈 <strong>추정</strong>이다 — M1 은 먼저 2 회로 재고 늘린다(무거운 실행 규약).</li>
+</ul>
+<hr />
+<h2 id="참고-문헌">참고 문헌</h2>
+<ol>
+<li>Wang-Chen S., Stimpson V.A., Lobato-Rios V., et al. 2024. NeuroMechFly v2: simulating embodied sensorimotor control in adult Drosophila. <em>Nature Methods</em>. doi:10.1038/s41592-024-02497-y · FlyGym 1.x 소스(<code>config.yaml</code> · <code>fly.py</code> · <code>examples/olfaction/</code>) [P* · 코드]</li>
+<li>Gaudry Q., Hong E.J., Kain J., de Bivort B.L., Wilson R.I. 2013. Asymmetric neurotransmitter release enables rapid odour lateralization in Drosophila. <em>Nature</em> 493:424–428. doi:10.1038/nature11747 · PMC3590906 [P]</li>
+<li>Duistermars B.J., Chow D.M., Frye M.A. 2009. Flies require bilateral sensory input to track odor gradients in flight. <em>Curr Biol</em> 19:1301–1307. doi:10.1016/j.cub.2009.06.022 [P]</li>
+<li>Kadakia N., Demir M., Michaelis B.T., et al. 2022. Odour motion sensing enhances navigation of complex plumes. <em>Nature</em> 611:754–761. doi:10.1038/s41586-022-05423-4 (bioRxiv 10.1101/2021.09.29.462473) [P* bioRxiv · 출판본 A]</li>
+<li>Álvarez-Salvado E., Licata A.M., Connor E.G., et al. 2018. Elementary sensory-motor transformations underlying olfactory navigation in walking fruit-flies. <em>eLife</em> 7:e37815. doi:10.7554/eLife.37815 [P]</li>
+<li>Borst A., Heisenberg M. 1982. Osmotropotaxis in Drosophila melanogaster. <em>J Comp Physiol</em> 147:479–484. doi:10.1007/BF00612013 [S]</li>
+<li>Demir M., Kadakia N., Anderson H.D., Clark D.A., Emonet T. 2020. Walking Drosophila navigate complex plumes using stochastic decisions biased by the timing of odor encounters. <em>eLife</em> 9:e57524. doi:10.7554/eLife.57524 [P]</li>
+<li>van Breugel F., Dickinson M.H. 2014. Plume-tracking behavior of flying Drosophila emerges from a set of distinct sensory-motor reflexes. <em>Curr Biol</em> 24:274–286. doi:10.1016/j.cub.2013.12.023 [A]</li>
+<li>Gomez-Marin A., Stephens G.J., Louis M. 2011. Active sampling and decision making in Drosophila chemotaxis. <em>Nat Commun</em> 2:441. doi:10.1038/ncomms1455 [P]</li>
+<li>Louis M., Huber T., Benton R., Sakmar T.P., Vosshall L.B. 2008. Bilateral olfactory sensory input enhances chemotaxis behavior. <em>Nat Neurosci</em> 11:187–199. doi:10.1038/nn2031 [A]</li>
+<li>Taisz I., Donà E., Münch D., et al. 2023. Generating parallel representations of position and identity in the olfactory system. <em>Cell</em> 186:2556–2573. doi:10.1016/j.cell.2023.04.038 · PMC10403364 [P]</li>
+<li>Semmelhack J.L., Wang J.W. 2009. Select Drosophila glomeruli mediate innate olfactory attraction and aversion. <em>Nature</em> 459:218–223. doi:10.1038/nature07983 [S — <code>config/task.yaml</code> 의 출처]</li>
+<li>Rayshubskiy A., Holtz S.L., Bates A.S., et al. 2025. Neural circuit mechanisms for steering control in walking Drosophila. <em>eLife</em>. doi:10.7554/eLife.102230 · PMC12279373 [P]</li>
+<li>Matheson A.M.M., Lanz A.J., Medina A.M., et al. 2022. A neural circuit for wind-guided olfactory navigation. <em>Nat Commun</em>. doi:10.1038/s41467-022-32247-7 (부록 2024 doi:10.1038/s41467-024-46225-8) [A]</li>
+<li>Schlegel P., Bates A.S., et al. 2021. Information flow, cell types and stereotypy in a full olfactory connectome. <em>eLife</em> 10:e66018. doi:10.7554/eLife.66018 [P]</li>
+<li>The larval Drosophila mushroom body balances lateralized sensing and interhemispheric integration. <em>Sci Adv</em> 2026 · bioRxiv doi:10.1101/2025.03.02.641007 [P bioRxiv · 제1저자 확인 못 함]</li>
+<li>Tobin W.F., Wilson R.I., Lee W.-C.A. 2017. Wiring variations that enable and constrain neural computation in a sensory microcircuit. <em>eLife</em> 6:e24838. doi:10.7554/eLife.24838 [P]</li>
+<li>Mohamed A.A.M., Hansson B.S., Sachse S. 2019. Third-order neurons in the lateral horn enhance bilateral contrast of odor inputs through contralateral inhibition in Drosophila. <em>Front Physiol</em> 10:851. doi:10.3389/fphys.2019.00851 [P/A — 조사 에이전트 둘의 표시가 다름 · 낮은 쪽으로 읽는다]</li>
+<li>Jayaram V., Kadakia N., Emonet T. 2022. Sensing complementary temporal features of odor signals enhances navigation of diverse turbulent plumes. <em>eLife</em> 11:e72415. doi:10.7554/eLife.72415 [A]</li>
+</ol>
+<div class="pager"><a href="13-회로-학습-설계-조사.html">← 13 · 회로 학습 설계 — 조사</a><span></span></div>
+<footer>이 HTML 은 <code>14-냄새-좌우-조사.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>
