@@ -161,6 +161,7 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
                  "channels": loop.table.describe(),
                  "channel_units": {n: c.units for n, c in loop.table.channels.items()},
                  "sensory_map": loop.smap.describe(), "samples": len(writer.rows),
+                 "teacher_rules": meta.get("teacher_rules"),      # 교사는 원본 그대로(묶기에 필요)
                  "wall_s": round(time.time() - t0, 1)})
     return {"samples": len(writer.rows), "out": str(out)}
 
