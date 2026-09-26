@@ -47,7 +47,7 @@
 
 - [x] train-v4 코드(압축 입력 · 채널당 토큰 1 · 칸 가중 1 / 틀 0.1) · 시험(칸 구간 · 가중 손실)
 - [x] 성적표 재배선 앙상블 — `--configs vector,…,rewired-s0,rewired-s1,rewired-s2,no_llm` · `judge()`(scorecard-v2: 먹이 도착이 재배선 전부보다 높고 씨앗별 쌍 부호 뒤집기 p < 0.05 · 재배선 하나면 옛 규칙) · 시험
-- [ ] `train-probe` → **요구자 확인** → 학습(진짜 + 재배선 3) · 평가 · 성적표(씨앗 40)
+- [x] `train-probe` → **요구자 확인** → 학습(진짜 + 재배선 3) · 평가 · 성적표(씨앗 40) — train-v5 · 결과는 [W loop](./20260923-104151-7469_fly-learning-next-loop_walkthrough.md)
 
 ## 최종 검증
 
