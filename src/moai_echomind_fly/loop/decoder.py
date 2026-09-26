@@ -18,6 +18,7 @@ from .signals import side_of
 
 ACTION_KEYS = {"walk", "turn", "turn_strength", "stop", "groom", "note"}
 IDLE = {"walk": 0.0, "turn": "none", "turn_strength": 0.0, "stop": False, "groom": False}
+STOP = {"walk": 0.0, "turn": "none", "turn_strength": 0.0, "stop": True, "groom": False}
 
 
 def parse_action(text: str) -> tuple[dict | None, str]:

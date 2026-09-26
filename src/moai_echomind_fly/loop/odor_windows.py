@@ -96,7 +96,10 @@ def run(dataset: str, rule: dict[str, Any] | None = None) -> dict[str, Any]:
     out: dict[str, Any] = {"dataset": dataset, "when": time.strftime("%Y-%m-%d %H:%M:%S"),
                            "rule": rule, "stats": STATS_RULE, "rewired_brains": brains[1:],
                            "method": f"선형(능선 회귀) · 규제 {FOLDS}겹 교차검증", "brains": {}}
-    episodes = np.array([r["seed"] for r in datasets.load(dataset, "eval", "real")[1]])
+    cut = rule.get("max_decision")   # task-v4 냄새 맡기 구간만(결정 < cut) · 창은 자르기 전에
+    keep_te = np.array([cut is None or r["decision"] < cut
+                        for r in datasets.load(dataset, "eval", "real")[1]])
+    episodes = np.array([r["seed"] for r in datasets.load(dataset, "eval", "real")[1]])[keep_te]
     for brain in brains:
         ftr, rtr = datasets.load(dataset, "train", brain)
         fte, rte = datasets.load(dataset, "eval", brain)
@@ -109,7 +112,11 @@ def run(dataset: str, rule: dict[str, Any] | None = None) -> dict[str, Any]:
             wtr, wte = window_mean(xtr, rtr, k), window_mean(xte, rte, k)
             sets[f"win{k}"] = (wtr, wte)
             sets[f"win{k}+delta"] = (np.hstack([wtr, dtr]), np.hstack([wte, dte]))
-        raw[brain] = {name: ProbeSet(a, b).field(ytr, yte) for name, (a, b) in sets.items()}
+        ktr = np.array([cut is None or r["decision"] < cut for r in rtr])
+        ytr = [y for y, k in zip(ytr, ktr) if k]
+        yte = [y for y, k in zip(yte, keep_te) if k]
+        raw[brain] = {name: ProbeSet(a[ktr], b[keep_te]).field(ytr, yte)
+                      for name, (a, b) in sets.items()}
         out["brains"][brain] = {name: _public(r) for name, r in raw[brain].items()}
     cells: dict[str, dict[str, Any]] = {}
     for name, r in raw["real"].items():
@@ -124,7 +131,8 @@ def run(dataset: str, rule: dict[str, Any] | None = None) -> dict[str, Any]:
 
 
 def main(args) -> int:
-    rule: dict[str, Any] = {"channel": args.channel}
+    rule: dict[str, Any] = {"channel": args.channel,
+                            "max_decision": args.max_decision or None}
     if args.windows:
         rule["windows"] = [int(k) for k in args.windows.split(",")]
     res = run(args.dataset, rule)
@@ -148,4 +156,6 @@ def register(sub) -> None:
     p.add_argument("--dataset", default="fly-loop-v2")
     p.add_argument("--windows", default="", help="누적 결정 수 목록(기본 1,3,5,10)")
     p.add_argument("--channel", default="smell", help="읽을 채널(channels-v3 의 smell_ln 등)")
+    p.add_argument("--max-decision", type=int, default=0,
+                   help="결정 번호 < N 만 채점(task-v4 냄새 맡기 구간 = 4) · 0 이면 전부")
     p.set_defaults(func=main)

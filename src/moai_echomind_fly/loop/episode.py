@@ -21,7 +21,7 @@ from ..graph import Graph
 from ..protocols import LoomSpec
 from ..sim import Engine, LIFParams
 from . import teacher
-from .decoder import IDLE, Decoder
+from .decoder import IDLE, STOP, Decoder
 from .encoder import Encoder, SensoryMap, build_map
 from .signals import ChannelTable, ChannelVector, SignalReader
 from .world import BodyClient, Obs, make_task, truth_of
@@ -133,6 +133,8 @@ class Loop:
             tp = time.time()
             action, info = policy(vectors, truth, obs, d)
             timing["policy_s"] += time.time() - tp
+            if d < int(ep.get("sniff_decisions", 0)):   # task-v4 냄새 맡기 — 몸을 세워 둔다
+                action, info = dict(STOP), {**info, "sniff": True}
             step = Step(d, obs.t_ms, truth, teacher.caption(truth), teacher.action(truth), action,
                         info.get("source", "?"), reflex_bins, drive, info)
             steps.append(step)
@@ -181,7 +183,8 @@ class DatasetWriter:
                 per[n].append(v.features(t.rate_scale_hz, t.depol_scale_mV))
         self.rows.append({"seed": seed, "decision": step.decision, "t_ms": step.t_ms,
                           "truth": step.truth.__dict__, "caption": step.caption,
-                          "teacher_action": step.teacher_action, "reflex_bins": step.reflex_bins})
+                          "teacher_action": step.teacher_action, "action": step.action,
+                          "reflex_bins": step.reflex_bins})
 
     def save(self, meta: dict[str, Any]) -> None:
         for brain, per in self.feats.items():

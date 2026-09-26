@@ -1,6 +1,8 @@
 # C 단계 과제 · 감각 인코더 · 행동 디코더 (R-3340 F-010 · F-011 · F-014)
 # 값마다 출처 또는 "선언" 을 적는다 — 선언한 값은 정직 목록에 그대로 실린다.
-version: task-v2.1 # 2026-09-26 — task-v2 + 냄새 센서를 더듬이(2 · 3)로 바로잡음(연구 노트 14 §3.1). 옛 판 config/archive/task-v2.yaml · task-v1.yaml
+version: task-v4   # 2026-09-26 — task-v2.1 + 냄새 맡기 구간(처음 결정 몇 개는 몸을 세워 둠) · 먹이 가깝게 · 옆 방위(연구 노트 14 M4 · 요구자 "냄새 맡기 구간 · 작은 시험 먼저").
+#   task-v3 이름은 R-7469 F-007(냄새 둘 CS+/CS−)에 예약. 옛 판 config/archive/task-v2.1.yaml · task-v2.yaml · task-v1.yaml
+# task-v2.1 = 2026-09-26 — task-v2 + 냄새 센서를 더듬이(2 · 3)로 바로잡음(연구 노트 14 §3.1)
 # task-v2 = 2026-09-23 — task-v1 + 물체 고도 · 시야 자리별(고도) LC 입력(R-7469 F-008)
 
 episode:
@@ -8,10 +10,12 @@ episode:
   max_decisions: 20         # 6 s
   reach_mm: 2.0             # 먹이 도착(teacher.REACH_MM 과 같다)
   hit_mm: 1.0               # 다가오는 물체가 반지름 + 이만큼 안으로 들어오면 부딪힘
+  sniff_decisions: 4        # task-v4 — 처음 이만큼(4 × 300 ms = 1.2 s) 몸을 세워 둔다(실행 행동 = 멈춤 · 교사 정답은 그대로).
+                            #   M1b: LN4 는 좌우 차 5~10 % 가 1 s 이상 일정할 때 가름(runs/odor-contrast-20260926-184048.json) — 선언
 
 world:                      # 씨앗으로 뽑는다 — 선언
-  odor_distance_mm: [20, 30]
-  odor_bearing_deg: [-90, 90]      # 파리 첫 방향 기준(+ 왼쪽)
+  odor_distance_mm: [6, 10]        # task-v4(옛 [20, 30]) — 더듬이 좌우 차 ≈ 0.342·sin(방위)/거리 → 6~10 mm · 옆 90° 에서 3.4~5.7 %(노트 14 §3.1 · §6.1)
+  odor_bearing_abs_deg: [45, 90]   # task-v4 — 첫 방위 크기(좌우는 씨앗으로 반씩 · + 왼쪽). 옛 odor_bearing_deg: [-90, 90] 은 정면 쪽이 많았다
   odor_peak: 500.0                 # FlyGym OdorArena 봉우리(거리 제곱에 반비례)
   looming_probability: 0.6
   looming_t0_ms: [600, 2400]

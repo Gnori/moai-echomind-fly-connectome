@@ -40,7 +40,11 @@ def make_task(seed: int, cfg: dict[str, Any]) -> dict[str, Any]:
     w = cfg["world"]
     rng = np.random.default_rng(seed)
     d = rng.uniform(*w["odor_distance_mm"])
-    b = math.radians(rng.uniform(*w["odor_bearing_deg"]))
+    if "odor_bearing_abs_deg" in w:   # task-v4 — 옆 방위 · 좌우 반씩
+        side = 1.0 if rng.random() < 0.5 else -1.0
+        b = math.radians(side * rng.uniform(*w["odor_bearing_abs_deg"]))
+    else:
+        b = math.radians(rng.uniform(*w["odor_bearing_deg"]))
     task: dict[str, Any] = {"odor_xy": [d * math.cos(b), d * math.sin(b)],
                             "odor_peak": w["odor_peak"], "heading0": 0.0}
     if rng.random() < w["looming_probability"]:

@@ -140,7 +140,7 @@ def test_retinotopic_encoder_prefers_lc_at_object_elevation():
 
 def test_task_v2_keeps_v1_draws_and_adds_elevation():
     v1 = config.load("task", version="task-v1")
-    v2 = config.load("task")
+    v2 = config.load("task", version="task-v2")
     seed = next(s for s in range(50) if "looming" in make_task(s, v1))
     a, b = make_task(seed, v1), make_task(seed, v2)
     assert a["odor_xy"] == b["odor_xy"]
@@ -236,3 +236,21 @@ def test_loo_threshold_accuracy_ignores_shared_bias():
     rng = np.random.default_rng(0)
     same = _loo_threshold_acc(rng.normal(size=200), rng.normal(size=200))
     assert 0.35 < same < 0.65
+
+
+def test_task_v4_places_food_near_and_to_the_side():
+    """task-v4 — 먹이 6~10 mm · 첫 방위 |45~90°| · 좌우 반씩(노트 14 M4)."""
+    import math
+
+    from moai_echomind_fly import config
+    from moai_echomind_fly.loop.world import make_task
+
+    cfg = config.load("task")
+    assert cfg["version"] == "task-v4" and cfg["episode"]["sniff_decisions"] == 4
+    sides = []
+    for seed in range(200):
+        x, y = make_task(seed, cfg)["odor_xy"]
+        d, b = math.hypot(x, y), math.degrees(math.atan2(y, x))
+        assert 6.0 <= d <= 10.0 and 45.0 <= abs(b) <= 90.0
+        sides.append(b > 0)
+    assert 0.35 < sum(sides) / len(sides) < 0.65

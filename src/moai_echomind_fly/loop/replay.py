@@ -139,7 +139,7 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
                         r, d, _ = br.bin(sens, dn)
                         bins[name].append((r, d))
                 dn_prev = dn_new
-                prev = row["teacher_action"]   # 다음 결정의 하강 뉴런 명령(원본과 같게)
+                prev = row.get("action", row["teacher_action"])   # 실행한 행동(task-v4 냄새 맡기)
                 vectors = {n: loop.brains[n].reader.assemble(bins[n]) for n in loop.brains}
                 truth = Truth(**{k: (tuple(v) if isinstance(v, list) else v)
                                  for k, v in tr.items()})
