@@ -106,6 +106,7 @@
 <p>1부 초파리 뇌 · 넷째 장. 코드: <code>src/moai_echomind_fly/loop/{world,encoder,signals,decoder,episode}.py</code> · <code>retino.py</code> · <code>inspect.py</code> · <code>body/fly_body_server.py</code> ·
 설정 <code>config/task.yaml</code> · <code>config/channels.yaml</code> · <code>config/retino.yaml</code>. 배경: <a href="../research/fly-connectome/06-설계-초파리-회로에-Qwen-뇌.html">연구 노트 06 §2 ~ §5</a> · <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">11 §4 · §5</a> · <a href="../research/fly-connectome/12-다음-학습-조사.html">12 §9(3차원)</a>.</p>
 <p>▶ <strong>2026-09-23 판이 올랐다</strong> — <code>task-v2</code>(물체 고도 · 시야 자리별 입력) · <code>retino-v1</code>(시각 투사 뉴런의 고도) · <code>channels-v2</code>(공간 채널) · <code>sim-v2</code>(냄새 좌우 · 02장). 옛 판은 <code>config/archive/</code>.
+▶ <strong>2026-09-26</strong> — <code>task-v2.1</code>(냄새 센서를 더듬이로 바로잡음) · <code>task-v4</code>(냄새 맡기 구간 · 먹이 가깝게 · 옆 방위) · <code>channels-v3</code>(후각 국소 뉴런 <code>smell_ln</code>) — 3.3절 · 5.1절.
 지금 있는 자료 <code>fly-loop-v1</code> 은 <strong>옛 판</strong>(task-v1 · channels-v1 · sim-v1)으로 모은 것이고, 새 판으로 모으는 <code>fly-loop-v2</code> 는 06장. 요구사항 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> F-003 · F-008.</p>
 </blockquote>
 <h2 id="1-이-장에서-하는-일">1. 이 장에서 하는 일</h2>
@@ -143,7 +144,7 @@
 </tr>
 <tr>
 <td>냄새</td>
-<td><code>OdorArena</code> — 먹이(식초) 냄새 원 하나 · 농도는 거리 제곱에 반비례 · 더듬이 센서 0 = 왼쪽 · 1 = 오른쪽(실측)</td>
+<td><code>OdorArena</code> — 먹이(식초) 냄새 원 하나 · 농도는 거리 제곱에 반비례 · 센서 <strong>2 = 왼 더듬이 · 3 = 오른 더듬이</strong>(<code>task-v2.1</code> · <code>config/task.yaml</code> <code>sensors</code>). ⚠️ 그 전(task-v1 · v2)은 0 · 1 을 더듬이로 알고 썼는데 <strong>작은턱수염</strong>이었다 — 자료 <code>fly-loop-v2</code> · v5 결과는 작은턱수염 기준(3.3)</td>
 </tr>
 <tr>
 <td>다가오는 물체</td>
@@ -152,6 +153,10 @@
 <tr>
 <td>몸 자세(task-v2)</td>
 <td>결정마다 몸의 오일러 각(FlyGym ZYX — 방향 · 앞뒤 기울기 · 좌우 기울기)과 머리 높이를 기록한다 — 자료에만 남긴다(캡션 서식은 그대로)</td>
+</tr>
+<tr>
+<td>냄새 맡기 구간(task-v4)</td>
+<td>처음 4 결정(1.2 s)은 몸을 세워 둔다 — 실행 행동은 멈춤 · 교사 정답은 그대로. 좌우 차가 1 s 이상 일정한 구간을 만들려고(3.3)</td>
 </tr>
 <tr>
 <td>지형</td>
@@ -164,7 +169,7 @@
 </tbody>
 </table></div>
 <p>과제는 씨앗으로 뽑는다(<code>world.make_task</code> · <code>config/task.yaml</code> 의 <code>world</code>):
-냄새 원 거리 20~30 mm · 방향 −90°~+90° · 60 % 확률로 다가오는 물체(0.6~2.4 s 에 25 mm 밖에서 25 mm/s 로) ·
+냄새 원 거리 20~30 mm · 방향 −90°~+90°(<strong>task-v4: 4~7 mm · 옆 방위 45~90° · 좌우 반씩</strong>) · 60 % 확률로 다가오는 물체(0.6~2.4 s 에 25 mm 밖에서 25 mm/s 로) ·
 <strong>물체 시작 고도 −30°~+60°</strong>(task-v2 · 선언 · 맨 뒤에 뽑아서 앞선 뽑기 순서가 v1 과 같다 — 시험 <code>test_task_v2_keeps_v1_draws_and_adds_elevation</code>).</p>
 <h2 id="3-감각-인코더--세계를-감각-뉴런-발화율로">3. 감각 인코더 — 세계를 감각 뉴런 발화율로</h2>
 <p>뉴런은 <strong>주석 칸으로만</strong> 고른다(손으로 고른 목록 없음 · 채운 수 0). 대응표는 <code>encoder.build_map</code> 이 만든다.</p>
@@ -202,7 +207,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>모든 상수는 <code>config/task.yaml</code>(판 <code>task-v2</code>)에 출처 또는 "선언"과 함께 있다 — 선언한 값은 결과 보고의 정직 목록에 그대로 실린다.
+<p>모든 상수는 <code>config/task.yaml</code>(판 <code>task-v4</code> · 옛 판 <code>config/archive/</code>)에 출처 또는 "선언"과 함께 있다 — 선언한 값은 결과 보고의 정직 목록에 그대로 실린다.
 <code>vision.mode: lr_sigmoid</code> 로 두면 v1 방식(좌우만)이다.</p>
 <h3 id="31-시야-자리--lc-마다-고도-retino-v1--fly-connectome-retinotopy-build">3.1 시야 자리 — LC 마다 고도 (<code>retino-v1</code> · <code>fly-connectome retinotopy build</code>)</h3>
 <p>v1 은 LC/LPLC 를 <strong>왼쪽 · 오른쪽 두 덩어리</strong>로만 켰다 — 입력에 고도가 없으면 무엇을 배워도 3차원이 아니다.
@@ -297,7 +302,40 @@
 </tr>
 </tbody>
 </table></div>
-<p>→ <strong>한 결정 창(300 ms)에서는 입력부터 좌우가 잡음보다 작다.</strong> 냄새 쪽 칸은 판정에서 뺀다(<code>stats-v2</code> · 09장). 생체처럼 <strong>시간을 두고</strong>(돌며 농도 변화) 읽는 방식은 후보로 남겼다.</p>
+<p>→ <strong>한 결정 창(300 ms)에서는 입력부터 좌우가 잡음보다 작다.</strong> 냄새 쪽 칸은 판정에서 뺀다(<code>stats-v2</code> · 09장). 생체처럼 <strong>시간을 두고</strong>(돌며 농도 변화) 읽는 방식은 후보로 남겼다.
+(⚠️ 위 4.4 % · 0.508 은 작은턱수염 기준이다 — 3.3.)</p>
+<h3 id="33-냄새-좌우-다시--센서--회로--과제-2026-09-26--연구-노트-14-m0m4">3.3 냄새 좌우 다시 — 센서 · 회로 · 과제 (2026-09-26 · <a href="../research/fly-connectome/14-냄새-좌우-조사.html">연구 노트 14</a> M0~M4)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>단계</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>센서(M0 · <code>task-v2.1</code>)</td>
+<td>0 · 1 은 <strong>작은턱수염</strong>이었다 → 더듬이 2 · 3 으로. 좌우 차는 오히려 작아진다(25 mm · 옆 90° 에서 4.8 % → 1.37 %)</td>
+</tr>
+<tr>
+<td>회로가 나를 수 있나(M1 · 한쪽 ORN 100 %)</td>
+<td>투사 뉴런 부호 정답률 1.000(재배선 0.358) — <strong>나른다.</strong> 그러나 차가 바탕의 <strong>2~4 %</strong> 뿐이고, 조향 하강 뉴런 <strong>DNa02 는 0 Hz</strong>(냄새가 조향 출력까지 닿지 않음)</td>
+</tr>
+<tr>
+<td>약한 좌우 차(M1b · 2~20 % × 0.3~3 s)</td>
+<td>입력(ORN)은 2 % 부터 가르는데 <strong>투사 뉴런에서 거의 다 사라진다</strong>(20 % · 3 s 에서야). <strong>안테나엽 국소 뉴런 4 종(LN4)은 5~10 % · 1 s 이상에서 가른다</strong> → 채널 <code>smell_ln</code>(5.1)</td>
+</tr>
+<tr>
+<td>옛 과제로 읽기(M2 · M3)</td>
+<td>여러 창 누적 · LN4 채널로도 찍기(0.556)와 구별 안 됨(최고 0.588) — 파리가 결정마다 돌아 <strong>1 s 이상 일정한 좌우 차 구간이 거의 없다</strong></td>
+</tr>
+<tr>
+<td>과제를 바꿈(M4 · <code>task-v4</code> 작은 시험)</td>
+<td>냄새 맡기 구간(처음 4 결정 몸 세움) · 먹이 4~7 mm · 옆 방위 → <strong>처음으로 찍기와 구별</strong>: 전체 · LN4 10 누적 <strong>0.682</strong>(재배선 0.367 · 찍기 0.485 · p 0.006) · 냄새 맡기 구간 · LN4 2 누적 0.650(찍기 0.500 · p 0.031 · 재배선 대비 Holm 0.065 경계) · 투사 뉴런은 불통</td>
+</tr>
+</tbody>
+</table></div>
+<p>수치 정본은 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> F-003. 재배선 하나 · 평가 40 이라 전체 수집 <code>fly-loop-v4</code>(평가 200 · 재배선 셋)로 다시 본다. 신호 단계 결과라 성적표 문구 규칙(R 2.0-6)은 그대로다.</p>
 <h2 id="4-행동-디코더--두-방향">4. 행동 디코더 — 두 방향</h2>
 <h3 id="41-행동--하강-뉴런명령">4.1 행동 → 하강 뉴런(명령)</h3>
 <p>LLM 이나 교사가 낸 행동 JSON <code>{"walk":0~1, "turn":"left|right|none", "turn_strength":0~1, "stop":bool, "groom":bool}</code> 을
@@ -339,7 +377,7 @@
 <p><strong>반사 우선</strong>: 그 구간에 거대섬유(DNp01)가 한 번이라도 발화하면 명령 대신 <strong>멈춘다</strong>(FlyGym 은 도약을 못 한다).</p>
 <h2 id="5-신호-읽기--채널-벡터-10개">5. 신호 읽기 — 채널 벡터 10개</h2>
 <p>2부에서 LLM 에 넘기는 것이 이것이다. 요구자: <em>"초파리의 다양한 신호 데이터를 벡터화해서 LLM"</em> · <em>"성적인 전기신호 데이터까지도 · 시신경 · 촉각"</em> · <em>"3차원 공간은 어떻게 학습 시켜야해?"</em>.</p>
-<h3 id="51-채널--configchannelsyaml판-channels-v2--옛-판-configarchivechannels-v1yaml">5.1 채널 — <code>config/channels.yaml</code>(판 <code>channels-v2</code> · 옛 판 <code>config/archive/channels-v1.yaml</code>)</h3>
+<h3 id="51-채널--configchannelsyaml판-channels-v3--옛-판-configarchivechannels-v2yaml--channels-v1yaml">5.1 채널 — <code>config/channels.yaml</code>(판 <code>channels-v3</code> · 옛 판 <code>config/archive/channels-v2.yaml</code> · <code>channels-v1.yaml</code>)</h3>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -383,6 +421,14 @@
 <td>686</td>
 <td>358</td>
 <td>2,148</td>
+</tr>
+<tr>
+<td><strong>smell_ln 후각 국소</strong>(v3 새로)</td>
+<td>type = 안테나엽 국소 뉴런 4 종(<code>v2LN3A1_b</code> · <code>lLN2X02</code> · <code>lLN15</code> · <code>lLN2F_b</code>) — 좌우를 투사 뉴런보다 잘 가름(3.3)</td>
+<td>종류</td>
+<td>26</td>
+<td>8</td>
+<td>48</td>
 </tr>
 <tr>
 <td>taste 미각</td>
@@ -438,7 +484,7 @@
 <td></td>
 <td></td>
 <td></td>
-<td><strong>33,402</strong>(v1 31,950)</td>
+<td><strong>33,450</strong>(v2 33,402 · v1 31,950)</td>
 </tr>
 </tbody>
 </table></div>
@@ -497,7 +543,7 @@
 </tr>
 <tr>
 <td>냄새 좌우가 채널에 남나</td>
-<td>❌ 한 창에서는 입력부터 잡음 아래(3.2) → 냄새 쪽 칸 판정 제외</td>
+<td>❌ 한 창에서는 입력부터 잡음 아래(3.2) → 냄새 쪽 칸 판정 제외 · ✅ <strong>task-v4 작은 시험에서 LN4 가 처음 찍기와 구별</strong>(0.682 대 0.485 · 3.3)</td>
 </tr>
 <tr>
 <td>나침반 봉우리가 방향을 따라가나</td>

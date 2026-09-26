@@ -706,6 +706,59 @@ M1 · M2 모두 <strong>대조군(재배선)과 나란히</strong> 적는다(R 2
 <li>7절 시간은 에피소드 기록에서 나눈 <strong>추정</strong>이다 — M1 은 먼저 2 회로 재고 늘린다(무거운 실행 규약).</li>
 </ul>
 <hr />
+<h2 id="9-측정-결과-조율-세션--2026-09-26">9. 측정 결과 (조율 세션 · 2026-09-26)</h2>
+<p>7절 계획을 M0 → M2 → M1 → M1b → M3 → M4 순서로 돌렸다. 수치 정본은 <a href="../../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469 F-003 인수 기준</a> — 여기는 옮긴 것이다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>판 · 파일</th>
+<th>결과</th>
+<th>판정</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M0</td>
+<td><code>task-v2.1</code>(<code>6da977f</code>)</td>
+<td>센서를 작은턱수염(0 · 1) → 더듬이(2 · 3)로. 간격 0.60 mm → 0.171 mm · 좌우 차 4.8 % → 1.37 %(25 mm · 옆 90°). 자료 v2 · v5 결과 · 1절 값(4.4 % · 0.508)은 작은턱수염 기준</td>
+<td>고침</td>
+</tr>
+<tr>
+<td>M2</td>
+<td><code>odor-windows-v1</code>(<code>9ac0214</code>) · <code>runs/odor-windows-20260926-173621.json</code> · CPU 3 분 38 초 · 자료 v2(작은턱수염)</td>
+<td>누적 1 · 3 · 5 · 10: 진짜 0.543 · 0.529 · 0.537 · 0.524 · 찍기 0.556 · 시간 차만 0.516. 규칙상 통과 1 칸(10 누적 + 시간 차 0.590 · 재배선 0.539 · Holm 0.021)은 찍기 대비 p 0.166. ICC −0.02~0.08(6.2 의 "1 에 가까움" 가정과 다름)</td>
+<td>❌ 찍기와 구별 안 됨</td>
+</tr>
+<tr>
+<td>M1</td>
+<td><code>odor-control-v1</code>(<code>e38348d</code>) · <code>runs/odor-control-20260926-175017.json</code> · 725 s · 120 회 · 최대 1.7 GB</td>
+<td>한쪽 ORN(왼 68 · 오른 80) {16, 40, 150 Hz} × 10 × 1 s. 투사 뉴런 부호 <strong>1.000</strong>(60/60) · 재배선 0.358. 좌우 차 0.35~1.05 Hz(바탕 약 26 Hz 의 2~4 %) · d′ 7.7~15.5. LN4 규칙상 0.500(바탕 치우침) · 사후 문턱 1.000 · d′ 10~36. <strong>DNa02 0 Hz</strong>(150 Hz 에도)</td>
+<td>✅ 회로는 나른다 · 차가 작고 출력 경로 침묵</td>
+</tr>
+<tr>
+<td>M1b</td>
+<td><code>odor-contrast-v1</code>(<code>8c2fff5</code>) · <code>runs/odor-contrast-20260926-184048.json</code> · 2,005 s · 240 회</td>
+<td>공통 40 Hz · 좌우 차 {2, 5, 10, 20 %} × 창 {0.3, 1, 3 s} · 문턱 0.75. ORN 2 % · 3 s 0.90 · 5 % 0.3 s 부터 0.90. 투사 뉴런은 20 % · 3 s 에서야 0.75. <strong>LN4 5 % · 1 s 0.85 · 10 % · 3 s 0.80 · 20 % · 1 s 0.95</strong></td>
+<td>투사 뉴런에서 사라짐 · LN4 는 5~10 % · 1 s 이상</td>
+</tr>
+<tr>
+<td>M3</td>
+<td><code>channels-v3</code>(<code>smell_ln</code> · <code>efa0104</code> · <code>338a252</code>) · 자료 <code>fly-loop-v2-ln</code>(v2 를 뇌만 재생 · 진짜 + s0 · 34 분 + 71 분) · <code>runs/odor-windows-20260926-203726.json</code> · <code>-203733.json</code></td>
+<td>재생 검증 최대 차 0(직전 교사 행동을 넘기지 않던 버그를 이때 고침). LN4 최고 0.588(5 누적) · 투사 뉴런 0.574 · 찍기 0.556 — 규칙상 통과 4 칸은 재배선 침묵 때문 · 찍기 대비 p ≥ 0.18. (사후 · 탐색) 좌우 차 ≥ 5 % / ≥ 10 % 결정만: LN4 0.594/0.575 · 0.672/0.627</td>
+<td>❌ 구별 안 됨 — 과제가 먼저</td>
+</tr>
+<tr>
+<td>M4</td>
+<td><code>task-v4</code>(<code>62837b2</code> · <code>abcb4ba</code>) · 자료 <code>fly-loop-v4-pilot</code>(학습 60 · 평가 40 · 진짜 + s0 · 48 분) · <code>runs/odor-windows-20260926-2231{19,21,22,24}.json</code></td>
+<td>먹이 6~10 mm 몸 확인에서 냄새 맡기 좌우 차 3.5~3.9 % → 뇌 결과 전에 4~7 mm 로. 냄새 맡기 구간 · LN4 2 누적 <strong>0.650</strong>(재배선 0.487 · 찍기 0.500 · p 0.031 · Holm 0.065) · 전체 · LN4 10 누적 <strong>0.682</strong>(0.367 · 0.485 · p 0.006 · Holm 0.001) · 10 누적 + 시간 차 0.700(0.570 · p 0.003 · Holm 0.016) · 투사 뉴런 0.41~0.60 불통</td>
+<td>✅ <strong>처음으로 찍기와 구별</strong>(LN4) · 재배선 대비 Holm 은 냄새 맡기 구간에서 경계</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>읽는 법</strong>: 좌우 정보는 입력(ORN)에 있고 회로도 나를 수 있다(M1) — 사라지는 곳은 <strong>투사 뉴런 단계</strong>이고, <strong>LN4 가 1 s 이상 일정한 약한 차</strong>를 가른다(M1b).
+옛 과제에는 그런 구간이 없어 채널 · 읽는 법만으로는 오르지 않았고(M2 · M3), 과제에 냄새 맡기 구간을 넣자 처음 구별됐다(M4).
+한계: 재배선 하나(후각 침묵) · 평가 40 — 전체 수집 <code>fly-loop-v4</code>(학습 200 · 평가 200 · 진짜 + s0~s2)로 다시 판정한다. 성적표(행동)는 아직이다.</p>
 <h2 id="참고-문헌">참고 문헌</h2>
 <ol>
 <li>Wang-Chen S., Stimpson V.A., Lobato-Rios V., et al. 2024. NeuroMechFly v2: simulating embodied sensorimotor control in adult Drosophila. <em>Nature Methods</em>. doi:10.1038/s41592-024-02497-y · FlyGym 1.x 소스(<code>config.yaml</code> · <code>fly.py</code> · <code>examples/olfaction/</code>) [P* · 코드]</li>
