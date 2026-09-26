@@ -8,6 +8,8 @@
   최신 `bump-check-*.json` · `projector-*/eval-caption-*.json`(칸별 정확도 · 찍기) ·
   최신 `scorecard-*/scorecard.json`(도착률 · `wording` 그대로)
 - `data/datasets/*/meta.json` · 백업 `BACKUP.md` 의 마지막 복사 줄
+- 2단계(R-5777): 캡션 표본 `samples.html` · 성적표 에피소드 `episodes.html` 을 같은 주기로 옆에
+  (`dashboard_debug` — 원본이 그대로면 다시 쓰지 않음)
 
 읽기만 한다 — 어떤 실행도 시작하지 않고 잠금도 만지지 않는다. 표준 라이브러리만.
 남은 시간 = 실측 s/걸음 × 남은 걸음.
@@ -37,7 +39,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Callable
 
-from . import config, paths
+from . import config, dashboard_debug, paths
 
 NONE = "아직 없음"
 
@@ -375,7 +377,7 @@ def read_scorecard(runs: Path, pattern: str) -> dict[str, Any]:
         return {"path": str(path.parent.name), "error": "읽기 실패"}
     return {"path": path.parent.name, "configs": s.get("configs") or {},
             "seeds": len(s.get("seeds") or []), "beats": s.get("vector_beats_rewired"),
-            "wording": s.get("wording"), "judge": s.get("judge")}
+            "wording": s.get("wording"), "judge": s.get("judge") or s.get("judgement")}
 
 
 def read_datasets(datasets_dir: Path, pattern: str) -> list[dict[str, Any]]:
@@ -705,10 +707,14 @@ def _compare_judge(j: dict[str, Any] | None, alpha: float | None = None) -> str:
         rows.append([FIELD_KO.get(k, k), _f(c["real"]),
                      " · ".join(_f(v) for v in c["rewired"]["values"]), _f(c["baseline"]),
                      f'{c["episodes"]} / {c["decisions"]}', _f(c.get("p_holm")), _f(pb),
-                     verdict])
+                     verdict,
+                     f'<a href="samples.html#f={_e(k)}&amp;m=only_right">진짜만 맞음</a> · '
+                     f'<a href="samples.html#f={_e(k)}&amp;m=only_wrong">진짜만 틀림</a>'])
     return ("<h3>판정(에피소드 단위 검정 · Holm · stats-v2)</h3>"
             + _table(["칸", "진짜", "재배선 s0 · s1 · s2", "찍기", "에피소드 / 표본", "Holm p",
-                      "찍기 대비 p", "판정"], rows))
+                      "찍기 대비 p", "판정", "표본 보기"], rows)
+            + '<p class="muted">표본 하나씩 — '
+            '<a href="samples.html">캡션 표본(뇌 넷 나란히)</a></p>')
 
 
 def _compare_scored(ps: list[dict[str, Any]]) -> str:
@@ -878,7 +884,8 @@ def _section_scorecard(s: dict[str, Any]) -> str:
                  f' · p {_f(judge.get("p_sign_flip"))}' if judge else "")
     wording = f'<div class="wording">{_e(s["wording"])}</div>' if s.get("wording") else ""
     return (f'<h3>성적표 — <code>{_e(s["path"])}</code></h3>'
-            f'<p class="muted">씨앗 {s.get("seeds")} · {beats_txt}{judge_txt}</p>'
+            f'<p class="muted">씨앗 {s.get("seeds")} · {beats_txt}{judge_txt}'
+            ' · <a href="episodes.html">에피소드 · 결정 보기</a></p>'
             + _table(["구성", "먹이 도착률", "끝 거리 mm", "회피율", "형식 위반"], rows) + wording)
 
 
@@ -910,6 +917,7 @@ def render(d: dict[str, Any]) -> str:
 <body>
 <h1>초파리 실행 대시보드</h1>
 <p class="sub">{_e(d['version'])} · {_e(d['runs'])} · 읽기 전용 · 자료 <code>state.json</code>
+ · <a href="samples.html">캡션 표본</a> · <a href="episodes.html">성적표 에피소드</a>
  · {links}</p>
 <h2>지금 상태</h2>
 {_section_status(d)}
@@ -938,6 +946,9 @@ def build(runs: Path | None = None, datasets_dir: Path | None = None,
     out = runs / cfg["out_dir"] / "index.html"
     out.parent.mkdir(parents=True, exist_ok=True)
     state = collect(runs, datasets_dir, backup_md, cfg, memory_free)
+    # 2단계(R-5777) — 표본 · 에피소드 두 쪽을 같은 주기로(원본이 그대로면 건너뜀) · 요약만 state 에
+    judged = list((state.get("caption_judge") or {}).get("cells") or {})
+    state["debug"] = dashboard_debug.build_pages(runs, out.parent, cfg, CSS, FIELD_KO, judged)
     # 자료 파일(R-7347 · 요구자 "데이터 파일로 가지고 있고 주기적으로 갱신") — 화면과 같은 덩어리를
     # runs/<out_dir>/state.json 에 둔다. 세션 · 스크립트는 HTML 이 아니라 이것을 읽는다.
     state_path = out.parent / cfg.get("state_file", "state.json")

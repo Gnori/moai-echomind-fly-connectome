@@ -18,6 +18,13 @@ globs:                   # runs/ 안에서 읽을 자리(가장 최근 것을 �
   bump: "bump-check-*.json"
   scorecard: "scorecard-*"
   eval_caption: "eval-*.json"        # eval-scored-*(채점 v2) · eval-caption-*(생성 v1) 둘 다
+debug:                   # 2단계(R-5777) — 결정 하나 단위 두 쪽 · index.html 옆에 같은 주기로(원본이 그대로면 건너뜀)
+  samples_page: samples.html        # F-001 캡션 표본 — projector-<뇌>-<train_rule>/eval-scored-<저장본>.json 의 per_sample
+  episodes_page: episodes.html      # F-003 성적표 에피소드 — 최신 scorecard-*/<구성>.jsonl · <구성>.decisions.jsonl
+  checkpoints: [final, stage1-caption]
+  max_samples: 5000                 # 표본 상한(v5 = 376)
+  max_decisions: 20000              # 결정 줄 상한(추정 280 에피소드 × 약 20 = 5,600 · R-5777 F-002)
+  raw_chars: 200                    # Qwen 원문 앞 몇 자
 datasets_glob: "*"       # data/datasets/<glob>/meta.json
 backup_md: "~/Backups/moai-echomind-fly-connectome/BACKUP.md"
 links:                   # 페이지 아래 링크 — runs/dashboard/index.html 기준 상대 경로
