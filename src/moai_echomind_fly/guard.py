@@ -64,13 +64,20 @@ def process_footprint_gb(pid: int | None = None) -> float:
 
 
 class Watchdog:
-    """긴 실행 중 감시 — 문턱을 넘으면 까닭을 돌려준다(부르는 쪽이 저장하고 멈춘다)."""
+    """긴 실행 중 감시 — 문턱을 넘으면 까닭을 돌려준다(부르는 쪽이 저장하고 멈춘다).
 
-    def __init__(self) -> None:
+    Args:
+        kind: guard.yaml 열쇠 앞머리 — "training"(걸음 단위) · "scorecard"(에피소드 단위).
+            `<kind>_check_every` · `<kind>_abort_free_percent` · `<kind>_abort_footprint_gb`
+            (마지막이 null 이면 프로세스 크기는 보지 않고 시스템 여유만 본다).
+    """
+
+    def __init__(self, kind: str = "training") -> None:
         cfg = config.load("guard")
-        self.every = int(cfg["training_check_every"])
-        self.min_free = int(cfg["training_abort_free_percent"])
-        self.max_gb = float(cfg["training_abort_footprint_gb"])
+        self.every = int(cfg[f"{kind}_check_every"])
+        self.min_free = int(cfg[f"{kind}_abort_free_percent"])
+        foot = cfg[f"{kind}_abort_footprint_gb"]
+        self.max_gb = None if foot is None else float(foot)
         self.last: dict[str, float] = {}
 
     def check(self, step: int) -> str | None:
@@ -81,7 +88,7 @@ class Watchdog:
         self.last = {"step": step, "sys_free_percent": free, "footprint_gb": round(foot, 1)}
         if free < self.min_free:
             return f"시스템 메모리 여유 {free}% < {self.min_free}%"
-        if foot > self.max_gb:
+        if self.max_gb is not None and foot > self.max_gb:
             return f"프로세스 메모리 {foot:.1f} GB > {self.max_gb} GB"
         return None
 

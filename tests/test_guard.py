@@ -79,3 +79,15 @@ def test_child_runs_inside_owner_lock(repo, monkeypatch):
         assert json.loads(lock.read_text())["pid"] == proc.pid
     finally:
         proc.kill()
+
+
+def test_watchdog_kind_reads_its_keys_and_null_footprint_checks_free_only(repo, monkeypatch):
+    (repo / "config" / "guard.yaml").write_text(
+        "version: t\nscorecard_check_every: 1\nscorecard_abort_free_percent: 25\n"
+        "scorecard_abort_footprint_gb: null\n")
+    monkeypatch.setattr(guard, "process_footprint_gb", lambda: 999.0)
+    w = guard.Watchdog("scorecard")
+    assert w.every == 1 and w.max_gb is None
+    assert w.check(1) is None                       # 프로세스가 커도 시스템 여유만 본다
+    monkeypatch.setattr(guard, "memory_free_percent", lambda: 20)
+    assert "20%" in (w.check(2) or "")

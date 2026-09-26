@@ -260,3 +260,13 @@ def test_old_unfinished_projector_is_shown_as_stopped_not_running(tmp_path, monk
     assert p["stale"] is True
     row = dashboard._train_row(p)
     assert "멈춘 기록" in row[1] and row[5] == "—"
+
+
+def test_judge_table_marks_pass_that_is_not_distinct_from_baseline():
+    cell = {"real": 0.57, "baseline": 0.50, "rewired": {"values": [0.47, 0.34, 0.54]},
+            "episodes": 23, "decisions": 103, "p_holm": 0.026, "pass": True}
+    j = {"cells": {"loom_side": {**cell, "p_vs_baseline": 0.14},
+                   "legs": {**cell, "p_vs_baseline": 0.001}}}
+    html = dashboard._compare_judge(j, 0.05)
+    assert "찍기 대비 p" in html
+    assert html.count("찍기와 구별 안 됨") == 1      # 물체 쪽만(p 0.14) · 다리는 그냥 통과

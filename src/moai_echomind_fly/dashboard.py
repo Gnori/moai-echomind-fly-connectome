@@ -424,6 +424,7 @@ def collect(runs: Path | None = None, datasets_dir: Path | None = None,
         "backup": read_backup(backup_md),
         "links": cfg.get("links") or [], "refresh_s": int(cfg["refresh_s"]),
         "train_rule": cfg.get("train_rule"),
+        "judge_alpha": cfg.get("judge_alpha"),
         "plan": plan_status(cfg.get("plan") or [], _same_run_steps(runs, full)),
         "caption_judge": _load_json(runs / f"caption-judge-{cfg.get('train_rule')}-final.json")
         if (runs / f"caption-judge-{cfg.get('train_rule')}-final.json").exists() else None,
@@ -681,11 +682,15 @@ def _section_compare(d: dict[str, Any]) -> str:
                 + diff_cells)
     head = ["뇌", "상태"] + [f"{a} (캡션 · 행동)" for a in ats]
     return (intro + "<h3>검증 손실(같은 24 표본)</h3>" + _table(head, rows) + _compare_scored(ps)
-            + _compare_judge(d.get("caption_judge")))
+            + _compare_judge(d.get("caption_judge"), d.get("judge_alpha")))
 
 
-def _compare_judge(j: dict[str, Any] | None) -> str:
-    """판정(judge-captions · stats-v2 · Holm) — 판정 칸 넷."""
+def _compare_judge(j: dict[str, Any] | None, alpha: float | None = None) -> str:
+    """판정(judge-captions · stats-v2 · Holm) — 판정 칸 넷.
+
+    규칙의 "찍기보다 높음"은 값 비교뿐이다 → 찍기 대비 p(`p_vs_baseline`)를 따로 보이고,
+    통과여도 그 p 가 `alpha` 이상이면 "찍기와 구별 안 됨"으로 적는다(v5 물체 쪽 p 0.14).
+    """
     if not j:
         return ('<h3>판정(에피소드 단위 검정 · Holm)</h3>'
                 '<p class="muted">아직 없음 — 채점 평가 8 뒤 '
@@ -693,13 +698,17 @@ def _compare_judge(j: dict[str, Any] | None) -> str:
     rows = []
     for k, c in j.get("cells", {}).items():
         ok = c.get("pass")
+        pb = c.get("p_vs_baseline")
+        vague = ok and alpha is not None and pb is not None and pb >= alpha
+        verdict = (_tag("warn", "통과 · 찍기와 구별 안 됨") if vague
+                   else _tag("ok" if ok else "bad", "통과" if ok else "불통"))
         rows.append([FIELD_KO.get(k, k), _f(c["real"]),
                      " · ".join(_f(v) for v in c["rewired"]["values"]), _f(c["baseline"]),
-                     f'{c["episodes"]} / {c["decisions"]}', _f(c.get("p_holm")),
-                     _tag("ok" if ok else "bad", "통과" if ok else "불통")])
+                     f'{c["episodes"]} / {c["decisions"]}', _f(c.get("p_holm")), _f(pb),
+                     verdict])
     return ("<h3>판정(에피소드 단위 검정 · Holm · stats-v2)</h3>"
             + _table(["칸", "진짜", "재배선 s0 · s1 · s2", "찍기", "에피소드 / 표본", "Holm p",
-                      "판정"], rows))
+                      "찍기 대비 p", "판정"], rows))
 
 
 def _compare_scored(ps: list[dict[str, Any]]) -> str:

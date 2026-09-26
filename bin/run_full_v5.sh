@@ -6,7 +6,7 @@
 # 학습은 시작 전 시스템 메모리 여유 40 % 이상(2026-09-23 요구자 "문턱을 40%로 낮춰 지금 바로" · 실측 최대 31.4 GB / 137 GB ·
 #   실행 중 감시 유지 · 옛 값 80 은 90 GB 먹던 때) · 평가 · 성적표도 40 %(Qwen 29 GB 는 guard 가 따로 센다).
 # 관문을 통과한 채널이 하나도 없으면 v5 학습을 하지 않는다(F-004 규칙 · 끝 코드 4).
-# 단계마다 메모리 여유가 문턱 위로 돌아올 때까지 기다린다 — 큰 프로세스가 끝난 직후엔 회수가 늦다. 30 분 넘게 안 돌아오면 중단(끝 코드 3).
+# 단계마다 메모리 여유가 문턱 위로 돌아올 때까지 기다린다 — 큰 프로세스가 끝난 직후엔 회수가 늦다. 한도(config/guard.yaml script_wait_max_min) 넘게 안 돌아오면 중단(끝 코드 3).
 #
 # 사용법:
 #   bin/run_full_v5.sh                # 압축 · 관문 → 학습 4 → 캡션 평가 8 → 성적표
@@ -30,6 +30,10 @@ for a in "$@"; do
   [ "$a" = "--skip-compress" ] && SKIP_COMPRESS=1     # 압축 · 관문 결과가 이미 있을 때(다시 시작)
 done
 
+guard_cfg() { .venv/bin/python -c "from moai_echomind_fly import config; print(config.load('guard')['$1'])"; }
+WAIT_EVERY_S=$(guard_cfg script_wait_every_s)      # 기다리는 간격 · 한도는 설정 파일에서(2026-09-26 · 스크립트에 박혀 있던 30 초 × 60 회)
+WAIT_MAX_MIN=$(guard_cfg script_wait_max_min)
+
 free_pct() { memory_pressure | sed -n 's/.*free percentage: \([0-9]*\)%.*/\1/p'; }
 
 # 사건 파일(R-7347 · 대시보드가 로그 대신 읽는다) — 한 줄 = 한 사건. $1 = 사건(begin/start/end/abort/done) · $2 = 명령 · $3 = 끝 코드
@@ -43,8 +47,8 @@ wait_free() {  # $1 = 문턱 %
   local need=$1 i=0
   while [ "$(free_pct)" -lt "$need" ]; do
     [ $i -eq 0 ] && echo "--- 메모리 여유 $(free_pct)% < $need% — 기다림" | tee -a "$LOG"
-    i=$((i + 1)); [ $i -gt 60 ] && { echo "--- 30 분 기다려도 안 됨 — 중단" | tee -a "$LOG"; exit 3; }
-    sleep 30
+    i=$((i + 1)); [ $((i * WAIT_EVERY_S)) -gt $((WAIT_MAX_MIN * 60)) ] && { echo "--- $WAIT_MAX_MIN 분 기다려도 안 됨 — 중단" | tee -a "$LOG"; exit 3; }
+    sleep "$WAIT_EVERY_S"
   done
 }
 

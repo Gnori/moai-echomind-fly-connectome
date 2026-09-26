@@ -16,3 +16,11 @@ training_cache_limit_gb: 2
 training_check_every: 5            # 몇 걸음마다 시스템 여유 · 프로세스 메모리를 보나
 training_abort_free_percent: 25    # 시스템 여유가 이 아래면 멈춤
 training_abort_footprint_gb: 50    # 프로세스 전체(phys_footprint)가 이 위면 멈춤(정상 28 GB)
+# 성적표 중 감시(2026-09-26 · R-7469 W loop 잔여 5) — v5 성적표 13 시간 동안 감시가 없었다(학습에만 있었음).
+# 에피소드마다 보고, 넘치면 끝난 에피소드까지 저장하고 멈춘다(끝 코드 3). 가장 큰 위험은 다른 앱(언리얼 141 GB 전례).
+scorecard_check_every: 1           # 몇 에피소드마다
+scorecard_abort_free_percent: 25
+scorecard_abort_footprint_gb: null # 성적표 프로세스 최대치는 아직 안 쟀다 — 재기 전엔 시스템 여유만 본다
+# 전체 순서 스크립트(bin/run_full_v*.sh)가 단계 사이 메모리 여유를 기다리는 간격 · 한도
+script_wait_every_s: 30
+script_wait_max_min: 30            # 이만큼 기다려도 문턱 아래면 중단(끝 코드 3)

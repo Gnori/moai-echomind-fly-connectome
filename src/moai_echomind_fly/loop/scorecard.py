@@ -23,7 +23,7 @@ import numpy as np
 
 from .. import config, paths
 from .. import graph as graph_mod
-from ..guard import GuardRefused, heavy
+from ..guard import GuardRefused, Watchdog, heavy
 from . import fly_prompt as fp
 from .collect import parse_seeds
 from .decoder import IDLE, parse_action
@@ -39,6 +39,10 @@ SYSTEM_RAW = (
     'JSON 한 줄로만 답한다: {"walk":0~1,"turn":"left|right|none","turn_strength":0~1,'
     '"stop":true|false,"groom":true|false}'
 )
+
+
+class _Abort(Exception):
+    """감시가 멈추라고 했다 — 끝난 에피소드까지 저장하고 나간다."""
 
 
 def raw_text(obs) -> str:
@@ -182,6 +186,8 @@ def main(args: argparse.Namespace) -> int:
             print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
             g = graph_mod.load(args.graph)
             q = QwenLM()
+            watchdog = Watchdog("scorecard")   # v5 성적표는 감시 없이 13 시간 돌았다
+            done = 0
             results: dict[str, list[dict]] = {}
             for cfg_name in configs:
                 brain = cfg_name if cfg_name.startswith("rewired") else "real"
@@ -217,12 +223,16 @@ def main(args: argparse.Namespace) -> int:
                         print(f"[{cfg_name}] seed {seed} · 도착 {res['reached']} "
                               f"({res['reach_ms']}) · 부딪힘 {res['looming_hit']} · 위반 "
                               f"{res['violations']} · {res['wall_s']} s", flush=True)
+                        done += 1
+                        why = watchdog.check(done)
+                        if why:
+                            raise _Abort(why)
                 finally:
                     loop.close()
+                    (out / f"{cfg_name}.jsonl").write_text(
+                        "".join(json.dumps(e, ensure_ascii=False) + "\n" for e in eps),
+                        encoding="utf-8")
                 results[cfg_name] = eps
-                (out / f"{cfg_name}.jsonl").write_text(
-                    "".join(json.dumps(e, ensure_ascii=False) + "\n" for e in eps),
-                    encoding="utf-8")
             table = {c: summarize(e) for c, e in results.items()}
             verdict = judge(results)
             beats = verdict["vector_beats_rewired"]
@@ -240,6 +250,14 @@ def main(args: argparse.Namespace) -> int:
     except GuardRefused as err:
         print(f"[guard] 막음 — {err}")
         return 2
+    except _Abort as err:
+        # 성적표는 다시 돌려야 한다(구성 사이 비교가 같은 씨앗이어야 함) — 끝난 것은 기록으로만
+        (out / "aborted.json").write_text(json.dumps(
+            {"reason": str(err), "watchdog": watchdog.last, "episodes_done": done,
+             "configs_done": list(results)}, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"[watchdog] 멈춤 — {err} · {watchdog.last} · 끝난 에피소드 {done} · {out}",
+              flush=True)
+        return 3
     return 0
 
 
