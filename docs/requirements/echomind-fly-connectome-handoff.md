@@ -25,6 +25,7 @@
 | `echomind-fly-research` | 설계 조사(F-006 · F-007 · 앞뒤 축 → 연구 노트 13) | 같음 |
 
 교신은 `SendMessage` 로 **일감 한 번 · 결과 한 번**(요구자 *"너무 많이 서로 하면 안되니까"*). 메모리: `session-roles.md` · `data-files-not-parsing.md` · `vscode-stays-open.md`.
+각 세션의 자기 인수인계: [doc 세션](./echomind-fly-doc-handoff.md)(각자 작성 · 이 파일은 조율 세션 소유).
 
 ### B. 한 일 (시간 순 · 커밋)
 
