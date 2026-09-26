@@ -224,3 +224,15 @@ def test_scorecard_decision_row_has_the_fields_the_dashboard_reads():
     assert (row["odor_L"], row["odor_R"], row["food_bearing_deg"]) == (1.5, 2.5, 30.0)
     assert len(row["raw"]) == RAW_CHARS and row["why"] is None
     json.dumps(row, ensure_ascii=False)                       # 한 줄로 쓸 수 있다
+
+
+def test_loo_threshold_accuracy_ignores_shared_bias():
+    """M1b — 두 쪽이 모두 음수여도(바탕 치우침) 갈리면 1.0 · 같으면 0.5 근처."""
+    import numpy as np
+
+    from moai_echomind_fly.inspect import _loo_threshold_acc
+
+    assert _loo_threshold_acc(np.array([-4.0, -4.2, -3.9]), np.array([-9.0, -9.5, -8.8])) == 1.0
+    rng = np.random.default_rng(0)
+    same = _loo_threshold_acc(rng.normal(size=200), rng.normal(size=200))
+    assert 0.35 < same < 0.65
