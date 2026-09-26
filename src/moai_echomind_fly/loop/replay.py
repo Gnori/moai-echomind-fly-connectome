@@ -73,6 +73,16 @@ def _shard_orders(pack: str, split: str, n_workers: int) -> list[list[int]]:
     return [seeds[i::n_workers] for i in range(n_workers)]
 
 
+def copy_episodes(pack: str, split: str, seeds: list[int], out) -> int:
+    """원본 묶음의 에피소드 요약 줄을 재생한 씨앗만큼 조각에 옮긴다 — 몸을 다시 돌리지 않으니
+    도착 · 부딪힘은 원본 그대로다(`dataset pack` 이 episodes.jsonl 을 요구)."""
+    src = datasets.store_dir() / pack / split / "episodes.jsonl"
+    keep = [line for line in src.read_text().splitlines()
+            if line and json.loads(line)["seed"] in set(seeds)]
+    (out / "episodes.jsonl").write_text("\n".join(keep) + "\n", encoding="utf-8")
+    return len(keep)
+
+
 def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
            retune: bool, verify: int = 0, seeds: list[int] | None = None,
            log=print) -> dict[str, Any]:
@@ -163,6 +173,7 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
                  "sensory_map": loop.smap.describe(), "samples": len(writer.rows),
                  "teacher_rules": meta.get("teacher_rules"),      # 교사는 원본 그대로(묶기에 필요)
                  "wall_s": round(time.time() - t0, 1)})
+    copy_episodes(pack, split, sorted(by), out)
     return {"samples": len(writer.rows), "out": str(out)}
 
 
