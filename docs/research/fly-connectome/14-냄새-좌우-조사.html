@@ -754,11 +754,18 @@ M1 · M2 모두 <strong>대조군(재배선)과 나란히</strong> 적는다(R 2
 <td>먹이 6~10 mm 몸 확인에서 냄새 맡기 좌우 차 3.5~3.9 % → 뇌 결과 전에 4~7 mm 로. 냄새 맡기 구간 · LN4 2 누적 <strong>0.650</strong>(재배선 0.487 · 찍기 0.500 · p 0.031 · Holm 0.065) · 전체 · LN4 10 누적 <strong>0.682</strong>(0.367 · 0.485 · p 0.006 · Holm 0.001) · 10 누적 + 시간 차 0.700(0.570 · p 0.003 · Holm 0.016) · 투사 뉴런 0.41~0.60 불통</td>
 <td>✅ <strong>처음으로 찍기와 구별</strong>(LN4) · 재배선 대비 Holm 은 냄새 맡기 구간에서 경계</td>
 </tr>
+<tr>
+<td><strong>M4 전체</strong></td>
+<td>자료 <code>fly-loop-v4</code>(학습 200 · 평가 200 · 진짜 + s0~s2 · 3 h 36 m · <code>bin/run_m4_full.sh</code>) · <code>stats-v3</code>(<code>e61d5de</code> · 결과 전에 정함) · <code>runs/linear-probe-20260927-021024.json</code> · <code>runs/odor-windows-20260927-0210{30,54}.json</code> 외</td>
+<td>냄새 맡기 구간 · LN4 1 결정 0.637 · <strong>4 누적(1.2 s) 0.725</strong>(재배선 평균 0.525 · 찍기 0.490 · 찍기 대비 p &lt; 0.001 · Holm 0.001) · 전체 · LN4 5 누적 + 시간 차 0.694(0.555 · 0.460) · 한 창 <code>smell_ln → 냄새 쪽</code> 0.554(0.446 · 0.460 · Holm 0.006) · 투사 뉴런 0.537~0.562(p ≥ 0.066)</td>
+<td>✅ <strong>F-003 성공 기준 충족</strong>(task-v4 · LN4) · 투사 뉴런 ❌</td>
+</tr>
 </tbody>
 </table></div>
 <p><strong>읽는 법</strong>: 좌우 정보는 입력(ORN)에 있고 회로도 나를 수 있다(M1) — 사라지는 곳은 <strong>투사 뉴런 단계</strong>이고, <strong>LN4 가 1 s 이상 일정한 약한 차</strong>를 가른다(M1b).
 옛 과제에는 그런 구간이 없어 채널 · 읽는 법만으로는 오르지 않았고(M2 · M3), 과제에 냄새 맡기 구간을 넣자 처음 구별됐다(M4).
-한계: 재배선 하나(후각 침묵) · 평가 40 — 전체 수집 <code>fly-loop-v4</code>(학습 200 · 평가 200 · 진짜 + s0~s2)로 다시 판정한다. 성적표(행동)는 아직이다.</p>
+전체 수집(<code>fly-loop-v4</code> · 평가 200 · 재배선 셋)에서도 같은 방향으로 통과했다(LN4 4 누적 0.725).
+한계: 과제를 바꿨다(냄새 맡기 구간 = 몸을 세워 둔 절차) · 재배선 후각은 거의 침묵이라 재배선 대비는 쉬운 비교 — 찍기 대비 p 로 함께 판정했다. 성적표(행동)는 아직이다.</p>
 <h2 id="참고-문헌">참고 문헌</h2>
 <ol>
 <li>Wang-Chen S., Stimpson V.A., Lobato-Rios V., et al. 2024. NeuroMechFly v2: simulating embodied sensorimotor control in adult Drosophila. <em>Nature Methods</em>. doi:10.1038/s41592-024-02497-y · FlyGym 1.x 소스(<code>config.yaml</code> · <code>fly.py</code> · <code>examples/olfaction/</code>) [P* · 코드]</li>
