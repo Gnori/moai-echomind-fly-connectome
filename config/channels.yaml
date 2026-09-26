@@ -2,7 +2,8 @@
 # 요구자(2026-09-21): "초파리의 다양한 신호 데이터를 벡터화해서 LLM" · "성적인 전기신호 데이터까지도 · 시신경 · 촉각"
 # 뉴런은 주석 칸으로만 고른다(손으로 고른 목록 없음 → 채운 수 0). 단위 = unit 칸들의 조합 × 좌우.
 # 전기 신호 = 창을 bins 로 나눈 구간마다 ① 발화율(Hz) ② 평균 탈분극(mV, v − v0).
-version: channels-v2   # 2026-09-23 — channels-v1 + space(중심복합체 · 운동 감지 수평/수직계 · R-7469 F-008). 옛 판 config/archive/channels-v1.yaml
+version: channels-v3   # 2026-09-26 — channels-v2 + smell_ln(안테나엽 LN 4 종 · 연구 노트 14 §5 · M1b 에서 투사 뉴런보다 좌우를 잘 가름). 옛 판 config/archive/channels-v2.yaml
+# channels-v2 = 2026-09-23 — channels-v1 + space(중심복합체 · 운동 감지 수평/수직계 · R-7469 F-008)
 window_ms: 300
 bins: 3
 rate_scale_hz: 20.0     # log1p(rate) / log1p(scale) 로 정규화
@@ -19,6 +20,10 @@ channels:
     unit: [type]
   smell:       # 후각 투사 뉴런(촉각엽 → 측각 · 버섯체)
     select: {class: [ALPN]}
+    unit: [type]
+  smell_ln:    # 안테나엽 국소 뉴런 4 종(26 뉴런) — 그래프 선형 전파 같은 쪽 편향 0.40~0.48(PN 0.08~0.15 · 노트 14 §5) ·
+               # M1b: 좌우 차 5~10 % · 창 1 s 이상에서 좌우를 가름(runs/odor-contrast-20260926-184048.json)
+    select: {type: [v2LN3A1_b, lLN2X02, lLN15, lLN2F_b]}
     unit: [type]
   taste:       # 미각 감각 뉴런 · 접촉 페로몬(receptorType 에 ppk23 추정)
     select: {class: [gustatory]}

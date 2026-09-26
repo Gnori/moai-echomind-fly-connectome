@@ -124,7 +124,9 @@ def run(dataset: str, rule: dict[str, Any] | None = None) -> dict[str, Any]:
 
 
 def main(args) -> int:
-    rule = {"windows": [int(k) for k in args.windows.split(",")]} if args.windows else None
+    rule: dict[str, Any] = {"channel": args.channel}
+    if args.windows:
+        rule["windows"] = [int(k) for k in args.windows.split(",")]
     res = run(args.dataset, rule)
     path = paths.runs_dir() / f"odor-windows-{time.strftime('%Y%m%d-%H%M%S')}.json"
     path.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -145,4 +147,5 @@ def register(sub) -> None:
                        help="냄새 쪽을 여러 결정 누적 · 시간 차로 선형 검사(연구 노트 14 M2 · CPU)")
     p.add_argument("--dataset", default="fly-loop-v2")
     p.add_argument("--windows", default="", help="누적 결정 수 목록(기본 1,3,5,10)")
+    p.add_argument("--channel", default="smell", help="읽을 채널(channels-v3 의 smell_ln 등)")
     p.set_defaults(func=main)

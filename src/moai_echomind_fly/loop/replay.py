@@ -74,10 +74,14 @@ def _shard_orders(pack: str, split: str, n_workers: int) -> list[list[int]]:
 
 
 def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
-           retune: bool, verify: int = 0, log=print) -> dict[str, Any]:
+           retune: bool, verify: int = 0, seeds: list[int] | None = None,
+           log=print) -> dict[str, Any]:
     """묶음 `pack` 의 `split` 나눔을 재주입한다. `retune` 이면 지금 설정으로 시각을 바꾼다.
 
     `verify > 0` 이면 첫 조각의 앞 `verify` 결정만 바꾸지 않고 돌려 원본과 비교(저장 없음).
+    `seeds` 가 있으면 그 에피소드만(2026-09-26 · M3 — 학습 나눔 일부).
+    건너뛴 에피소드만큼 포아송 난수 흐름이 달라져 원본과 비트 단위로 같지는 않다
+    (검증은 `seeds` 없이).
     """
     _, rows = datasets.load(pack, split, "real")
     stim = np.load(datasets.store_dir() / pack / split / "stim.npz")
@@ -89,6 +93,8 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
     if not np.array_equal(np.asarray(loop.smap.stim_idx), stim_idx):
         raise ValueError("자극 뉴런 순서가 원본과 다르다 — task · loom 판을 확인")
     by = _episodes(rows)
+    if seeds is not None:
+        by = {k: v for k, v in by.items() if k in set(seeds)}
     orders = _shard_orders(pack, split, 3)
     ref = ({name: datasets.load(pack, split, name)[0] for name in graphs if name in
             ("real", *datasets.rewired_brains(pack, split))} if verify else {})
@@ -123,6 +129,7 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
                         r, d, _ = br.bin(sens, dn)
                         bins[name].append((r, d))
                 dn_prev = dn_new
+                prev = row["teacher_action"]   # 다음 결정의 하강 뉴런 명령(원본과 같게)
                 vectors = {n: loop.brains[n].reader.assemble(bins[n]) for n in loop.brains}
                 truth = Truth(**{k: (tuple(v) if isinstance(v, list) else v)
                                  for k, v in tr.items()})
@@ -135,6 +142,8 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
                         if name not in ref:
                             continue
                         for ch, v in vec.items():
+                            if ch not in ref[name]:   # 새 채널(channels-v3)은 원본에 없다
+                                continue
                             got = v.features(f.rate_scale_hz, f.depol_scale_mV)
                             worst = max(worst, float(np.abs(got - ref[name][ch][i]).max()))
                     done += 1
@@ -162,7 +171,8 @@ def main(args: argparse.Namespace) -> int:
         with heavy("replay") as guard:
             print(f"[guard] 메모리 여유 {guard.free_percent}% · 뇌 {1 + len(rewired)}", flush=True)
             res = replay(args.pack, args.split, args.name, rewired, retune=not args.no_retune,
-                         verify=args.verify)
+                         verify=args.verify,
+                         seeds=parse_seeds(args.seeds) if args.seeds else None)
             print(json.dumps(res, ensure_ascii=False))
     except GuardRefused as err:
         print(f"[guard] 막음 — {err}")
@@ -177,6 +187,7 @@ def register(sub) -> None:
     p.add_argument("--name", required=True, help="결과 조각 이름 runs/dataset-<name>")
     p.add_argument("--rewired-seeds", default="0-4")
     p.add_argument("--no-retune", action="store_true", help="시각을 바꾸지 않는다(검증용)")
+    p.add_argument("--seeds", default="", help="이 에피소드만(예: 0-59) — 비우면 전부")
     p.add_argument("--verify", type=int, default=0,
                    help="앞 N 결정만 바꾸지 않고 돌려 원본과 비교(저장 없음)")
     p.set_defaults(func=main)
