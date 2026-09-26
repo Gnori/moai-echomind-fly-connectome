@@ -40,6 +40,31 @@ STATS_RULE: dict[str, Any] = {
 }
 
 
+# stats-v3(2026-09-26 · 결과 보기 전에 정함): task-v4 자료(냄새 맡기 구간 · 옆 방위)부터
+# ① 냄새 쪽 칸을 판정에 넣는다(M4 작은 시험에서 LN4 가 찍기와 구별됨)
+# ② "찍기보다 높음"을 값 비교가 아니라 **찍기 대비 p < alpha** 로(v5 물체 쪽: 값은 높고 p 0.14 였다)
+STATS_RULE_V3: dict[str, Any] = {
+    **STATS_RULE,
+    "version": "stats-v3",
+    "exclude_fields_from_judgement": [],
+    "require_vs_baseline": True,
+    "extra_judge_fields": ["odor_side"],       # 캡션 판정 칸에 더함(caption_score.judge)
+}
+V3_FROM_TASK = 4                                # task-v<N> 에서 N ≥ 이 값이면 stats-v3
+
+
+def rule_for_dataset(name: str) -> dict[str, Any]:
+    """자료 묶음의 과제 판으로 판정 규칙을 고른다 — 옛 자료는 stats-v2 그대로."""
+    import json
+    import re
+
+    from .. import datasets
+
+    meta = json.loads((datasets.store_dir() / name / "meta.json").read_text(encoding="utf-8"))
+    m = re.match(r"task-v(\d+)", str(meta.get("versions", {}).get("task", "")))
+    return STATS_RULE_V3 if m and int(m.group(1)) >= V3_FROM_TASK else STATS_RULE
+
+
 def episode_sums(values: np.ndarray, episodes: np.ndarray) -> np.ndarray:
     """결정마다 값 → 에피소드마다 합(에피소드 순서는 정렬된 고유값 순)."""
     _, inv = np.unique(episodes, return_inverse=True)
@@ -120,8 +145,10 @@ def finalize(cells: dict[str, dict[str, Any]], rule: dict[str, Any] = STATS_RULE
     for k, c in cells.items():
         if k in adj:
             c["p_holm"] = adj[k]
+            above = (c["p_vs_baseline"] < rule["alpha"] if rule.get("require_vs_baseline")
+                     else c["real"] > c["baseline"])
             c["pass"] = bool(c["rank_pct"] >= rule["rank_pct"] and adj[k] < rule["alpha"]
-                             and c["real"] > c["baseline"])
+                             and above)
         else:
             c["p_holm"] = None
             c["pass"] = None

@@ -198,7 +198,8 @@ def judge(per_brain: dict[str, list[dict[str, Any]]], rule: dict[str, Any] | Non
         if [x["seed"] for x in r] != [x["seed"] for x in real]:
             raise ValueError("뇌마다 표본 순서가 다르다")
     cells: dict[str, Any] = {}
-    for f in JUDGE_FIELDS:
+    fields = [*JUDGE_FIELDS, *rule.get("extra_judge_fields", [])]
+    for f in fields:
         idx = [i for i, x in enumerate(real) if f in x["truth"]]
         if not idx:
             continue
@@ -210,6 +211,6 @@ def judge(per_brain: dict[str, list[dict[str, Any]]], rule: dict[str, Any] | Non
                                     np.array([real[i]["seed"] for i in idx]), rule)
         cells[f]["majority"] = major
     stats.finalize(cells, rule)
-    return {"rule": {**RULE, "judge_fields": JUDGE_FIELDS, "stats": rule["version"]},
+    return {"rule": {**RULE, "judge_fields": fields, "stats": rule["version"]},
             "brains": sorted(per_brain), "cells": cells,
             "passed": [k for k, c in cells.items() if c.get("pass")]}

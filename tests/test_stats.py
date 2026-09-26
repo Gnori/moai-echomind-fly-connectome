@@ -118,3 +118,17 @@ def test_probeset_matches_reference_solver():
     ref = _fit_predict(xtr - m, _onehot(ytr, ["a", "b", "c"]), xte - m, 1.0)
     got = ProbeSet(xtr, xte).full.predict(_onehot(ytr, ["a", "b", "c"]), 1.0)
     assert np.allclose(ref, got, atol=1e-8)
+
+
+def test_stats_v3_needs_p_against_baseline_not_just_higher_value():
+    """stats-v3 — 값이 찍기보다 높아도 찍기 대비 p 가 크면 불통(v5 물체 쪽 같은 경우)."""
+    from moai_echomind_fly.loop.stats import STATS_RULE, STATS_RULE_V3, finalize
+
+    def cell():
+        return {"real": 0.57, "baseline": 0.50, "rank_pct": 100.0, "p_block_perm": 0.001,
+                "p_vs_baseline": 0.14, "judge": True}
+
+    v2, v3 = {"a": cell()}, {"a": cell()}
+    finalize(v2, STATS_RULE)
+    finalize(v3, STATS_RULE_V3)
+    assert v2["a"]["pass"] is True and v3["a"]["pass"] is False

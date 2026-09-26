@@ -86,10 +86,11 @@ def icc(correct: np.ndarray, episodes: np.ndarray) -> float:
 def run(dataset: str, rule: dict[str, Any] | None = None) -> dict[str, Any]:
     from .. import datasets
     from .linear_probe import FOLDS, ProbeSet, _public
-    from .stats import STATS_RULE, finalize, judge_cell
+    from .stats import finalize, judge_cell, rule_for_dataset
     from .train_cli import _sub, caption_fields
 
     rule = {**ODOR_WINDOWS_RULE, **(rule or {})}
+    STATS_RULE = rule_for_dataset(dataset)
     brains = ["real", *datasets.rewired_brains(dataset)]
     ch, fld = rule["channel"], rule["field"]
     raw: dict[str, dict[str, dict[str, Any]]] = {}
@@ -139,7 +140,7 @@ def main(args) -> int:
     path = paths.runs_dir() / f"odor-windows-{time.strftime('%Y%m%d-%H%M%S')}.json"
     path.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"{res['rule']['version']} · {res['dataset']} · 재배선 {len(res['rewired_brains'])} 개 · "
-          f"stats-v2(순위 ≥ 95 % · Holm p < 0.05 · 찍기보다 높음)")
+          f"{res['stats']['version']}(순위 ≥ 95 % · Holm p < 0.05 · 찍기보다 높음)")
     print(f"{'특징|칸':<30}{'진짜':>7}{'재배선':>8}{'찍기':>7}{'순위%':>7}{'p':>8}{'Holm':>8}"
           f"{'찍기p':>8}{'ICC':>6}  판정")
     for key, c in res["cells"].items():

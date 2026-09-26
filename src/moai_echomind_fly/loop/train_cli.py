@@ -602,7 +602,10 @@ def judge_captions(args: argparse.Namespace) -> int:
             print(f"[judge] {f} 에 표본별 기록이 없다 — eval-scored 를 다시 돌린다")
             return 2
         per[b] = rec["per_sample"]
-    out = cs.judge(per)
+    from .stats import rule_for_dataset
+
+    meta = json.loads((projector_dir("real", args.version) / "meta.json").read_text())
+    out = cs.judge(per, rule_for_dataset(meta["data"]["pack"]))    # 자료 판에 맞는 규칙
     out.update(version=args.version, checkpoint=args.checkpoint,
                when=time.strftime("%Y-%m-%d %H:%M:%S"))
     path = paths.runs_dir() / f"caption-judge-{args.version}-{args.checkpoint}.json"

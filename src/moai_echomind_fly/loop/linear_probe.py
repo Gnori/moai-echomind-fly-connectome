@@ -180,9 +180,10 @@ def run(name: str, rule: dict[str, Any] | None = None,
 
 
 def main(args) -> int:
-    from .stats import STATS_RULE
+    from .stats import rule_for_dataset
 
-    rule = {**STATS_RULE, **({"permutations": args.permutations} if args.permutations else {})}
+    rule = {**rule_for_dataset(args.dataset),
+            **({"permutations": args.permutations} if args.permutations else {})}
     res = run(args.dataset, rule)
     path = paths.runs_dir() / f"linear-probe-{time.strftime('%Y%m%d-%H%M%S')}.json"
     path.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
