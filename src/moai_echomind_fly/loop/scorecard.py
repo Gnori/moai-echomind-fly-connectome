@@ -32,6 +32,23 @@ from .signals import text_summary
 from .train_cli import TRAIN_RULE
 
 CONFIGS = ["vector", "text", "no_circuit", "rewired", "no_llm"]
+# scorecard-v3(2026-09-26 · R-5777 F-002): 판정은 v2 그대로 ·
+# 구성마다 결정 기록 `<구성>.decisions.jsonl` 을 더 남긴다
+RECORD_VERSION = "scorecard-v3"
+RAW_CHARS = 200            # Qwen 원문은 앞 이만큼만(파일 크기)
+
+
+def decision_row(seed: int, step) -> dict[str, Any]:
+    """결정 하나 → 대시보드가 읽는 한 줄(R-5777 3.3). 냄새 · 먹이 값은 참값(회로 밖)."""
+    t = step.truth
+    info = step.info or {}
+    return {"seed": seed, "d": step.decision, "t_ms": step.t_ms, "truth": dict(t.__dict__),
+            "caption": step.caption, "teacher": step.teacher_action, "action": step.action,
+            "source": step.action_source, "raw": (info.get("raw") or "")[:RAW_CHARS],
+            "valid": info.get("valid"), "why": info.get("why") or None,
+            "odor_L": t.odor_left, "odor_R": t.odor_right,
+            "food_bearing_deg": t.odor_azimuth_deg, "food_mm": t.food_distance_mm,
+            "drive": list(step.drive), "reflex_bins": step.reflex_bins}
 
 SYSTEM_RAW = (
     "너는 초파리의 뇌다. 아래는 세계의 원시 값이다(각도는 + 가 왼쪽). "
@@ -208,13 +225,16 @@ def main(args: argparse.Namespace) -> int:
                                                else (None, list(loop.table.channels), 2, None))
                     policy = QwenPolicy(cfg_name, q, names, k, brain, proj, loop.table, squeeze)
                 eps = []
+                dec_file = (out / f"{cfg_name}.decisions.jsonl").open("w", encoding="utf-8")
                 try:
                     for seed in seeds:
                         lat: list[float] = []
 
-                        def on_step(step, vectors, lat=lat):
+                        def on_step(step, vectors, lat=lat, seed=seed):
                             if "latency_s" in step.info:
                                 lat.append(step.info["latency_s"])
+                            dec_file.write(json.dumps(decision_row(seed, step),
+                                                      ensure_ascii=False) + "\n")
 
                         if policy is not None:
                             policy.reset()
@@ -233,6 +253,7 @@ def main(args: argparse.Namespace) -> int:
                             raise _Abort(why)
                 finally:
                     loop.close()
+                    dec_file.close()
                     (out / f"{cfg_name}.jsonl").write_text(
                         "".join(json.dumps(e, ensure_ascii=False) + "\n" for e in eps),
                         encoding="utf-8")
@@ -244,7 +265,7 @@ def main(args: argparse.Namespace) -> int:
                        else "섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다")
             card = {"seeds": seeds, "llm": q.label, "configs": table,
                     "projector_version": args.version or TRAIN_RULE["version"],
-                    "judgement": verdict,
+                    "judgement": verdict, "record": RECORD_VERSION,
                     "vector_beats_rewired": beats, "wording": wording,
                     "notes": ["no_circuit 에는 영상 이미지를 주지 않았다(mlx-lm 은 글 부분만)",
                               "몸의 걷기 리듬은 FlyGym 1.x 제어기가 만든다(06 (나) 갈래)"]}

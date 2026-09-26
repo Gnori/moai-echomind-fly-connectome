@@ -122,8 +122,10 @@ v5 결과로 **무엇을 봐야 하는지가 정해졌다**: ① 캡션에서 �
 runs/scorecard-<시각>/<구성>.decisions.jsonl        (F-002 · scorecard-v3 부터)
 {"seed": 2000, "d": 3, "t_ms": 400, "truth": {...캡션 칸...}, "teacher": {...행동...},
  "action": {...}, "raw": "…", "valid": true, "why": null,
- "odor_L": 12.3, "odor_R": 11.8, "food_bearing_deg": 35.0, "food_mm": 24.1, "loom_mm": null,
- "drive": [0.6, 0.4]}
+ "odor_L": 12.3, "odor_R": 11.8, "food_bearing_deg": 35.0, "food_mm": 24.1,
+ "drive": [0.6, 0.4], "caption": "…", "source": "vector", "reflex_bins": 0}
+# 구현 중 변경(2026-09-26 · F-002): loom_mm 은 뺌(결정 기록 시점에 물체 거리 참값이 없다 — truth 의
+# looming_present · looming_azimuth_deg 로 대신) · caption · source · reflex_bins 추가 · truth = 참값 전체
 
 runs/dashboard/samples.html · episodes.html     (F-001 · F-003 · 대시보드가 index.html 과 같은 주기로 만듦)
 ```
@@ -134,7 +136,7 @@ runs/dashboard/samples.html · episodes.html     (F-001 · F-003 · 대시보드
 
 ### 4.1 기능 개발
 
-- [ ] F-002 성적표 결정 기록(scorecard-v3) · 시험
+- [x] F-002 성적표 결정 기록(scorecard-v3) · 시험 — `decision_row` · `test_scorecard_decision_row_has_the_fields_the_dashboard_reads`
 - [ ] F-001 캡션 표본 페이지 · 시험(정확도 재계산 일치)
 - [ ] F-003 에피소드 · 결정 페이지 · 시험
 - [ ] 대시보드 메모리 측정 · 실제 v5 파일로 화면 확인

@@ -203,3 +203,24 @@ def test_smell_reads_antenna_sensors_not_palps():
     obs = Obs(0.0, (0.0, 0.0), 0.0, [9.0, 9.0, 1.0, 2.0], {}, {"present": False},
               (10.0, 0.0), False, 0.0)
     assert "왼 더듬이 1.00 · 오른 더듬이 2.00" in raw_text(obs, s)
+
+
+def test_scorecard_decision_row_has_the_fields_the_dashboard_reads():
+    """R-5777 F-002 — 결정 기록 한 줄의 칸(3.3)."""
+    import json
+
+    from moai_echomind_fly.loop.episode import Step
+    from moai_echomind_fly.loop.scorecard import RAW_CHARS, decision_row
+    from moai_echomind_fly.loop.teacher import Truth
+
+    t = Truth(False, 0.0, 0.0, False, odor_left=1.5, odor_right=2.5, odor_azimuth_deg=30.0,
+              food_distance_mm=12.0, legs_in_contact=6)
+    step = Step(3, 900.0, t, "캡션", {"turn": "left"}, {"turn": "right"}, "vector", 0,
+                (0.4, 0.6), {"raw": "x" * 500, "valid": True, "why": ""})
+    row = decision_row(2000, step)
+    for k in ("seed", "d", "t_ms", "truth", "teacher", "action", "raw", "valid", "why",
+              "odor_L", "odor_R", "food_bearing_deg", "food_mm", "drive"):
+        assert k in row
+    assert (row["odor_L"], row["odor_R"], row["food_bearing_deg"]) == (1.5, 2.5, 30.0)
+    assert len(row["raw"]) == RAW_CHARS and row["why"] is None
+    json.dumps(row, ensure_ascii=False)                       # 한 줄로 쓸 수 있다
