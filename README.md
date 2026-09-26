@@ -66,6 +66,11 @@ bin/run_full.sh                                                     # (v2 순서
 uv run fly-connectome backup                                        # git 밖 결과를 두 곳에 복사 · 대조
 ```
 
+**대시보드**(R-7928 · R-5777 · 읽기 전용 · 127.0.0.1 만 · 표준 라이브러리만) — `uv run fly-connectome dashboard --serve 8770 --every 30` → http://127.0.0.1:8770/ .
+`runs/dashboard/` 에 진행 · 결과 한 장(`index.html` · 자료 `state.json`)과 2단계 두 쪽을 같은 주기로 만든다:
+`samples.html` 캡션 표본(채점 평가 표본마다 진짜 · 재배선 셋 예측 나란히 · 칸 · 진짜만 맞음/틀림 · 에피소드로 거르기) ·
+`episodes.html` 성적표 에피소드 · 결정(씨앗 × 구성 → 결정 표 · 교사와 Qwen 의 도는 쪽이 다르면 표시 — 결정 표는 scorecard-v3 이후 성적표부터). 값 · 상한은 `config/dashboard.yaml`.
+
 학습 자료는 `data/datasets/<이름>/` 에 묶어 둔다 — [docs/datasets.md](docs/datasets.md).
 
 `data/` 와 `runs/` 는 커밋하지 않는다. 출처는 [NOTICE](NOTICE).
