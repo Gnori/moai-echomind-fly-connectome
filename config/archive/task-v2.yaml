@@ -1,0 +1,54 @@
+# C 단계 과제 · 감각 인코더 · 행동 디코더 (R-3340 F-010 · F-011 · F-014)
+# 값마다 출처 또는 "선언" 을 적는다 — 선언한 값은 정직 목록에 그대로 실린다.
+version: task-v2   # 2026-09-23 — task-v1 + 물체 고도 · 시야 자리별(고도) LC 입력(R-7469 F-008). 옛 판 config/archive/task-v1.yaml
+
+episode:
+  decision_ms: 300          # 결정 창(06 §5 시작값)
+  max_decisions: 20         # 6 s
+  reach_mm: 2.0             # 먹이 도착(teacher.REACH_MM 과 같다)
+  hit_mm: 1.0               # 다가오는 물체가 반지름 + 이만큼 안으로 들어오면 부딪힘
+
+world:                      # 씨앗으로 뽑는다 — 선언
+  odor_distance_mm: [20, 30]
+  odor_bearing_deg: [-90, 90]      # 파리 첫 방향 기준(+ 왼쪽)
+  odor_peak: 500.0                 # FlyGym OdorArena 봉우리(거리 제곱에 반비례)
+  looming_probability: 0.6
+  looming_t0_ms: [600, 2400]
+  looming_bearing_deg: [30, 120]   # 좌우는 씨앗으로
+  looming_start_mm: 25.0
+  looming_speed_mm_s: 25.0
+  looming_radius_mm: 1.5
+  looming_elevation_deg: [-30, 60]  # 시작 고도(파리 머리 기준 · 위가 +) — 선언. 곧게 다가오므로 고도는 거의 그대로다
+
+encoder:
+  vision:                   # 다가옴 → LC/LPLC(loom.yaml 의 Turner 2022 상대 세기 · peak_hz)
+    expansion_ref_deg_s: 60.0      # 이 확대 속도에서 게인 1 — 교사의 위협 문턱(각 크기 20°)의 확대 속도(반지름 1.5 mm · 25 mm/s → 57.6°/s)에 맞춘 선언.
+                                   #   처음 200 은 '중간' 거리에서 LC/LPLC 자극이 거의 0 이었다(2026-09-22 pilot)
+    gain_max: 3.0
+    side_softness_deg: 15.0        # 앞쪽 물체는 두 눈에 나눠 준다(시그모이드 폭) — 선언
+    mode: retinotopic              # lr_sigmoid(task-v1: 좌우만) | retinotopic(좌우 × LC 마다 고도 가우시안 · retino-v1)
+    elevation_sigma_deg: 25.0      # LC 고도 조율 폭 — 선언(LC 수용장 수십 도). 좌표 없는 LC 는 조율 없이 1
+  smell:                    # 먹이(식초) 냄새 → DM1 · VA2 사구체 ORN — Semmelhack & Wang 2009 Nature 459:218
+    types: [ORN_DM1, ORN_VA2]
+    rate_max_hz: 150.0             # Shiu 기본 자극 발화율
+    conc_ref: 1.0                  # log1p(c / ref) — 선언
+    conc_max: 200.0
+    sensors: {L: 0, R: 1}          # FlyGym odor_intensity 센서 순서(0 왼 더듬이 · 1 오른 더듬이 — 2026-09-22 실측)
+  touch:                    # 다리 접촉 → 그 다리 신경의 촉각 뉴런(entryNerve × 좌우)
+    klass: [mechanosensory_tactile]
+    nerves: {F: ProLN, M: MesoLN, H: MetaLN}
+    rate_max_hz: 100.0
+    force_ref: 3.0                 # 이 힘에서 최대 발화율 — 걷는 동안 다리당 1.5~4.2(2026-09-22 실측)에 맞춘 선언
+
+decoder:                    # 행동 JSON → 하강 뉴런 목표 발화율(포아송) — 카탈로그
+  max_rate_hz: 100.0
+  ramp_bins: 1                     # 100 ms 에 걸쳐 새 명령으로(06 §4.2 의 100~200 ms)
+  catalog:
+    walk: {types: [DNp09], source: "Bidaye et al. 2020 Neuron — 앞으로 걷기"}
+    turn_left: {types: [DNa02], side: L, source: "Rayshubskiy et al. — 같은 쪽 DNa02 가 그쪽으로 돌기"}
+    turn_right: {types: [DNa02], side: R, source: "같음"}
+    groom: {types: [], source: "카탈로그에 뉴런 없음 — 받으면 기록만"}
+  drive:                    # 회로가 낸 하강 뉴런 발화율 → FlyGym 좌우 구동(06 (나) 갈래 · 코드가 더한 것)
+    walk_rate_ref_hz: 100.0
+    turn_gain: 0.8
+    escape_type: DNp01             # 거대섬유가 발화하면 다음 구간 멈춤(FlyGym 은 도약을 못 한다)

@@ -130,7 +130,7 @@ def test_retinotopic_encoder_prefers_lc_at_object_elevation():
                       {k: np.zeros(0, int) for k in ("LF", "LM", "LH", "RF", "RM", "RH")})
     cfg = config.load("task")
     enc = Encoder(smap, cfg, LoomSpec.from_config())
-    obs = Obs(0.0, (0.0, 0.0), 0.0, [0.0, 0.0], {}, {"present": True, "azimuth_deg": 90.0,
+    obs = Obs(0.0, (0.0, 0.0), 0.0, [0.0, 0.0, 0.0, 0.0], {}, {"present": True, "azimuth_deg": 90.0,
               "size_deg": 20.0, "expansion_deg_s": 60.0, "elevation_deg": 45.0},
               (10.0, 0.0), False, 0.0)
     r = enc.rates(obs)
@@ -190,3 +190,16 @@ def test_replay_retune_keeps_other_senses_and_rescales_vision():
     assert abs(new[2] - base) < 1e-9                      # 조율 없는 LC = 바탕값 × 상대 세기 1
     assert abs(new[0] - base) < 1e-9                      # 고도 40° 물체 → 40° LC 조율 1
     assert new[1] < base * 0.5 * 0.9                      # −40° LC 는 더 약해진다
+
+
+def test_smell_reads_antenna_sensors_not_palps():
+    """task-v2.1 — FlyGym 순서는 작은턱수염 0 · 1 → 더듬이 2 · 3(연구 노트 14 §3.1)."""
+    from moai_echomind_fly import config
+    from moai_echomind_fly.loop.scorecard import raw_text
+    from moai_echomind_fly.loop.world import Obs
+
+    s = config.load("task")["encoder"]["smell"]["sensors"]
+    assert s == {"L": 2, "R": 3}
+    obs = Obs(0.0, (0.0, 0.0), 0.0, [9.0, 9.0, 1.0, 2.0], {}, {"present": False},
+              (10.0, 0.0), False, 0.0)
+    assert "왼 더듬이 1.00 · 오른 더듬이 2.00" in raw_text(obs, s)

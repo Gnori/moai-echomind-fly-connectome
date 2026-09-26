@@ -1,6 +1,7 @@
 # C 단계 과제 · 감각 인코더 · 행동 디코더 (R-3340 F-010 · F-011 · F-014)
 # 값마다 출처 또는 "선언" 을 적는다 — 선언한 값은 정직 목록에 그대로 실린다.
-version: task-v2   # 2026-09-23 — task-v1 + 물체 고도 · 시야 자리별(고도) LC 입력(R-7469 F-008). 옛 판 config/archive/task-v1.yaml
+version: task-v2.1 # 2026-09-26 — task-v2 + 냄새 센서를 더듬이(2 · 3)로 바로잡음(연구 노트 14 §3.1). 옛 판 config/archive/task-v2.yaml · task-v1.yaml
+# task-v2 = 2026-09-23 — task-v1 + 물체 고도 · 시야 자리별(고도) LC 입력(R-7469 F-008)
 
 episode:
   decision_ms: 300          # 결정 창(06 §5 시작값)
@@ -33,7 +34,10 @@ encoder:
     rate_max_hz: 150.0             # Shiu 기본 자극 발화율
     conc_ref: 1.0                  # log1p(c / ref) — 선언
     conc_max: 200.0
-    sensors: {L: 0, R: 1}          # FlyGym odor_intensity 센서 순서(0 왼 더듬이 · 1 오른 더듬이 — 2026-09-22 실측)
+    sensors: {L: 2, R: 3}          # FlyGym 1.x odor_intensity 순서 = 왼 · 오른 작은턱수염(0 · 1) → 왼 · 오른 더듬이(2 · 3)
+                                   # (flygym_gymnasium config.yaml · fly.py _add_odor_sensors · 연구 노트 14 §3.1).
+                                   # ORN_DM1 · VA2 는 더듬이 ORN → 2 · 3. task-v2 까지는 0 · 1(작은턱수염 · 간격 0.60 mm 로
+                                   # 실제 더듬이 약 0.3 mm 보다 넓어 좌우 차가 약 3.5 배 컸다). 더듬이 간격 0.171 mm
   touch:                    # 다리 접촉 → 그 다리 신경의 촉각 뉴런(entryNerve × 좌우)
     klass: [mechanosensory_tactile]
     nerves: {F: ProLN, M: MesoLN, H: MetaLN}

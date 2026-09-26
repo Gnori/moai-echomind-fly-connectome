@@ -45,21 +45,24 @@ class _Abort(Exception):
     """감시가 멈추라고 했다 — 끝난 에피소드까지 저장하고 나간다."""
 
 
-def raw_text(obs) -> str:
+def raw_text(obs, sensors: dict[str, int]) -> str:
+    """no_circuit 의 글 — 냄새는 인코더와 같은 센서(task.yaml `encoder.smell.sensors`)."""
     lo = obs.looming
     loom = (f"물체 방위 {lo['azimuth_deg']:+.0f}° · 각 크기 {lo['size_deg']:.1f}° · "
             f"확대 {lo['expansion_deg_s']:+.0f}°/s") if lo["present"] else "물체 없음"
     legs = " ".join(f"{k} {v:.1f}" for k, v in obs.leg_contact.items())
-    return (f"시각: {loom}\n냄새 농도: 왼 더듬이 {obs.odor_sensors[0]:.2f} · "
-            f"오른 더듬이 {obs.odor_sensors[1]:.2f}\n다리 접촉 힘: {legs}")
+    return (f"시각: {loom}\n냄새 농도: 왼 더듬이 {obs.odor_sensors[sensors['L']]:.2f} · "
+            f"오른 더듬이 {obs.odor_sensors[sensors['R']]:.2f}\n다리 접촉 힘: {legs}")
 
 
 class QwenPolicy:
     """vector · text · no_circuit — 결정마다 Qwen 이 행동 JSON 을 낸다. 위반이면 직전 행동 유지."""
 
     def __init__(self, kind: str, qwen, names: list[str], k: int, primary: str,
-                 projector=None, table=None, squeeze=None) -> None:
+                 projector=None, table=None, squeeze=None,
+                 sensors: dict[str, int] | None = None) -> None:
         self.squeeze = squeeze
+        self.sensors = sensors or config.load("task")["encoder"]["smell"]["sensors"]
         self.kind, self.q, self.names, self.k = kind, qwen, names, k
         self.primary, self.proj, self.table = primary, projector, table
         self.slot = qwen.tok.convert_tokens_to_ids(fp.SLOT)
@@ -86,7 +89,8 @@ class QwenPolicy:
             emb = self.q.splice(self.act_prompt, self.slot, self.proj(feats))
             gen = self.q.generate(self.act_prompt, max_tokens=60, input_embeddings=emb)
         else:
-            body = text_summary(vectors[self.primary]) if self.kind == "text" else raw_text(obs)
+            body = (text_summary(vectors[self.primary]) if self.kind == "text"
+                    else raw_text(obs, self.sensors))
             system = fp.SYSTEM_ACTION if self.kind == "text" else SYSTEM_RAW
             prompt = self.q.render(fp.messages(system, fp.INSTRUCTION_ACTION, self.names, self.k,
                                                text_summary=body))
