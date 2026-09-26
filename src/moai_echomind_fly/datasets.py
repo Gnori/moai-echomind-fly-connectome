@@ -93,6 +93,8 @@ def pack(name: str, train: str, eval_: str, generated_with: str = "") -> Path:
         "from_runs": {s: [p.name for p in parts] for s, parts in splits.items()},
         **{k: src_meta[k] for k in ("graph", "rewired_seed", "versions", "channels",
                                      "channel_units", "sensory_map", "teacher_rules")},
+        # 재배선 여럿(R-7469 F-002) — 2026-09-27 까지는 옮기지 않아 카드에 "씨앗 0"만 적혔다(fly-loop-v2 · v4)
+        "rewired_seeds": src_meta.get("rewired_seeds", [src_meta["rewired_seed"]]),
     }
     (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     (out / "README.md").write_text(card(meta), encoding="utf-8")
@@ -154,7 +156,7 @@ def card(meta: dict[str, Any]) -> str:
 
 > R-3340 F-017 · 묶은 때 {meta['packed']} · 모은 코드 커밋 `{meta['generated_with_commit']}` ·
 > 묶은 코드 커밋 `{meta['code_commit']}` · 그래프 `{meta['graph']}` ·
-> 섞은 배선 씨앗 {meta['rewired_seed']} · 설정 판 {meta['versions']}
+> 섞은 배선 씨앗 {meta.get('rewired_seeds', meta['rewired_seed'])} · 설정 판 {meta['versions']}
 
 ## 무엇인가
 
