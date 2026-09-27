@@ -5,7 +5,7 @@
 #   판정(judge-captions)을 순서에 넣음 · 자유 생성 평가(기록용 · 약 2 시간)는 뺌.
 # ⚠️ 요구자 확인 뒤 실행(2026-09-26 "남은거 진행해"). 학습 입력 채널이 v5 와 다를 수 있어 train-probe 로 먼저 잰다.
 #
-# 사용법: bin/run_full_v6.sh [--skip-compress] [--skip-train]
+# 사용법: bin/run_full_v6.sh [--skip-compress] [--skip-train] [--train-only=rewired-s1,rewired-s2]
 set -u
 cd "$(dirname "$0")/.."
 LOG="runs/full-v6-$(date +%Y%m%d-%H%M%S).log"
@@ -18,10 +18,11 @@ QWEN_WAIT=63             # Qwen(28.6 GB / 128 GB ≈ 22.3 % → 가드는 62.4 %
                          # 가드는 "올린 뒤 예상 여유 ≥ 40 %"를 보는데 스크립트가 40 % 만 기다려 2026-09-25 14:45 에 막혔다(여유 62 % → 예상 39 %)
 TRAIN_SEEDS="0-149"      # 학습 표본 = 에피소드 150(task-v4 는 에피소드당 약 8 결정 → 약 1,200 결정 · v5 와 같은 규모)
 
-SKIP_TRAIN=0; SKIP_COMPRESS=0
+SKIP_TRAIN=0; SKIP_COMPRESS=0; TRAIN_ONLY=""
 for a in "$@"; do
   [ "$a" = "--skip-train" ] && SKIP_TRAIN=1
   [ "$a" = "--skip-compress" ] && SKIP_COMPRESS=1     # 압축 · 관문 결과가 이미 있을 때(다시 시작)
+  case "$a" in --train-only=*) TRAIN_ONLY="${a#--train-only=}" ;; esac   # 예: rewired-s1,rewired-s2 — 이 뇌만 학습(나머지는 끝난 것을 쓴다 · 2026-09-27 GPU 오류 뒤 다시 시작)
 done
 
 guard_cfg() { .venv/bin/python -c "from moai_echomind_fly import config; print(config.load('guard')['$1'])"; }
@@ -89,6 +90,9 @@ echo "--- $GATE_MSG" | tee -a "$LOG"
 # 3 · 4. 투영기 학습 — 진짜 + 재배선 3 · 같은 절차(대조군)
 if [ $SKIP_TRAIN -eq 0 ]; then
   for b in "${BRAINS[@]}"; do
+    if [ -n "$TRAIN_ONLY" ] && [[ ",$TRAIN_ONLY," != *",$b,"* ]]; then
+      echo "--- 학습 건너뜀 $b(--train-only) — runs/projector-$b-$VERSION 을 쓴다" | tee -a "$LOG"; continue
+    fi
     run 40 train --brain "$b" --dataset "$DATASET" --train-seeds "$TRAIN_SEEDS"
   done
 else
