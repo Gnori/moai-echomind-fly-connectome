@@ -111,8 +111,9 @@ def test_build_writes_both_pages_with_links_and_no_external_scripts(tmp_path, mo
     _fake_eval(runs)
     _fake_scorecard(runs, with_decisions=False)
     monkeypatch.setenv("FLY_RUNS_DIR", str(runs))
+    cfg = {**config.load("dashboard"), "train_rule": "train-v5"}   # 가짜 파일의 판
     out = dashboard.build(datasets_dir=tmp_path / "x", backup_md=tmp_path / "y",
-                          memory_free=lambda: 70)
+                          memory_free=lambda: 70, cfg=cfg)
     idx = out.read_text(encoding="utf-8")
     assert 'href="samples.html"' in idx and 'href="episodes.html"' in idx
     sp = (out.parent / "samples.html").read_text(encoding="utf-8")
@@ -152,7 +153,7 @@ def test_pages_are_not_rewritten_when_sources_are_unchanged(tmp_path):
     _fake_eval(runs)
     out = runs / "dashboard"
     out.mkdir()
-    cfg = config.load("dashboard")
+    cfg = {**config.load("dashboard"), "train_rule": "train-v5"}   # 가짜 파일의 판
     dashboard_debug._SIGS.clear()
     dashboard_debug.build_pages(runs, out, cfg, "", dashboard.FIELD_KO, [])
     sp = out / "samples.html"
