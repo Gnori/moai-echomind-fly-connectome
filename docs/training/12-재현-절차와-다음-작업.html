@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>재현 절차와 다음 작업</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code,pre{font-variant-ligatures:none}   /* <|vision_pad|> 같은 글자가 합자로 바뀌지 않게 */
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 뇌 학습 안내서</p>
+  <p class="sub">R-3340 · 2026-09-23</p>
+  <div class="grp">시작</div>
+  <ol><li><a href="index.html">안내서 시작 — 지도와 상태</a></li></ol>
+  <div class="grp">1부 · 초파리 뇌</div>
+  <ol><li><a href="01-뇌-재료-공식-데이터와-그래프.html">01 · 뇌 재료 — 데이터와 그래프</a></li><li><a href="02-뇌-엔진-LIF.html">02 · 뇌 엔진 — LIF</a></li><li><a href="03-뇌-맞추기와-검산.html">03 · 뇌 맞추기와 검산</a></li><li><a href="04-감각-넣기와-신호-읽기.html">04 · 감각 넣기와 신호 읽기</a></li><li><a href="05-회로를-학습시키려면.html">05 · 회로를 학습시키려면(후보)</a></li></ol>
+  <div class="grp">2부 · Qwen 연결</div>
+  <ol><li><a href="06-학습-자료-모으기.html">06 · 학습 자료 모으기</a></li><li><a href="07-투영기와-Qwen-잇기.html">07 · 투영기와 Qwen 잇기</a></li><li><a href="08-투영기-학습-절차.html">08 · 투영기 학습 절차</a></li><li><a href="09-평가와-대조군.html">09 · 평가와 대조군</a></li><li><a href="10-학습-기록과-다음.html">10 · 학습 기록 · 결과 · 다음</a></li></ol>
+  <div class="grp">부록</div>
+  <ol><li><a href="11-명령-모음과-용어.html">11 · 명령 모음과 용어</a></li><li><a href="12-재현-절차와-다음-작업.html" class="cur">12 · 재현 절차와 다음 작업</a></li></ol>
+  <div class="grp">관련 문서</div>
+  <ol><li><a href="../research/fly-connectome/index.html">연구 노트(설계 · 배경)</a></li>
+<li><a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">연구 노트 11 · 구현</a></li>
+<li><a href="../datasets.md">학습 자료 형식</a></li>
+<li><a href="../requirements/echomind-fly-connectome-handoff.md">인수인계(진행 상황)</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="12-재현-절차와-다음-작업.md">12-재현-절차와-다음-작업.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="12-재현-절차와-다음-작업">12. 재현 절차와 다음 작업</h1>
+<blockquote>
+<p>부록. 요구자 2026-09-29 <em>"지금 했던 작업 · 앞으로 할 작업 모두 문서화 · 그것 보고 그대로 다시 하거나 개선할 수 있게 · 아주 상세하게"</em>.
+2026-09-26 ~ 09-29 에 한 일(냄새 좌우 M0~M4 · train-v6)을 <strong>그대로 다시 하는 순서</strong>와, 걸렸던 <strong>함정</strong>, <strong>앞으로 할 작업의 설계안</strong>을 한곳에 모았다.
+처음부터 끝까지의 명령 전체 · 판 번호 표는 <a href="11-명령-모음과-용어.html">11장</a>, 결과 대장은 <a href="10-학습-기록과-다음.html">10장</a>, 냄새 좌우 조사는 <a href="../research/fly-connectome/14-냄새-좌우-조사.html">연구 노트 14</a>.</p>
+</blockquote>
+<p><strong>이 장의 규칙</strong></p>
+<ul>
+<li>수치의 정본은 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> F-003 · F-005 인수 기준 · <a href="10-학습-기록과-다음.html">10장</a> 1.1 · 1.2c · 1.3 · 2.6 · 2.7 · <a href="../research/fly-connectome/14-냄새-좌우-조사.html">연구 노트 14</a> §9 다. 여기는 <strong>옮긴 것</strong>이다 — 어긋나면 그쪽이 맞다.</li>
+<li>기록이 없는 값은 <strong>"기록 없음"</strong> 이라고 쓴다. 추정한 값은 "추정"이라고 붙인다.</li>
+<li>명령은 <code>uv run fly-connectome …</code>(또는 <code>.venv/bin/fly-connectome …</code>)로 돈다. 옵션은 2026-09-29 <code>--help</code> 로 확인했다.</li>
+<li>⚠️ <strong>무거운 실행은 요구자 확인 뒤</strong> · 한 번에 하나(<code>runs/.heavy.lock</code>) · 새 종류는 작게 먼저 재고 무엇에 비례하는지 본다 · 띄웠으면 수십 분 간격으로 확인한다(CLAUDE.md).</li>
+</ul>
+<hr />
+<h2 id="1-지금-판--무엇이-잠겨-있나">1. 지금 판 — 무엇이 잠겨 있나</h2>
+<p>판 번호는 "이 결과를 만든 규칙"의 이름이다. 판을 바꾸면 그 뒤의 단계를 다시 한다(<a href="11-명령-모음과-용어.html">11장 §3</a> 표).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>무엇</th>
+<th>지금 판</th>
+<th>내용</th>
+<th>옛 판</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>과제 · 인코더 · 디코더</td>
+<td><strong><code>task-v4</code></strong>(<code>config/task.yaml</code>)</td>
+<td><code>task-v2.1</code> = 냄새 센서를 <strong>더듬이 <code>{L: 2, R: 3}</code></strong> 로(FlyGym 1.x 순서: 작은턱수염 0 · 1 → 더듬이 2 · 3) · <code>task-v4</code> = + <strong>냄새 맡기 구간</strong> <code>sniff_decisions: 4</code>(처음 4 결정 × 300 ms = 1.2 s 몸을 세워 둠 · 실행 행동 = 멈춤 · 교사 정답은 그대로) · 먹이 <code>odor_distance_mm: [4, 7]</code> · 첫 방위 <code>odor_bearing_abs_deg: [45, 90]</code>(좌우는 씨앗으로 반씩)</td>
+<td><code>config/archive/task-v2.yaml</code> · <code>task-v2.1.yaml</code> · <code>task-v1.yaml</code> · <strong><code>task-v3</code> 이름은 R-7469 F-007(냄새 둘)에 예약</strong></td>
+</tr>
+<tr>
+<td>신호 채널</td>
+<td><strong><code>channels-v3</code></strong>(<code>config/channels.yaml</code>)</td>
+<td><code>channels-v2</code> + <strong><code>smell_ln</code></strong> = 안테나엽 국소 뉴런 4 종 <code>v2LN3A1_b</code> · <code>lLN2X02</code> · <code>lLN15</code> · <code>lLN2F_b</code>(26 뉴런 · 8 단위 · 48 차원) · 합계 11 채널 33,450 차원</td>
+<td><code>config/archive/channels-v2.yaml</code> · <code>channels-v1.yaml</code></td>
+</tr>
+<tr>
+<td>판정 규칙</td>
+<td><strong>자료 판으로 자동 선택</strong>(<code>loop/stats.py</code> <code>rule_for_dataset</code>)</td>
+<td>자료 <code>meta.json</code> 의 과제 판이 <strong>task-v4 이상 → <code>stats-v3</code></strong>(냄새 쪽 칸도 판정 · 통과에 <strong>찍기 대비 p &lt; 0.05</strong> 요구) · 그보다 옛 자료 → <code>stats-v2</code> 그대로</td>
+<td><code>stats-v2</code> · <code>stats-v1</code></td>
+</tr>
+<tr>
+<td>투영기 학습</td>
+<td><strong><code>train-v6</code></strong>(<code>loop/train_cli.py</code> <code>TRAIN_RULE</code>)</td>
+<td>v5 와 같은 규칙(캡션 2 회전 → 행동 1 회전 · 캡션 되새김 <code>caption_rehearsal: 0.3</code> · 채널당 선형 토큰 1) · 자료 <strong><code>fly-loop-v4</code></strong> · 입력 = 관문 통과 <strong>시각 · smell_ln · 공간</strong></td>
+<td><code>train-v5</code>(자료 fly-loop-v2) · <code>train-v4</code> · <code>train-v2</code></td>
+</tr>
+<tr>
+<td>압축 · 관문</td>
+<td><code>compress-v3</code>(<code>config/compress.yaml</code>)</td>
+<td>채널마다 PCA 64 · 평균 크기 1 · 관문은 위 판정 규칙으로</td>
+<td><code>compress-v2</code> · <code>compress-v1</code></td>
+</tr>
+<tr>
+<td>성적표</td>
+<td>판정 <strong><code>scorecard-v2</code></strong> · 기록 <strong><code>scorecard-v3</code></strong></td>
+<td>판정(재배선 앙상블 · 부호 뒤집기 · R 2.0-6 문구)은 v2 그대로 · v3 는 구성마다 <strong><code>&lt;구성&gt;.decisions.jsonl</code></strong>(결정 한 줄씩 · 대시보드 에피소드 쪽이 읽음)을 더 남김</td>
+<td>—</td>
+</tr>
+<tr>
+<td>시야 자리</td>
+<td><code>retino-v2</code>(<code>config/retino.yaml</code>)</td>
+<td>방위 + 고도 · <strong>뒤섞은 대응표</strong> <code>retinotopy build --shuffle {azimuth,elevation} --within {type,type_side}</code>(대조군 · 선택)</td>
+<td><code>retino-v1</code>(고도만)</td>
+</tr>
+<tr>
+<td>LIF · 다가옴</td>
+<td><code>sim-v2</code> · <code>loom-v1</code></td>
+<td>바뀌지 않음</td>
+<td><code>sim-v1</code></td>
+</tr>
+<tr>
+<td>감시</td>
+<td><code>config/guard.yaml</code></td>
+<td>성적표 감시 <code>scorecard_check_every: 1</code> · <code>scorecard_abort_free_percent: 25</code> · <code>scorecard_abort_footprint_gb: null</code>(<strong>아직 안 쟀다</strong>) · 스크립트 기다림 <code>script_wait_every_s: 30</code> · <code>script_wait_max_min: 30</code>(넘으면 끝 코드 3)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>대시보드</td>
+<td><code>config/dashboard.yaml</code> <code>train_rule: train-v6</code></td>
+<td>판정 · 표본 쪽이 v6 폴더를 읽는다</td>
+<td>v5</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="11-자료-묶음-datadatasets--git-밖--목록은-docsdatasetsmd">1.1 자료 묶음 (<code>data/datasets/</code> · git 밖 · 목록은 <a href="../datasets.md">docs/datasets.md</a>)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>묶음</th>
+<th>과제 · 채널</th>
+<th>재배선</th>
+<th>무엇에 썼나</th>
+<th>알아 둘 것</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fly-loop-v2</code></td>
+<td>task-v2 · channels-v2</td>
+<td><strong>실제 s0~s4</strong>(카드 · meta 머리는 "0" 으로 잘못 적힘)</td>
+<td>train-v5 · M2</td>
+<td>⚠️ <strong>냄새 센서가 작은턱수염</strong> — 이 자료의 냄새 값 · v5 결과는 그 기준</td>
+</tr>
+<tr>
+<td><code>fly-loop-v2-ln</code></td>
+<td>task-v2.1 · <strong>channels-v3</strong></td>
+<td>s0</td>
+<td>M3</td>
+<td>v2 의 감각 입력(<code>stim.npz</code>)을 <strong>뇌만 재생</strong>(몸 · 센서 값은 v2 그대로)</td>
+</tr>
+<tr>
+<td><code>fly-loop-v4-pilot</code></td>
+<td><strong>task-v4</strong> · channels-v3</td>
+<td>s0</td>
+<td>M4 작은 시험</td>
+<td>학습 60 · 평가 40 에피소드</td>
+</tr>
+<tr>
+<td><code>fly-loop-v4</code></td>
+<td><strong>task-v4</strong> · channels-v3</td>
+<td><strong>실제 s0~s2</strong>(카드 "0" — 묶는 코드는 <code>56d4b73</code> 부터 고쳐짐)</td>
+<td>M4 전체 · train-v6</td>
+<td>학습 200 · 평가 200 에피소드 · 888 MB</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="2-한-일을-그대로-다시-하는-순서">2. 한 일을 그대로 다시 하는 순서</h2>
+<p>각 단계: <strong>명령 · 입력 · 결과 파일 · 실측(시간 · 메모리) · 확인값</strong>. 앞 단계의 확인값이 맞지 않으면 다음으로 가지 않는다.</p>
+<h3 id="20-준비--매번">2.0 준비 — 매번</h3>
+<pre><code class="language-bash">memory_pressure | tail -1        # 시스템 여유 % — 평소 40 % 이상 · Qwen 을 올리는 단계는 63 % 이상(조율 세션 기준)
+cat runs/.heavy.lock             # 비어 있어야 한다(한 번에 하나)
+ollama ps                        # Qwen 단계 전 — 다른 큰 모델이 올라 있지 않은지
+nohup .venv/bin/fly-connectome dashboard --serve 8770 --every 30 &gt; runs/dashboard/serve.log 2&gt;&amp;1 &amp;   # 대시보드
+</code></pre>
+<ul>
+<li>대시보드: http://127.0.0.1:8770/ — <code>config/dashboard.yaml</code> 을 바꾸면 <strong>서버를 다시 띄운다</strong>(띄울 때 설정을 읽는다).</li>
+<li>오래 도는 스크립트는 사건 파일 <code>runs/full-v&lt;N&gt;-*.jsonl</code> 을 남긴다 — 대시보드 "순서" 칸이 이것을 읽는다.</li>
+</ul>
+<h3 id="21-m0--냄새-센서-바로잡기-설정-한-줄">2.1 M0 — 냄새 센서 바로잡기 (설정 한 줄)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>무엇</td>
+<td><code>config/task.yaml</code> <code>encoder.smell.sensors: {L: 2, R: 3}</code></td>
+</tr>
+<tr>
+<td>왜</td>
+<td>FlyGym 1.x <code>odor_intensity</code> 순서 = 왼 · 오른 <strong>작은턱수염(0 · 1)</strong> → 왼 · 오른 <strong>더듬이(2 · 3)</strong> — <a href="../research/fly-connectome/14-냄새-좌우-조사.html">연구 노트 14 §3.1</a></td>
+</tr>
+<tr>
+<td>결과</td>
+<td>판 <code>task-v2.1</code>(커밋 <code>6da977f</code>) · 좌우 차 약 1/3.5(원천 25 mm · 옆 90° 에서 4.8 % → 1.37 %)</td>
+</tr>
+<tr>
+<td>확인</td>
+<td>성적표 <code>no_circuit</code> 글도 이 설정을 따른다(0 · 1 을 박아 두었던 것을 같은 때 고침)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="22-m2--여러-창-선형-검사-새-시뮬레이션-없음--cpu">2.2 M2 — 여러 창 선형 검사 (새 시뮬레이션 없음 · CPU)</h3>
+<pre><code class="language-bash">uv run fly-connectome odor-windows --dataset fly-loop-v2
+#   옵션: --channel smell|smell_ln · --windows 1,3,5,10(기본) · --max-decision N(결정 번호 &lt; N 만 · 0 = 전부)
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>입력</th>
+<th>결과 파일</th>
+<th>실측</th>
+<th>확인값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fly-loop-v2</code>(작은턱수염 기준) · 채널 <code>smell</code></td>
+<td><code>runs/odor-windows-20260926-173621.json</code>(판 <code>odor-windows-v1</code>)</td>
+<td>CPU <strong>3 분 38 초</strong> · 메모리 기록 없음</td>
+<td>진짜 0.543(1) · 0.529(3) · 0.537(5) · 0.524(10) · 찍기 0.556 · 규칙상 통과 1 칸(10 누적 + 시간 차 0.590 · Holm 0.021)은 <strong>찍기 대비 p 0.166 → 구별 안 됨</strong> · ICC −0.02~0.08</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="23-m1--양성-대조-한쪽-orn-만--뇌만">2.3 M1 — 양성 대조 (한쪽 ORN 만 · 뇌만)</h3>
+<p>먼저 작게 재고 → 본 측정.</p>
+<pre><code class="language-bash">uv run fly-connectome inspect odor-control --rates 40 --reps 1 --rewired-seeds &quot;&quot;     # 작은 측정
+uv run fly-connectome inspect odor-control --rates 16,40,150 --reps 10 --rewired-seeds 0
+#   옵션: --window-ms(창 · 본 측정은 1 s) · --graph
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>단계</th>
+<th>결과 파일</th>
+<th>실측</th>
+<th>확인값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>작은 측정</td>
+<td><code>runs/odor-control-20260926-173803.json</code>(reps 1)</td>
+<td><strong>10.3 s</strong> · 1.7 GB(조율 세션 기록)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>본 측정</td>
+<td><code>runs/odor-control-20260926-175017.json</code>(판 <code>odor-control-v1</code> · 판정 문턱 0.9) · 로그 <code>runs/odor-control-m1.log</code></td>
+<td><strong>725 s</strong> · 120 회 · 최대 1.7 GB</td>
+<td>투사 뉴런(ALPN 좌우 343 씩) 부호 정답률 <strong>1.000</strong>(60/60) · 재배선 0.358(침묵) · 좌우 차 0.35~1.05 Hz(바탕 약 26 Hz 의 2~4 %) · d′ 7.7~15.5 · LN4 규칙상 0.500(바탕이 오른쪽으로 치우침 — 3절) · <strong>DNa02 0 Hz</strong>(150 Hz 에도)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="24-m1b--약한-좌우-차-뇌만--진짜-배선">2.4 M1b — 약한 좌우 차 (뇌만 · 진짜 배선)</h3>
+<pre><code class="language-bash">uv run fly-connectome inspect odor-contrast
+#   기본: --contrasts 0.02,0.05,0.1,0.2 · --windows-ms 300,1000,3000 · --reps 10 · 공통 40 Hz
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>결과 파일</th>
+<th>실측</th>
+<th>판정 규칙(결과 전에 정함)</th>
+<th>확인값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runs/odor-contrast-20260926-184048.json</code>(판 <code>odor-contrast-v1</code>) · 로그 <code>runs/odor-contrast-m1b.log</code></td>
+<td><strong>2,005 s</strong>(2,004.6) · 240 회 · 메모리 기록 없음</td>
+<td>한 개 빼고 문턱 정답률 ≥ 0.75</td>
+<td>ORN 2 % · 3 s 0.90 · 5 % 부터 0.3 s 에 0.90 · 투사 뉴런은 20 % · 3 s 에서야 0.75 · <strong>LN4 5 % · 1 s 0.85 · 10 % · 3 s 0.80 · 20 % · 1 s 0.95</strong>(표 전체는 <a href="../research/fly-connectome/14-냄새-좌우-조사.html">연구 노트 14 §9</a>)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="25-m3--ln-채널-재생-channels-v3--뇌만-다시">2.5 M3 — LN 채널 재생 (<code>channels-v3</code> · 뇌만 다시)</h3>
+<p>재생은 <strong>쓰기 전에 반드시 검증</strong>한다(3절 첫 함정).</p>
+<pre><code class="language-bash"># ① 검증 — 앞 6 결정을 바꾸지 않고 돌려 원본과 비교(저장 없음) → 모든 결정 &quot;최대 차 0&quot; 이어야 한다
+uv run fly-connectome replay --pack fly-loop-v2 --split eval --name probe-ln --rewired-seeds 0-4 --no-retune --verify 6
+# ② 본 재생 → 묶기 → 여러 창 검사
+bin/run_m3.sh
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>단계</th>
+<th>결과</th>
+<th>실측</th>
+<th>확인값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① 검증</td>
+<td>저장 없음</td>
+<td>뇌 둘 결정당 약 4.6 s · 3.2 GB(<code>bin/run_m3.sh</code> 머리 주석)</td>
+<td>고친 뒤(<code>efa0104</code>) 모든 채널 <strong>최대 차 0</strong></td>
+</tr>
+<tr>
+<td>② 재생</td>
+<td>조각 <code>runs/dataset-m3-eval</code> · <code>runs/dataset-m3-train</code> → 묶음 <code>fly-loop-v2-ln</code></td>
+<td>평가 40 에피소드 <strong>34 분</strong> + 학습 에피소드 0~119 <strong>71 분</strong></td>
+<td>묶음 <code>dataset verify fly-loop-v2-ln</code> "온전"</td>
+</tr>
+<tr>
+<td>② 검사</td>
+<td><code>runs/odor-windows-20260926-203726.json</code>(smell_ln) · <code>-203733.json</code>(smell)</td>
+<td>기록 없음</td>
+<td>LN4 최고 0.588(5 누적) · 투사 뉴런 0.574 · 찍기 0.556 → <strong>찍기 대비 p ≥ 0.18 → 구별 안 됨</strong>(규칙상 통과 4 칸은 재배선 침묵 때문)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="26-m4--냄새-맡기-구간-과제-task-v4">2.6 M4 — 냄새 맡기 구간 과제 (<code>task-v4</code>)</h3>
+<pre><code class="language-bash"># ① 몸 확인 — 냄새 맡기 4 결정 동안 먹이 거리가 그대로인지 · 좌우 차 %
+uv run fly-connectome collect --name v4check --seeds 0-1 --rewired-seeds 0 --workers 1
+# ② 작은 시험(학습 60 · 평가 40 · 진짜 + s0)
+bin/run_m4_pilot.sh
+# ③ 전체 수집 전 작은 측정(뇌 4)
+uv run fly-connectome collect-probe --seeds 0-1 --rewired-seeds 0-2
+# ④ 전체(학습 200 · 평가 200 · 진짜 + s0~s2 → 묶기 → linear-probe + odor-windows 넷)
+bin/run_m4_full.sh
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>단계</th>
+<th>결과</th>
+<th>실측</th>
+<th>확인값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①</td>
+<td>조각 <code>runs/dataset-v4check</code>(<code>config/task.yaml</code> 주석) — <strong>지금 <code>runs/</code> 에 폴더 없음(기록 없음)</strong></td>
+<td>기록 없음</td>
+<td>먹이 6~10 mm 에서 냄새 맡기 좌우 차 <strong>3.5~3.9 %</strong>(M1b 문턱 5 % 아래) → <strong>뇌 결과 보기 전에</strong> 4~7 mm 로 당김(<code>abcb4ba</code>)</td>
+</tr>
+<tr>
+<td>②</td>
+<td>묶음 <code>fly-loop-v4-pilot</code> · <code>runs/odor-windows-20260926-2231{19,21,22,24}.json</code></td>
+<td><strong>48 분</strong>(스크립트 머리 추정 약 35 분)</td>
+<td>냄새 맡기 구간 · LN4 2 누적 <strong>0.650</strong>(재배선 0.487 · 찍기 0.500 · p 0.031 · Holm 0.065 경계) · 전체 · LN4 10 누적 <strong>0.682</strong>(0.367 · 0.485 · p 0.006 · Holm 0.001)</td>
+</tr>
+<tr>
+<td>③</td>
+<td><code>runs/collect-probe-20260926-223206.json</code></td>
+<td>뇌 4 결정당 <strong>9.35 s</strong> · <strong>3.3 GB</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>④</td>
+<td>조각 <code>runs/dataset-v4main-w0~2</code> · <code>dataset-v4eval-w0~2</code> → 묶음 <code>fly-loop-v4</code> · 로그 <code>runs/m4-full-20260926-223458.log</code> · <code>runs/linear-probe-20260927-021024.json</code> · <code>runs/odor-windows-20260927-0210{30,54}.json</code> · <code>-021101.json</code> · <code>-021129.json</code></td>
+<td><strong>3 h 36 m</strong>(09-26 22:34 → 09-27 02:11)</td>
+<td><strong>stats-v3</strong>(<code>e61d5de</code> · 결과 전에 정함): 냄새 맡기 구간 · LN4 <strong>4 누적(1.2 s) 0.725</strong>(재배선 평균 0.525 · 찍기 0.490 · 찍기 대비 p &lt; 0.001 · Holm 0.001) · 선형 검사 통과 6 칸(시각 넷 · smell_ln → 냄새 쪽 · 구애 → 물체 있음) · 투사 뉴런 불통 → <strong>F-003 성공 기준 충족</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="27-train-v6--투영기-다시-학습-무거움--qwen">2.7 train-v6 — 투영기 다시 학습 (무거움 · Qwen)</h3>
+<pre><code class="language-bash">uv run fly-connectome compress fit --dataset fly-loop-v4
+uv run fly-connectome compress gate --dataset fly-loop-v4          # 통과 채널이 비면 학습하지 않는다
+uv run fly-connectome train-probe --dataset fly-loop-v4 --steps 12  # 작은 측정
+bin/run_full_v6.sh --skip-compress                                  # 학습 4 → 채점 평가 8 → 캡션 판정 2 → 성적표
+#   한 뇌가 멈추면: 그 폴더를 옆으로 옮기고(예: …-v6.gpuerror-1636)
+bin/run_full_v6.sh --skip-compress --train-only=rewired-s1,rewired-s2   # 그 뇌부터 처음부터 · 나머지는 끝난 것을 쓴다
+</code></pre>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>단계</th>
+<th>결과 파일</th>
+<th>실측</th>
+<th>확인값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>압축 · 관문</td>
+<td><code>runs/compress-fly-loop-v4-compress-v3/gate.json</code></td>
+<td>기록 없음</td>
+<td>통과 채널 <strong>시각 · smell_ln · 공간</strong>(칸: 시각 넷 · smell_ln → 냄새 쪽 · 공간 → 물체 있음) · v5 의 몸 · 촉각 · 미각은 다리 칸이 관문을 못 넘어 빠짐(찍기 0.713)</td>
+</tr>
+<tr>
+<td>작은 측정</td>
+<td><code>runs/train-probe-20260927-021708.jsonl</code></td>
+<td>걸음당 <strong>3.4~6.4 s</strong> · 최대 <strong>31.3 GB</strong> 평탄</td>
+<td>v5 와 같음</td>
+</tr>
+<tr>
+<td>학습 4</td>
+<td><code>runs/projector-{real,rewired-s0,rewired-s1,rewired-s2}-train-v6/</code> · 사건 <code>runs/full-v6-20260927-021824.jsonl</code> · <code>-163721.jsonl</code></td>
+<td>뇌마다 약 4,270 걸음 · 진짜 02:18 → 07:31 · s0 07:31 → 13:23 · s1 16:37 → 09-28 02:23(첫 시도 13:23 → 16:36 GPU 오류 · 1,550 걸음) · s2 02:23 → 10:40 · 31.3 GB</td>
+<td>학습 자료 에피소드 0~149(1,294 결정) · 손실 표 10장 1.2c · Qwen 지문 전후 같음 <code>a4cfcb8d0ae14b11</code> · 저장본 sha256 10장 1.3</td>
+</tr>
+<tr>
+<td>채점 평가 8</td>
+<td><code>runs/projector-*-train-v6/eval-scored-{final,stage1-caption}.json</code></td>
+<td>하나 약 16 분(조율 세션 기록)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>캡션 판정 2</td>
+<td><code>runs/caption-judge-train-v6-final.json</code>(sha256 <code>c999c6766e9cda7e</code>) · <code>-stage1-caption.json</code>(<code>c647768f86b70752</code>)</td>
+<td>기록 없음</td>
+<td>물체 있음 0.735 ✅ · <strong>냄새 쪽 0.530 ✅</strong>(재배선 0.476 · 0.506 · 0.502 · 찍기 0.461 · Holm 0.022 / 캡션 단계본 0.577) · 다리 입력 없음</td>
+</tr>
+<tr>
+<td>성적표</td>
+<td><code>runs/scorecard-20260928-124155/scorecard.json</code>(sha256 <code>c889e93a44fb2a17</code>) · 구성마다 <code>.decisions.jsonl</code></td>
+<td>09-28 12:4x → 09-29 00:31(약 12 h) · 메모리 기록 없음</td>
+<td>vector <strong>0.350</strong> · 재배선 0.200 / <strong>0.375</strong> / 0.300 · no_circuit 0.325 · text 0 · no_llm 0 · p 0.29 → <strong>R 2.0-6 세 번째 발동</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="28-끝나면--매번">2.8 끝나면 — 매번</h3>
+<pre><code class="language-bash">uv run fly-connectome backup      # git 밖 결과를 ~/Backups 와 USB(JKL-USB)에 · 대조
+</code></pre>
+<p>그 뒤 문서: 학습 안내서 <a href="10-학습-기록과-다음.html">10장</a> 대장에 한 줄(손실 · 저장본 sha256 · 재배선과 나란히) → R 인수 기준 → 인수인계 → 결과가 바뀐 곳(연구 노트 11 · 안내서 README · 뿌리 README). 연구 노트 · 안내서를 고치면 같은 커밋에서 HTML 을 다시 만든다(깨진 링크 0).</p>
+<hr />
+<h2 id="3-함정--증상--원인--대처">3. 함정 — 증상 → 원인 → 대처</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>증상</th>
+<th>원인</th>
+<th>대처 · 커밋</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>재생한 신호가 원본과 다르다(결정 1 부터 최대 차 1)</td>
+<td>재생이 <strong>직전 교사 행동을 다음 결정에 넘기지 않았다</strong></td>
+<td>고침 <code>efa0104</code> · <strong>쓰기 전에 <code>replay … --verify N</code></strong> 으로 최대 차 0 확인</td>
+</tr>
+<tr>
+<td>재생 조각을 묶다가 멈춘다</td>
+<td>재생 조각에 <code>episodes.jsonl</code> · <code>teacher_rules</code> 가 없었다</td>
+<td>고침 <code>9b969ec</code>(episodes.jsonl) · <code>338a252</code>(teacher_rules)</td>
+</tr>
+<tr>
+<td>자료 카드 · <code>meta.json</code> 머리가 재배선 씨앗 "0"</td>
+<td>묶는 코드가 여러 재배선을 머리에 적지 않았다(파일은 s0~s4 · s0~s2 로 있음)</td>
+<td><code>56d4b73</code> 부터 고쳐짐 · 옛 카드(fly-loop-v2 · v4)는 파일 목록을 믿는다</td>
+</tr>
+<tr>
+<td>GPU 오류 <code>InnocentVictim</code>(09-27 16:36) · 걸음이 2~3 배 느려짐</td>
+<td>다른 세션의 GPU 작업(크롬 3D · 시험)과 경합</td>
+<td>무거운 실행 중에는 다른 GPU 작업을 줄인다 · 멈추면 <strong>폴더를 옆으로 옮기고 처음부터</strong>(초기값 씨앗이 고정이라 같은 걸음에서 같은 손실로 재현된다 — 10장 1.1)</td>
+</tr>
+<tr>
+<td>평가 · 검사가 옛 자료를 읽는다</td>
+<td>여러 명령의 <code>--dataset</code> 기본값이 옛 묶음이다(2026-09-29 코드 확인: <code>eval-scored</code> · <code>eval-caption</code> · <code>train</code> · <code>train-probe</code> · <code>compress fit/gate</code> · <code>odor-windows</code> · <code>inspect bump</code> 기본 <strong>fly-loop-v2</strong> · <code>linear-probe</code> 기본 <strong>fly-loop-v1</strong>)</td>
+<td><strong>항상 <code>--dataset</code> 을 적는다</strong>(<code>bin/run_full_v6.sh</code> 는 적는다 · v5 스크립트는 기본값을 썼다)</td>
+</tr>
+<tr>
+<td>대시보드가 옛 판을 보인다</td>
+<td><code>config/dashboard.yaml</code> <code>train_rule</code> 이 옛 판 · 서버는 띄울 때 설정을 읽는다</td>
+<td>판을 올리고 서버를 다시 띄운다(<code>1ae2dec</code>) · 대시보드 시험은 판을 가짜 파일 쪽으로 고정(<code>8e8b5a3</code>)</td>
+</tr>
+<tr>
+<td>M1 에서 LN4 부호 정답률이 0.5</td>
+<td>LN4 바탕 발화가 오른쪽으로 치우쳐 어느 쪽을 자극해도 오른쪽이 높다</td>
+<td>부호 대신 <strong>한 개 빼고 문턱</strong>(M1b 판정) · d′ 로 본다(사후 값은 사후라고 적는다)</td>
+</tr>
+<tr>
+<td>"재배선보다 높음"이 쉽게 통과한다</td>
+<td>재배선 뇌는 후각 쪽이 거의 침묵</td>
+<td><strong>찍기 대비 p 를 함께</strong>(stats-v3 가 요구)</td>
+</tr>
+<tr>
+<td>커밋 전 검사 실패가 가려진다</td>
+<td><code>uv run ruff check … \| tail &amp;&amp; git commit</code> — 파이프 끝(<code>tail</code>)의 끝 코드만 보여 실패해도 커밋된다</td>
+<td>검사는 <strong>파이프 없이</strong> 돌려 끝 코드를 확인한 뒤 커밋</td>
+</tr>
+<tr>
+<td>손실이 가장 낮은 뇌가 이긴 것처럼 보인다</td>
+<td>손실은 정답 글에 가까운 정도일 뿐 칸 판정이 아니다(v6 재배선 s2 가 손실 최저 · 칸 판정은 진짜가 이김)</td>
+<td><strong>손실로 판정하지 않는다</strong> — 채점 평가 · 판정 · 성적표</td>
+</tr>
+<tr>
+<td>몸 확인에서 좌우 차가 문턱 아래(3.5~3.9 %)</td>
+<td>먹이가 멀었다(6~10 mm)</td>
+<td>뇌 결과를 보기 <strong>전에</strong> 과제를 고친다(<code>abcb4ba</code> · 4~7 mm) — 결과를 본 뒤 고치면 그 사실과 까닭을 적는다</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-앞으로-할-작업---설계안확정-아님">4. 앞으로 할 작업 — ⚠️ 설계안(확정 아님)</h2>
+<p>아래는 조율 세션이 정리한 후보다. <strong>요구자 확인 전에는 착수하지 않는다</strong> · 명령은 초안이다(없는 옵션 · 스크립트는 "만들 것"으로 적었다).</p>
+<h3 id="41-행동-단계가-캡션을-깎는-문제">4.1 행동 단계가 캡션을 깎는 문제</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>왜</td>
+<td>v5 · v6 모두 <strong>캡션 단계본 &gt; 최종본</strong>이다(v6 냄새 쪽 0.577 → 0.530 · 움직임 통과 → 불통). 행동을 배우며 캡션이 잊힌다</td>
+</tr>
+<tr>
+<td>어떻게</td>
+<td>후보 ① <strong><code>train-v7</code></strong> = v6 + <code>caption_rehearsal</code> 0.3 → 0.5(같은 자료 fly-loop-v4 · 뇌 4) · ② 캡션 · 행동을 번갈아(회전마다 섞기 — 코드 없음)</td>
+</tr>
+<tr>
+<td>명령 초안</td>
+<td><code>TRAIN_RULE</code> 판 올림(<code>train-v7</code>) → <code>train-probe --dataset fly-loop-v4 --steps 12</code> → v6 스크립트를 바탕으로 <code>bin/run_full_v7.sh</code>(만들 것)</td>
+</tr>
+<tr>
+<td>대조군</td>
+<td>재배선 s0~s2 를 <strong>같은 규칙</strong>으로</td>
+</tr>
+<tr>
+<td>성공 기준</td>
+<td>최종본 냄새 쪽 ≥ 캡션 단계본 · 성적표 vector 가 재배선 셋 <strong>모두</strong> 위</td>
+</tr>
+<tr>
+<td>무게</td>
+<td>학습 뇌 4 약 1.5 일(추정 · v6 실측 뇌당 5~10 h) + 성적표 약 12 h</td>
+</tr>
+<tr>
+<td>먼저 잴 것</td>
+<td>⚠️ <strong>성적표 씨앗 40 은 95 % 구간 폭이 약 ±0.15</strong> — 0.350 대 0.375 는 가를 수 없다 → <strong>씨앗 100 이상</strong>(성적표 약 30 h · 추정)을 먼저 검토 · <code>scorecard_abort_footprint_gb</code> 가 아직 없으니 성적표 프로세스 메모리부터 잰다</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="42-시야-방위-입력retino-v2--물체-쪽-칸">4.2 시야 방위 입력(retino-v2) — "물체 쪽" 칸</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>왜</td>
+<td>v6 에서 <strong>물체 쪽</strong> 칸이 불통(0.506 · 찍기 0.506). 지금 시각 입력은 고도만 조율한다(<code>vision.mode: retinotopic</code>)</td>
+</tr>
+<tr>
+<td>어떻게</td>
+<td><code>config/task.yaml</code> <code>encoder.vision.mode: retinotopic2</code>(고도 × <strong>방위</strong> 가우시안 · 코드 있음 <code>loop/encoder.py</code>) · <strong><code>azimuth_sigma_deg</code> 값을 선언해야 한다</strong>(지금 설정에 없음 · 출처 또는 "선언") · 판 올림</td>
+</tr>
+<tr>
+<td>명령 초안</td>
+<td><code>retinotopy build</code>(retino-v2) → <code>replay --pack fly-loop-v4 --split eval --name &lt;이름&gt; --rewired-seeds 0-2 --verify 6</code>(검증 · 이때 <code>--no-retune</code> 없이 시각을 새 규칙으로 다시 조율) → 본 재생 → 묶기 → <code>linear-probe --dataset &lt;새 묶음&gt;</code></td>
+</tr>
+<tr>
+<td>대조군</td>
+<td>재배선 + <strong>뒤섞은 대응표</strong> <code>retinotopy build --shuffle azimuth --within type_side</code>(같은 종류 · 같은 쪽 안에서 섞음) · <code>--within type</code>(두 눈을 섞어 좌우까지 지움 · <code>ebff77a</code>)</td>
+</tr>
+<tr>
+<td>성공 기준</td>
+<td>시각 → 물체 쪽이 찍기(대비 p &lt; 0.05) · 재배선 · 뒤섞은 대응표 모두 위</td>
+</tr>
+<tr>
+<td>무게</td>
+<td>재생 — 뇌 수 × 결정 수에 비례(M3 실측 뇌 둘 결정당 약 4.6 s) · 전체 시간은 기록 없음</td>
+</tr>
+<tr>
+<td>먼저 잴 것</td>
+<td><code>--verify</code> 로 결정당 시간 · 메모리</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="43-회로-학습-f-006-세포-유형-단위">4.3 회로 학습 F-006 (세포 유형 단위)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>왜</td>
+<td>조향 하강 뉴런 <strong>DNa02 가 냄새에 침묵</strong>(M1) — 냄새가 행동 출력까지 닿지 않는다. 연결 하나하나가 아니라 <strong>세포 유형별 매개변수</strong>만 배워 커넥톰 정체성을 지킨다(<a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> F-006 · <a href="../research/fly-connectome/13-회로-학습-설계-조사.html">연구 노트 13 §2</a>)</td>
+</tr>
+<tr>
+<td>어떻게</td>
+<td>I v2 §7 · core P Task 5 — <code>sim-v3</code> 매개변수 형식 · 함수형 걸음 + 대리 기울기 + <code>grad_scope</code> · 생리 목표 <code>physiology-v1</code>(있음)에 <strong>DNa02 냄새 반응</strong>을 더함 · 1단계 CMA-ES(기울기 없음)</td>
+</tr>
+<tr>
+<td>명령 초안</td>
+<td><code>fit-probe --scope escape-small --window-ms 10,30</code>(<strong>코드 없음 · 계획</strong>) — 창 두 길이로 메모리가 무엇에 비례하는지 확인 → CMA-ES → 재배선 s0~s4 같은 절차</td>
+</tr>
+<tr>
+<td>대조군</td>
+<td>재배선 s0~s4 에 같은 절차</td>
+</tr>
+<tr>
+<td>성공 기준</td>
+<td>R-7469 F-006 인수 기준(생리 목표 + 관문 칸 해독)</td>
+</tr>
+<tr>
+<td>무게</td>
+<td>기록 없음(먼저 <code>fit-probe</code> 로 잰다)</td>
+</tr>
+<tr>
+<td>먼저 잴 것</td>
+<td>창 길이 · scope 크기에 메모리가 어떻게 비례하나</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="44-그-밖">4.4 그 밖</h3>
+<ul>
+<li><strong>R-5777</strong>(대시보드 2단계) — 요구자 확인 → 아카이브(조율 세션).</li>
+<li><strong>도커 <code>moai-vectorDB</code> unhealthy</strong> — 이 저장소 일이 아니다. 전달만.</li>
+</ul>
+<hr />
+<h2 id="5-이-장에서-기록-없음으로-둔-칸">5. 이 장에서 "기록 없음"으로 둔 칸</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>단계</th>
+<th>빠진 값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M2(2.2)</td>
+<td>메모리</td>
+</tr>
+<tr>
+<td>M1b(2.4)</td>
+<td>메모리</td>
+</tr>
+<tr>
+<td>M3 검사(2.5)</td>
+<td>여러 창 검사 시간</td>
+</tr>
+<tr>
+<td>M4 ① 몸 확인(2.6)</td>
+<td>조각 폴더(<code>runs/dataset-v4check</code>)가 <code>runs/</code> 에 없음 · 시간</td>
+</tr>
+<tr>
+<td>v6 압축 · 관문(2.7)</td>
+<td>시간</td>
+</tr>
+<tr>
+<td>v6 캡션 판정(2.7)</td>
+<td>시간</td>
+</tr>
+<tr>
+<td>v6 성적표(2.7)</td>
+<td>메모리(<code>scorecard_abort_footprint_gb</code> 도 아직 없음)</td>
+</tr>
+<tr>
+<td>4.2 재생 전체 · 4.3 회로 학습</td>
+<td>시간 · 메모리(먼저 잰다)</td>
+</tr>
+</tbody>
+</table></div>
+<div class="pager"><a href="11-명령-모음과-용어.html">← 11 · 명령 모음과 용어</a><span></span></div>
+<footer>이 HTML 은 <code>12-재현-절차와-다음-작업.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>

@@ -91,7 +91,7 @@
   <div class="grp">2부 · Qwen 연결</div>
   <ol><li><a href="06-학습-자료-모으기.html">06 · 학습 자료 모으기</a></li><li><a href="07-투영기와-Qwen-잇기.html">07 · 투영기와 Qwen 잇기</a></li><li><a href="08-투영기-학습-절차.html">08 · 투영기 학습 절차</a></li><li><a href="09-평가와-대조군.html">09 · 평가와 대조군</a></li><li><a href="10-학습-기록과-다음.html">10 · 학습 기록 · 결과 · 다음</a></li></ol>
   <div class="grp">부록</div>
-  <ol><li><a href="11-명령-모음과-용어.html" class="cur">11 · 명령 모음과 용어</a></li></ol>
+  <ol><li><a href="11-명령-모음과-용어.html" class="cur">11 · 명령 모음과 용어</a></li><li><a href="12-재현-절차와-다음-작업.html">12 · 재현 절차와 다음 작업</a></li></ol>
   <div class="grp">관련 문서</div>
   <ol><li><a href="../research/fly-connectome/index.html">연구 노트(설계 · 배경)</a></li>
 <li><a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">연구 노트 11 · 구현</a></li>
@@ -103,7 +103,8 @@
 <div class="page">
 <h1 id="11-명령-모음과-용어">11. 명령 모음과 용어</h1>
 <blockquote>
-<p>부록. 처음부터 끝까지 다시 돌리는 순서와, 이 안내서에 나오는 말의 뜻. 2026-09-23 R-7469 의 새 명령(재배선 앙상블 · 좌우 측정 · 시야 자리 · 압축 관문 · 봉우리 검사)을 더했다.</p>
+<p>부록. 처음부터 끝까지 다시 돌리는 순서와, 이 안내서에 나오는 말의 뜻. 2026-09-23 R-7469 의 새 명령(재배선 앙상블 · 좌우 측정 · 시야 자리 · 압축 관문 · 봉우리 검사)을 더했다.
+2026-09-29: 냄새 좌우(M0~M4) · 재생 · train-v6 명령(21~29)과 지금 판을 더했다 — 단계마다 결과 파일 · 확인값은 <a href="12-재현-절차와-다음-작업.html">12장</a>.</p>
 </blockquote>
 <h2 id="1-준비">1. 준비</h2>
 <pre><code class="language-bash">uv sync --group dev --extra llm            # 본체(파이썬 3.14) — Qwen 을 쓰려면 --extra llm
@@ -264,8 +265,72 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 <td>약 1 분(USB 포함 · 801 MB)</td>
 <td>—</td>
 </tr>
+<tr>
+<td>21</td>
+<td><code>uv run fly-connectome odor-windows --dataset &lt;묶음&gt; [--channel smell\|smell_ln] [--windows 1,3,5,10] [--max-decision 4]</code></td>
+<td>12 · 연구 노트 14</td>
+<td>CPU 3 분 38 초(fly-loop-v2 · smell)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>22</td>
+<td><code>uv run fly-connectome inspect odor-control --rates 16,40,150 --reps 10 --rewired-seeds 0</code>(먼저 <code>--rates 40 --reps 1 --rewired-seeds ""</code>)</td>
+<td>12</td>
+<td>725 s · 최대 1.7 GB(작은 측정 10.3 s)</td>
+<td>여유 40 %</td>
+</tr>
+<tr>
+<td>23</td>
+<td><code>uv run fly-connectome inspect odor-contrast</code>(기본 좌우 차 0.02~0.2 × 창 300 · 1000 · 3000 ms × 10)</td>
+<td>12</td>
+<td>2,005 s</td>
+<td>여유 40 %</td>
+</tr>
+<tr>
+<td>24</td>
+<td><code>uv run fly-connectome replay --pack &lt;묶음&gt; --split eval\|train --name &lt;이름&gt; --rewired-seeds 0-4 [--seeds 0-119] [--no-retune] [--verify 6]</code></td>
+<td>12</td>
+<td>뇌 둘 결정당 약 4.6 s · 3.2 GB · <strong><code>--verify</code> 로 최대 차 0 먼저</strong></td>
+<td>여유 40 %</td>
+</tr>
+<tr>
+<td>25</td>
+<td><code>bin/run_m3.sh</code>(재생 channels-v3 → <code>fly-loop-v2-ln</code> → 여러 창)</td>
+<td>12</td>
+<td>34 분 + 71 분</td>
+<td>여유 40 %</td>
+</tr>
+<tr>
+<td>26</td>
+<td><code>bin/run_m4_pilot.sh</code>(task-v4 작은 시험 → <code>fly-loop-v4-pilot</code>)</td>
+<td>12</td>
+<td>48 분</td>
+<td>여유 40 %</td>
+</tr>
+<tr>
+<td>27</td>
+<td><code>bin/run_m4_full.sh</code>(task-v4 · 진짜 + s0~s2 · 학습 200 · 평가 200 → <code>fly-loop-v4</code> → 판정)</td>
+<td>12</td>
+<td>3 h 36 m · 뇌 4 결정당 9.35 s · 3.3 GB</td>
+<td>여유 40 %</td>
+</tr>
+<tr>
+<td>28</td>
+<td><code>bin/run_full_v6.sh --skip-compress [--skip-train] [--train-only=rewired-s1,rewired-s2]</code></td>
+<td>12</td>
+<td>학습 뇌당 약 5~10 h · 채점 하나 약 16 분 · 성적표 약 12 h</td>
+<td>여유 40 % · Qwen 단계 63 %</td>
+</tr>
+<tr>
+<td>29</td>
+<td><code>uv run fly-connectome judge-captions --version train-v6 --checkpoint final\|stage1-caption</code> · <code>retinotopy build [--shuffle azimuth\|elevation --within type\|type_side --seed N]</code> · <code>dashboard --serve 8770 --every 30</code></td>
+<td>09 · 12</td>
+<td>판정 기록 없음 · 대응표 CPU 수 초(기록 없음)</td>
+<td>—</td>
+</tr>
 </tbody>
 </table></div>
+<p>⚠️ <strong><code>--dataset</code> 을 항상 적는다</strong> — 기본값이 옛 묶음이다(<code>linear-probe</code> = fly-loop-v1 · 나머지 대부분 = fly-loop-v2 · <a href="12-재현-절차와-다음-작업.html">12장 §3</a>).</p>
 <p>v1 자료 · v2 판을 다시 돌릴 때(지금 있는 결과): <code>--dataset fly-loop-v1 --brain rewired</code> · 평가 · 성적표에 <strong><code>--version train-v2</code></strong> — 기본은 지금 규칙 판(train-v4)이다.
 <strong><code>bin/run_full_v4.sh</code></strong> 가 15~19 를 한 번에 돈다(압축 · 관문 → 학습 4 → 캡션 평가 8 → 성적표 7 구성 × 40 씨앗 · 관문 통과 채널이 없으면 끝 코드 4 · <code>--skip-train</code> 은 평가 · 성적표만 · 단계마다 메모리 여유 문턱을 기다림). <code>bin/run_full.sh</code> 는 v2 순서(학습 둘 → 캡션 평가 넷 → 성적표 5 구성) 그대로다.
 학습은 끝난 폴더를 덮어쓰지 않는다(<code>final.safetensors</code> 가 있으면 시작하지 않음).</p>
@@ -292,7 +357,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 <tr>
 <td>과제 · 인코더 · 디코더</td>
-<td><code>config/task.yaml</code> <strong>task-v2</strong></td>
+<td><code>config/task.yaml</code> <strong>task-v4</strong>(v2.1 더듬이 센서 · v4 냄새 맡기 구간 · 먹이 4~7 mm · 옆 방위 · 옛 task-v2 · task-v1 · <strong>task-v3 는 F-007 예약</strong>)</td>
 <td>06 → 08 → 09</td>
 </tr>
 <tr>
@@ -302,12 +367,12 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 <tr>
 <td>채널 표</td>
-<td><code>config/channels.yaml</code> <strong>channels-v2</strong></td>
-<td>06(차원이 바뀐다 · 새 이름) → 08 → 09</td>
+<td><code>config/channels.yaml</code> <strong>channels-v3</strong>(+ smell_ln · 33,450 차원 · 옛 channels-v2 · v1)</td>
+<td>06(차원이 바뀐다 · 새 이름 · 또는 <code>replay</code> 로 뇌만 다시) → 08 → 09</td>
 </tr>
 <tr>
 <td>판정 규칙</td>
-<td><code>stats.STATS_RULE</code> <strong>stats-v2</strong></td>
+<td><strong>자료 판으로 자동</strong>(<code>stats.rule_for_dataset</code> — task-v4 이상 자료 = <strong>stats-v3</strong> · 냄새 쪽 칸 + 찍기 대비 p &lt; 0.05 · 옛 자료 = stats-v2)</td>
 <td>09 판정 다시(자료는 그대로)</td>
 </tr>
 <tr>
@@ -317,7 +382,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 <tr>
 <td>학습 규칙</td>
-<td><code>train_cli.TRAIN_RULE</code> <strong>train-v5</strong>(v4 + compress-v3)</td>
+<td><code>train_cli.TRAIN_RULE</code> <strong>train-v6</strong>(= v5 규칙 · 자료 fly-loop-v4 · 옛 train-v5 = v4 + compress-v3)</td>
 <td>08 → 09(결과 폴더 이름이 바뀐다)</td>
 </tr>
 <tr>
@@ -326,9 +391,14 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 <td>09 채점</td>
 </tr>
 <tr>
-<td>성적표 판정</td>
-<td><code>scorecard.judge</code> <strong>scorecard-v2</strong></td>
-<td>09 문구</td>
+<td>성적표 판정 · 기록</td>
+<td><code>scorecard.judge</code> <strong>scorecard-v2</strong>(판정) · <strong>scorecard-v3</strong>(기록 — 구성마다 <code>&lt;구성&gt;.decisions.jsonl</code>)</td>
+<td>09 문구 · 대시보드 에피소드 쪽</td>
+</tr>
+<tr>
+<td>감시 · 대시보드</td>
+<td><code>config/guard.yaml</code>(<code>scorecard_*</code> · <code>script_wait_*</code>) · <code>config/dashboard.yaml</code> <code>train_rule: train-v6</code></td>
+<td>대시보드 서버 다시 띄우기</td>
 </tr>
 <tr>
 <td>Qwen 가중치</td>
@@ -337,7 +407,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 </tbody>
 </table></div>
-<p><strong>옛 판은 <code>config/archive/&lt;판&gt;.yaml</code></strong> 에 남긴다(sim-v1 · task-v1 · channels-v1 · retino-v1 · compress-v1) — <code>config.load(name, version="sim-v1")</code> 로 옛 자료를 다시 돌릴 수 있다.</p>
+<p><strong>옛 판은 <code>config/archive/&lt;판&gt;.yaml</code></strong> 에 남긴다(sim-v1 · task-v1 · task-v2 · task-v2.1 · channels-v1 · channels-v2 · retino-v1 · compress-v1 · compress-v2) — <code>config.load(name, version="sim-v1")</code> 로 옛 자료를 다시 돌릴 수 있다.</p>
 <h2 id="4-문서-고치기">4. 문서 고치기</h2>
 <pre><code class="language-bash">uv run --no-project --with markdown python docs/training/build.py                 # 이 안내서 HTML — &quot;깨진 링크 없음&quot;
 uv run --no-project --with markdown python docs/research/fly-connectome/build.py  # 연구 노트 HTML
@@ -543,7 +613,7 @@ python3 .claude/skills/dev/scripts/dispatch.py validate                         
 </tbody>
 </table></div>
 <p>이전: <a href="10-학습-기록과-다음.html">10. 학습 기록 · 결과 · 다음</a> · 처음: <a href="index.html">안내서 시작</a></p>
-<div class="pager"><a href="10-학습-기록과-다음.html">← 10 · 학습 기록 · 결과 · 다음</a><span></span></div>
+<div class="pager"><a href="10-학습-기록과-다음.html">← 10 · 학습 기록 · 결과 · 다음</a><a href="12-재현-절차와-다음-작업.html">12 · 재현 절차와 다음 작업 →</a></div>
 <footer>이 HTML 은 <code>11-명령-모음과-용어.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
 </div>
 </main>

@@ -45,7 +45,10 @@ GROUPS = [
         ("09-평가와-대조군.md", "09 · 평가와 대조군"),
         ("10-학습-기록과-다음.md", "10 · 학습 기록 · 결과 · 다음"),
     ]),
-    ("부록", [("11-명령-모음과-용어.md", "11 · 명령 모음과 용어")]),
+    ("부록", [
+        ("11-명령-모음과-용어.md", "11 · 명령 모음과 용어"),
+        ("12-재현-절차와-다음-작업.md", "12 · 재현 절차와 다음 작업"),
+    ]),
 ]
 ORDER = [name for _, items in GROUPS for name, _ in items]
 SHORT = {name: label for _, items in GROUPS for name, label in items}
