@@ -455,7 +455,7 @@ bin/run_m3.sh
 <tr>
 <td>② 검사</td>
 <td><code>runs/odor-windows-20260926-203726.json</code>(smell_ln) · <code>-203733.json</code>(smell)</td>
-<td>기록 없음</td>
+<td>한 번에 약 7~10 초(묶기 20:37:1x 뒤 결과 파일 시각 20:37:26 · 20:37:33 · <code>runs/m3-resume-203715.log</code>)</td>
 <td>LN4 최고 0.588(5 누적) · 투사 뉴런 0.574 · 찍기 0.556 → <strong>찍기 대비 p ≥ 0.18 → 구별 안 됨</strong>(규칙상 통과 4 칸은 재배선 침묵 때문)</td>
 </tr>
 </tbody>
@@ -484,7 +484,7 @@ bin/run_m4_full.sh
 <tbody>
 <tr>
 <td>①</td>
-<td>조각 <code>runs/dataset-v4check</code>(<code>config/task.yaml</code> 주석) — <strong>지금 <code>runs/</code> 에 폴더 없음(기록 없음)</strong></td>
+<td>조각 <code>runs/dataset-v4check</code>(<code>config/task.yaml</code> 주석) — 몸 확인용 임시 조각이라 확인 뒤 지웠다(조율 세션). 결과의 정본은 <a href="../requirements/20260923-104151-7469_fly-learning-next_req.md">R-7469</a> F-003 "M4 작은 시험" 줄 · 앞으로는 <code>scripts/20-odor/m4-body-check.sh</code> 가 같은 일을 하고 조각을 지운다</td>
 <td>에피소드 2 · 약 2 분(<code>scripts/20-odor/m4-body-check.sh</code> 머리 주석)</td>
 <td>먹이 6~10 mm 에서 냄새 맡기 좌우 차 <strong>3.5~3.9 %</strong>(M1b 문턱 5 % 아래) → <strong>뇌 결과 보기 전에</strong> 4~7 mm 로 당김(<code>abcb4ba</code>)</td>
 </tr>
@@ -550,19 +550,19 @@ bin/run_full_v6.sh --skip-compress --train-only=rewired-s1,rewired-s2   # 그 �
 <tr>
 <td>채점 평가 8</td>
 <td><code>runs/projector-*-train-v6/eval-scored-{final,stage1-caption}.json</code></td>
-<td>하나 약 16 분(조율 세션 기록)</td>
+<td>하나 약 15~17 분 · 8 번 합계 약 2 h(조율 세션 기록)</td>
 <td>—</td>
 </tr>
 <tr>
 <td>캡션 판정 2</td>
 <td><code>runs/caption-judge-train-v6-final.json</code>(sha256 <code>c999c6766e9cda7e</code>) · <code>-stage1-caption.json</code>(<code>c647768f86b70752</code>)</td>
-<td>기록 없음</td>
+<td>한 번에 1 초 안(12:41:54 → 12:41:54 · 12:41:54 → 12:41:55 · <code>runs/full-v6-20260927-163721.log</code>)</td>
 <td>물체 있음 0.735 ✅ · <strong>냄새 쪽 0.530 ✅</strong>(재배선 0.476 · 0.506 · 0.502 · 찍기 0.461 · Holm 0.022 / 캡션 단계본 0.577) · 다리 입력 없음</td>
 </tr>
 <tr>
 <td>성적표</td>
 <td><code>runs/scorecard-20260928-124155/scorecard.json</code>(sha256 <code>c889e93a44fb2a17</code>) · 구성마다 <code>.decisions.jsonl</code></td>
-<td>09-28 12:4x → 09-29 00:31(약 12 h) · 약 29 GB(<code>scripts/40-eval/scorecard.sh</code> 머리 주석 · 감시 문턱 <code>scorecard_abort_footprint_gb</code> 는 아직 비어 있음)</td>
+<td>09-28 12:4x → 09-29 00:31(약 12 h) · 메모리: <strong>ps 한 번 관측 · 측정 파일 없음</strong> — 09-28 19:3x 성적표 프로세스 RSS 30,655,072 KB ≈ 29.2 GB(Qwen 28.6 GB 포함) · 시스템 여유 62~86 % · 감시 문턱 <code>scorecard_abort_footprint_gb</code> 는 아직 비어 있음</td>
 <td>vector <strong>0.350</strong> · 재배선 0.200 / <strong>0.375</strong> / 0.300 · no_circuit 0.325 · text 0 · no_llm 0 · p 0.29 → <strong>R 2.0-6 세 번째 발동</strong></td>
 </tr>
 </tbody>
@@ -796,20 +796,8 @@ bin/run_full_v6.sh --skip-compress --train-only=rewired-s1,rewired-s2   # 그 �
 <td>메모리</td>
 </tr>
 <tr>
-<td>M3 검사(2.5)</td>
-<td>여러 창 검사 시간</td>
-</tr>
-<tr>
-<td>M4 ① 몸 확인(2.6)</td>
-<td>조각 폴더(<code>runs/dataset-v4check</code>)가 <code>runs/</code> 에 없음(시간은 스크립트 주석의 약 2 분)</td>
-</tr>
-<tr>
-<td>v6 캡션 판정(2.7)</td>
-<td>판정(<code>judge-captions</code>) 자체의 시간(채점 평가 + 판정 합계 약 2 h 만 있음)</td>
-</tr>
-<tr>
 <td>v6 성적표(2.7)</td>
-<td>측정 파일로 남은 최대 메모리(스크립트 주석의 약 29 GB 뿐 · <code>scorecard_abort_footprint_gb</code> 도 아직 없음)</td>
+<td>최대 메모리 측정 파일(ps 한 번 관측 29.2 GB 뿐)</td>
 </tr>
 <tr>
 <td>4.2 재생 전체 · 4.3 회로 학습</td>
