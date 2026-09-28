@@ -26,6 +26,8 @@ from . import config, data, paths
 from . import graph as graph_mod
 
 SHUFFLE_KEYS = {"azimuth": "azimuth_deg", "elevation": "elevation_deg"}
+# 뒤섞는 묶음 — 기본은 종류 × 눈(좌우는 남음) · type 은 두 눈을 섞어 좌우까지 지운다
+SHUFFLE_WITHIN = {"type_side": ("type", "side"), "type": ("type",)}
 REPORT_TYPES = ("LC4", "LC6", "LC11", "LC12", "LC16", "LC17", "LPLC1", "LPLC2")
 
 
@@ -130,29 +132,37 @@ def build(g: graph_mod.Graph, cfg: dict[str, Any] | None = None) -> dict[str, An
     return out
 
 
-def shuffled(res: dict[str, Any], what: str = "azimuth", seed: int = 0) -> dict[str, Any]:
-    """뒤섞은 대응표(대조군) — `what`(azimuth | elevation) 값을 같은 종류 · 같은 눈 안에서 뒤섞는다.
+def shuffled(res: dict[str, Any], what: str = "azimuth", seed: int = 0,
+             within: str = "type_side") -> dict[str, Any]:
+    """뒤섞은 대응표(대조군) — `what`(azimuth | elevation) 값을 묶음 안에서 뒤섞는다.
 
-    다른 칸(좌표 · 다른 각 · 시냅스 수)은 그대로. `rule` 은 `<판>.shuffled-<what>-s<seed>` 로
-    바뀌어 파일 이름 · 자료 메타에 뒤섞은 표임이 남는다.
+    `within="type_side"`(기본): 같은 종류 · 같은 눈 안 — 눈 안의 자리만 지우고 **좌우는 남는다**
+    (방위를 섞어도 원본과 상관 0.78 · 연구 노트 13 §4.5).
+    `within="type"`: 같은 종류 안에서 두 눈을 섞는다 — 좌우(어느 쪽 시야인가)까지 지운다.
+    다른 칸(좌표 · 다른 각 · 시냅스 수)은 그대로. `rule` 은 `<판>.shuffled-<what>-s<seed>`
+    (`type` 이면 `<판>.shuffled-<what>-type-s<seed>`)로 바뀌어 파일 이름 · 자료 메타에 남는다.
     """
     if what not in SHUFFLE_KEYS:
         raise ValueError(f"what 은 {sorted(SHUFFLE_KEYS)} 중 하나 — {what!r}")
+    if within not in SHUFFLE_WITHIN:
+        raise ValueError(f"within 은 {sorted(SHUFFLE_WITHIN)} 중 하나 — {within!r}")
     key = SHUFFLE_KEYS[what]
     if any(key not in n for n in res["neurons"]):
         raise ValueError(f"대응표에 {key} 가 없는 뉴런이 있다 — 판 {res.get('rule')}")
     rng = np.random.default_rng(seed)
     out = json.loads(json.dumps(res))
-    groups: dict[tuple[str, str], list[int]] = defaultdict(list)
+    groups: dict[tuple[str, ...], list[int]] = defaultdict(list)
     for k, n in enumerate(out["neurons"]):
-        groups[(n["type"], n["side"])].append(k)
+        groups[tuple(n[c] for c in SHUFFLE_WITHIN[within])].append(k)
     for ids in groups.values():
         vals = [out["neurons"][k][key] for k in ids]
         for k, j in zip(ids, rng.permutation(len(ids))):
             out["neurons"][k][key] = vals[j]
     out["base_rule"] = res["rule"]
-    out["rule"] = f"{res['rule']}.shuffled-{what}-s{seed}"
-    out["shuffle"] = {"what": what, "key": key, "seed": int(seed), "within": ["type", "side"]}
+    tag = "" if within == "type_side" else f"-{within}"
+    out["rule"] = f"{res['rule']}.shuffled-{what}{tag}-s{seed}"
+    out["shuffle"] = {"what": what, "key": key, "seed": int(seed),
+                      "within": list(SHUFFLE_WITHIN[within])}
     return out
 
 
@@ -207,12 +217,12 @@ def main(args: argparse.Namespace) -> int:
     for line in summarize(res):
         print(line)
     print(f"[retino] 저장 {out}")
+    unit = {"type_side": "종류 × 눈 안에서", "type": "종류 안에서 · 두 눈을 섞음"}[args.within]
     for what in args.shuffle or []:
-        sh = shuffled(res, what, args.seed)
+        sh = shuffled(res, what, args.seed, args.within)
         p = path_for(g.name, sh["rule"])
         p.write_text(json.dumps(sh, ensure_ascii=False), encoding="utf-8")
-        print(f"[retino] 뒤섞은 대응표({what} · 씨앗 {args.seed} · 종류 × 눈 안에서)"
-              f" 저장 {p}")
+        print(f"[retino] 뒤섞은 대응표({what} · 씨앗 {args.seed} · {unit}) 저장 {p}")
     return 0
 
 
@@ -225,4 +235,7 @@ def register(sub) -> None:
     b.add_argument("--shuffle", action="append", choices=sorted(SHUFFLE_KEYS),
                    help="뒤섞은 대응표(대조군)도 저장 — 여러 번 줄 수 있다")
     b.add_argument("--seed", type=int, default=0, help="뒤섞기 씨앗")
+    b.add_argument("--within", choices=sorted(SHUFFLE_WITHIN), default="type_side",
+                   help="섞는 묶음 — type_side(기본 · 좌우는 남김)"
+                        " | type(두 눈을 섞어 좌우까지 지움)")
     b.set_defaults(func=main)

@@ -5,6 +5,7 @@ R-7469 F-008 · I v2 §9.2. 가벼운 시험 · 실제 파일 없음(raw feather
 (b) 왼눈은 같은 기둥에서 부호가 반대 (c) 고도는 v1 과 같은 식
 (d) 옛 판 설정(방위 범위 없음)이면 방위 칸이 없다
 (e) `shuffled()` 는 같은 종류 · 같은 눈 안에서만 값을 바꾸고 다른 칸은 그대로다.
+(f) `within="type"` 은 두 눈을 섞어 좌우까지 지운다 · 규칙 이름이 달라 기본 파일을 덮지 않는다.
 """
 
 from __future__ import annotations
@@ -149,3 +150,23 @@ def test_summarize_reports_azimuth_per_eye(res):
     lines = retino.summarize(res, ("LC4", "LPLC2"))
     assert len(lines) == 2 and lines[0].startswith("  LC4") and "방위 R(3)" in lines[0]
     assert "방위 L(2)" in lines[0] and "방위 R(1)" in lines[1]
+
+
+def test_shuffled_within_type_mixes_eyes(res):
+    """within="type": 종류 안 값 집합은 같고, 어떤 씨앗에서는 왼눈 값이 오른눈으로 간다."""
+    crossed = 0
+    for seed in range(12):
+        sh = retino.shuffled(res, "azimuth", seed, within="type")
+        assert sh["rule"] == f"retino-v2-test.shuffled-azimuth-type-s{seed}"
+        assert sh["shuffle"]["within"] == ["type"]
+        a, b = _by_idx(res), _by_idx(sh)
+        for t in {n["type"] for n in res["neurons"]}:
+            va = sorted(n["azimuth_deg"] for n in res["neurons"] if n["type"] == t)
+            vb = sorted(n["azimuth_deg"] for n in sh["neurons"] if n["type"] == t)
+            assert va == vb
+        # 왼눈 방위는 +, 오른눈은 − 였다 — 부호가 바뀐 뉴런이 있으면 두 눈이 섞인 것
+        if any(np.sign(a[i]["azimuth_deg"]) != np.sign(b[i]["azimuth_deg"]) for i in a):
+            crossed += 1
+    assert crossed > 0
+    with pytest.raises(ValueError):
+        retino.shuffled(res, "azimuth", 0, within="side")
