@@ -47,6 +47,8 @@ select = ["E", "F", "I", "W"]
 [tool.ruff.lint.per-file-ignores]
 # 자료 카드의 마크다운 표 틀 — 줄을 나누면 표가 깨진다
 "src/moai_echomind_fly/datasets.py" = ["E501"]
+# 재현 · 분석 스크립트 — 머리말(무엇 · 언제 · 실측값)과 한 줄 결과 출력이 길다(2026-09-29 · 코드 줄은 ruff format)
+"scripts/50-analysis/*.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
