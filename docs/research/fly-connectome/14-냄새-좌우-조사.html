@@ -760,6 +760,12 @@ M1 · M2 모두 <strong>대조군(재배선)과 나란히</strong> 적는다(R 2
 <td>냄새 맡기 구간 · LN4 1 결정 0.637 · <strong>4 누적(1.2 s) 0.725</strong>(재배선 평균 0.525 · 찍기 0.490 · 찍기 대비 p &lt; 0.001 · Holm 0.001) · 전체 · LN4 5 누적 + 시간 차 0.694(0.555 · 0.460) · 한 창 <code>smell_ln → 냄새 쪽</code> 0.554(0.446 · 0.460 · Holm 0.006) · 투사 뉴런 0.537~0.562(p ≥ 0.066)</td>
 <td>✅ <strong>F-003 성공 기준 충족</strong>(task-v4 · LN4) · 투사 뉴런 ❌</td>
 </tr>
+<tr>
+<td>재학습 v6</td>
+<td><code>train-v6</code>(자료 <code>fly-loop-v4</code> · 입력 시각 · smell_ln · 공간) · <code>runs/caption-judge-train-v6-final.json</code> · <code>runs/scorecard-20260928-124155/scorecard.json</code></td>
+<td>캡션 냄새 쪽 최종 <strong>0.530</strong>(재배선 0.476~0.506 · 찍기 0.461 · Holm 0.022 / 캡션 단계본 0.577) · 성적표 vector 0.350 · 재배선 0.200/0.375/0.300 · no_circuit 0.325</td>
+<td>✅ Qwen 경로 캡션에서 처음 통과 · ❌ 성적표는 재배선 s1 에 짐(R 2.0-6 세 번째) — <a href="11-구현-초파리-신호를-Qwen-에.html">11 §8.9</a></td>
+</tr>
 </tbody>
 </table></div>
 <p><strong>읽는 법</strong>: 좌우 정보는 입력(ORN)에 있고 회로도 나를 수 있다(M1) — 사라지는 곳은 <strong>투사 뉴런 단계</strong>이고, <strong>LN4 가 1 s 이상 일정한 약한 차</strong>를 가른다(M1b).
