@@ -154,3 +154,65 @@ train-v5 학습(`bin/run_full_v5.sh --skip-compress` · 2026-09-24 12:43 → 09-
 4. **틀 토큰 가중 0.1** — 인수 기준 "기울기 0" 과 다름(의도된 구현 변경 · 2장).
 5. ~~성적표에 메모리 감시 없음 · `run_full_v5.sh` 대기 한도 하드코딩 · 대시보드 "찍기보다 높음" 이 값 비교뿐~~ → **2026-09-26 고침**(아래 커밋): 성적표 에피소드마다 `Watchdog("scorecard")`(여유 < 25 % 면 끝난 에피소드 저장 · `aborted.json` · 끝 코드 3 · 프로세스 크기 문턱은 아직 안 재서 null) · 대기 간격 · 한도 `config/guard.yaml script_wait_*` · 판정 표에 "찍기 대비 p" 열과 "통과 · 찍기와 구별 안 됨"(v5 물체 쪽 p 0.145). 시험 96 통과.
 6. 자료 v2 는 `retino-v1` 로 수집됨 — retino-v2(앞뒤 축)는 재주입 또는 v3 에서. (D 6)
+
+---
+
+## 6. 덧붙임 — 2026-09-26 ~ 29 (냄새 좌우 M0~M4 · train-v6)
+
+> 이 W 를 쓴 뒤(09-26) 잔여 이슈 1 · 2(냄새 좌우 · 평가 자료)를 풀려고 한 일. 수치 정본은 R-7469 F-003 · F-005 인수 기준과 학습 안내서 10장 1.1 · 1.2c · 1.3 · 2.6 · 2.7.
+> **다시 하는 입구는 `scripts/README.md`**(단계별 · 종류별 · 분석 6 · 09-29 실제 자료로 재현 확인).
+
+### 6.1 변경 파일(커밋)
+
+| 무엇 | 커밋 |
+|---|---|
+| 센서를 더듬이로(task-v2.1) · no_circuit 글도 설정을 따름 | `6da977f` |
+| `odor-windows`(M2) · `--channel` · `--max-decision` | `9ac0214` · `efa0104` · `62837b2` |
+| `inspect odor-control`(M1) · `odor-contrast`(M1b) | `e38348d` · `8c2fff5` |
+| 재생 버그(직전 교사 행동) · 새 채널 검증 건너뜀 · `--seeds` · episodes · teacher_rules | `efa0104` · `338a252` · `9b969ec`(copy_episodes) |
+| channels-v3(smell_ln) | `efa0104` |
+| task-v4(냄새 맡기 · 4~7 mm · 옆 방위) · 실행 행동 기록 · STOP | `62837b2` · `abcb4ba` |
+| stats-v3(자료 판으로 자동 · 냄새 쪽 칸 · 찍기 대비 p) | `e61d5de` · `cb3ccb2` |
+| train-v6 · run_full_v6.sh(`--dataset` · 판정 · `--train-only`) | `cb3ccb2` · `66e5a8d` · `7f27e8a` |
+| 성적표 결정 기록 scorecard-v3(R-5777 F-002) | `e069579` |
+| 묶음 카드 재배선 씨앗 목록 | `56d4b73` |
+| 재현 스크립트 | `280448c` · `0fda52b` |
+
+### 6.2 시험 · 검사(원문)
+
+```
+$ scripts/00-check/check.sh        # 2026-09-29 07:06
+ruff check src tests scripts → 끝 코드 0
+pytest -q -m "not heavy"      → 끝 코드 0 (110 passed)
+```
+
+재생 검증(원본과 같은지 · 고친 뒤): `replay --pack fly-loop-v2 --split eval --rewired-seeds 0-4 --no-retune --verify 6` → 결정 0~5 모두 **최대 차 0**.
+
+### 6.3 동작 확인 기록(파일 · 결과)
+
+| 단계 | 파일 | 결과 |
+|---|---|---|
+| M2 | `runs/odor-windows-20260926-173621.json` | 옛 과제 · 투사 뉴런 — 누적해도 찍기 수준 |
+| M1 | `runs/odor-control-20260926-175017.json` | PN 부호 1.000(차 2~4 %) · LN4 d′ 10~36(사후) · DNa02 0 Hz |
+| M1b | `runs/odor-contrast-20260926-184048.json` | PN 20 %·3 s 에서야 · LN4 5~10 %·1 s 이상 |
+| M3 | `runs/odor-windows-20260926-2037{26,33}.json`(fly-loop-v2-ln) | LN4 도 옛 과제에선 찍기와 구별 안 됨 |
+| M4 작은 시험 | `runs/odor-windows-20260926-2231*.json`(fly-loop-v4-pilot) | 전체 LN4 10 누적 0.682 · 찍기 0.485 |
+| M4 전체 | `runs/odor-windows-20260927-021030.json` 등 · `runs/linear-probe-20260927-021024.json`(fly-loop-v4) | **냄새 맡기 LN4 4 누적 0.725 · 재배선 0.525 · 찍기 0.490 · stats-v3 Holm 0.001** |
+| v6 관문 · probe | `runs/compress-fly-loop-v4-compress-v3/gate.json` · `runs/train-probe-20260927-021708.jsonl` | 통과 시각 · smell_ln · 공간 · 31.3 GB |
+| v6 판정 | `runs/caption-judge-train-v6-final.json`(`c999c6766e9cda7e`) · `-stage1-caption.json`(`c647768f86b70752`) | 물체 있음 · **냄새 쪽 통과**(0.530 · 캡션 단계본 0.577) |
+| v6 성적표 | `runs/scorecard-20260928-124155/scorecard.json`(`c889e93a44fb2a17`) | vector 0.350 · 재배선 0.200/**0.375**/0.300 → **R 2.0-6 세 번째 발동** |
+
+### 6.4 인수 기준 대조(덧붙임)
+
+| 기능 | 성공 기준 | 결과 |
+|---|---|---|
+| F-003 | 후각 계열 채널 → 냄새 쪽이 찍기를 넘고 재배선 앙상블 상위 | ✅ **task-v4 · LN4 로 충족**(선형 검사 · 캡션 판정 둘 다) · 옛 과제 · 투사 뉴런으로는 불가 |
+| F-005(v6) | 캡션이 찍기 · 재배선 앞섬 **그리고** 성적표가 재배선보다 높음 | ⚠️ 캡션만(물체 있음 · 냄새 쪽) · 성적표는 재배선 s1 에 짐 |
+
+### 6.5 잔여 이슈(갱신)
+
+1. ~~냄새 좌우~~ → 캡션에서 풀림 · **행동으로는 아직**(도는 쪽 같은 비율 진짜 0.558 대 재배선 0.508~0.580).
+2. 행동 단계가 캡션을 깎는다 — v6 에서도(냄새 쪽 0.577 → 0.530) → 인수인계 D 4.
+3. 성적표 씨앗 40 은 95 % 구간 ±0.15 — 0.35 대 0.375 는 가를 수 없다(판정력).
+4. 조향 하강 뉴런 DNa02 침묵(M1) — 회로 쪽 한계 → F-006 생리 목표.
+5. GPU 경합 — 다른 세션의 GPU 작업이 있으면 학습 2~3 배 느림 · GPU 오류(09-27 s1 재시작).
