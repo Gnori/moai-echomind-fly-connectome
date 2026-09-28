@@ -203,6 +203,46 @@
 <td>4~9 s · 31.4 GB</td>
 <td>✅</td>
 </tr>
+<tr>
+<td><code>projector-real-train-v6</code></td>
+<td>진짜</td>
+<td><strong>train-v6</strong>(= v5 규칙)</td>
+<td><strong>fly-loop-v4</strong>(task-v4 냄새 맡기 · 더듬이 · channels-v3) 에피소드 0~149(1,294 결정) · 관문 통과 <strong>시각 · smell_ln · 공간</strong> 3 채널</td>
+<td>09-27 02:18 → 07:31</td>
+<td>약 4,270</td>
+<td>4~5 s · 31.3 GB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>projector-rewired-s0-train-v6</code></td>
+<td>재배선 s0</td>
+<td>train-v6</td>
+<td>같음</td>
+<td>09-27 07:31 → 13:23</td>
+<td>약 4,270</td>
+<td>4~6 s · 31.3 GB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>projector-rewired-s1-train-v6</code></td>
+<td>재배선 s1</td>
+<td>train-v6</td>
+<td>같음</td>
+<td>09-27 16:37 → 09-28 02:23</td>
+<td>약 4,270</td>
+<td>7~11 s(다른 세션과 GPU 경합)</td>
+<td>✅ · 첫 시도는 13:23 → 16:36 <strong>GPU 오류(InnocentVictim)</strong> 로 1,550 걸음에서 멈춤(<code>…-v6.gpuerror-1636</code> · 처음부터 다시 · 손실이 같은 걸음에서 같게 재현)</td>
+</tr>
+<tr>
+<td><code>projector-rewired-s2-train-v6</code></td>
+<td>재배선 s2</td>
+<td>train-v6</td>
+<td>같음</td>
+<td>09-28 02:23 → 10:40</td>
+<td>약 4,270</td>
+<td>6~9 s</td>
+<td>✅</td>
+</tr>
 </tbody>
 </table></div>
 <h3 id="12-손실검증--eval-앞-24-개--낮을수록-정답-글에-가깝다">1.2 손실(검증 · <code>eval</code> 앞 24 개 · 낮을수록 정답 글에 가깝다)</h3>
@@ -275,6 +315,49 @@
 </table></div>
 <p>진짜 배선이 네 시점 모두 캡션이 가장 낮지만 재배선 s2 와는 끝에서 0.014 차이 — <strong>손실로는 판정하지 않는다</strong>(2.4 의 채점 판정으로).
 Qwen 가중치 지문은 네 학습 모두 학습 전후 같음(<code>a4cfcb8d0ae14b11</code>).</p>
+<h3 id="12c-손실--train-v6검증--캡션--행동">1.2c 손실 — train-v6(검증 · 캡션 / 행동)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>학습 전</th>
+<th>캡션 1 회전</th>
+<th>캡션 단계 끝</th>
+<th>최종</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>진짜 배선</td>
+<td>3.587 / 1.109</td>
+<td>2.110 / 1.051</td>
+<td>1.744 / 1.043</td>
+<td>1.815 / 0.441</td>
+</tr>
+<tr>
+<td>재배선 s0</td>
+<td>3.575 / 1.156</td>
+<td>2.286 / 1.001</td>
+<td>2.056 / 1.009</td>
+<td>2.111 / 0.600</td>
+</tr>
+<tr>
+<td>재배선 s1</td>
+<td>3.628 / 1.130</td>
+<td>2.368 / 1.019</td>
+<td>1.900 / 1.010</td>
+<td>1.899 / 0.775</td>
+</tr>
+<tr>
+<td>재배선 s2</td>
+<td>3.621 / 1.145</td>
+<td><strong>1.960</strong> / 1.070</td>
+<td><strong>1.665</strong> / 1.103</td>
+<td><strong>1.768</strong> / <strong>0.412</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>재배선 s2 가 캡션 · 행동 모두 가장 낮다 — <strong>손실로는 판정하지 않는다</strong>(2.6 채점 판정 · 2.7 성적표). Qwen 가중치 지문 네 학습 모두 전후 같음(<code>a4cfcb8d0ae14b11</code>).</p>
 <h3 id="13-저장본과-지문">1.3 저장본과 지문</h3>
 <div class="tbl"><table>
 <thead>
@@ -334,6 +417,26 @@ Qwen 가중치 지문은 네 학습 모두 학습 전후 같음(<code>a4cfcb8d0a
 <td><code>runs/projector-rewired-s2-train-v5/…</code></td>
 <td><code>75c763229638af39</code> · <code>07498e0007209dd3</code></td>
 <td>5.3 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-real-train-v6/stage1-caption.safetensors</code> · <code>final</code></td>
+<td><code>af7296a03718f421</code> · <code>2980b6b4e00583ea</code></td>
+<td>3.5 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-rewired-s0-train-v6/…</code></td>
+<td><code>e55ff437de26dea5</code> · <code>9648216df15ffda6</code></td>
+<td>3.5 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-rewired-s1-train-v6/…</code></td>
+<td><code>2b571c6dbb28ee63</code> · <code>e25ba73be480094e</code></td>
+<td>3.5 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-rewired-s2-train-v6/…</code></td>
+<td><code>fb0e027a6ab3470e</code> · <code>728220476dbe7c2f</code></td>
+<td>3.5 MB</td>
 </tr>
 </tbody>
 </table></div>
@@ -678,6 +781,128 @@ Qwen 가중치 지문은 네 학습 모두 학습 전후 같음(<code>a4cfcb8d0a
 <strong>"섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다"</strong>(R 2.0-6 · 두 번째 발동).</p>
 <p>읽는 법: Qwen 은 과제를 할 줄 안다(no_circuit 0.95) · 캡션에서는 진짜 배선이 물체 있음 · 다리를 재배선보다 잘 읽지만(2.4)
 먹이 도착에 필요한 <strong>냄새 쪽</strong>은 어느 뇌 신호에도 없다(04장 3.2 · 판정 제외 칸) → 행동은 모든 뇌가 같이 못 한다. <strong>다음 병목 = 냄새 좌우 정보.</strong></p>
+<h3 id="26-train-v6-캡션-판정--채점-평가--평가-1708-결정--200-에피소드--stats-v3냄새-쪽-칸-포함--찍기-대비-p-요구--결과-전에-정함">2.6 train-v6 캡션 판정 — 채점 평가 · 평가 1,708 결정 / 200 에피소드 · <strong>stats-v3</strong>(냄새 쪽 칸 포함 · 찍기 대비 p 요구 · 결과 전에 정함)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>최종본 진짜 · 재배선 s0/s1/s2 · 찍기</th>
+<th>판정</th>
+<th>캡션 단계본 진짜 · 재배선 · 찍기</th>
+<th>판정</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>물체 있음</td>
+<td><strong>0.735</strong> · 0.672/0.703/0.683 · 0.667</td>
+<td>✅</td>
+<td><strong>0.738</strong> · 0.669/0.682/0.711 · 0.667</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>냄새 쪽</strong></td>
+<td><strong>0.530</strong> · 0.476/0.506/0.502 · 0.461(Holm 0.022)</td>
+<td>✅</td>
+<td><strong>0.577</strong> · 0.458/0.521/0.516 · 0.461(Holm &lt; 0.001)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>물체 움직임</td>
+<td>0.680 · 0.671/0.663/0.673 · 0.671</td>
+<td>❌</td>
+<td>0.687 · 0.671/0.650/0.671 · 0.671</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>물체 쪽</td>
+<td>0.506 · 0.464/0.517/0.497 · 0.506</td>
+<td>❌</td>
+<td>0.524 · 0.466/0.499/0.536 · 0.506</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>다리</td>
+<td>0.716 · 0.614/0.731/0.721 · 0.713</td>
+<td>❌(몸 · 촉각이 관문을 못 넘어 입력 없음 · 예상)</td>
+<td>0.724 · 0.547/0.703/0.723 · 0.713</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>파일: <code>runs/caption-judge-train-v6-final.json</code>(sha256 <code>c999c6766e9cda7e</code>) · <code>-stage1-caption.json</code>(<code>c647768f86b70752</code>).</li>
+<li><strong>냄새 쪽이 처음으로 Qwen 경로에서도 통과</strong>(v5 는 판정조차 못 했다). 행동 단계가 캡션을 또 깎는다(냄새 쪽 0.577 → 0.530 · 움직임 통과 → 불통).</li>
+</ul>
+<h3 id="27-train-v6-성적표--씨앗-20002039--7-구성--task-v4--runsscorecard-20260928-124155scorecardjsonsha256-c889e93a44fb2a17--scorecard-v2-판정--scorecard-v3-결정-기록">2.7 train-v6 성적표 — 씨앗 2000~2039 · 7 구성 · task-v4 · <code>runs/scorecard-20260928-124155/scorecard.json</code>(sha256 <code>c889e93a44fb2a17</code>) · scorecard-v2 판정 · <strong>scorecard-v3 결정 기록</strong></h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>구성</th>
+<th>먹이 도착(95 % 구간)</th>
+<th>끝 거리 평균</th>
+<th>회피</th>
+<th>교사가 돌라 한 결정에서 같은 쪽 / 반대쪽(냄새 맡기 뒤)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>vector</strong>(진짜 배선)</td>
+<td><strong>0.350</strong>(0.200~0.501)</td>
+<td><strong>6.3 mm</strong></td>
+<td>0.682</td>
+<td>0.558 / 0.360</td>
+</tr>
+<tr>
+<td>재배선 s0</td>
+<td>0.200(0.075~0.325)</td>
+<td>19.5 mm</td>
+<td>0.682</td>
+<td>0.508 / 0.491</td>
+</tr>
+<tr>
+<td>재배선 s1</td>
+<td><strong>0.375</strong>(0.225~0.525)</td>
+<td>8.3 mm</td>
+<td>0.682</td>
+<td>0.580 / 0.372</td>
+</tr>
+<tr>
+<td>재배선 s2</td>
+<td>0.300(0.150~0.450)</td>
+<td>9.2 mm</td>
+<td>0.773</td>
+<td>0.556 / 0.438</td>
+</tr>
+<tr>
+<td>text</td>
+<td>0.000</td>
+<td>47.2 mm</td>
+<td>0.864</td>
+<td>0.097 / 0.050</td>
+</tr>
+<tr>
+<td>no_circuit(더듬이 원시 값 숫자)</td>
+<td>0.325</td>
+<td>19.6 mm</td>
+<td>0.727</td>
+<td>0.690 / 0.069</td>
+</tr>
+<tr>
+<td>no_llm(하한)</td>
+<td>0.000</td>
+<td>5.6 mm</td>
+<td>0.0</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>판정: vector 순위 67 %(재배선 s1 이 위) · 부호 뒤집기 p 0.29 · <strong>vector_beats_rewired = false</strong> →
+<strong>"섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다"</strong>(R 2.0-6 · 세 번째 발동).</p>
+<p>읽는 법: v5(0.075)보다 모든 Qwen 구성이 크게 올랐다 — 과제가 가까워지고 냄새 맡기 구간이 생긴 효과가 섞여 있어 <strong>v5 와 숫자를 바로 비교하지 않는다</strong>.
+진짜 배선은 재배선 셋 중 둘(s0 · s2)보다 높고 no_circuit(0.325)보다도 높지만 s1(0.375)을 넘지 못했다. 결정 기록으로 보면 재배선 s0 은 도는 쪽이 동전 던지기(0.508/0.491)인데
+진짜 · s1 · s2 는 0.56~0.58 로 비슷하다 — 캡션의 냄새 쪽 차이(0.530 대 0.476~0.506)가 행동에서는 가를 만큼 크지 않다. no_circuit 은 1.0 → 0.325 로 떨어져, 더듬이 기준 과제가 Qwen 에게도 어렵다.
+v5 에서 no_llm 이 0 이었듯 이번에도 0 — 회로만으로 먹이에 가지 못한다(DNa02 침묵 · M1).</p>
 <h2 id="3-해석--막힌-곳은-앞이-아니라-전달이다">3. 해석 — 막힌 곳은 앞이 아니라 전달이다</h2>
 <div class="tbl"><table>
 <thead>
