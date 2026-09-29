@@ -182,6 +182,12 @@
 <td>—</td>
 </tr>
 <tr>
+<td>지금 자료 묶음</td>
+<td><code>config/datasets.yaml</code> <strong><code>datasets-v1</code></strong> · <code>current: fly-loop-v4</code></td>
+<td>명령마다 <code>--dataset</code>(재생 <code>--pack</code>) 기본값이 여기서 온다(<code>bf48c2d</code>) · 옛 자료는 <code>--dataset</code> 직접</td>
+<td>명령마다 박아 둔 기본값(fly-loop-v1 · v2)</td>
+</tr>
+<tr>
 <td>대시보드</td>
 <td><code>config/dashboard.yaml</code> <code>train_rule: train-v6</code></td>
 <td>판정 · 표본 쪽이 v6 폴더를 읽는다</td>
@@ -610,8 +616,8 @@ bin/run_full_v6.sh --skip-compress --train-only=rewired-s1,rewired-s2   # 그 �
 </tr>
 <tr>
 <td>평가 · 검사가 옛 자료를 읽는다</td>
-<td>여러 명령의 <code>--dataset</code> 기본값이 옛 묶음이다(2026-09-29 코드 확인: <code>eval-scored</code> · <code>eval-caption</code> · <code>train</code> · <code>train-probe</code> · <code>compress fit/gate</code> · <code>odor-windows</code> · <code>inspect bump</code> 기본 <strong>fly-loop-v2</strong> · <code>linear-probe</code> 기본 <strong>fly-loop-v1</strong>)</td>
-<td><strong>항상 <code>--dataset</code> 을 적는다</strong>(<code>bin/run_full_v6.sh</code> 는 적는다 · v5 스크립트는 기본값을 썼다)</td>
+<td>명령마다 <code>--dataset</code> 기본값을 옛 묶음으로 박아 두었다(<code>linear-probe</code> = fly-loop-v1 · 나머지 대부분 = fly-loop-v2) — 인자를 빠뜨리면 옛 자료로 조용히 돌았다(09-27 <code>eval-scored</code>)</td>
+<td>✅ <strong>고침</strong>(<code>bf48c2d</code> · 요구자 2026-09-29 "통일") — 기본값은 <code>config/datasets.yaml</code> 의 <code>current</code>(지금 <code>fly-loop-v4</code> · 판 <code>datasets-v1</code>) 한 곳에서 읽는다(명령 10 곳 · 재생은 <code>--pack</code>). <strong>새 자료를 묶으면 이 한 줄만 바꾼다</strong> · 옛 결과를 다시 볼 때는 <code>--dataset</code> 을 직접 준다</td>
 <td>모든 단계 스크립트가 <code>--dataset</code> 을 인자로 받아 <strong>반드시 넘긴다</strong>(<code>40-eval/eval-judge.sh &lt;판&gt; &lt;묶음&gt;</code> 등)</td>
 </tr>
 <tr>
@@ -772,7 +778,18 @@ bin/run_full_v6.sh --skip-compress --train-only=rewired-s1,rewired-s2   # 그 �
 </tr>
 </tbody>
 </table></div>
-<h3 id="44-그-밖">4.4 그 밖</h3>
+<h3 id="44-판을-바꿔-다시-할-때--순서">4.4 판을 바꿔 다시 할 때 — 순서</h3>
+<p>위 설계안(4.1 ~ 4.3)이나 다른 개선을 실제로 할 때의 순서다(<a href="../../scripts/README.md">scripts/README.md</a> §4 와 같다).</p>
+<ol>
+<li>바꿀 설정의 판을 올린다 — 옛 판은 <code>config/archive/</code> 로 · 무엇을 다시 해야 하는지는 <a href="11-명령-모음과-용어.html">11장 §3</a>.</li>
+<li>과제를 바꿨으면 몸 확인 <code>scripts/20-odor/m4-body-check.sh</code> → 입력 크기가 판정 문턱에 닿는지 <code>scripts/50-analysis/lr_budget.py</code>.</li>
+<li>판정 규칙은 <strong>결과 보기 전에</strong> 코드에 적는다(stats-v3 처럼).</li>
+<li>수집은 작게 먼저 — <code>scripts/10-data/collect.sh</code>(collect-probe 를 먼저 돈다) 또는 채널 · 시야만 바꿨으면 <code>scripts/10-data/replay.sh</code>(원본과 같은지 먼저 검증).</li>
+<li><strong>묶은 뒤 <code>config/datasets.yaml</code> 의 <code>current</code> 를 새 묶음으로 바꾼다</strong>(한 줄) — 그 뒤 명령들의 <code>--dataset</code> 기본값이 새 묶음이 된다. 옛 결과를 다시 볼 때는 <code>--dataset</code> 을 직접 준다.</li>
+<li>학습 판을 올리면 <code>bin/run_full_v6.sh</code> 를 복사해 새 판 순서를 만들고, <code>config/dashboard.yaml</code> 의 <code>train_rule</code> · <code>plan</code> 을 바꾼 뒤 대시보드를 다시 띄운다.</li>
+<li>끝나면 <code>scripts/90-wrap/finalize.sh &lt;판&gt;</code> → 10장 대장 · R · 인수인계 · 문서 반영(2.8).</li>
+</ol>
+<h3 id="45-그-밖">4.5 그 밖</h3>
 <ul>
 <li><strong>R-5777</strong>(대시보드 2단계) — 요구자 확인 → 아카이브(조율 세션).</li>
 <li><strong>도커 <code>moai-vectorDB</code> unhealthy</strong> — 이 저장소 일이 아니다. 전달만.</li>

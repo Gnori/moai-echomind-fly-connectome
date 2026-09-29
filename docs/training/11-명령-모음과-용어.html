@@ -332,7 +332,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </table></div>
 <p>| 30 | <strong><code>scripts/</code></strong> — 단계별 입구: <code>00-check/check.sh</code> · <code>10-data/{collect,replay}.sh</code> · <code>20-odor/{m1-odor-control,m1b-odor-contrast,m2-odor-windows,m4-body-check}.sh</code> · <code>30-train/{gate-and-probe,train-all}.sh</code> · <code>40-eval/{eval-judge,scorecard}.sh</code> · <code>90-wrap/finalize.sh</code> · 분석 <code>50-analysis/*.py</code>(6) | 12 | 단계마다(<a href="../../scripts/README.md">scripts/README.md</a>) | 스크립트가 잠금 · 여유를 본다 |</p>
 <p>위 1~29 를 한 줄씩 돌리는 대신 <strong><code>scripts/</code></strong> 를 쓰면 잠금 · 메모리 대기 · 끝 코드 확인(실패면 멈춤)을 스크립트가 한다(<code>scripts/common.sh</code>). 순서와 확인값은 <a href="12-재현-절차와-다음-작업.html">12장 §2</a>.</p>
-<p>⚠️ <strong><code>--dataset</code> 을 항상 적는다</strong> — 기본값이 옛 묶음이다(<code>linear-probe</code> = fly-loop-v1 · 나머지 대부분 = fly-loop-v2 · <a href="12-재현-절차와-다음-작업.html">12장 §3</a>).</p>
+<p><strong><code>--dataset</code> 기본값 = <code>config/datasets.yaml</code> 의 <code>current</code></strong>(지금 <code>fly-loop-v4</code> · 2026-09-29 <code>bf48c2d</code> 에서 통일 — 그전에는 명령마다 fly-loop-v1 · v2 를 박아 두었다 · <a href="12-재현-절차와-다음-작업.html">12장 §3</a>). 옛 자료 · 옛 결과는 <code>--dataset</code> 을 직접 준다.</p>
 <p>v1 자료 · v2 판을 다시 돌릴 때(지금 있는 결과): <code>--dataset fly-loop-v1 --brain rewired</code> · 평가 · 성적표에 <strong><code>--version train-v2</code></strong> — 기본은 지금 규칙 판(train-v4)이다.
 <strong><code>bin/run_full_v4.sh</code></strong> 가 15~19 를 한 번에 돈다(압축 · 관문 → 학습 4 → 캡션 평가 8 → 성적표 7 구성 × 40 씨앗 · 관문 통과 채널이 없으면 끝 코드 4 · <code>--skip-train</code> 은 평가 · 성적표만 · 단계마다 메모리 여유 문턱을 기다림). <code>bin/run_full.sh</code> 는 v2 순서(학습 둘 → 캡션 평가 넷 → 성적표 5 구성) 그대로다.
 학습은 끝난 폴더를 덮어쓰지 않는다(<code>final.safetensors</code> 가 있으면 시작하지 않음).</p>
@@ -396,6 +396,11 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 <td>성적표 판정 · 기록</td>
 <td><code>scorecard.judge</code> <strong>scorecard-v2</strong>(판정) · <strong>scorecard-v3</strong>(기록 — 구성마다 <code>&lt;구성&gt;.decisions.jsonl</code>)</td>
 <td>09 문구 · 대시보드 에피소드 쪽</td>
+</tr>
+<tr>
+<td>지금 자료 묶음</td>
+<td><code>config/datasets.yaml</code> <strong>datasets-v1</strong> · <code>current: fly-loop-v4</code>(명령마다 <code>--dataset</code> · 재생 <code>--pack</code> 기본값)</td>
+<td>새 자료를 묶은 뒤 <code>current</code> 한 줄 · 옛 결과는 <code>--dataset</code> 직접</td>
 </tr>
 <tr>
 <td>감시 · 대시보드</td>
