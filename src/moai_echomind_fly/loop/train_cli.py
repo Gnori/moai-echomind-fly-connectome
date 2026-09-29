@@ -630,7 +630,7 @@ def register(sub) -> None:
     p = sub.add_parser("train",
                        help="F-017 투영기 학습(Qwen 얼림 · 최대 약 32 GB · 학습 전용 문턱)")
     p.add_argument("--brain", type=_brain, required=True, help="real · rewired · rewired-s<K>")
-    p.add_argument("--dataset", default="fly-loop-v2",
+    p.add_argument("--dataset", default=config.current_dataset(),
                    help="묶음 이름(data/datasets/) — 없으면 runs/dataset-<이름> 조각으로 읽는다")
     p.add_argument("--val", default="eval", help="조각으로 읽을 때만: 검증 조각 이름")
     p.add_argument("--resume-caption", default="",
@@ -640,13 +640,13 @@ def register(sub) -> None:
     p.set_defaults(func=train)
     pr = sub.add_parser("train-probe", help="짧게 돌리며 걸음마다 메모리를 잰다(저장 없음)")
     pr.add_argument("--brain", type=_brain, default="real")
-    pr.add_argument("--dataset", default="fly-loop-v2")
+    pr.add_argument("--dataset", default=config.current_dataset())
     pr.add_argument("--steps", type=int, default=50)
     pr.set_defaults(func=probe)
     e = sub.add_parser("eval-caption", help="F-017 캡션 칸별 정확도(학습에 안 쓴 씨앗)")
     e.add_argument("--brain", type=_brain, required=True)
     e.add_argument("--checkpoint", default="stage1-caption", choices=["stage1-caption", "final"])
-    e.add_argument("--dataset", default="fly-loop-v2", help="묶음 이름(eval 나눔을 쓴다)")
+    e.add_argument("--dataset", default=config.current_dataset(), help="묶음(eval 나눔)")
     e.add_argument("--val", default="eval", help="조각으로 읽을 때만: 평가 조각 이름")
     e.add_argument("--version", default=None,
                    help=f"투영기 규칙 판(기본 {TRAIN_RULE['version']} · 예전 결과는 train-v2)")
@@ -655,7 +655,7 @@ def register(sub) -> None:
     es = sub.add_parser("eval-scored", help="캡션 채점 평가 eval-v2 — 빈칸 채우기(서식 무관)")
     es.add_argument("--brain", type=_brain, required=True)
     es.add_argument("--checkpoint", default="final", choices=["stage1-caption", "final"])
-    es.add_argument("--dataset", default="fly-loop-v2", help="묶음 이름(eval 나눔을 쓴다)")
+    es.add_argument("--dataset", default=config.current_dataset(), help="묶음(eval 나눔)")
     es.add_argument("--val", default="eval", help="조각으로 읽을 때만: 평가 조각 이름")
     es.add_argument("--version", default=None, help="투영기 판(기본 = 지금 규칙의 판)")
     es.add_argument("--limit", type=int, default=0, help="앞에서 N 표본만(0 = 전부)")

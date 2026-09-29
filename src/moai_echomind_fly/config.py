@@ -38,3 +38,8 @@ def load(name: str, directory: Path | None = None, version: str | None = None) -
     if not isinstance(data, dict) or not data.get("version"):
         raise ValueError(f"{path}: 매핑이 아니거나 version 칸이 없다")
     return data
+
+
+def current_dataset() -> str:
+    """지금 쓰는 학습 자료 묶음(config/datasets.yaml current) — 명령마다 --dataset 기본값."""
+    return str(load("datasets")["current"])

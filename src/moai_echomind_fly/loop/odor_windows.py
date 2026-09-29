@@ -26,7 +26,7 @@ from typing import Any
 
 import numpy as np
 
-from .. import paths
+from .. import config, paths
 
 ODOR_WINDOWS_RULE: dict[str, Any] = {
     "version": "odor-windows-v1",
@@ -154,7 +154,7 @@ def main(args) -> int:
 def register(sub) -> None:
     p = sub.add_parser("odor-windows",
                        help="냄새 쪽을 여러 결정 누적 · 시간 차로 선형 검사(연구 노트 14 M2 · CPU)")
-    p.add_argument("--dataset", default="fly-loop-v2")
+    p.add_argument("--dataset", default=config.current_dataset())
     p.add_argument("--windows", default="", help="누적 결정 수 목록(기본 1,3,5,10)")
     p.add_argument("--channel", default="smell", help="읽을 채널(channels-v3 의 smell_ln 등)")
     p.add_argument("--max-decision", type=int, default=0,

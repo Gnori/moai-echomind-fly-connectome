@@ -24,7 +24,7 @@ from typing import Any, Callable
 
 import numpy as np
 
-from .. import paths
+from .. import config, paths
 
 LAMBDAS = (1e-2, 1e-1, 1.0, 10.0, 100.0, 1e3, 1e4)
 FOLDS = 5
@@ -208,7 +208,7 @@ def main(args) -> int:
 def register(sub) -> None:
     p = sub.add_parser("linear-probe",
                        help="Qwen 없이 채널 벡터만으로 캡션 칸 맞히기 — 신호에 정보가 있나(CPU)")
-    p.add_argument("--dataset", default="fly-loop-v1")
+    p.add_argument("--dataset", default=config.current_dataset())
     p.add_argument("--judge-only", action="store_true", help="판정 대상 칸만 출력")
     p.add_argument("--permutations", type=int, default=0,
                    help="에피소드가 많을 때 몬테카를로 횟수(기본 = stats-v1)")

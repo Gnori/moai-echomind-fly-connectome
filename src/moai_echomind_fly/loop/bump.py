@@ -22,7 +22,7 @@ from typing import Any
 
 import numpy as np
 
-from .. import datasets, paths
+from .. import config, datasets, paths
 
 _GLOM = re.compile(r"_([LR])(\d)")
 
@@ -119,6 +119,6 @@ def main(args: argparse.Namespace) -> int:
 
 def register(isub) -> None:
     b = isub.add_parser("bump", help="나침반 봉우리 — EPG 위상이 몸 방향을 따라가나(R-7469 F-008)")
-    b.add_argument("--dataset", default="fly-loop-v2")
+    b.add_argument("--dataset", default=config.current_dataset())
     b.add_argument("--permutations", type=int, default=2000)
     b.set_defaults(func=main)

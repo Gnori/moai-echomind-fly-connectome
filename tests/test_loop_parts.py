@@ -254,3 +254,26 @@ def test_task_v4_places_food_near_and_to_the_side():
         assert 4.0 <= d <= 7.0 and 45.0 <= abs(b) <= 90.0
         sides.append(b > 0)
     assert 0.35 < sum(sides) / len(sides) < 0.65
+
+
+def test_dataset_defaults_come_from_one_config():
+    """--dataset 기본값은 config/datasets.yaml current 한 곳(2026-09-29 · 전엔 명령마다 박힘)."""
+    import argparse
+
+    from moai_echomind_fly import config
+    from moai_echomind_fly.loop import bump, compress, linear_probe, odor_windows, replay, train_cli
+
+    ap = argparse.ArgumentParser()
+    sub = ap.add_subparsers(dest="cmd")
+    for m in (linear_probe, odor_windows, replay, compress, train_cli):
+        m.register(sub)
+    isub = sub.add_parser("inspect").add_subparsers(dest="i")
+    bump.register(isub)
+    cur = config.current_dataset()
+    assert cur == "fly-loop-v4"
+    cmds = (["linear-probe"], ["odor-windows"], ["compress", "fit"], ["compress", "gate"],
+            ["train", "--brain", "real"], ["train-probe"], ["eval-scored", "--brain", "real"],
+            ["inspect", "bump"])
+    for argv in cmds:
+        assert ap.parse_args(argv).dataset == cur, argv
+    assert ap.parse_args(["replay", "--name", "x"]).pack == cur

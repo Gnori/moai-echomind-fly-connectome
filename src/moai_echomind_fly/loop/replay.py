@@ -194,7 +194,7 @@ def main(args: argparse.Namespace) -> int:
 
 def register(sub) -> None:
     p = sub.add_parser("replay", help="묶음의 감각 입력으로 몸 없이 뇌만 다시 돌린다(무거움 · 뇌)")
-    p.add_argument("--pack", default="fly-loop-v2")
+    p.add_argument("--pack", default=config.current_dataset())
     p.add_argument("--split", choices=["train", "eval"], default="train")
     p.add_argument("--name", required=True, help="결과 조각 이름 runs/dataset-<name>")
     p.add_argument("--rewired-seeds", default="0-4")
