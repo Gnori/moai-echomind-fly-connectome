@@ -76,5 +76,6 @@
 1. 바꿀 설정의 판을 올린다(옛 판은 `config/archive/`) — 무엇을 다시 해야 하는지는 11장 §3.
 2. 과제를 바꿨으면 `20-odor/m4-body-check.sh` → 입력 크기가 판정 문턱에 닿는지(`50-analysis/lr_budget.py`).
 3. 수집은 **작게 먼저**(10 단계 스크립트가 collect-probe 를 먼저 돈다) · 판정 규칙은 **결과 전에** 코드에 적는다(stats-v3 처럼).
+   묶은 뒤 **`config/datasets.yaml` 의 `current` 를 새 묶음으로** 바꾼다 — 명령마다 `--dataset` 기본값이 여기서 온다(bf48c2d · 옛 결과는 `--dataset` 을 직접).
 4. 학습 판을 올리면 `bin/run_full_v6.sh` 를 복사해 새 판 순서를 만들고 `config/dashboard.yaml` train_rule · plan 을 바꾼 뒤 대시보드 재시작.
 5. 끝나면 `90-wrap/finalize.sh` → 10장 대장 · R · 인수인계 · doc 세션에 문서 반영.
