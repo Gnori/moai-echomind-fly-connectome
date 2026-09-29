@@ -324,15 +324,17 @@ def train(args: argparse.Namespace) -> int:
 
             caption_from = None
             if args.resume_caption:
-                src = Path(args.resume_caption)
-                caption_from = {"path": str(src),
-                                "sha256": hashlib.sha256(src.read_bytes()).hexdigest()}
-                proj.load_weights(str(src))
-                if src.resolve() != (out / "stage1-caption.safetensors").resolve():
-                    shutil.copyfile(src, out / "stage1-caption.safetensors")
+                # ⚠️ `src` 는 자료 정보(meta "data")다 — 2026-09-30 여기서 src 를 경로로 덮어써
+                # meta.json 을 못 쓰고 끝 코드 1(train-v7 진짜 배선 · 학습 자체는 정상)
+                ck_path = Path(args.resume_caption)
+                caption_from = {"path": str(ck_path),
+                                "sha256": hashlib.sha256(ck_path.read_bytes()).hexdigest()}
+                proj.load_weights(str(ck_path))
+                if ck_path.resolve() != (out / "stage1-caption.safetensors").resolve():
+                    shutil.copyfile(ck_path, out / "stage1-caption.safetensors")
                 run_epochs([(i, "cap") for i in range(n)], "caption", rule["caption_epochs"],
                            replay_only=True)
-                say(f"[resume] 캡션 단계 = {src} · sha256 {caption_from['sha256'][:16]} · "
+                say(f"[resume] 캡션 단계 = {ck_path} · sha256 {caption_from['sha256'][:16]} · "
                     f"검증 캡션 {val('cap'):.3f} · 검증 행동 {val('act'):.3f}")
             else:
                 vc, va = val("cap"), val("act")
