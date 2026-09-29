@@ -97,7 +97,9 @@ if [ $SKIP_TRAIN -eq 0 ]; then
     if [ -n "$TRAIN_ONLY" ] && [[ ",$TRAIN_ONLY," != *",$b,"* ]]; then
       echo "--- 학습 건너뜀 $b(--train-only) — runs/projector-$b-$VERSION 을 쓴다" | tee -a "$LOG"; continue
     fi
-    run 40 train --brain "$b" --dataset "$DATASET" --train-seeds "$TRAIN_SEEDS"
+    # v7 은 캡션 단계가 v6 과 똑같다(되새김은 행동 단계에서만 · 초기값 씨앗 고정 — 09-29 진짜 배선 450 걸음 손실 2.605 로 v6 과 같음 확인)
+    # → v6 캡션 단계본에서 이어 행동 단계만(--resume-caption · 난수 순서 · 옵티마이저 초기화는 처음부터 돈 것과 같음 · 뇌당 약 4 h 절약)
+    run 40 train --brain "$b" --dataset "$DATASET" --train-seeds "$TRAIN_SEEDS" --resume-caption "runs/projector-$b-train-v6/stage1-caption.safetensors"
   done
 else
   echo "--- 학습 건너뜀(--skip-train) — 기존 runs/projector-<뇌>-$VERSION 을 쓴다" | tee -a "$LOG"
