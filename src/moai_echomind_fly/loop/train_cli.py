@@ -45,10 +45,12 @@ TRAIN_RULE = {
     # v6(2026-09-26 · 연구 노트 14 M4): 규칙은 v5 와 같고 자료만 fly-loop-v4
     # (task-v4 냄새 맡기 구간 · 더듬이 센서 · channels-v3 smell_ln).
     # 관문을 통과한 채널이 입력(냄새 LN 이 들 수 있다).
-    "version": "train-v6",
+    # v7(2026-09-29 · 요구자 "순서대로" A): v6 + 캡션 되새김 0.3 → 0.5 — 행동 단계가 캡션을 깎는다
+    # (v5 · v6 모두 캡션 단계본 > 최종본 · v6 냄새 쪽 0.577 → 0.530). 나머지는 v6 과 같다.
+    "version": "train-v7",
     "input": "compress", "compress": "compress-v3",   # v1 차원 다름 → v2 같은 64 → v3 같은 크기
     "k": 1, "width": 0, "kind": "linear", "lr": 2e-4,
-    "caption_epochs": 2, "action_epochs": 1, "caption_rehearsal": 0.3,
+    "caption_epochs": 2, "action_epochs": 1, "caption_rehearsal": 0.5,   # v6 까지 0.3
     "val_samples": 24, "seed": 0, "init_seed": 0, "template_weight": 0.1,
 }
 

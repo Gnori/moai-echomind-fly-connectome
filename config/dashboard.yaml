@@ -7,7 +7,7 @@ every_s: 30              # --serve 일 때 페이지를 다시 만드는 간격(
 out_dir: dashboard       # runs/<out_dir>/index.html · state.json (git 밖)
 state_file: state.json   # 화면과 같은 자료 덩어리(JSON) — 세션 · 스크립트는 이것을 읽는다
 stale_minutes: 60        # 끝(final)이 없는데 이만큼 갱신이 없으면 '멈춘 기록'(도는 중으로 보이지 않게 · 요구자 2026-09-24)
-train_rule: train-v6     # 지금 판 — 판정 표 · 표본 쪽이 이 판을 읽는다(2026-09-27 v5 → v6 · 진행 칸은 globs 로 모든 판)
+train_rule: train-v7     # 지금 판 — 판정 표 · 표본 쪽이 이 판을 읽는다(09-27 v5 → v6 · 09-29 v6 → v7 · 진행 칸은 globs 로 모든 판)
 judge_alpha: 0.05        # 판정 표의 '찍기 대비 p' 문턱 — stats-v2(loop/stats.py STATS_RULE.alpha)와 같게 · 대시보드는 numpy 를 안 올려서 여기 둔다
 globs:                   # runs/ 안에서 읽을 자리(가장 최근 것을 고른다)
   full_jsonl: "full-v[0-9]-*.jsonl"   # 전체 순서 사건 파일(v5 부터 · 먼저)
@@ -32,18 +32,18 @@ links:                   # 페이지 아래 링크 — runs/dashboard/index.html
   - ["연구 노트", "../../docs/research/fly-connectome/index.html"]
   - ["요구사항 · 인수인계", "../../docs/requirements/"]
 
-# 지금 도는 전체 순서의 계획(bin/run_full_v6.sh --skip-compress · 2026-09-27) — 단계마다 무엇을 하는지.
+# 지금 도는 전체 순서의 계획(bin/run_full_v7.sh --skip-compress · 2026-09-29 · v6 과 같고 캡션 되새김 0.5 · 성적표 씨앗 100) — 단계마다 무엇을 하는지.
 # 상태(완료 · 진행 중 · 남음)는 full-v6-*.jsonl 사건과 명령 앞부분(match)을 맞춰 대시보드가 센다.
 plan:
   - name: "1. 학습 — 진짜 배선"
     match: "train --brain real "
-    content: "실제 수컷 초파리 연결 지도(뉴런 16.5만 · 연결 2,556만)로 돌린 신호 → 투영기 학습. 자료 fly-loop-v4(task-v4: 처음 1.2 초 냄새 맡기 · 먹이 4~7 mm 옆쪽 · 더듬이 센서) 에피소드 0~149(1,294 결정) · 입력 = 관문 통과 3 채널(시각 · 냄새 LN4 · 공간, 압축 v3 · 크기 1) → 채널당 토큰 1 개 · 캡션 2 회전 → 행동 1 회전(+ 캡션 되새김 30 %) · Qwen 은 얼림(투영기 92 만 매개변수만)"
+    content: "실제 수컷 초파리 연결 지도(뉴런 16.5만 · 연결 2,556만)로 돌린 신호 → 투영기 학습. 자료 fly-loop-v4(task-v4: 처음 1.2 초 냄새 맡기 · 먹이 4~7 mm 옆쪽 · 더듬이 센서) 에피소드 0~149(1,294 결정) · 입력 = 관문 통과 3 채널(시각 · 냄새 LN4 · 공간, 압축 v3 · 크기 1) → 채널당 토큰 1 개 · 캡션 2 회전 → 행동 1 회전(+ 캡션 되새김 **50 %** · v6 은 30 %) · Qwen 은 얼림(투영기 92 만 매개변수만)"
   - name: "2. 학습 — 재배선 s0"
     match: "train --brain rewired-s0 "
     content: "1 과 모든 것이 같고 뇌만 다름 — 같은 뉴런 · 같은 연결 수, 연결 상대를 무작위로 섞은 가짜 뇌(섞는 씨앗 0). 대조군"
   - name: "3. 학습 — 재배선 s1"
     match: "train --brain rewired-s1 "
-    content: "2 와 같고 섞는 씨앗만 1 · 09-27 16:36 GPU 오류(다른 프로세스의 GPU 복구에 휘말림)로 멈춰 처음부터 다시(멈춘 기록은 .gpuerror-1636)"
+    content: "2 와 같고 섞는 씨앗만 1"
   - name: "4. 학습 — 재배선 s2"
     match: "train --brain rewired-s2 "
     content: "2 와 같고 섞는 씨앗만 2"
@@ -57,4 +57,4 @@ plan:
     content: "진짜 대 재배선 셋 — 칸 다섯(물체 있음 · 쪽 · 움직임 · 다리 · 냄새 쪽, 평가 전에 정함) · 에피소드 단위 부호 뒤집기 · Holm · 찍기 대비 p < 0.05 까지. 다리 칸은 이번 입력에 몸 · 촉각이 없어 질 것이 예상됨"
   - name: "6. 성적표"
     match: "scorecard "
-    content: "몸(FlyGym)에 넣어 닫힌 고리로 씨앗 40 개(2000~2039) × 7 구성(vector · text · no_circuit · 재배선 s0~s2 · no_llm) — task-v4 과제 · 먹이 도착률 · 결정 기록(scorecard-v3). 진짜가 재배선 셋을 못 이기면 '초파리 뇌'라는 말을 쓰지 않는다"
+    content: "몸(FlyGym)에 넣어 닫힌 고리로 씨앗 **100 개(2000~2099)** · v6 까지 40 × 7 구성(vector · text · no_circuit · 재배선 s0~s2 · no_llm) — task-v4 과제 · 먹이 도착률 · 결정 기록(scorecard-v3). 진짜가 재배선 셋을 못 이기면 '초파리 뇌'라는 말을 쓰지 않는다"
