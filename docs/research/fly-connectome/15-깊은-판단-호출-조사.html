@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>언제 깊은 판단을 부르나 — 반사 · 습관 · 숙고와 호출 조건 조사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li>
+<li><a href="12-다음-학습-조사.html">12 · 다음 학습 — 조사</a></li>
+<li><a href="13-회로-학습-설계-조사.html">13 · 회로 학습 설계 — 조사</a></li>
+<li><a href="14-냄새-좌우-조사.html">14 · 냄새 좌우 — 조사</a></li>
+<li><a href="15-깊은-판단-호출-조사.html" class="cur">15 · 깊은 판단 호출 — 조사</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="15-깊은-판단-호출-조사.md">15-깊은-판단-호출-조사.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="15-언제-깊은-판단을-부르나--반사--습관--숙고와-호출-조건-조사">15. 언제 깊은 판단을 부르나 — 반사 · 습관 · 숙고와 호출 조건 조사</h1>
+<blockquote>
+<p>2026-10-01 · 세션 <code>echomind-fly-research</code> · 조율 세션 일감 <a href="../../requirements/20261001-070937-1027_fly-tiered-control_req.md">R-1027</a> F-007
+(요구자 2026-10-01 <em>"깊은 생각이 필요한게 있고 필요 없는게 있잖아"</em>).
+이 노트는 <strong>문헌 조사와 그래프 조회</strong>만 했다. 시뮬레이션 · Qwen · 성적표는 돌리지 않았다 — 7절은 조율 세션이 돌릴 <strong>측정 계획</strong>이다.
+확인 수준: <strong>[P]</strong> 원문 본문 · <strong>[P*]</strong> 원문을 요약 도구로 읽음 · <strong>[A]</strong> 초록 · <strong>[S]</strong> 2차 · <strong>[X]</strong> 못 엶 · <strong>[그래프]</strong> 우리 연결 지도 조회.</p>
+</blockquote>
+<hr />
+<h2 id="0-한눈에--r-1027-f-003-호출-조건마다">0. 한눈에 — R-1027 F-003 호출 조건마다</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>조건</th>
+<th>근거(한 줄)</th>
+<th>권하는 계산</th>
+<th>문턱을 결과 전에 잠그는 법</th>
+<th>판정</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>목표 변화</strong></td>
+<td>새 지시 · 과제 시작에서 부름 — 로봇 문헌의 공통 규칙 [H1]</td>
+<td>에피소드 첫 결정 · 새 지시</td>
+<td>없음(결정적) · 호출 수에는 포함</td>
+<td>무조건</td>
+</tr>
+<tr>
+<td><strong>놀람</strong></td>
+<td>예측 오차가 "숙고로 넘길 신호"(Lee 2014 [N3]) · 장면 변화 · 예외 관측에서 부름 [R2][R4]</td>
+<td><strong>예측 오차형</strong>: 2층 입력(압축 특징 · 표준화)의 선형 전방 모형 ẑ_t = A·z_{t−1} + B·a_{t−1} 대비 오차 ‖z_t − ẑ_t‖². 원시 3.2 만 차원 거리는 쓰지 않는다</td>
+<td>학습 나눔(에피소드 단위)의 오차 분포 상위 q 분위수 · q 먼저 고정</td>
+<td>권함</td>
+</tr>
+<tr>
+<td><strong>애매함</strong></td>
+<td>불확실한 쪽이 판단을 넘긴다(Daw 2005 [N1]) · 예측 집합이 둘 이상이면 도움 요청(KnowNo [R6])</td>
+<td>2층 행동 분포의 <strong>등각 예측 집합</strong> — 집합 크기 &gt; 1 이면 부름. 간단형은 1 · 2 위 확률 차</td>
+<td>보정 나눔(학습과 분리 · 에피소드 단위)에서 분위수 q̂ = ⌈(n+1)(1−ε)⌉/n · ε 먼저 고정</td>
+<td>권함</td>
+</tr>
+<tr>
+<td><strong>충돌</strong></td>
+<td>갈등 = 동시에 켜진 반대 반응의 곱(Botvinick 2001 [N5]) · 갈등은 제어 강화의 입력(EVC [N4]) · 초파리도 버섯체 출력 균형으로 접근/회피 충돌을 푼다 [F21][F22]</td>
+<td>c_t = p_회피 · p_접근(2층의 두 읽기)</td>
+<td>학습 나눔의 c 상위 분위수 — <strong>먼저 분포를 본다</strong>(드물면 조건이 거의 안 켜짐)</td>
+<td>조건부 권함</td>
+</tr>
+<tr>
+<td><strong>시간 상한</strong></td>
+<td>고정 주기 호출 [R5] · 멈춤이 이어지면 부름(SwiftSage K = 5 [R1])</td>
+<td>마지막 호출 뒤 N 결정</td>
+<td><strong>예산에서 역산</strong>: 시간 상한 몫 ≤ 1/N — N = 10(모의 3 s)이면 최대 10 %</td>
+<td>권함</td>
+</tr>
+<tr>
+<td>(공통) 최소 호출 간격</td>
+<td>전환 비용이 "여유 폭" 구실 — 떨림 방지(Harb 2018 [N7])</td>
+<td>호출 뒤 k 결정은 다시 부르지 않음(목표 변화 제외)</td>
+<td>k 먼저 고정</td>
+<td>권함</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>가장 중요한 대조군 — 같은 호출률의 무작위 호출.</strong> 문헌에서 학습된 · 사건 기반 호출이 <strong>같은 호출 수의 무작위보다 못한 경우</strong>가 여러 번 나왔다
+(RouteLLM 에서 한 라우터가 무작위보다 21.8 % 낮음 [R8] · Nguyen 2022 에서 늘 묻기 97.8 대 학습 정책 85.8 [R11] · When2Ask 에서 무작위 50 % 가 늘 부름과 같은 성공 [R10]).
+그래서 판정은 <strong>늘 부름 · 안 부름 · 같은 호출률의 무작위 · 같은 호출률의 주기</strong>와 나란히, 그리고 <strong>재배선에도 같은 층 구조</strong>를 씌워서 한다(R 2.0-6).</p>
+<p><strong>초파리 쪽에서 옮길 것</strong>(4절): 반사는 밀리초~수백 ms(거대섬유 도망 · 조향) · 전환 신호는 <strong>냄새 잃음 · 만남 끊김(약 5 s) · 위협 때 느린 걸음 · 목표 방향 오차 큼</strong> · 숙고에 가까운 것은 <strong>가치 충돌 · 새로움 · 어려운 구분(결정이 느려짐)</strong>.
+단 ⚠️ <strong>우리 모형에서 도파민 · 옥토파민 뉴런은 부호 0</strong>이라(PAM 316 · PPL1 16 · OA-VPM3/4 전부 [그래프]) "새로움 · 각성 · 가치 오차" 신호는 <strong>회로 안에서 아무 효과를 내지 않는다</strong> — 쓰려면 그 뉴런의 <strong>발화를 읽기만</strong> 해야 한다.</p>
+<hr />
+<h2 id="1-출발점--이미-잰-값다시-재지-않음">1. 출발점 — 이미 잰 값(다시 재지 않음)</h2>
+<p>조율 세션 기준(R-1027 1.1):
+- 결정(모의 300 ms)마다 Qwen 을 <strong>무조건</strong> 부른다 · 한 번에 벽시계 약 2.5~5 s · 모의 시간은 그동안 멈춘다(결과에는 영향 없음 · 실시간이면 못 씀).
+- 회로가 스스로 하는 것은 <strong>거대섬유(DNp01) 도망 반사</strong>뿐 · 조향 하강 뉴런 DNa02 는 침묵(R-7469 M1 · 150 Hz 에도 0 Hz) · 회로만 쓴 <code>no_llm</code> 먹이 도착 0.
+- 냄새 쪽은 안테나엽 LN4 에서 선형으로 읽힌다(R-7469 M4 · 4 누적 0.725).</p>
+<p>이번에 읽은 값(파일 읽기만 · <code>runs/full-v7-20260930-012816.log</code> · <code>runs/scorecard-20260930-151822/*.decisions.jsonl</code> · 조율 세션 실행 중 기록):
+- 에피소드 하나 벽시계 평균 — <code>vector</code> 144 s · <code>rewired-s0</code> 109 s · <code>no_circuit</code> 106 s · <code>text</code> 209 s(각 100 에피소드).
+- 에피소드당 결정 약 15(<code>vector</code> 1,472 결정 / 100 에피소드).
+- 결정 기록 칸: <code>teacher</code> · <code>action</code> · <code>raw</code> · <code>valid</code> · <code>drive</code> · <code>reflex_bins</code> · <code>truth</code> — <strong>2층 입력(압축 특징)은 결정 기록에 없다</strong>(7절 T3 에서 문제가 됨).</p>
+<hr />
+<h2 id="2-반사--습관--숙고--무엇이-생각할지를-정하나-신경과학--인지">2. 반사 · 습관 · 숙고 — 무엇이 "생각할지"를 정하나 [신경과학 · 인지]</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>문헌</th>
+<th>정하는 양</th>
+<th>식 · 숫자</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daw, Niv &amp; Dayan 2005 [N1]</td>
+<td><strong>불확실성</strong> — 두 제어기 중 가치 추정이 더 확실한 쪽이 이김</td>
+<td>"the estimated value of each action is taken to be that derived from the controller that is more certain about the value" · 계획 쪽 불확실성에 탐색 단계마다 쌓이는 계산 잡음 · <strong>숙고 비용 항 없음</strong></td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Keramati, Dezfouli &amp; Piray 2011 [N2]</td>
+<td><strong>정보 가치 대 시간 비용</strong></td>
+<td>VPI(s,a) &gt; R̄·τ 일 때만 목표 지향 계산(τ = 숙고 시간 · R̄ = 평균 보상률 = "opportunity cost of latency") · 습관 쪽 가치 분포가 겹칠수록 VPI 가 큼</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Lee, Shimojo &amp; O'Doherty 2014 [N3]</td>
+<td><strong>신뢰도</strong>(예측 오차 기반)</td>
+<td>모형 기반 신뢰도 = 상태 예측 오차 기반 · 모형 없는 쪽 = 보상 예측 오차 기반 · 습관 쪽을 편드는 노력 편향 항 · 매개변수 값은 못 봄</td>
+<td>[P*]</td>
+</tr>
+<tr>
+<td>Shenhav, Botvinick &amp; Cohen 2013 [N4]</td>
+<td><strong>제어의 기대 가치(EVC)</strong></td>
+<td>EVC = Σ Pr(결과)·가치 − 비용(신호) · 갈등 · 오류는 "제어가 모자라다"는 입력</td>
+<td>[P*]</td>
+</tr>
+<tr>
+<td>Botvinick et al. 2001 [N5]</td>
+<td><strong>반응 갈등</strong></td>
+<td>서로 억제하는 반응 단위들의 동시 활성의 곱</td>
+<td>[S]</td>
+</tr>
+<tr>
+<td>Kool, Gershman &amp; Cushman 2017 [N6]</td>
+<td>비용-이득</td>
+<td>모형 기반이 더 정확하고 보상이 클 때 모형 기반을 더 씀</td>
+<td>[A]</td>
+</tr>
+<tr>
+<td>Harb, Bacon, Klissarov &amp; Precup 2018 [N7]</td>
+<td><strong>전환(숙고) 비용 η</strong></td>
+<td>옵션 종료 기울기에 η 를 더함 → η = "a margin … for how good an option ought to be" · 클수록 지금 옵션 유지(이력 현상)</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Lieder &amp; Griffiths 2020 [N8] · Russell &amp; Wefald 1991</td>
+<td>자원 합리성 · 계산의 가치</td>
+<td>결정 개선 기대치 − 시간 · 자원 비용 · 식은 옮기지 못함</td>
+<td>[P] 식 X · [S]</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>우리에게 옮기면</strong>:
+- 네 계열이 있다 — (a) 불확실성 · 신뢰도 → <strong>애매함</strong> · (b) 예측 오차 → <strong>놀람</strong> · (c) 갈등 → <strong>충돌</strong> · (d) 전환 비용 → <strong>최소 호출 간격</strong>. "시간 상한"은 (b)(정보 가치가 시간에 따라 쌓인다)의 거친 근사다.
+- ⚠️ Keramati 식의 "시간 비용"은 <strong>생각하는 동안 세계가 흘러야</strong> 행동상 비용이 된다. 지금 우리 모의는 Qwen 을 기다리며 멈추므로 비용은 벽시계 · 계산량뿐이다 → 식을 쓰지 말고 <strong>호출 예산(≤ 30 %)</strong> 으로 다룬다. R-1027 F-006(실시간 모의)을 켜면 그때 Keramati 식이 의미를 가진다.</p>
+<hr />
+<h2 id="3-로봇--에이전트--언제-큰-모델을-부르나">3. 로봇 · 에이전트 — 언제 큰 모델을 부르나</h2>
+<h3 id="31-사건-기반">3.1 사건 기반</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>문헌</th>
+<th>부르는 조건</th>
+<th>보고 수치</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SwiftSage [R1]</td>
+<td>① 5 걸음 연속 보상 0 ② 무효 행동 ③ 결정적 행동 ④ 예외 관측 → 큰 모델이 행동 약 5 개를 내고 다시 작은 모델로</td>
+<td>과제 평균 84.68(작은 모델 단독 49.22) · 행동당 토큰 757(SayCan 1,856) · <strong>큰 모델 호출 비율 보고 없음 · 무작위 대조 없음</strong></td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>REFLECT [R2]</td>
+<td>실패 때 부름 · 요약할 순간 = 장면 그래프가 직전과 달라짐 · 소리 사건 · 하위 목표 끝</td>
+<td>수정 계획 성공 약 80 %</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>DoReMi [R3]</td>
+<td>큰 모델이 제약 조건도 냄 → 0.2 s 마다 위반 검사 → 위반이면 곧바로 재계획</td>
+<td>교란 p = 0.04: 91 대 Inner Monologue 37</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Inner Monologue [R4]</td>
+<td>단계가 끝날 때마다 성공 감지 · 장면 기술로 재계획</td>
+<td>호출률 못 옮김</td>
+<td>[A]</td>
+</tr>
+<tr>
+<td>Hi Robot [R5]</td>
+<td>"after a set time or upon receiving new language feedback" — 고정 주기 + 새 지시 · 저자가 고정 주기를 한계로 적음</td>
+<td>저수준 약 10 Hz</td>
+<td>[P]</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="32-불확실성-기반--보정">3.2 불확실성 기반 · 보정</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>문헌</th>
+<th>방법</th>
+<th>수치</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KnowNo [R6]</td>
+<td>후보 행동 점수 → 분할 등각 예측 · <strong>집합 크기 &gt; 1 이면 도움 요청</strong> · 다단계는 단계 점수의 최솟값으로 보정 · 보정 N = 400 · δ = 0.01</td>
+<td>도움 요청 10~24 % 감소 · 하드웨어 다단계에서 같은 성공률에 단계별 도움 0.58 대 기준 0.72</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Conformal Risk Control [R7]</td>
+<td>단조 손실의 기대값을 α 이하로 — 손실 = "이 에피소드의 호출 비율"로 두면 <strong>호출률 자체를 묶을 수 있다</strong></td>
+<td>—</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Jitkrittum 2023 [R12]</td>
+<td>확신도로 미루기는 대체로 되지만 <strong>학습-시험 분포 이동</strong>에서 실패할 수 있다</td>
+<td>—</td>
+<td>[A]</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="33-비용-라우팅--같은-호출률의-무작위-대조가-정석">3.3 비용 라우팅 — 같은 호출률의 무작위 대조가 정석</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>문헌</th>
+<th>내용</th>
+<th>수치</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RouteLLM [R8]</td>
+<td>"a random router that routes queries randomly under a cost constraint as the baseline" · PGR = (라우터 − 약한 모델)/(강한 − 약한) · 호출률 칸마다 비교 · 95 % 구간</td>
+<td>무작위는 80 % 이득에 호출 78 % · 가장 좋은 라우터는 <strong>31.3 %</strong> · 어떤 라우터는 무작위보다 −21.8 % · 한 과제에서는 전부 무작위 수준</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>FrugalGPT [R9]</td>
+<td>점수 문턱을 예산 제약 아래 최적화한 연쇄</td>
+<td>"up to 98% cost reduction"</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>When2Ask [R10]</td>
+<td>강화학습으로 "지금 물을까"를 배움</td>
+<td>한 과제에서 물은 수 학습 4.24 · 늘 25.78 · 무작위 50 % 12.75 — 셋 다 성공 100 % · <strong>무작위는 호출률 맞춤이 아님</strong></td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Nguyen, Bisk &amp; Daumé 2022 [R11]</td>
+<td>계층 강화학습으로 도움 요청 · <strong>호출 수를 맞춘 무작위</strong> 대조</td>
+<td>성공 맞춘 무작위 78.8 · 학습 85.8 · <strong>늘 묻기 97.8</strong></td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>HiRT [R13]</td>
+<td>느린 모델을 고정 주기로 줄임(절제 실험)</td>
+<td>간격 1 → 6 에서 성공 94.2 → 63.4</td>
+<td>[P]</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>우리에게 옮기면</strong>:
+- 체화 과제에서 <strong>30 % 예산으로 성능이 얼마나 남는지를 정량 보고한 연구는 찾지 못했다</strong> — 가장 가까운 숫자는 비체화 RouteLLM 의 31.3 %(강한 모델 이득의 80 %).
+- <strong>호출률 맞춘 무작위 · 주기 대조 없이는 "사건 기반이 낫다"를 쓸 수 없다.</strong> R-1027 F-004 성적표 구성에 <code>random-matched</code> · <code>periodic-matched</code> 를 더하기를 권한다.
+- 호출률은 <strong>조건의 합집합</strong>으로 잰다(조건별 비율의 합이 아님).</p>
+<hr />
+<h2 id="4-초파리가-행동을-바꾸는-신호-문헌--그래프">4. 초파리가 행동을 바꾸는 신호 [문헌 · 그래프]</h2>
+<h3 id="41-문헌">4.1 문헌</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>전환 신호</th>
+<th>세포 종류</th>
+<th>문턱 · 시간</th>
+<th>출처 · 수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>냄새 만남 → 바람 거슬러 · 잃음 → 좌우 탐색(비행)</td>
+<td>행동</td>
+<td>만남 뒤 190 ± 75 ms · 잃은 뒤 450 ± 165 ms</td>
+<td>[F3] [A]</td>
+</tr>
+<tr>
+<td>걷기: 냄새 켜짐 → 바람 거슬러 달리기 · 꺼짐 → 국소 탐색</td>
+<td>모형</td>
+<td>켜짐 필터 0.72 s · 적응 9.8 s · 꺼짐 0.62 / 4.84 s</td>
+<td>[F1] [P]</td>
+</tr>
+<tr>
+<td>냄새 만남 빈도 → 바람 쪽 치우침</td>
+<td>행동</td>
+<td>만남 약 200 ms · 빈도 필터 2 s · 만남이 끊기면 <strong>약 5 s</strong> 뒤 치우침 사라짐 · 급회전 간격 0.75 s 는 빈도와 무관(냄새는 <strong>방향만</strong> 바꿈)</td>
+<td>[F2] [P]</td>
+</tr>
+<tr>
+<td>냄새가 바람 방향 목표를 켬</td>
+<td>hDeltaC · FB5AB → PFL3(회전) · PFL2(전진)</td>
+<td>hDeltaC 는 냄새가 있을 때만 바람 방향에 반응 · 지속 시간 숫자 못 찾음</td>
+<td>[F4] [P]</td>
+</tr>
+<tr>
+<td>다가오는 물체의 크기 + 속도 → 거대섬유 발화 시점</td>
+<td>LPLC2(크기) · LC4(속도) → DNp01</td>
+<td>문턱 각도 · 가중치 못 찾음</td>
+<td>[F7][F8] [A]</td>
+</tr>
+<tr>
+<td>짧은 이륙 대 긴 이륙</td>
+<td>거대섬유는 문턱이 높지만 발화하면 진행 중 동작을 덮어씀 · 두 경로의 스파이크 <strong>타이밍 경쟁</strong></td>
+<td>짧은 방식 &lt; 7 ms</td>
+<td>[F6] [A] · 7 ms [S]</td>
+</tr>
+<tr>
+<td>위협 위치 → 이륙 방향</td>
+<td>LC4 → DNp02(뒤) · DNp11(앞) · DNp04 · DNp06</td>
+<td>활성화 시 이륙률 GF &gt; 90 % · DNp04 · DNp11 15~40 %</td>
+<td>[F10] [P]</td>
+</tr>
+<tr>
+<td>얼어붙기 대 도망</td>
+<td>DNp09</td>
+<td>위협 전 500 ms 걸음 속도가 결정 — 느리면 얼어붙기 76.7 % · 빠르면 26.8 % · DNp09 침묵 시 20 %</td>
+<td>[F11] [P]</td>
+</tr>
+<tr>
+<td>멈춤 두 방식</td>
+<td>Foxglove · Bluebell(먹을 때) · Brake(그루밍 때)</td>
+<td>문턱 못 찾음 · <strong>우리 연결 지도에서 이 이름은 못 찾음</strong></td>
+<td>[F14] [P]</td>
+</tr>
+<tr>
+<td>조향 이득</td>
+<td>DNa02(높은 이득 · 짧게) · DNa01(낮은 이득 · 오래)</td>
+<td>발화 → 약 150 ms 뒤 회전 속도</td>
+<td>[F15] [P]</td>
+</tr>
+<tr>
+<td>명령 하강 뉴런이 다른 하강 뉴런을 끌어들임</td>
+<td>방송형 DNp09 · DNb02 · 단독형 MDN</td>
+<td>행동별 군집이 서로 억제</td>
+<td>[F16] [P]</td>
+</tr>
+<tr>
+<td>하강 뉴런 효과가 직전 상태에 달림</td>
+<td>다수</td>
+<td>직전 −1.5 ~ 0.5 s 의 상태</td>
+<td>[F17] [P]</td>
+</tr>
+<tr>
+<td>목표에서 멀리 벗어났을 때만 강하게 조향</td>
+<td>EPG · FC2 → PFL3 · PFL2</td>
+<td>PFL2 는 방향 오차가 클 때 모집 · 각도 문턱 숫자 못 찾음</td>
+<td>[F19][F20] [P]</td>
+</tr>
+<tr>
+<td>가치 충돌 · 새로움 · 버티기</td>
+<td>MBON 출력의 균형 · MBON-α′3(새로움) · OA-VPM4</td>
+<td>시간 숫자 못 찾음</td>
+<td>[F22] [P] · [F23] [A] · [F24] [P] · [F21] [A]</td>
+</tr>
+<tr>
+<td>어려울수록 결정이 늦음(증거 누적)</td>
+<td>FoxP αβc 케니언 세포</td>
+<td>첫 스파이크 = 결정 · 쉬운 구분(농도비 0.1)은 빠르고 어려운 구분(0.9)은 느림 · 초 단위 값 못 찾음</td>
+<td>[F25] [P]</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>읽는 법</strong>(해석 · 원문 주장 아님):
+- <strong>반사로 둘 것</strong>: 밀리초~수백 ms 단위 — 거대섬유 이륙 · 조향 · 냄새 만남 뒤 바람 쪽 돌기. R-1027 의 1 층 · 2 층에 해당한다.
+- <strong>전환(사건) 후보</strong>: 냄새 꺼짐 · 만남이 약 5 s 끊김 · 위협 때 느린 걸음 · 목표 방향 오차 큼. 우리 과제에는 바람이 없으므로 "냄새 잃음"과 "먹이 방향 오차"가 가장 가깝다.
+- <strong>숙고에 가까운 신호</strong>: 버섯체 출력끼리 반대 방향(가치 충돌) · 새로움 · 어려운 구분. 초파리에서 이것들은 <strong>이진 스위치가 아니라 확률 · 타이밍 경쟁</strong>이다(76.7 % 대 26.8 % · 스파이크 타이밍 · 군집 상호 억제).</p>
+<h3 id="42-우리-연결-지도에-있나-그래프--runstiered-neurons-20261001json--조회만">4.2 우리 연결 지도에 있나 [그래프 · <code>runs/tiered-neurons-20261001.json</code> · 조회만]</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>종류</th>
+<th>수</th>
+<th>부호 · 전달물질</th>
+<th>지금 우리 모형에서</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNp01(거대섬유)</td>
+<td>2</td>
+<td>+ · ACh</td>
+<td>도망 반사로 쓰는 중</td>
+</tr>
+<tr>
+<td>DNp02 · DNp11 · DNp04 · DNp06</td>
+<td>각 2</td>
+<td>+ · ACh</td>
+<td>운동 채널 안(읽기만)</td>
+</tr>
+<tr>
+<td><strong>DNp09</strong>(걷기)</td>
+<td>2</td>
+<td>+ · ACh</td>
+<td>⚠️ <strong>디코더가 걷기 명령을 넣는 뉴런</strong></td>
+</tr>
+<tr>
+<td><strong>DNa02</strong>(조향) · DNa01</td>
+<td>각 2</td>
+<td>+ · ACh</td>
+<td>⚠️ DNa02 는 <strong>디코더가 회전 명령을 넣는 뉴런</strong> · 냄새로는 침묵</td>
+</tr>
+<tr>
+<td>MDN(뒤로 걷기)</td>
+<td>4</td>
+<td>+ · ACh</td>
+<td>운동 채널 안</td>
+</tr>
+<tr>
+<td>DNb02</td>
+<td>4</td>
+<td>− · Glu</td>
+<td>운동 채널 안</td>
+</tr>
+<tr>
+<td>LC4 · LPLC2</td>
+<td>126 · 185</td>
+<td>+ · ACh</td>
+<td>시각 입력(다가옴)</td>
+</tr>
+<tr>
+<td>PFL3 · PFL2 · PFL1</td>
+<td>24 · 12 · 14</td>
+<td>+ · ACh</td>
+<td>PFL3 는 공간 채널 안</td>
+</tr>
+<tr>
+<td>FC2A · FC2B · FC2C</td>
+<td>18 · 27 · 47</td>
+<td>+ · ACh</td>
+<td>공간 채널 안</td>
+</tr>
+<tr>
+<td>EPG · hDeltaC · FB5AB</td>
+<td>46 · 20 · 2</td>
+<td>+ · ACh</td>
+<td>EPG 는 공간 채널 안</td>
+</tr>
+<tr>
+<td>MBON(37 종류) · MBON11</td>
+<td>97 · 2</td>
+<td>MBON11 − · GABA</td>
+<td>가치 채널</td>
+</tr>
+<tr>
+<td><strong>PAM · PPL1</strong>(도파민)</td>
+<td>316 · 16</td>
+<td><strong>0</strong></td>
+<td>⚠️ 회로 효과 없음</td>
+</tr>
+<tr>
+<td><strong>OA-VPM3 · OA-VPM4</strong>(옥토파민)</td>
+<td>2 · 2</td>
+<td><strong>0</strong></td>
+<td>⚠️ 회로 효과 없음</td>
+</tr>
+<tr>
+<td>(참고) 부호 0 전체</td>
+<td>4,143</td>
+<td>불명 3,100 · 없음 502 · 도파민 392 · 옥토파민 101 · 세로토닌 48</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>문헌이 말하는 <strong>"새로움 · 각성 · 가치 오차" 담당(도파민 · 옥토파민)은 우리 모형에서 부호 0</strong> 이다. 그러니 그 신호로 회로가 스스로 행동을 바꾸는 일은 없다. 호출 조건에 쓰려면 <strong>발화를 읽는 쪽</strong>으로만 쓸 수 있다(입력은 받으므로 발화는 한다).</li>
+<li>⚠️ <strong>DNp09 · DNa02 는 디코더가 명령을 넣는 뉴런</strong>이다. 이 뉴런들의 발화를 "놀람 · 충돌" 계산에 넣으면 <strong>직전 명령이 그대로 되돌아와</strong> 자기 자신을 부르는 고리가 된다. 호출 조건의 입력에서 <strong>운동 채널을 빼거나, 명령을 넣기 전 구간만</strong> 쓴다(R-7469 F-003 의 운동 채널 누설과 같은 문제).</li>
+<li>Foxglove · Bluebell · Brake · aDN2 · BPN · MAN · UpWiN 은 <strong>이 이름으로는 없다</strong> — 다른 정식 이름으로 있을 수 있으나 대응을 찾지 못했다.</li>
+</ul>
+<hr />
+<h2 id="5-결론--f-003-호출-조건-설계">5. 결론 — F-003 호출 조건 설계</h2>
+<h3 id="51-계산-입력은-2-층과-같은-압축-특징--운동-채널은-뺌">5.1 계산 (입력은 2 층과 같은 압축 특징 · 운동 채널은 뺌)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>조건</th>
+<th>계산</th>
+<th>켜지는 때</th>
+<th>우리 과제에서 생길 사건</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>목표 변화</td>
+<td>에피소드 첫 결정 · 새 지시</td>
+<td>결정적</td>
+<td>시작</td>
+</tr>
+<tr>
+<td>놀람</td>
+<td>s_t = ‖z_t − (A·z_{t−1} + B·a_{t−1})‖² · A · B 는 학습 나눔 능선 회귀</td>
+<td>s_t &gt; 문턱</td>
+<td>물체가 나타남 · 냄새가 사라짐 · 부딪힘</td>
+</tr>
+<tr>
+<td>애매함</td>
+<td>2 층 행동의 등각 집합 크기 · 간단형 = 1 · 2 위 확률 차</td>
+<td>집합 &gt; 1(또는 차 &lt; 문턱)</td>
+<td>먹이가 정면 근처 · 냄새가 약함</td>
+</tr>
+<tr>
+<td>충돌</td>
+<td>c_t = p_회피 · p_접근</td>
+<td>c_t &gt; 문턱</td>
+<td>다가오는 물체와 먹이가 같은 쪽</td>
+</tr>
+<tr>
+<td>시간 상한</td>
+<td>마지막 호출 뒤 결정 수</td>
+<td>≥ N</td>
+<td>긴 직진</td>
+</tr>
+<tr>
+<td>최소 간격</td>
+<td>호출 뒤 k 결정은 다시 부르지 않음(목표 변화 제외)</td>
+<td>—</td>
+<td>떨림 방지</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="52-문턱을-결과-전에-잠그는-절차">5.2 문턱을 결과 전에 잠그는 절차</h3>
+<ol>
+<li>자료를 <strong>에피소드 단위</strong>로 학습 · 보정 · 평가로 나눈다(한 에피소드 안 결정은 서로 의존 — R-7469 에서도 에피소드 단위로 셈).</li>
+<li>학습 나눔으로 2 층 정책과 전방 모형을 맞춘다.</li>
+<li>보정 나눔에서 (q_놀람 · 문턱_충돌 · ε_애매 · N · k) 격자를 돌려 <strong>합집합 호출률 ≤ 30 %</strong> 인 조합 중 <strong>"늘 부름 Qwen 과 행동 일치율"</strong> 이 가장 높은 것을 고른다(Qwen 기록이 없으면 교사 행동으로 대신하고 그렇게 적는다).</li>
+<li>그 조합을 <code>config/control.yaml</code> 에 적어 <strong>커밋하고 해시를 남긴 뒤</strong> 평가는 한 번만 한다. 조합을 여럿 고르며 보장을 원하면 다중 검정 보정(Learn-then-Test [R7] 계열)을 쓴다.</li>
+<li>호출률 자체에 보장이 필요하면 Conformal Risk Control(손실 = 에피소드 호출 비율 · α = 0.30) [R7].</li>
+</ol>
+<h3 id="53-대조군--판정">5.3 대조군 · 판정</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>구성</th>
+<th>무엇</th>
+<th>왜</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>vector</code>(늘 부름)</td>
+<td>위 한계</td>
+<td>지금 기준</td>
+</tr>
+<tr>
+<td><code>fast-only</code>(안 부름)</td>
+<td>2 층만</td>
+<td>아래 한계</td>
+</tr>
+<tr>
+<td><code>vector-gated</code></td>
+<td>사건 기반</td>
+<td>시험 대상</td>
+</tr>
+<tr>
+<td><strong><code>vector-random-matched</code></strong></td>
+<td><code>vector-gated</code> 가 <strong>실제로 낸 호출률 p</strong> 로 결정마다 무작위(더 엄격하게는 에피소드마다 같은 호출 <strong>수</strong>를 무작위 위치에)</td>
+<td>사건 기반이 "부른 때"를 잘 골랐는지 [R8][R11]</td>
+</tr>
+<tr>
+<td><code>vector-periodic-matched</code></td>
+<td>k = round(1/p) 결정마다</td>
+<td>고정 주기 [R5][R13]</td>
+</tr>
+<tr>
+<td><code>rewired-sK-gated</code> · <code>-random-matched</code></td>
+<td>재배선 셋에 같은 층 구조</td>
+<td>R 2.0-6</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>판정 지표: <strong>PGR</strong> = (성적_gated − 성적_fast-only) / (성적_늘부름 − 성적_fast-only) [R8] 를 <strong>같은 호출률의 무작위 · 주기</strong>와 나란히 · 무작위는 씨앗 여러 개로 95 % 구간.</li>
+<li>"사건 기반이 낫다"는 <strong>gated &gt; random-matched</strong>(씨앗별 부호 뒤집기 p &lt; 0.05)일 때만 쓴다. 못 넘으면 "호출을 줄였다"까지만 쓰고 "잘 골랐다"는 쓰지 않는다.</li>
+<li>문헌 경고: 늘 부름이 학습 정책보다 높을 수 있다 [R11] · 고정 주기로 줄이면 크게 떨어질 수 있다 [R13] · 확신도 기반은 분포 이동에서 깨질 수 있다 [R12] — 평가 과제가 학습 분포와 다르면 애매함 보정이 깨진다. task-v4 로 학습하고 다른 과제로 평가하지 않는다.</li>
+</ul>
+<hr />
+<h2 id="6-확인하지-못한-것--정직-목록">6. 확인하지 못한 것 · 정직 목록</h2>
+<ul>
+<li><strong>놀람을 큰 모델 호출 조건으로 쓰고 호출률과 성능을 함께 보고한 1 차 문헌은 찾지 못했다</strong> — 근거는 장면 변화 · 예외 관측 · 제약 위반(REFLECT · SwiftSage · DoReMi) 수준이다.</li>
+<li>30 % 호출 예산에서 체화 과제 성능 유지율 — 못 찾음.</li>
+<li>SwiftSage 의 실제 큰 모델 호출 비율 — 못 찾음.</li>
+<li>Botvinick 2001 원문(식은 2 차) · Kool 2017 본문 · Heemels 2012 본문(사건 기반 제어의 최소 간격은 기억 [S]) · Russell &amp; Wefald 원문 · Lee 2014 적합 매개변수 · Lieder &amp; Griffiths 식 기호.</li>
+<li>초파리: 거대섬유 문턱 각도 · von Reyn 2017 모형 가중치 · 짧은/긴 이륙 비율 · Hattori 2017 새로움 반응 시간 · Groschner / DasGupta 결정 시간의 초 단위 값 · Matheson 2022 지속 시간 · PFL2 모집 각도 · MBON · PPL1 · PAM 번호와 구획 이름의 전체 대응 · Bidaye 2020 본문.</li>
+<li>연결 지도에서 Foxglove · Bluebell · Brake · aDN2 · BPN · MAN · UpWiN 의 대응 이름.</li>
+<li>우리 압축 특징 공간에서 "놀람" 점수가 잡음에 지배되는지 — 문헌이 아니라 7 절 T1 에서 잰다.</li>
+</ul>
+<hr />
+<h2 id="7-조율-세션이-돌릴-측정-계획-무엇을--몇-회--예상-시간">7. 조율 세션이 돌릴 측정 계획 (무엇을 · 몇 회 · 예상 시간)</h2>
+<p>시간 근거: 1 절(에피소드 <code>vector</code> 144 s · 재배선 약 107 s · 결정 약 15). Qwen 호출 한 번 2.5~5 s → 늘 부름의 에피소드당 Qwen 몫 약 37~74 s.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>측정</th>
+<th>무엇을 · 몇 회</th>
+<th>판정 · 산출</th>
+<th>예상 시간</th>
+<th>먼저 확인</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>T1</strong></td>
+<td>호출 신호 분포(오프라인)</td>
+<td><code>fly-loop-v4</code> 학습 · 평가 나눔의 압축 특징으로 놀람 s_t · 충돌 c_t · 애매함(2 층 확률) · 시간 상한을 결정마다 계산 · 진짜 + 재배선 s0~s2 · <strong>에피소드 단위</strong> 학습 / 보정 나눔</td>
+<td>조건별 · 합집합 호출률 대 문턱 곡선 · 충돌이 실제로 켜지는지 · 놀람이 사건(물체 등장 · 냄새 사라짐)과 맞는지(<code>truth</code> 로)</td>
+<td>CPU 수 분(F-002 적합과 함께)</td>
+<td>아니오</td>
+</tr>
+<tr>
+<td><strong>T2</strong></td>
+<td>2 층 빠른 정책(F-002)</td>
+<td>능선 회귀 · 진짜 + 재배선 셋 · 결정 하나 추론 시간</td>
+<td>교사 일치율 · 확신도 보정 곡선 · &lt; 5 ms</td>
+<td>CPU 수 분</td>
+<td>아니오</td>
+</tr>
+<tr>
+<td><strong>T3</strong></td>
+<td>문턱 잠금</td>
+<td>T1 격자에서 합집합 ≤ 30 % · 교사(또는 Qwen) 일치율 최대 조합 → <code>config/control.yaml</code> 커밋 · 해시</td>
+<td>잠근 커밋</td>
+<td>분</td>
+<td><strong>예</strong>(결과 전 잠금 확인)</td>
+</tr>
+<tr>
+<td>T3b</td>
+<td>(권함) 결정 기록에 2 층 입력 남기기</td>
+<td>scorecard-v4 결정 기록에 압축 특징(또는 그 해시 · 경로)을 더함</td>
+<td>성적표 뒤에 "쓸모 있는 호출"(Qwen 이 2 층과 달랐나)을 오프라인으로 잴 수 있게</td>
+<td>코드(가벼움)</td>
+<td>조율 세션 판단</td>
+</tr>
+<tr>
+<td><strong>T4</strong></td>
+<td>성적표(F-004)</td>
+<td>구성 여덟 — <code>vector</code> · <code>fast-only</code> · <code>vector-gated</code> · <code>vector-random-matched</code> · <code>vector-periodic-matched</code> · <code>rewired-s0/s1/s2-gated</code> · 씨앗 40(2000~2039 · 지금 성적표와 같은 씨앗)</td>
+<td>PGR · 호출률 · 먹이 도착 · 회피 · gated 대 random-matched · 진짜 대 재배선</td>
+<td>늘 부름 144 s · 호출 30 % 구성은 약 90~120 s(추정) → 여덟 × 40 ≈ <strong>9~11 시간</strong></td>
+<td><strong>예</strong>(무거움 · A · B 뒤)</td>
+</tr>
+<tr>
+<td>T4b</td>
+<td>무작위 대조 앙상블</td>
+<td><code>vector-random-matched</code> 씨앗(무작위 위치) 3 개</td>
+<td>무작위 쪽 95 % 구간</td>
+<td>약 3.5 시간</td>
+<td>예</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>순서의 까닭</strong>: T1 · T2 는 Qwen 도 뇌도 안 돌려 공짜다 — 여기서 <strong>충돌 조건이 거의 안 켜지거나 놀람이 잡음에 지배되면</strong> T4 전에 조건을 줄인다.
+T4 는 무작위 · 주기 대조가 없으면 "사건 기반이 낫다"를 판정할 수 없으므로 구성에서 빼지 않는다.
+시간은 모두 추정이다 — T4 는 먼저 2 에피소드로 재고 늘린다(무거운 실행 규약).</p>
+<hr />
+<h2 id="참고-문헌">참고 문헌</h2>
+<p><strong>신경과학 · 인지</strong>
+- [N1] Daw N.D., Niv Y., Dayan P. 2005. Uncertainty-based competition between prefrontal and dorsolateral striatal systems for behavioral control. <em>Nat Neurosci</em> 8:1704–1711. [P]
+- [N2] Keramati M., Dezfouli A., Piray P. 2011. Speed/accuracy trade-off between the habitual and the goal-directed processes. <em>PLoS Comput Biol</em> 7:e1002055. [P]
+- [N3] Lee S.W., Shimojo S., O'Doherty J.P. 2014. Neural computations underlying arbitration between model-based and model-free learning. <em>Neuron</em> 81:687–699. [P*]
+- [N4] Shenhav A., Botvinick M.M., Cohen J.D. 2013. The expected value of control. <em>Neuron</em> 79:217–240. [P*]
+- [N5] Botvinick M.M., Braver T.S., Barch D.M., Carter C.S., Cohen J.D. 2001. Conflict monitoring and cognitive control. <em>Psychol Rev</em> 108:624–652. [S]
+- [N6] Kool W., Gershman S.J., Cushman F.A. 2017. Cost-benefit arbitration between multiple reinforcement-learning systems. <em>Psychol Sci</em> 28:1321–1333. [A]
+- [N7] Harb J., Bacon P.-L., Klissarov M., Precup D. 2018. When waiting is not an option: learning options with a deliberation cost. <em>AAAI</em> · arXiv 1709.04571. [P]
+- [N8] Lieder F., Griffiths T.L. 2020. Resource-rational analysis. <em>Behav Brain Sci</em> 43:e1. [P · 식 옮기지 못함] · Russell S., Wefald E. 1991. <em>Do the Right Thing</em>. MIT Press. [S]</p>
+<p><strong>로봇 · 에이전트 · 라우팅</strong>
+- [R1] Lin B.Y., et al. 2023. SwiftSage: a generative agent with fast and slow thinking for complex interactive tasks. <em>NeurIPS</em> · arXiv 2305.17390. [P]
+- [R2] Liu Z., Bahety A., Song S. 2023. REFLECT: summarizing robot experiences for failure explanation and correction. <em>CoRL</em> · arXiv 2306.15724. [P]
+- [R3] Guo Y., et al. 2023. DoReMi: grounding language model by detecting and recovering from plan-execution misalignment. arXiv 2307.00329. [P]
+- [R4] Huang W., et al. 2022. Inner Monologue: embodied reasoning through planning with language models. arXiv 2207.05608. [A]
+- [R5] Shi L.X., et al. 2025. Hi Robot: open-ended instruction following with hierarchical vision-language-action models. arXiv 2502.19417. [P]
+- [R6] Ren A.Z., et al. 2023. Robots that ask for help: uncertainty alignment for large language model planners (KnowNo). <em>CoRL</em> · arXiv 2307.01928. [P]
+- [R7] Angelopoulos A.N., et al. Conformal risk control. arXiv 2208.02814 [P] · Angelopoulos A.N., Bates S. A gentle introduction to conformal prediction. arXiv 2107.07511 [P] · Learn then Test. arXiv 2110.01052 [A]
+- [R8] Ong I., et al. 2025. RouteLLM: learning to route LLMs with preference data. <em>ICLR</em> · arXiv 2406.18665. [P]
+- [R9] Chen L., Zaharia M., Zou J. 2023. FrugalGPT. arXiv 2305.05176. [P]
+- [R10] Hu B., et al. 2024. Enabling intelligent interactions between an agent and an LLM (When2Ask). <em>RLC</em> · arXiv 2306.03604. [P]
+- [R11] Nguyen K., Bisk Y., Daumé III H. 2022. A framework for learning to request rich and contextually useful information from humans. <em>ICML</em>. [P]
+- [R12] Jitkrittum W., et al. 2023. When does confidence-based cascade deferral suffice? arXiv 2307.02764. [A]
+- [R13] Zhang J., et al. 2024. HiRT: enhancing robotic control with hierarchical robot transformers. arXiv 2410.05273. [P]
+- [H1] 목표 변화(새 지시) 호출은 [R5] 와 [R4] 의 공통 규칙이다.</p>
+<p><strong>초파리</strong>
+- [F1] Álvarez-Salvado E., et al. 2018. <em>eLife</em> 7:e37815. doi:10.7554/eLife.37815 [P]
+- [F2] Demir M., Kadakia N., et al. 2020. <em>eLife</em> 9:e57524. doi:10.7554/eLife.57524 [P]
+- [F3] van Breugel F., Dickinson M.H. 2014. <em>Curr Biol</em> 24:274–286. doi:10.1016/j.cub.2013.12.023 [A]
+- [F4] Matheson A.M.M., et al. 2022. <em>Nat Commun</em>. doi:10.1038/s41467-022-32247-7 [P]
+- [F5] Aso Y., et al. 2023. <em>eLife</em>. doi:10.7554/eLife.85756 (UpWiN) [P]
+- [F6] von Reyn C.R., et al. 2014. <em>Nat Neurosci</em>. doi:10.1038/nn.3741 [A]
+- [F7] von Reyn C.R., et al. 2017. <em>Neuron</em>. doi:10.1016/j.neuron.2017.05.036 [A]
+- [F8] Ache J.M., et al. 2019. <em>Curr Biol</em>. doi:10.1016/j.cub.2019.01.079 [A]
+- [F9] Card G., Dickinson M.H. 2008. <em>Curr Biol</em>. doi:10.1016/j.cub.2008.07.094 [A]
+- [F10] Dombrovski M., et al. 2023. <em>Nature</em>. doi:10.1038/s41586-022-05562-8 [P]
+- [F11] Zacarias R., et al. 2018. <em>Nat Commun</em>. doi:10.1038/s41467-018-05875-1 [P]
+- [F12] Bidaye S.S., et al. 2014. <em>Science</em>. doi:10.1126/science.1249964 [A]
+- [F13] Bidaye S.S., et al. 2020. <em>Neuron</em>. doi:10.1016/j.neuron.2020.07.032 [A]
+- [F14] Sapkal N., et al. 2024. <em>Nature</em>. doi:10.1038/s41586-024-07854-7 [P]
+- [F15] Rayshubskiy A., et al. 2025. <em>eLife</em>. doi:10.7554/eLife.102230 [P]
+- [F16] Braun J., et al. 2024. <em>Nature</em>. doi:10.1038/s41586-024-07523-9 [P]
+- [F17] Cande J., et al. 2018. <em>eLife</em>. doi:10.7554/eLife.34275 [P]
+- [F18] Namiki S., et al. 2018. <em>eLife</em>. doi:10.7554/eLife.34272 [P]
+- [F19] Mussells Pires P., et al. 2024. <em>Nature</em>. doi:10.1038/s41586-023-07006-3 [P · 앞부분]
+- [F20] Westeinde E.A., et al. 2024. <em>Nature</em>. doi:10.1038/s41586-024-07039-2 [P · 요약부]
+- [F21] Lewis L.P.C., et al. 2015. <em>Curr Biol</em>. doi:10.1016/j.cub.2015.07.015 [A]
+- [F22] Aso Y., et al. 2014b. <em>eLife</em>. doi:10.7554/eLife.04580 [P]
+- [F23] Hattori D., et al. 2017. <em>Cell</em>. doi:10.1016/j.cell.2017.04.028 [A]
+- [F24] Sayin S., et al. 2019. <em>Neuron</em>. doi:10.1016/j.neuron.2019.07.028 [P · 초록 · 요점]
+- [F25] Groschner L.N., et al. 2018. <em>Cell</em>. doi:10.1016/j.cell.2018.03.075 [P] · DasGupta S., et al. 2014. <em>Science</em> (FoxP) [A]
+- [F26] Suver M.P., et al. 2012. <em>Curr Biol</em>. doi:10.1016/j.cub.2012.10.034 [A] · OA-VPM3 주의 관문 bioRxiv 10.1101/2024.12.20.629828 [A]</p>
+<div class="pager"><a href="14-냄새-좌우-조사.html">← 14 · 냄새 좌우 — 조사</a><span></span></div>
+<footer>이 HTML 은 <code>15-깊은-판단-호출-조사.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>
