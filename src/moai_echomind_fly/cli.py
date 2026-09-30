@@ -153,6 +153,8 @@ def main(argv: list[str] | None = None) -> int:
     fast_policy.register(sub)
     compress.register(sub)
     replay.register(sub)
+    from . import circuit_fit
+    circuit_fit.register(sub)
     from . import datasets
     datasets.register(sub)
     from . import backup

@@ -21,6 +21,9 @@ training_abort_footprint_gb: 50    # 프로세스 전체(phys_footprint)가 이 
 scorecard_check_every: 1           # 몇 에피소드마다
 scorecard_abort_free_percent: 25
 scorecard_abort_footprint_gb: null # 성적표 프로세스 최대치는 아직 안 쟀다 — 재기 전엔 시스템 여유만 본다
+fit_check_every: 1                 # 회로 학습(F-006 · circuit_fit) — 몇 번 평가마다
+fit_abort_free_percent: 25
+fit_abort_footprint_gb: null       # 아직 안 쟀다 — fit-probe 로 잰 뒤 적는다
 # 전체 순서 스크립트(bin/run_full_v*.sh)가 단계 사이 메모리 여유를 기다리는 간격 · 한도
 script_wait_every_s: 30
 script_wait_max_min: 30            # 이만큼 기다려도 문턱 아래면 중단(끝 코드 3)

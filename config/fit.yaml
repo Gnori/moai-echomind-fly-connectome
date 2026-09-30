@@ -15,3 +15,13 @@ scopes:
                                 # ⚠️ 제안(착수 전 요구자 확인) — 무엇을 배우나를 정하는 선택
   space: null                   # 중심복합체 21 종(연구 노트 13 §2.1) — 종류 목록을 잠근 뒤
   escape: null                  # 시각 투사 346 + 하강 480 — 같음
+cmaes:                          # 1 단계(I v2 §7.2) — 기울기 없음 · 정방향만 · 값은 선언(결과 전에 적음)
+  sigma0: 0.3                   # 로그 매개변수 공간의 처음 걸음(e^0.3 ≈ 1.35 배)
+  popsize: null                 # null = 4 + ⌊3 ln P⌋(P 44 → 15)
+  generations: 100
+  trials: 20                    # 평가 한 번의 다가옴 시행 수(bench fit-v1 과 같음)
+  seed: 0
+  reg_lambda: 0.01              # 규제 λ‖θ − θ₀‖²(로그 공간)
+  nan_tolerances: 3.0           # 측정이 없을 때(GF 무반응 → 잠복 NaN) 벌점 = 이만큼 허용폭 밖
+  null_seed: 1000               # 대조 항(rewired_gf_silent)용 재배선 씨앗 — 학습하는 그래프를 섞는다
+  device: cpu
