@@ -1,0 +1,17 @@
+# 회로 학습 범위(R-7469 F-006 · I v2 §7.1) — 무엇을 배우나를 **이름으로 잠근다**.
+# 매개변수 = 종류마다 막 시간 상수 · 문턱 + 종류 쌍마다 배율(α ≥ 0). 연결 수 · 부호 · 상대 · w_scale · ipsi_release 는 불변.
+# 파일: data/graph/<그래프>.params-<version>-<scope>.npz (sim-v3 매개변수 파일 · cellparams.py)
+version: sim-v3
+bounds:                         # 선언(로그 매개화 범위 · I v2 §7.1)
+  tau_ms: [5.0, 200.0]
+  v_th_above_rest_mV: [2.0, 15.0]
+  alpha: [0.1, 10.0]
+scopes:
+  escape-small:                 # 1 단계(CMA-ES · 매개변수 ≤ 50 목표)
+    types_from_loom: true       # loom.yaml amplitude 의 다가옴 LC/LPLC 13 종
+    types: [DNp01, DNp02, DNp04, DNp11]
+    pair_min_synapses: 100      # 이 이상 시냅스가 오가는 종류 쌍만 α 를 둔다
+    pair_dst: [DNp01, DNp02, DNp04, DNp11]   # 출력 쌍(LC/LPLC → 하강)만 — 전부 두면 쌍 85 · 매개변수 119(목표 ≤ 50 넘음 · 2026-10-01 실측)
+                                # ⚠️ 제안(착수 전 요구자 확인) — 무엇을 배우나를 정하는 선택
+  space: null                   # 중심복합체 21 종(연구 노트 13 §2.1) — 종류 목록을 잠근 뒤
+  escape: null                  # 시각 투사 346 + 하강 480 — 같음

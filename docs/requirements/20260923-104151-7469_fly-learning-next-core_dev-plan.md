@@ -37,7 +37,8 @@
 ## Task 5: F-006 회로 학습 (I v2 §7 · 착수는 F-005 판정 뒤 · 무거운 실행은 요구자 확인)
 
 - [x] `config/physiology.yaml`(physiology-v1 · 11 항목 · 출처 · 허용폭 · 확인 수준 — `8e7c270`)
-- [ ] `config/sim.yaml` → sim-v3 매개변수 파일 형식
+- [x] sim-v3 매개변수 파일 형식(2026-10-01 · 미리 개발) — `cellparams.py`(`CellParams` · `init` · `init_scope` · 정체성 검사 `check` · 저장/불러오기) · `config/fit.yaml`(범위 이름 · 경계) · `Engine(cell=)` 선택 인자(없으면 지금 길 그대로). 시험 7: **처음 값이면 발화 완전 일치**(작은 그래프) · α 가 범위 안 연결만 · tau · 문턱은 범위 안 뉴런만 · 두 시간 상수가 같을 때 극한 연속 · 음수 α 거부.
+  실측(traced-v1): escape-small 17 종 · 뉴런 2,534 · 범위 안 쌍 전부(≥ 100 시냅스) 85 → 매개변수 119(목표 ≤ 50 넘음) → **제안: 출력 쌍(→ DNp01/02/04/11)만 10 · 매개변수 44 · 연결 1,060** — ⚠️ 무엇을 배우나를 정하는 선택이라 착수 전 요구자 확인. sim.yaml 은 그대로(sim-v2 · 도는 성적표가 읽음)
 - [ ] 함수형 걸음 + 대리 기울기 + `grad_scope` · 시험: 대리 기울기 끄면 지금 엔진과 발화 완전 일치(작은 그래프)
 - [ ] `fit-probe --scope escape-small --window-ms 10,30` → 비례 확인 → **요구자 확인** → `fit --method cmaes`(1단계) → 재배선 s0~s4 같은 절차 → 정체성 검사 · 도망 재채점
 - [ ] 2단계 `sgbptt`(space · escape) — 같은 순서

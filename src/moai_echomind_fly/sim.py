@@ -65,6 +65,15 @@ class LIFParams:
         return d
 
 
+def _decay_mix(dt: float, tau_in: np.ndarray | float, t_m: np.ndarray | float):
+    """입력(시간 상수 tau_in)이 막(t_m)으로 새는 정확한 한 걸음 계수. tau_in == t_m 이면 극한."""
+    tau_in, t_m = np.asarray(tau_in, dtype=np.float64), np.asarray(t_m, dtype=np.float64)
+    a, b = np.exp(-dt / t_m), np.exp(-dt / tau_in)
+    same = np.isclose(tau_in, t_m, rtol=0, atol=1e-9)
+    diff = np.where(same, 1.0, tau_in - t_m)
+    return np.where(same, dt / t_m * a, tau_in / diff * (b - a))
+
+
 def resolve_device(name: str = "cpu") -> torch.device:
     if name == "mps" and not torch.backends.mps.is_available():
         raise RuntimeError("MPS 를 쓸 수 없다 — --device cpu 로 돌린다")
@@ -100,7 +109,10 @@ class Engine:
         device: str = "cpu",
         dtype: torch.dtype = torch.float32,
         seed: int = 0,
+        cell=None,
     ) -> None:
+        """`cell`(cellparams.CellParams · sim-v3)이 있으면 종류마다 막 시간 상수 · 문턱과
+        종류 쌍 배율을 쓴다. 없으면 지금과 같은 길(스칼라)."""
         if device == "mps" and dtype == torch.float64:
             raise ValueError("MPS 는 float64 를 지원하지 않는다")
         self.graph = graph
@@ -124,12 +136,26 @@ class Engine:
         self.k_g = tau / (tau - t_m) * (b - a)
         self.k_adapt = a_adapt
         self.k_A = tau_a / (tau_a - t_m) * (a_adapt - a)
+        self.v_th = params.v_th_mV
+        if cell is not None:
+            cell.check(graph)
+            tau_n, vth_n = cell.per_neuron(graph, t_m, params.v_th_mV)
+
+            def tens(x: np.ndarray) -> torch.Tensor:
+                return torch.as_tensor(x, dtype=dtype, device=self.dev)
+
+            self.k_a = tens(np.exp(-dt / tau_n))
+            self.k_g = tens(_decay_mix(dt, tau, tau_n))
+            self.k_A = tens(_decay_mix(dt, tau_a, tau_n))
+            self.v_th = tens(vth_n)
 
         self.row_ptr = torch.as_tensor(graph.row_ptr, dtype=torch.int64, device=self.dev)
         self.dst = torch.as_tensor(graph.dst.astype(np.int64), device=self.dev)
         w = graph.sign[graph.src()].astype(np.float64) * graph.count
         for rule in params.ipsi_release:
             w *= ipsi_scale(graph, rule)
+        if cell is not None:
+            w *= cell.edge_scale()          # 종류 쌍 배율(α ≥ 0 · 부호 불변)
         self.w = torch.as_tensor(w * params.w_syn_mV * params.w_scale, dtype=dtype, device=self.dev)
 
         self.n_rfc = torch.full((n,), self.n_rfc_default, dtype=torch.int64, device=self.dev)
@@ -236,7 +262,7 @@ class Engine:
         volt = (torch.empty((steps, self.rec_idx.numel()), dtype=self.dtype, device=self.dev)
                 if rec else None)
         p = self.p
-        v0, v_th, v_reset = p.v0_mV, p.v_th_mV, p.v_reset_mV
+        v0, v_th, v_reset = p.v0_mV, self.v_th, p.v_reset_mV
         has_stim = k > 0 and bool(kicks.any())
         for t in range(steps):
             s = self.step
