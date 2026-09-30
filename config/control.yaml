@@ -1,0 +1,13 @@
+# 두 층 제어 · 사건 기반 LLM 호출 (R-1027 · P loop) — 깊은 판단이 필요할 때만 Qwen.
+# 1 반사(회로 · 규칙) → 2 빠른 정책(초파리 신호 선형 읽기) → 3 Qwen(사건 때만).
+# ⚠️ 문턱은 연구 노트 15(F-007) 조사 뒤 **결과를 보기 전에** 여기서 잠근다. null 이면 gated 모드는 시작을 거부한다.
+version: control-v1
+mode: gated                 # always(늘 부름 = 지금 성적표와 같음) | never(fast-only · LLM 없음) | gated(사건 때만)
+between_calls: fast         # 부르지 않는 결정: fast(2층이 몬다) | hold(마지막 LLM 행동 유지 · 연구 노트 06 §5)
+thresholds:
+  max_gap_decisions: null   # 시간 상한 — 마지막 호출 뒤 이만큼 결정이 지나면 부름(1 결정 = 300 ms)
+  surprise_q: null          # 놀람 — 직전 결정 대비 특징 변화량이 학습 나눔 분위수(0.5~0.99) 위면 부름
+  confidence_min: null      # 애매함 — 2층 돌기 확신도(두 높은 점수 차)가 이 아래면 부름
+  conflict_min: null        # 충돌 — 위험 점수와 먹이 쪽 돌기 확신도가 둘 다 이 위면 부름
+  reflex_threat_min: null   # 1층 — 위험 점수가 이 위면 LLM 없이 회피(null 이면 끔 · 도망 반사는 회로가 그대로)
+fast_policy: fast-v1        # loop/fast_policy.py FAST_RULE 판
