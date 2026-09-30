@@ -277,3 +277,26 @@ def test_dataset_defaults_come_from_one_config():
     for argv in cmds:
         assert ap.parse_args(argv).dataset == cur, argv
     assert ap.parse_args(["replay", "--name", "x"]).pack == cur
+
+
+def test_build_map_can_use_a_shuffled_retino_map():
+    """C 대조군: 뒤섞은 대응표를 고르면 자극 뉴런 순서는 같고 방위만 눈 안에서 뒤섞인다."""
+    from moai_echomind_fly.loop.encoder import build_map
+    from moai_echomind_fly.protocols import LoomSpec
+
+    g = graph.load()
+    cfg = config.load("task")
+    cfg["encoder"]["vision"] = {**cfg["encoder"]["vision"], "mode": "retinotopic2",
+                                "azimuth_sigma_deg": 30.0}
+    loom = LoomSpec.from_config()
+    base = build_map(g, cfg, loom)
+    sh = build_map(g, cfg, loom, retino_rule="retino-v2.shuffled-azimuth-s0")
+    assert np.array_equal(base.stim_idx, sh.stim_idx)
+    for s in ("L", "R"):
+        a, b = base.vision_az[s], sh.vision_az[s]
+        assert np.array_equal(np.sort(a[~np.isnan(a)]), np.sort(b[~np.isnan(b)]))  # 같은 눈 안
+        assert not np.array_equal(a, b, equal_nan=True)
+        assert np.array_equal(base.vision_elev[s], sh.vision_elev[s], equal_nan=True)
+    cfg["encoder"]["vision"]["mode"] = "lr_sigmoid"
+    with pytest.raises(ValueError, match="시야 조율 모드"):
+        build_map(g, cfg, loom, retino_rule="retino-v2.shuffled-azimuth-s0")

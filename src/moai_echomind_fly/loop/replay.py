@@ -85,13 +85,14 @@ def copy_episodes(pack: str, split: str, seeds: list[int], out) -> int:
 
 def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
            retune: bool, verify: int = 0, seeds: list[int] | None = None,
-           log=print) -> dict[str, Any]:
+           retino_rule: str | None = None, log=print) -> dict[str, Any]:
     """묶음 `pack` 의 `split` 나눔을 재주입한다. `retune` 이면 지금 설정으로 시각을 바꾼다.
 
     `verify > 0` 이면 첫 조각의 앞 `verify` 결정만 바꾸지 않고 돌려 원본과 비교(저장 없음).
     `seeds` 가 있으면 그 에피소드만(2026-09-26 · M3 — 학습 나눔 일부).
     건너뛴 에피소드만큼 포아송 난수 흐름이 달라져 원본과 비트 단위로 같지는 않다
     (검증은 `seeds` 없이).
+    `retino_rule` 이 있으면 그 시야 대응표로 조율한다(뒤섞은 표 = 시야 대조군 · `retune` 과 함께).
     """
     _, rows = datasets.load(pack, split, "real")
     stim = np.load(datasets.store_dir() / pack / split / "stim.npz")
@@ -99,7 +100,7 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
     meta = json.loads((datasets.store_dir() / pack / "meta.json").read_text(encoding="utf-8"))
     g = graph_mod.load(meta["graph"])
     graphs = brains_for(g, rewired_seeds)
-    loop = Loop(graphs, "real", body=False)
+    loop = Loop(graphs, "real", body=False, retino_rule=retino_rule)
     if not np.array_equal(np.asarray(loop.smap.stim_idx), stim_idx):
         raise ValueError("자극 뉴런 순서가 원본과 다르다 — task · loom 판을 확인")
     by = _episodes(rows)
@@ -112,7 +113,8 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
     writer = DatasetWriter(out, loop.table, np.asarray(loop.smap.stim_idx))
     done, t0, worst = 0, time.time(), 0.0
     for order in orders:
-        loop = Loop(graphs, "real", body=False)         # 조각마다 새 난수 흐름(원본과 같게)
+        # 조각마다 새 난수 흐름(원본과 같게)
+        loop = Loop(graphs, "real", body=False, retino_rule=retino_rule)
         for seed in order:
             if seed not in by:
                 continue
@@ -165,9 +167,12 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
                     done += 1
             log(f"[replay {out_name}] 씨앗 {seed} 끝 · 누적 {done} · {time.time() - t0:.0f} s")
     cfgs = {n: config.load(n)["version"] for n in ("sim", "loom", "task", "channels", "retino")}
+    if retino_rule:
+        cfgs["retino"] = retino_rule
     writer.save({"graph": g.name, "rewired_seeds": rewired_seeds, "rewired_seed": rewired_seeds[0],
                  "seeds": sorted(by), "versions": cfgs, "replay_of": {"pack": pack, "split": split,
-                                                                       "retune": retune},
+                                                                       "retune": retune,
+                                                                       "retino_rule": retino_rule},
                  "channels": loop.table.describe(),
                  "channel_units": {n: c.units for n, c in loop.table.channels.items()},
                  "sensory_map": loop.smap.describe(), "samples": len(writer.rows),
@@ -184,7 +189,8 @@ def main(args: argparse.Namespace) -> int:
             print(f"[guard] 메모리 여유 {guard.free_percent}% · 뇌 {1 + len(rewired)}", flush=True)
             res = replay(args.pack, args.split, args.name, rewired, retune=not args.no_retune,
                          verify=args.verify,
-                         seeds=parse_seeds(args.seeds) if args.seeds else None)
+                         seeds=parse_seeds(args.seeds) if args.seeds else None,
+                         retino_rule=args.retino_rule)
             print(json.dumps(res, ensure_ascii=False))
     except GuardRefused as err:
         print(f"[guard] 막음 — {err}")
@@ -199,6 +205,8 @@ def register(sub) -> None:
     p.add_argument("--name", required=True, help="결과 조각 이름 runs/dataset-<name>")
     p.add_argument("--rewired-seeds", default="0-4")
     p.add_argument("--no-retune", action="store_true", help="시각을 바꾸지 않는다(검증용)")
+    p.add_argument("--retino-rule", default=None,
+                   help="시야 대응표 판(예: retino-v2.shuffled-azimuth-type-s0 = 대조군)")
     p.add_argument("--seeds", default="", help="이 에피소드만(예: 0-59) — 비우면 전부")
     p.add_argument("--verify", type=int, default=0,
                    help="앞 N 결정만 바꾸지 않고 돌려 원본과 비교(저장 없음)")

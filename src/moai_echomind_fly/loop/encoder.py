@@ -36,7 +36,12 @@ class SensoryMap:
                 "from_annotation": int(len(self.stim_idx)), "filled": 0}
 
 
-def build_map(graph: Graph, cfg: dict[str, Any], loom: LoomSpec) -> SensoryMap:
+def build_map(graph: Graph, cfg: dict[str, Any], loom: LoomSpec, *,
+              retino_rule: str | None = None) -> SensoryMap:
+    """감각 뉴런 자리표. `retino_rule` 은 시야 대응표 판(없으면 설정의 지금 판).
+
+    뒤섞은 대응표(`<판>.shuffled-<what>-s<seed>`)를 넣으면 시야 조율 대조군(C · retino-v2)이 된다.
+    """
     enc = cfg["encoder"]
     side = side_of(graph)
     groups: list[np.ndarray] = []
@@ -48,10 +53,13 @@ def build_map(graph: Graph, cfg: dict[str, Any], loom: LoomSpec) -> SensoryMap:
 
     elev_of, az_of = np.full(graph.n, np.nan), np.full(graph.n, np.nan)
     mode = enc["vision"].get("mode", "lr_sigmoid")
+    if retino_rule and mode not in ("retinotopic", "retinotopic2"):
+        raise ValueError(f"시야 대응표 {retino_rule} 는 시야 조율 모드에서만 쓴다(지금 {mode})")
     if mode in ("retinotopic", "retinotopic2"):
         from .. import retino
 
-        for n in retino.load(graph.meta.get("rewired_from", graph.name))["neurons"]:
+        for n in retino.load(graph.meta.get("rewired_from", graph.name),
+                              retino_rule)["neurons"]:
             elev_of[n["idx"]] = n["elevation_deg"]
             az_of[n["idx"]] = n.get("azimuth_deg", np.nan)
         if mode == "retinotopic2" and np.isnan(az_of).all():

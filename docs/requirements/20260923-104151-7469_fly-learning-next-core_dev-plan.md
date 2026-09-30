@@ -53,6 +53,8 @@
 - [x] `config/retino.yaml` → retino-v2(h · v · 방위 [−170, +10] 선언 · 왼쪽 거울) · `retinotopy build` · 뒤섞은 대응표 둘 — research 세션 `58a1569` · 부호 검증 LC4→DNp02 +0.76/+0.85
 - [x] 재주입 `replay`(몸 없이 뇌만 · 조각별 씨앗 순서 · `--verify`) · `retinotopic2` 인코더 — `a94b182`(⚠️ 수집이 끝날 때까지 config/retino.yaml 은 v1 로 되돌려 둠 · task.yaml 도 그대로)
 - [ ] 자료 v2 재주입(`collect --replay`) 또는 v3 — 작게 잰 뒤 요구자 확인
+- [x] 대조군 준비(2026-10-01) — `build_map(retino_rule=)` · `Loop(retino_rule=)` · `replay --retino-rule` : 뒤섞은 대응표로 시야를 조율해 **같은 절차의 대조군 자료**를 만든다(자료 메타 `versions.retino` · `replay_of.retino_rule` 에 판이 남음). 조율 모드가 아니면 거부 · 시험 1(자극 뉴런 순서 같음 · 방위만 눈 안에서 섞임)
+- [ ] 순서(성적표가 끝난 뒤 · 설정 파일은 그 전에 안 만짐): ① task-v5 = `vision.mode: retinotopic2` + `azimuth_sigma_deg`(선언 · 판 올림 · 옛 판 archive) ② `replay --retune` 으로 fly-loop-v4 → 새 묶음(진짜) ③ 같은 원본을 `--retino-rule retino-v2.shuffled-azimuth-s0`(눈 안) · `…-type-s0`(두 눈) 으로 재주입 ④ 물체 방향 선형 검사: 진짜 > 섞은 대응표일 때만 "시야 자리가 쓰였다" ⑤ 학습은 그 뒤 판단 — 무거운 단계마다 요구자 확인
 
 ## 최종 검증
 

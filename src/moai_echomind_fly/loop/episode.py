@@ -67,12 +67,13 @@ def teacher_policy(vectors, truth, obs, decision):
 
 class Loop:
     def __init__(self, graphs: dict[str, Graph], primary: str, *, seed: int = 0,
-                 body: bool = True) -> None:
+                 body: bool = True, retino_rule: str | None = None) -> None:
         self.cfg = config.load("task")
+        self.retino_rule = retino_rule          # None = 설정의 지금 판 · 뒤섞은 표 = 시야 대조군
         self.loom = LoomSpec.from_config()
         self.params = LIFParams.from_config()
         g0 = graphs[primary]
-        self.smap = build_map(g0, self.cfg, self.loom)
+        self.smap = build_map(g0, self.cfg, self.loom, retino_rule=retino_rule)
         self.decoder = Decoder(g0, self.cfg)
         # 직접 자극하는 뉴런은 벡터에서 뺀다(ChannelTable.build 설명)
         self.table = ChannelTable.build(
