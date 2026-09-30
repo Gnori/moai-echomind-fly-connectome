@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -35,8 +36,11 @@ CONFIGS = ["vector", "text", "no_circuit", "rewired", "no_llm"]
 # scorecard-v3(2026-09-26 · R-5777 F-002): 판정은 v2 그대로 ·
 # 구성마다 결정 기록 `<구성>.decisions.jsonl` 을 더 남긴다
 # v4(2026-10-01 · R-1027): 층 구조 구성(-gated · fast-only) · 결정 기록 tier 칸
+#   + 같은 호출률 대조(-random-matched · -periodic-matched · 연구 노트 15 §5.3) · 신호 · 특징 z 칸
 RECORD_VERSION = "scorecard-v4"
-TIER_SUFFIX = {"-gated": "gated", "-fast-only": "never"}
+TIER_SUFFIX = {"-gated": "gated", "-fast-only": "never", "-random-matched": "random",
+               "-periodic-matched": "periodic"}
+TIER_INFO = ("tier", "trigger", "fast_conf", "threat", "conflict", "surprise", "z")
 RAW_CHARS = 200            # Qwen 원문은 앞 이만큼만(파일 크기)
 
 
@@ -51,14 +55,15 @@ def decision_row(seed: int, step) -> dict[str, Any]:
             "odor_L": t.odor_left, "odor_R": t.odor_right,
             "food_bearing_deg": t.odor_azimuth_deg, "food_mm": t.food_distance_mm,
             "drive": list(step.drive), "reflex_bins": step.reflex_bins,
-            **{k: info[k] for k in ("tier", "trigger", "fast_conf", "threat") if k in info}}
+            **{k: info[k] for k in TIER_INFO if k in info}}
 
 
 def parse_config(name: str) -> dict[str, Any]:
     """구성 이름 → 바탕 구성 · 뇌 · 층 모드(R-1027). 기존 이름은 층 모드 None(지금과 같은 길).
 
     `vector-gated` · `rewired-s0-gated` → gated ·
-    `fast-only`(= 진짜) · `rewired-s0-fast-only` → never.
+    `fast-only`(= 진짜) · `rewired-s0-fast-only` → never ·
+    `vector-random-matched` · `vector-periodic-matched` → 같은 성적표 `vector-gated` 호출률 대조.
     """
     mode = None
     base = name
@@ -71,15 +76,31 @@ def parse_config(name: str) -> dict[str, Any]:
     return {"base": base, "brain": brain, "tier_mode": mode}
 
 
-def build_tiered(llm, brain: str, loop, mode: str):
+def matched_rate(decisions: Path, sniff: int) -> float:
+    """gated 결정 기록 → 목표 호출을 뺀 결정당 호출 확률(냄새 맡기 뒤 · 목표 결정 제외)."""
+    calls = n = 0
+    for line in decisions.read_text(encoding="utf-8").splitlines():
+        r = json.loads(line)
+        if int(r["d"]) < sniff or r.get("trigger") == "goal":
+            continue
+        n += 1
+        calls += int(r.get("tier") == "llm")
+    if n == 0 or calls == 0:
+        raise ValueError(f"{decisions.name}: 목표 밖 호출이 없어 호출률을 맞출 수 없다")
+    return calls / n
+
+
+def build_tiered(llm, brain: str, loop, mode: str, rate: float | None = None):
     """층 구조 조립 — 빠른 정책 · 게이트 · 문턱은 config/control.yaml(문턱 미정이면 gated 거부)."""
     from . import fast_policy as fp
     from .tiered import Gate, TieredPolicy, load_config
 
     cfg = load_config()
     fast = fp.FastPolicy.load(fp.out_dir(config.current_dataset(), brain, cfg["fast_policy"]))
-    gate = Gate({"mode": mode, "thresholds": cfg["thresholds"]}, fast.meta["delta_quantiles"],
-                sniff_decisions=int(loop.cfg["episode"].get("sniff_decisions", 0)))
+    gate = Gate({"mode": mode, "thresholds": cfg["thresholds"],
+                 "conditions": cfg.get("conditions")}, fast,
+                sniff_decisions=int(loop.cfg["episode"].get("sniff_decisions", 0)),
+                rate=rate, seed=int(cfg.get("seed", 0)))
     return TieredPolicy(fast, llm, gate, fp.make_featurizer(fast, loop.table, brain),
                         between_calls=cfg["between_calls"],
                         reflex_threat_min=(cfg["thresholds"] or {}).get("reflex_threat_min"))
@@ -216,6 +237,42 @@ def summarize(eps: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def gating_verdict(results: dict[str, list[dict[str, Any]]]) -> dict[str, Any] | None:
+    """층 구조 판정(연구 노트 15 §5.3) — PGR 과 `vector-gated` 대 같은 호출률 무작위 · 주기.
+
+    PGR = (gated − fast-only) / (늘 부름 − fast-only) · 먹이 도착률.
+    "사건 기반이 잘 골랐다"는 gated > random-matched(씨앗별 부호 뒤집기 p < alpha)일 때만.
+    """
+    from .stats import STATS_RULE, sign_flip_p
+
+    if "vector-gated" not in results:
+        return None
+    seeds = [e["seed"] for e in results["vector-gated"]]
+
+    def reach(c: str) -> np.ndarray | None:
+        if c not in results:
+            return None
+        by = {e["seed"]: float(e["reached"]) for e in results[c]}
+        return np.array([by[s] for s in seeds]) if all(s in by for s in seeds) else None
+
+    g, full, fast = reach("vector-gated"), reach("vector"), reach("fast-only")
+    out: dict[str, Any] = {"rule": "gating-v1", "reach_gated": round(float(g.mean()), 3)}
+    if full is not None and fast is not None:
+        span = float(full.mean() - fast.mean())
+        out["pgr"] = round(float(g.mean() - fast.mean()) / span, 3) if span else None
+    for ctl in ("vector-random-matched", "vector-periodic-matched"):
+        r = reach(ctl)
+        if r is None:
+            continue
+        p = sign_flip_p(g - r)
+        out[ctl] = {"reach": round(float(r.mean()), 3), "p_sign_flip": p,
+                    "gated_beats": bool(g.mean() > r.mean() and p < STATS_RULE["alpha"])}
+    beats = out.get("vector-random-matched", {}).get("gated_beats")
+    out["wording"] = ("사건 기반 호출이 같은 호출률의 무작위보다 나았다" if beats
+                      else "호출을 줄였다까지만 — '잘 골랐다'는 쓰지 않는다")
+    return out
+
+
 def judge(results: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     """`vector` 가 재배선(들)을 앞섰나 — scorecard-v2(R-7469 F-001 · F-005).
 
@@ -279,7 +336,16 @@ def main(args: argparse.Namespace) -> int:
                                                    else (None, list(loop.table.channels), 2,
                                                          None))
                         llm = QwenPolicy(base, q, names, k, brain, proj, loop.table, squeeze)
-                    policy = (build_tiered(llm, brain, loop, pc["tier_mode"])
+                    rate = None
+                    if pc["tier_mode"] in ("random", "periodic"):
+                        src = out / f"{pc['base']}-gated.decisions.jsonl"
+                        if not src.exists():
+                            raise ValueError(f"{cfg_name} 앞에 {pc['base']}-gated 를 같은 "
+                                             "성적표에서 돌려야 호출률을 맞춘다")
+                        rate = matched_rate(src, int(loop.cfg["episode"]
+                                                     .get("sniff_decisions", 0)))
+                        print(f"[{cfg_name}] 맞춘 호출률 {rate:.3f}", flush=True)
+                    policy = (build_tiered(llm, brain, loop, pc["tier_mode"], rate)
                               if pc["tier_mode"] else llm)
                 eps = []
                 dec_file = (out / f"{cfg_name}.decisions.jsonl").open("w", encoding="utf-8")
@@ -294,7 +360,10 @@ def main(args: argparse.Namespace) -> int:
                                                       ensure_ascii=False) + "\n")
 
                         if policy is not None:
-                            policy.reset()
+                            if pc["tier_mode"]:
+                                policy.reset(seed)      # random 모드 난수 · 에피소드마다
+                            else:
+                                policy.reset()
                             v0 = policy.violations
                         res = loop.episode(seed, policy or no_llm_policy, on_step=on_step)
                         res["violations"] = (policy.violations - v0) if policy is not None else 0
@@ -319,10 +388,12 @@ def main(args: argparse.Namespace) -> int:
                 results[cfg_name] = eps
             table = {c: summarize(e) for c, e in results.items()}
             verdict = judge(results)
-            for suf, key in (("-gated", "judgement_gated"), ("-fast-only", "judgement_fast_only")):
+            for suf, key in (("-gated", "judgement_gated"), ("-fast-only", "judgement_fast_only"),
+                             ("-random-matched", "judgement_random_matched")):
                 pr = paired(results, suf)
                 if "vector" in pr and any(c.startswith("rewired") for c in pr):
                     verdict[key] = judge(pr)
+            verdict["gating"] = gating_verdict(results)
             beats = verdict["vector_beats_rewired"]
             wording = ("초파리 배선 벡터가 섞은 배선보다 나았다" if beats
                        else "섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다")
