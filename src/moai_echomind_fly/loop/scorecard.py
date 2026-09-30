@@ -34,7 +34,9 @@ from .train_cli import TRAIN_RULE
 CONFIGS = ["vector", "text", "no_circuit", "rewired", "no_llm"]
 # scorecard-v3(2026-09-26 · R-5777 F-002): 판정은 v2 그대로 ·
 # 구성마다 결정 기록 `<구성>.decisions.jsonl` 을 더 남긴다
-RECORD_VERSION = "scorecard-v3"
+# v4(2026-10-01 · R-1027): 층 구조 구성(-gated · fast-only) · 결정 기록 tier 칸
+RECORD_VERSION = "scorecard-v4"
+TIER_SUFFIX = {"-gated": "gated", "-fast-only": "never"}
 RAW_CHARS = 200            # Qwen 원문은 앞 이만큼만(파일 크기)
 
 
@@ -48,7 +50,50 @@ def decision_row(seed: int, step) -> dict[str, Any]:
             "valid": info.get("valid"), "why": info.get("why") or None,
             "odor_L": t.odor_left, "odor_R": t.odor_right,
             "food_bearing_deg": t.odor_azimuth_deg, "food_mm": t.food_distance_mm,
-            "drive": list(step.drive), "reflex_bins": step.reflex_bins}
+            "drive": list(step.drive), "reflex_bins": step.reflex_bins,
+            **{k: info[k] for k in ("tier", "trigger", "fast_conf", "threat") if k in info}}
+
+
+def parse_config(name: str) -> dict[str, Any]:
+    """구성 이름 → 바탕 구성 · 뇌 · 층 모드(R-1027). 기존 이름은 층 모드 None(지금과 같은 길).
+
+    `vector-gated` · `rewired-s0-gated` → gated ·
+    `fast-only`(= 진짜) · `rewired-s0-fast-only` → never.
+    """
+    mode = None
+    base = name
+    if name == "fast-only":
+        base, mode = "vector", "never"
+    for suf, m in TIER_SUFFIX.items():
+        if name.endswith(suf):
+            base, mode = name[: -len(suf)], m
+    brain = base if base.startswith("rewired") else "real"
+    return {"base": base, "brain": brain, "tier_mode": mode}
+
+
+def build_tiered(llm, brain: str, loop, mode: str):
+    """층 구조 조립 — 빠른 정책 · 게이트 · 문턱은 config/control.yaml(문턱 미정이면 gated 거부)."""
+    from . import fast_policy as fp
+    from .tiered import Gate, TieredPolicy, load_config
+
+    cfg = load_config()
+    fast = fp.FastPolicy.load(fp.out_dir(config.current_dataset(), brain, cfg["fast_policy"]))
+    gate = Gate({"mode": mode, "thresholds": cfg["thresholds"]}, fast.meta["delta_quantiles"],
+                sniff_decisions=int(loop.cfg["episode"].get("sniff_decisions", 0)))
+    return TieredPolicy(fast, llm, gate, fp.make_featurizer(fast, loop.table, brain),
+                        between_calls=cfg["between_calls"],
+                        reflex_threat_min=(cfg["thresholds"] or {}).get("reflex_threat_min"))
+
+
+def paired(results: dict[str, list[dict]], suffix: str) -> dict[str, list[dict]]:
+    """층 구성끼리 판정하려고 이름을 바탕 이름으로(vector-gated → vector)."""
+    out = {}
+    for c, e in results.items():
+        if c == "fast-only" and suffix == "-fast-only":
+            out["vector"] = e
+        elif c.endswith(suffix):
+            out[c[: -len(suffix)]] = e
+    return out
 
 SYSTEM_RAW = (
     "너는 초파리의 뇌다. 아래는 세계의 원시 값이다(각도는 + 가 왼쪽). "
@@ -162,6 +207,12 @@ def summarize(eps: list[dict[str, Any]]) -> dict[str, Any]:
         "decisions": int(sum(e["decisions"] for e in eps)),
         "latency_s_mean": round(float(np.mean([e["latency_s"] for e in eps if e.get("latency_s")]
                                               or [0.0])), 2),
+        **({"llm_calls": int(sum(e["llm_calls"] for e in eps)),
+            "call_rate": round(sum(e["llm_calls"] for e in eps)
+                               / max(sum(e["decisions"] for e in eps), 1), 3),
+            "est_llm_wall_s": round(float(sum(e["llm_calls"] * (e.get("latency_s") or 0.0)
+                                              for e in eps)), 1)}
+           if eps and all("llm_calls" in e for e in eps) else {}),
     }
 
 
@@ -211,19 +262,25 @@ def main(args: argparse.Namespace) -> int:
             done = 0
             results: dict[str, list[dict]] = {}
             for cfg_name in configs:
-                brain = cfg_name if cfg_name.startswith("rewired") else "real"
-                seed_k = (int(cfg_name.rsplit("-s", 1)[1]) if cfg_name.startswith("rewired-s")
+                pc = parse_config(cfg_name)
+                base, brain = pc["base"], pc["brain"]
+                seed_k = (int(base.rsplit("-s", 1)[1]) if base.startswith("rewired-s")
                           else args.rewired_seed)
                 graphs = {brain: (graph_mod.rewire(g, seed_k) if brain != "real" else g)}
                 loop = Loop(graphs, brain)
-                if cfg_name == "no_llm":
+                if base == "no_llm":
                     policy = None
                 else:
-                    uses_proj = cfg_name == "vector" or cfg_name.startswith("rewired")
-                    proj, names, k, squeeze = (_load_projector(q, brain, args.version)
-                                               if uses_proj
-                                               else (None, list(loop.table.channels), 2, None))
-                    policy = QwenPolicy(cfg_name, q, names, k, brain, proj, loop.table, squeeze)
+                    llm = None
+                    if pc["tier_mode"] != "never":
+                        uses_proj = base == "vector" or base.startswith("rewired")
+                        proj, names, k, squeeze = (_load_projector(q, brain, args.version)
+                                                   if uses_proj
+                                                   else (None, list(loop.table.channels), 2,
+                                                         None))
+                        llm = QwenPolicy(base, q, names, k, brain, proj, loop.table, squeeze)
+                    policy = (build_tiered(llm, brain, loop, pc["tier_mode"])
+                              if pc["tier_mode"] else llm)
                 eps = []
                 dec_file = (out / f"{cfg_name}.decisions.jsonl").open("w", encoding="utf-8")
                 try:
@@ -241,6 +298,8 @@ def main(args: argparse.Namespace) -> int:
                             v0 = policy.violations
                         res = loop.episode(seed, policy or no_llm_policy, on_step=on_step)
                         res["violations"] = (policy.violations - v0) if policy is not None else 0
+                        res["llm_calls"] = (int(getattr(policy, "llm_calls", res["decisions"]))
+                                            if policy is not None else 0)
                         res["latency_s"] = float(np.mean(lat)) if lat else None
                         res.pop("task", None)
                         eps.append(res)
@@ -260,6 +319,10 @@ def main(args: argparse.Namespace) -> int:
                 results[cfg_name] = eps
             table = {c: summarize(e) for c, e in results.items()}
             verdict = judge(results)
+            for suf, key in (("-gated", "judgement_gated"), ("-fast-only", "judgement_fast_only")):
+                pr = paired(results, suf)
+                if "vector" in pr and any(c.startswith("rewired") for c in pr):
+                    verdict[key] = judge(pr)
             beats = verdict["vector_beats_rewired"]
             wording = ("초파리 배선 벡터가 섞은 배선보다 나았다" if beats
                        else "섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다")

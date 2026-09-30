@@ -149,6 +149,23 @@ class FastPolicy:
         return cls(heads, meta["names"], float(meta["strength"]), meta)
 
 
+def make_featurizer(pol: FastPolicy, table, brain: str):
+    """성적표 · 수집용 — 결정의 채널 벡터 → 빠른 정책 입력(학습 때와 같은 압축 · 같은 순서)."""
+    from . import compress
+
+    model = compress.load(pol.meta["dataset"], brain, version=pol.meta["rule"]["compress"])
+    names = list(pol.names)
+    sub = {c: model[c] for c in names}
+
+    def featurize_vectors(vectors: dict) -> np.ndarray:
+        v = vectors[brain]
+        raw = {n: v[n].features(table.rate_scale_hz, table.depol_scale_mV)[None] for n in names}
+        sq = compress.apply(sub, raw)
+        return featurize({n: sq[n][0] for n in names}, names)
+
+    return featurize_vectors
+
+
 def out_dir(dataset: str, brain: str, version: str | None = None) -> Path:
     return paths.runs_dir() / f"fast-policy-{dataset}-{brain}-{version or FAST_RULE['version']}"
 

@@ -79,23 +79,25 @@ TieredPolicy.__call__(vectors, truth, obs, d):
 ---
 
 ## Task 1: 설정 · 틀 (F-001 · F-003)
-- [ ] `config/control.yaml`(control-v1 · mode · 문턱 "미정" · between_calls fast|hold)
-- [ ] `loop/tiered.py` — `Gate`(조건 계산 · 기억) · `TieredPolicy`(1.1) · 참값을 안 씀
-- [ ] 시험: always = 매 결정 LLM · never = LLM 0 · 시간 상한 · 놀람 · 애매함 · 충돌 각각 가짜 특징으로 · truth 를 망가뜨려도 결정 같음 · 문턱 미정이면 gated 거부
+- [x] `config/control.yaml`(control-v1 · mode · 문턱 "미정" · between_calls fast|hold)
+- [x] `loop/tiered.py` — `Gate`(조건 계산 · 기억) · `TieredPolicy`(1.1) · 참값을 안 씀
+- [x] 시험: always = 매 결정 LLM · never = LLM 0 · 시간 상한 · 놀람 · 애매함 · 충돌 각각 가짜 특징으로 · truth 를 망가뜨려도 결정 같음 · 문턱 미정이면 gated 거부
 
 ## Task 2: 빠른 정책 (F-002)
-- [ ] `loop/fast_policy.py` — fit(자료 · 뇌 · 압축) · predict(z → 행동 · 확신도 · 머리) · 저장/불러오기 · `fast-policy fit|eval` 명령
-- [ ] 시험: 심은 선형 규칙을 되찾음 · 저장 → 불러오기 같음 · 추론 < 5 ms
-- [ ] 실행(CPU): 진짜 · 재배선 s0~s2 fit + 평가 나눔 일치율 · 확신도 보정 → R 2.2 인수 기준 기록
+- [x] `loop/fast_policy.py` — fit(자료 · 뇌 · 압축) · predict(z → 행동 · 확신도 · 머리) · 저장/불러오기 · `fast-policy fit|eval` 명령
+- [x] 시험: 심은 선형 규칙을 되찾음 · 저장 → 불러오기 같음 · 추론 < 5 ms
+- [x] 실행(CPU): 진짜 · 재배선 s0~s2 fit(3.2 s) — 돌기 진짜 0.676 · 재배선 0.573~0.586 · 찍기 0.434 · 확신도 구간별 정확도 0.52 → 0.86(애매함 조건에 근거)
 
 ## Task 3: 반사 규칙 (F-005)
-- [ ] 회로 신호로 읽을 수 있는 것만 — 빠른 정책 위험 머리 강함 → 회피 · (미각 채널이 관문 밖이라) 먹이 닿음은 "회로 신호 없음"으로 기록 · 교사와 다른 반사 비율
+- [x] 회로 신호로 읽을 수 있는 것만 — 빠른 정책 위험 머리 ≥ `reflex_threat_min` → LLM 없이 회피(TieredPolicy 1층) · 먹이 닿음은 미각 채널이 관문 밖이라 **회로 신호 없음**(도착은 몸 쪽 끝 조건이 처리) · 교사와 다른 반사 비율은 성적표 결정 기록(tier=reflex)에서
 
 ## Task 4: 성적표 (F-004)
-- [ ] 구성 이름 해석 · 조립 · scorecard-v4 칸 · 요약 · 판정에 gated 쌍
-- [ ] 회귀 시험: 기존 구성 목록이면 기록 칸 · 판정이 v3 과 같음(새 칸 제외)
+- [x] 구성 이름 해석 · 조립 · scorecard-v4 칸 · 요약 · 판정에 gated 쌍
+- [x] 회귀 시험: 기존 구성 목록이면 기록 칸 · 판정이 v3 과 같음(새 칸 제외)
 - [ ] 대시보드 episodes 쪽 층 표시 — doc 세션(칸 추가만 알림)
 - [ ] 실행(무거움): A · B 뒤 · 문턱 잠근 뒤 · 요구자 확인
+
+- [x] 성적표 입력 = 학습 입력 확인(실제 자료 한 줄 · 최대 차 3e-6 · 예측 같음)
 
 ## 최종 검증
 - `uv run ruff check src tests scripts` · `uv run pytest -m "not heavy"` — 파이프 없이 끝 코드 확인 뒤 커밋

@@ -13,7 +13,7 @@
 | [20260924-002928-7928_fly-dashboard_req.md](./20260924-002928-7928_fly-dashboard_req.md) | 검증완료 (간단) | 100% | 2026-09-24 | 2026-09-24 |
 | [20260924-115138-7347_fly-dashboard-state_req.md](./20260924-115138-7347_fly-dashboard-state_req.md) | 검증완료 (간단) | 100% | 2026-09-24 | 2026-09-24 |
 | [20260926-171115-5777_fly-dashboard-debug_req.md](./20260926-171115-5777_fly-dashboard-debug_req.md) | 구현완료(검증대기) (표준) | 100% | 2026-09-26 | 2026-09-26 |
-| [20261001-070937-1027_fly-tiered-control_req.md](./20261001-070937-1027_fly-tiered-control_req.md) | 확정 (표준) | 0% | 2026-10-01 | TBD |
+| [20261001-070937-1027_fly-tiered-control_req.md](./20261001-070937-1027_fly-tiered-control_req.md) | 구현중 (표준) | 57% | 2026-10-01 | TBD |
 
 ## 규약 위반 (검사기 출력 자리)
 

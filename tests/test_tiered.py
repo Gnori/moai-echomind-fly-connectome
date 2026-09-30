@@ -121,3 +121,56 @@ def test_labels_follow_teacher_branches():
     assert fp.labels({"walk": 0.6, "turn": "left", "turn_strength": 1.0, "stop": False}) == (
         "left", False, False)
     assert fp.labels({"walk": 0.0, "turn": "none", "turn_strength": 0.0, "stop": True})[1] is True
+
+
+def test_scorecard_parses_tier_configs_and_keeps_old_names():
+    from moai_echomind_fly.loop.scorecard import parse_config
+
+    assert parse_config("vector") == {"base": "vector", "brain": "real", "tier_mode": None}
+    assert parse_config("rewired-s1") == {"base": "rewired-s1", "brain": "rewired-s1",
+                                          "tier_mode": None}
+    assert parse_config("no_llm")["tier_mode"] is None
+    assert parse_config("vector-gated") == {"base": "vector", "brain": "real",
+                                            "tier_mode": "gated"}
+    assert parse_config("rewired-s2-gated")["brain"] == "rewired-s2"
+    assert parse_config("fast-only") == {"base": "vector", "brain": "real", "tier_mode": "never"}
+    assert parse_config("rewired-s0-fast-only") == {"base": "rewired-s0", "brain": "rewired-s0",
+                                                    "tier_mode": "never"}
+
+
+def test_scorecard_summary_call_stats_and_gated_pairing():
+    from moai_echomind_fly.loop.scorecard import judge, paired, summarize
+
+    def ep(seed, reached, calls, dec=10):
+        return {"seed": seed, "reached": reached, "reach_ms": 1000.0 if reached else None,
+                "final_food_mm": 1.0, "looming": False, "looming_hit": None, "decisions": dec,
+                "violations": 0, "latency_s": 3.0, "llm_calls": calls}
+
+    s = summarize([ep(1, True, 2), ep(2, False, 3)])
+    assert s["llm_calls"] == 5 and s["call_rate"] == 0.25 and s["est_llm_wall_s"] == 15.0
+    old = {k: v for k, v in s.items() if k not in ("llm_calls", "call_rate", "est_llm_wall_s")}
+    s2 = summarize([{k: v for k, v in e.items() if k != "llm_calls"}
+                    for e in (ep(1, True, 2), ep(2, False, 3))])
+    assert s2 == old                                        # 옛 기록(칸 없음)은 옛 요약 그대로
+    res = {"vector": [ep(i, True, 10) for i in range(4)],
+           "vector-gated": [ep(i, True, 2) for i in range(4)],
+           "rewired-s0-gated": [ep(i, False, 2) for i in range(4)],
+           "fast-only": [ep(i, False, 0) for i in range(4)],
+           "rewired-s0-fast-only": [ep(i, False, 0) for i in range(4)]}
+    g = paired(res, "-gated")
+    assert set(g) == {"vector", "rewired-s0"} and judge(g)["rewired"] == ["rewired-s0"]
+    assert set(paired(res, "-fast-only")) == {"vector", "rewired-s0"}
+
+
+def test_decision_row_carries_tier_fields_only_when_present():
+    from moai_echomind_fly.loop.episode import Step
+    from moai_echomind_fly.loop.scorecard import decision_row
+    from moai_echomind_fly.loop.teacher import Truth
+
+    t = Truth(False, 0.0, 0.0, False, odor_left=1.0, odor_right=1.0, odor_azimuth_deg=0.0,
+              food_distance_mm=5.0, legs_in_contact=6)
+    old = decision_row(1, Step(0, 0.0, t, "c", {}, {}, "vector", 0, (0.0, 0.0), {"raw": "x"}))
+    assert "tier" not in old
+    new = decision_row(1, Step(0, 0.0, t, "c", {}, {}, "fast", 0, (0.0, 0.0),
+                               {"tier": "fast", "trigger": None, "fast_conf": 0.4}))
+    assert new["tier"] == "fast" and new["fast_conf"] == 0.4

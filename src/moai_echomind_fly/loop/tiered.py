@@ -98,6 +98,11 @@ class TieredPolicy:
         self.last_llm: dict | None = None
         self.llm_calls = 0
 
+    @property
+    def violations(self) -> int:
+        """성적표가 세는 형식 위반 — LLM 쪽 값(부르지 않으면 0)."""
+        return int(getattr(self.llm, "violations", 0)) if self.llm is not None else 0
+
     def __call__(self, vectors, truth, obs, decision):
         z = self.featurize(vectors)
         fo = self.fast.predict(z)
