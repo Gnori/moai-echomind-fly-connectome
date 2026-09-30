@@ -10,6 +10,7 @@ from __future__ import annotations
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
+import pytest
 from mlx.utils import tree_flatten
 from mlx_lm.models.qwen3_5 import TextModel, TextModelArgs
 
@@ -43,21 +44,23 @@ def _tiny_qwen() -> QwenLM:
     return q
 
 
-def test_layerwise_grads_match_full_graph():
+@pytest.mark.parametrize("chunk", [1, 2, 3, 4])
+def test_layerwise_grads_match_full_graph(chunk):
+    """층을 k 개씩 묶어도(D 14) 한 번에 미분한 것과 같다 — 3 은 나누어떨어지지 않는 경우."""
     mx.set_default_device(mx.cpu)
     try:
-        _check_layerwise()
+        _check_layerwise(chunk)
     finally:
         mx.set_default_device(mx.gpu)
 
 
-def _check_layerwise():
+def _check_layerwise(chunk: int = 1):
     q = _tiny_qwen()
     rng = np.random.default_rng(0)
     dims = {"smell": 12, "vision": 20}
     proj = ChannelProjector(dims, hidden=64, k=2, kind="mlp2", width=16, target_rms=0.02)
     mx.eval(proj.parameters())
-    trainer = Trainer(q, proj)
+    trainer = Trainer(q, proj, backprop_chunk=chunk)
     prompt = [11, 12, 13] + [SLOT_ID] * 4 + [14, 15, 16, 17]
     s = Sample(prompt, [21, 22, 23, 24],
                {n: rng.standard_normal(d).astype(np.float32) for n, d in dims.items()})

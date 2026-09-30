@@ -11,6 +11,12 @@ Qwen3.8 의 선형 어텐션 층(GatedDeltaNet)은 `training` 이면 전용 커�
 mlx-lm 의 층별 재계산(`grad_checkpoint`)은 전체를 한 번에 평가하는 지연 평가에서 듣지 않았다
 (켜도 끄도 90~100 GB).
 그래서 **한 층씩 거꾸로** 미분하고 층마다 평가해 끊는다 — 한 번에 한 층 몫만 든다.
+
+`backprop_chunk`(2026-10-01 · 인수인계 D 14): 층을 k 개씩 묶어 앞 · 뒤를 계산한다.
+층마다 평가하면 한 걸음에 작은 GPU 명령 · 동기화가 층 수 × 2 번 생겨 CPU 코어 하나 넘게(약 116 %)
+늘 쓴다(요구자 09-29 "CPU 가 과도"). 묶으면 동기화가 1/k · 기울기는 같다(시험) · 대신 거꾸로 할 때
+k 층 몫의 중간 상태를 든다(메모리 ↑ — train-probe 로 잰다).
+기본 1 = 지금과 같다.
 """
 
 from __future__ import annotations
@@ -38,8 +44,9 @@ class Sample:
 
 class Trainer:
     def __init__(self, qwen: QwenLM, projector: ChannelProjector, lr: float = 1e-4,
-                 cache_limit_gb: float | None = None) -> None:
+                 cache_limit_gb: float | None = None, backprop_chunk: int = 1) -> None:
         self.qwen = qwen
+        self.chunk = max(1, int(backprop_chunk))
         if cache_limit_gb is not None:
             # 캐시 상한 — 두지 않으면 걸음마다 쌓여 13 시간 뒤 103 GB 가 됐다(2026-09-22)
             mx.set_cache_limit(int(cache_limit_gb * 1e9))
@@ -85,17 +92,25 @@ class Trainer:
         x = mx.stop_gradient(self._embeddings(s))[None]
         fa, ssm = create_attention_mask(x, None), create_ssm_mask(x, None)
         masks = [ssm if layer.is_linear else fa for layer in m.layers]
+        n = len(m.layers)
+        spans = [(a, min(a + self.chunk, n)) for a in range(0, n, self.chunk)]
+
+        def run(h: mx.array, a: int, b: int) -> mx.array:
+            for layer, mask in zip(m.layers[a:b], masks[a:b]):
+                h = layer(h, mask=mask)
+            return h
+
         self.qwen.model.eval()                         # 앞으로는 전용 커널(빠르다)
         inputs = []
-        for layer, mask in zip(m.layers, masks):
+        for a, b in spans:
             inputs.append(x)
-            x = layer(x, mask=mask)
+            x = run(x, a, b)
             mx.eval(x)
         loss, cot = mx.value_and_grad(lambda h: self._head_loss(h, s))(x)
         mx.eval(loss, cot)
         self.qwen.model.train()                        # 거꾸로는 미분 가능한 경로
-        for layer, mask, xi in zip(reversed(m.layers), reversed(masks), reversed(inputs)):
-            _, (cot,) = mx.vjp(lambda h: layer(h, mask=mask), [xi], [cot])
+        for (a, b), xi in zip(reversed(spans), reversed(inputs)):
+            _, (cot,) = mx.vjp(lambda h, a=a, b=b: run(h, a, b), [xi], [cot])
             mx.eval(cot)
         _, grads = self._pull(s, cot[0].astype(mx.float32))
         return loss, grads

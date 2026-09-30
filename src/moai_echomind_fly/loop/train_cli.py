@@ -263,7 +263,8 @@ def train(args: argparse.Namespace) -> int:
             rms = float(mx.sqrt(mx.mean(emb * emb)))
             proj = new_projector({n: feats[n].shape[1] for n in names}, q.hidden, rule, rms)
             trainer = Trainer(q, proj, lr=rule["lr"],
-                              cache_limit_gb=float(gcfg["training_cache_limit_gb"]))
+                              cache_limit_gb=float(gcfg["training_cache_limit_gb"],
+                              backprop_chunk=int(rule.get("backprop_chunk", 1))))
             watchdog = Watchdog()
             total = [0]
             setup = _Setup(q, names, rule["k"], rule.get("template_weight"))
@@ -401,7 +402,8 @@ def probe(args: argparse.Namespace) -> int:
             proj = new_projector({n: feats[n].shape[1] for n in names}, q.hidden, rule,
                                  float(mx.sqrt(mx.mean(emb * emb))))
             cache = float(gcfg["training_cache_limit_gb"])
-            trainer = Trainer(q, proj, lr=rule["lr"], cache_limit_gb=cache)
+            trainer = Trainer(q, proj, lr=rule["lr"], cache_limit_gb=cache,
+                              backprop_chunk=args.chunk)
             setup = _Setup(q, names, rule["k"], rule.get("template_weight"))
             watchdog = Watchdog()
             rng = random.Random(1)
@@ -646,6 +648,8 @@ def register(sub) -> None:
     pr.add_argument("--brain", type=_brain, default="real")
     pr.add_argument("--dataset", default=config.current_dataset())
     pr.add_argument("--steps", type=int, default=50)
+    pr.add_argument("--chunk", type=int, default=1,
+                    help="층 몇 개씩 묶어 역전파(메모리 · 걸음 시간을 재 보려고 · 기본 1 = 지금)")
     pr.set_defaults(func=probe)
     e = sub.add_parser("eval-caption", help="F-017 캡션 칸별 정확도(학습에 안 쓴 씨앗)")
     e.add_argument("--brain", type=_brain, required=True)
