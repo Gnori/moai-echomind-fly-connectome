@@ -243,6 +243,46 @@
 <td>6~9 s</td>
 <td>✅</td>
 </tr>
+<tr>
+<td><code>projector-real-train-v7</code></td>
+<td>진짜</td>
+<td><strong>train-v7</strong>(= v6 + 캡션 되새김 0.3 → 0.5)</td>
+<td>v6 과 같음(fly-loop-v4 에피소드 0~149 · 시각 · smell_ln · 공간) · <strong>캡션 단계는 v6 저장본에서 이어 씀</strong>(<code>--resume-caption</code>)</td>
+<td>09-29 21:42 → 09-30 01:27</td>
+<td>4,529(전체 · 행동 단계만 돎)</td>
+<td>6.9 s · 31.33 GB</td>
+<td>✅ · 끝에 <code>meta.json</code> 쓰기 오류로 순서 스크립트가 끝 코드 1(<code>0111603</code> 에서 고침 · 저장본은 남음) · 첫 시도(20:11 · 캡션부터)는 <code>.stopped-resume-2142</code> 로 보존</td>
+</tr>
+<tr>
+<td><code>projector-rewired-s0-train-v7</code></td>
+<td>재배선 s0</td>
+<td>train-v7</td>
+<td>같음</td>
+<td>09-30 01:28 → 04:32</td>
+<td>4,529</td>
+<td>5.7 s · 31.33 GB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>projector-rewired-s1-train-v7</code></td>
+<td>재배선 s1</td>
+<td>train-v7</td>
+<td>같음</td>
+<td>09-30 04:32 → 07:41</td>
+<td>4,529</td>
+<td>5.8 s · 31.33 GB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>projector-rewired-s2-train-v7</code></td>
+<td>재배선 s2</td>
+<td>train-v7</td>
+<td>같음</td>
+<td>09-30 07:41 → 12:47</td>
+<td>4,529</td>
+<td>9.4 s · 31.34 GB</td>
+<td>✅</td>
+</tr>
 </tbody>
 </table></div>
 <h3 id="12-손실검증--eval-앞-24-개--낮을수록-정답-글에-가깝다">1.2 손실(검증 · <code>eval</code> 앞 24 개 · 낮을수록 정답 글에 가깝다)</h3>
@@ -358,6 +398,39 @@ Qwen 가중치 지문은 네 학습 모두 학습 전후 같음(<code>a4cfcb8d0a
 </tbody>
 </table></div>
 <p>재배선 s2 가 캡션 · 행동 모두 가장 낮다 — <strong>손실로는 판정하지 않는다</strong>(2.6 채점 판정 · 2.7 성적표). Qwen 가중치 지문 네 학습 모두 전후 같음(<code>a4cfcb8d0ae14b11</code>).</p>
+<h3 id="12d-손실--train-v7검증--캡션--행동">1.2d 손실 — train-v7(검증 · 캡션 / 행동)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>캡션 단계 끝(v6 저장본 · 이어 씀)</th>
+<th>최종</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>진짜 배선</td>
+<td>1.744 / 1.043</td>
+<td>1.753 / 0.486</td>
+</tr>
+<tr>
+<td>재배선 s0</td>
+<td>2.056 / 1.009</td>
+<td>1.957 / 0.716</td>
+</tr>
+<tr>
+<td>재배선 s1</td>
+<td>1.900 / 1.010</td>
+<td>1.735 / 0.827</td>
+</tr>
+<tr>
+<td>재배선 s2</td>
+<td>1.665 / 1.103</td>
+<td><strong>1.606</strong> / 0.488</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>scripts/50-analysis/ledger_hashes.py train-v7</code> 출력 · 캡션 단계 값은 각 <code>train.log</code> 의 <code>[resume]</code> 줄. 네 뇌 Qwen 지문 전후 같음. 이번에도 <strong>손실로는 판정하지 않는다</strong>(2.8 · 2.9).</p>
 <h3 id="13-저장본과-지문">1.3 저장본과 지문</h3>
 <div class="tbl"><table>
 <thead>
@@ -436,6 +509,26 @@ Qwen 가중치 지문은 네 학습 모두 학습 전후 같음(<code>a4cfcb8d0a
 <tr>
 <td><code>runs/projector-rewired-s2-train-v6/…</code></td>
 <td><code>fb0e027a6ab3470e</code> · <code>728220476dbe7c2f</code></td>
+<td>3.5 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-real-train-v7/stage1-caption.safetensors</code> · <code>final</code></td>
+<td><code>af7296a03718f421</code>(v6 캡션 단계본 그대로) · <code>8235939e927883cb</code></td>
+<td>3.5 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-rewired-s0-train-v7/…</code></td>
+<td><code>e55ff437de26dea5</code>(v6 그대로) · <code>72935f524d119478</code></td>
+<td>3.5 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-rewired-s1-train-v7/…</code></td>
+<td><code>2b571c6dbb28ee63</code>(v6 그대로) · <code>a7c3539b265d01d2</code></td>
+<td>3.5 MB</td>
+</tr>
+<tr>
+<td><code>runs/projector-rewired-s2-train-v7/…</code></td>
+<td><code>fb0e027a6ab3470e</code>(v6 그대로) · <code>0f54158eba4efe6c</code></td>
 <td>3.5 MB</td>
 </tr>
 </tbody>
@@ -903,6 +996,127 @@ Qwen 가중치 지문은 네 학습 모두 학습 전후 같음(<code>a4cfcb8d0a
 진짜 배선은 재배선 셋 중 둘(s0 · s2)보다 높고 no_circuit(0.325)보다도 높지만 s1(0.375)을 넘지 못했다. 결정 기록으로 보면 재배선 s0 은 도는 쪽이 동전 던지기(0.508/0.491)인데
 진짜 · s1 · s2 는 0.56~0.58 로 비슷하다 — 캡션의 냄새 쪽 차이(0.530 대 0.476~0.506)가 행동에서는 가를 만큼 크지 않다. no_circuit 은 1.0 → 0.325 로 떨어져, 더듬이 기준 과제가 Qwen 에게도 어렵다.
 v5 에서 no_llm 이 0 이었듯 이번에도 0 — 회로만으로 먹이에 가지 못한다(DNa02 침묵 · M1).</p>
+<h3 id="28-train-v7-캡션-판정--채점-평가--평가-1708-결정--200-에피소드--stats-v3">2.8 train-v7 캡션 판정 — 채점 평가 · 평가 1,708 결정 / 200 에피소드 · stats-v3</h3>
+<p>바꾼 것은 둘뿐이다(R-7469 F-005 · 결과 전에 정함): <strong>캡션 되새김 0.3 → 0.5</strong>(행동 단계가 캡션을 깎는 문제) · <strong>성적표 씨앗 40 → 100</strong>(판정력). 자료 · 입력은 v6 과 같다.
+성공 기준(결과 전에 정함): (a) 최종본 냄새 쪽 ≥ 캡션 단계본 · 재배선 셋 · 찍기를 넘음 (b) 성적표 vector 가 재배선 셋 모두 위 · 부호 뒤집기 p &lt; 0.05.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>최종본 진짜 · 재배선 s0/s1/s2 · 찍기</th>
+<th>판정</th>
+<th>캡션 단계본(v6 것과 같음) 진짜 · 재배선 · 찍기</th>
+<th>판정</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>물체 있음</td>
+<td><strong>0.734</strong> · 0.680/0.704/0.707 · 0.667</td>
+<td>✅</td>
+<td><strong>0.738</strong> · 0.669/0.682/0.711 · 0.667</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>냄새 쪽</strong></td>
+<td><strong>0.566</strong> · 0.464/0.518/0.497 · 0.461(찍기 대비 p &lt; 0.001)</td>
+<td>✅</td>
+<td><strong>0.577</strong> · 0.458/0.520/0.516 · 0.461</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>다리</td>
+<td><strong>0.748</strong> · 0.627/0.677/0.727 · 0.713</td>
+<td>✅</td>
+<td>0.724 · 0.547/0.703/0.723 · 0.713</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>물체 움직임</td>
+<td>0.677 · 0.659/0.680/0.678 · 0.671</td>
+<td>❌</td>
+<td>0.687 · 0.671/0.650/0.671 · 0.671</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>물체 쪽</td>
+<td>0.517 · 0.443/0.511/0.508 · 0.506</td>
+<td>❌</td>
+<td>0.524 · 0.466/0.499/0.536 · 0.506</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>파일: <code>runs/caption-judge-train-v7-final.json</code>(sha256 <code>8cf451a968586510</code>) · <code>-stage1-caption.json</code>(<code>f10b00e857aa51dc</code>).</li>
+<li><strong>(a) 엄밀히 못 넘음</strong> — 최종 냄새 쪽 0.566 &lt; 캡션 단계본 0.577(차 0.011 · 구간 [0.539, 0.594] 대 [0.550, 0.606] 겹침). 재배선 셋 · 찍기는 넘는다. 깎임은 v6(0.577 → 0.530)보다 줄었다.</li>
+</ul>
+<h3 id="29-train-v7-성적표--씨앗-20002099100--7-구성--task-v4--runsscorecard-20260930-151822scorecardjsonsha256-69e0ca8f6ef173d0--scorecard-v2-판정--scorecard-v3-결정-기록">2.9 train-v7 성적표 — 씨앗 2000~2099(100) · 7 구성 · task-v4 · <code>runs/scorecard-20260930-151822/scorecard.json</code>(sha256 <code>69e0ca8f6ef173d0</code>) · scorecard-v2 판정 · scorecard-v3 결정 기록</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>구성</th>
+<th>먹이 도착(95 % 구간)</th>
+<th>끝 거리 평균</th>
+<th>회피</th>
+<th>교사가 돌라 한 결정에서 같은 쪽</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>vector</strong>(진짜 배선)</td>
+<td><strong>0.48</strong>(0.38~0.58)</td>
+<td>8.16 mm</td>
+<td>0.646</td>
+<td>0.592</td>
+</tr>
+<tr>
+<td>재배선 s0</td>
+<td>0.34(0.25~0.43)</td>
+<td>14.28 mm</td>
+<td>0.708</td>
+<td>0.503</td>
+</tr>
+<tr>
+<td>재배선 s1</td>
+<td>0.47(0.37~0.57)</td>
+<td>7.33 mm</td>
+<td>0.615</td>
+<td>0.588</td>
+</tr>
+<tr>
+<td>재배선 s2</td>
+<td>0.36(0.27~0.46)</td>
+<td>9.54 mm</td>
+<td>0.708</td>
+<td>0.543</td>
+</tr>
+<tr>
+<td>text</td>
+<td>0.00</td>
+<td>46.08 mm</td>
+<td>0.846</td>
+<td>기록 없음</td>
+</tr>
+<tr>
+<td>no_circuit</td>
+<td>0.47</td>
+<td>15.75 mm</td>
+<td>0.677</td>
+<td>0.687</td>
+</tr>
+<tr>
+<td>no_llm</td>
+<td>0.00</td>
+<td>5.58 mm</td>
+<td>0.0</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>판정: vector 순위 100 %(재배선 셋 모두 위) · <strong>부호 뒤집기 p 0.056</strong> → <strong>vector_beats_rewired = false</strong> → <strong>(b) 못 넘음 · "섞은 배선 대조를 이기지 못했다 — '초파리 뇌'라는 말을 쓰지 않는다"(R 2.0-6 · 네 번째 발동)</strong>. 형식 위반 0 · 결정당 지연 vector 3.69 s.</p>
+<p>읽는 법: 처음으로 vector 가 재배선 셋 <strong>모두</strong>보다 높았지만 미리 정한 문턱(p &lt; 0.05)을 넘지 못했다. 결정 기록에서 진짜(0.592)와 s1(0.588)이 거의 같다 — v6 과 같은 모양. v6(씨앗 40)과 씨앗 수가 달라 숫자를 바로 비교하지 않는다.
+백업: <code>~/Backups</code> · JKL-USB · 대조 715/715.</p>
 <h2 id="3-해석--막힌-곳은-앞이-아니라-전달이다">3. 해석 — 막힌 곳은 앞이 아니라 전달이다</h2>
 <div class="tbl"><table>
 <thead>
