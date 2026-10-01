@@ -207,6 +207,11 @@ class Engine:
         self.b_adapt[torch.as_tensor(np.asarray(idx, dtype=np.int64), device=self.dev)] = b_adapt_mV
         self.adapt_on = bool((self.b_adapt != 0).any())
 
+    def set_edge_weights(self, edges: np.ndarray, values: np.ndarray) -> None:
+        """연결 세기 일부를 바꾼다(가소성 · plasticity.py — KC → MBON 배율만 · 부호 불변)."""
+        self.w[torch.as_tensor(np.asarray(edges, dtype=np.int64), device=self.dev)] = (
+            torch.as_tensor(np.asarray(values), dtype=self.dtype, device=self.dev))
+
     def silence(self, idx: np.ndarray) -> None:
         """뉴런의 나가는 연결 세기를 0 으로(뉴런은 남고 영향만 사라진다 — Shiu)."""
         for i in np.asarray(idx, dtype=np.int64):

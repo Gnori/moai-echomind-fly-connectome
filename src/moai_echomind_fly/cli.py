@@ -155,6 +155,8 @@ def main(argv: list[str] | None = None) -> int:
     replay.register(sub)
     from . import circuit_fit
     circuit_fit.register(sub)
+    from . import plasticity
+    plasticity.register(sub)
     from . import datasets
     datasets.register(sub)
     from . import backup

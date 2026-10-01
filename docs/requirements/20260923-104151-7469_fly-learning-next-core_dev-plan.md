@@ -49,7 +49,9 @@
 ## Task 6: F-007 버섯체 가소성 (I v2 §8 · Task 5 뒤)
 
 - [x] `config/plasticity.yaml`(plasticity-v1 · 규칙 · η 보정 목표 · 구획 · 사건 → DAN · 대조군 다섯)
-- [ ] 구획 표를 그래프에서 생성 · `plasticity-probe`(KC 발화 비율 · MBON 반응 · DAN 효과 · η 보정 — 몸 없이 창 몇 개)
+- [x] 구획 표를 그래프에서 생성 · `plasticity-probe` 코드(2026-10-01 · 미리 개발 · **실행 없음**) — `plasticity.py`: `compartments`(MBON 종류마다 시냅스 최다 DAN 종류) · `ThreeFactor`(KC 흔적 · 구획 DAN 신호 · 곱셈 약화 · 바닥 m_min · 창 단위 `update` → `apply`(엔진 KC → MBON 세기 = 처음 세기 × m · 새 `Engine.set_edge_weights`)) · `plasticity-probe --eta …`(KC 발화 비율 · MBON 이 KC 로 발화하나 · 짝짓기 1 s 뒤 보상 구획 MBON 의 CS+ 반응 변화). 시험 4(작은 버섯체 그래프).
+  실측(traced-v1 · 그래프 읽기만): KC → MBON 연결 **61,210**(I v2 와 같음) · KC 4,064 · 구획 37 · 문헌 대조 **7/7 일치**(PPL101→MBON11 · PAM01→MBON01 · PAM08→MBON05 · PAM10→MBON06 · PAM11→MBON07 · PPL103→MBON12 · PPL106→MBON14)
+- [ ] `plasticity-probe` 실행(무거움 · 요구자 확인 뒤 · 회로 학습 뒤 순서)
 - [ ] `task-v3`(냄새 둘) · 대조군 다섯 · `value` 채널 해독(stats-v2)
 
 ## Task 7: retino-v2 (I v2 §9 · 가벼움)
