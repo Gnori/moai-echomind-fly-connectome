@@ -2,17 +2,19 @@
 # 1 반사(회로 · 규칙) → 2 빠른 정책(초파리 신호 선형 읽기) → 3 Qwen(사건 때만).
 # control-v2(2026-10-01 · 연구 노트 15 §5): 문턱은 빠른 정책 **보정 나눔의 분위수**로 적는다(뇌마다 같은 절차).
 # ⚠️ 문턱은 `fly-connectome fast-policy calibrate` 제안을 보고 **결과(성적표)를 보기 전에** 여기 적어 커밋 · 해시를 남긴다.
-#    null 이면 gated 모드는 시작을 거부한다. 옛 판 control-v1(절댓값 문턱 · 모두 null · 실행 없음)은 이 파일의 git 기록.
+#    null 이면 gated 모드는 시작을 거부한다.
+# 🔒 잠금 2026-10-01 19:48(요구자 "니가 최적이라 생각하는걸로 해바") — 진짜 뇌 calibrate 제안을 **모든 뇌에 같은 분위수로**
+#    (runs/fast-policy-fly-loop-v4-real-fast-v2/calibration-control-v2.json · 보정 60 에피소드 · 호출률 0.298 · 교사 일치 0.858). 층 구성 성적표 결과 전. 옛 판 control-v1(절댓값 문턱 · 모두 null · 실행 없음)은 이 파일의 git 기록.
 version: control-v2
 mode: gated                 # always(늘 부름 = 지금 성적표) | never(fast-only) | gated(사건 때만) | random · periodic(대조 · gated 호출률에 맞춤)
 between_calls: fast         # 부르지 않는 결정: fast(2층이 몬다) | hold(마지막 LLM 행동 유지 · 연구 노트 06 §5)
 conditions: [gap, conflict, ambiguous, surprise]   # 목표(냄새 맡기 끝 · 첫 결정)는 늘 켜짐. 분포를 보고 뺄 수 있다(결과 전에)
 thresholds:
-  max_gap_decisions: null       # 시간 상한 — 마지막 호출 뒤 이만큼 결정이면 부름(1 결정 = 300 ms · 몫 ≤ 1/N)
-  min_interval_decisions: null  # 최소 간격 — 호출 뒤 이만큼 결정 안에서는 다시 안 부름(떨림 방지 · Harb 2018)
-  surprise_q: null              # 놀람 — 전방 모형 오차²가 보정 분위수 q 위면 부름
-  confidence_q: null            # 애매함 — 돌기 확신도(두 높은 점수 차)가 보정 분위수 q 아래면 부름
-  conflict_q: null              # 충돌 — 위험 × 먹이 쪽 확신도가 보정 분위수 q 위면 부름
+  max_gap_decisions: 5          # 시간 상한 — 마지막 호출 뒤 이만큼 결정이면 부름(1 결정 = 300 ms · 몫 ≤ 1/N)
+  min_interval_decisions: 2     # 최소 간격 — 호출 뒤 이만큼 결정 안에서는 다시 안 부름(떨림 방지 · Harb 2018)
+  surprise_q: 0.99              # 놀람 — 전방 모형 오차²가 보정 분위수 q 위면 부름
+  confidence_q: 0.05            # 애매함 — 돌기 확신도(두 높은 점수 차)가 보정 분위수 q 아래면 부름
+  conflict_q: 0.99              # 충돌 — 위험 × 먹이 쪽 확신도가 보정 분위수 q 위면 부름
   reflex_threat_min: null       # 1층 — 위험 점수(0~1)가 이 위면 LLM 없이 회피(null = 끔 · 도망 반사는 회로가 그대로)
 fast_policy: fast-v2        # loop/fast_policy.py FAST_RULE 판
 seed: 0                     # random 모드 난수(에피소드 씨앗과 섞음)
