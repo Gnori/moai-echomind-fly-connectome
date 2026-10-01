@@ -12,14 +12,20 @@
   층 구조 기록(scorecard-v4 · R-1027 — `tier` · `trigger`)이 있으면 결정 표에 층 · 계기 칸과
   LLM 호출 수 · 호출률을 더한다(없는 옛 기록은 그대로).
 
-가벼움(R-7347): numpy 를 올리지 않고, 원본이 바뀌지 않았으면(경로 · 크기 · 수정 시각 지문)
-다시 쓰지 않는다. 결정 줄은 한 줄씩 읽어 필요한 값만 남긴다(`max_decisions` 에서 멈춤).
+가벼움(R-7347 · R-5777 50 MB): numpy 를 올리지 않고, 원본이 바뀌지 않았으면
+(경로 · 크기 · 수정 시각 지문) 다시 쓰지 않는다. 결정 기록은 **두 번 흘려 읽는다** —
+처음엔 세기만(수 · 불일치 · 층 · 캡션 표), 페이지를 쓸 때 구성 하나씩 줄을 만들어 바로 내보낸다
+(한 번에 한 구성만 든다 · `max_decisions` 에서 멈춤). 결정마다 붙는 압축 특징 `z`
+(scorecard-v4 · 수백 개 수)는 **파싱 전에 줄에서 지운다**(읽지도 들지도 않음).
+반복되는 짧은 글(정답 칸 값 · 행동 글 · 층 · 계기)은 한 객체를 함께 쓴다(`_intern`).
 """
 
 from __future__ import annotations
 
 import html
 import json
+import re
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +34,20 @@ TURN_KO = {"left": "왼쪽", "right": "오른쪽", "none": "안 돎"}
 TIER_KO = {"llm": "Qwen", "fast": "빠른 정책", "reflex": "반사"}
 TRIGGER_KO = {"goal": "목표", "gap": "간격", "conflict": "충돌", "ambiguous": "애매함",
               "surprise": "놀람", "random": "무작위", "periodic": "주기"}
+_Z_RE = re.compile(r'(,\s*"z"\s*:\s*(\[[^\]]*\]|null))|("z"\s*:\s*(\[[^\]]*\]|null)\s*,?)')
+_POOL: dict[str, str] = {}
+
+
+def _intern(x: Any) -> Any:
+    """같은 글은 한 객체로 — 표본 · 결정이 수천 줄이라 "있음" 같은 값이 수만 번 반복된다."""
+    return _POOL.setdefault(x, x) if isinstance(x, str) and len(x) <= 80 else x
+
+
+def _loads_no_z(ln: str) -> Any:
+    """결정 한 줄 → dict · 압축 특징 `z` 는 문자열 단계에서 지운다(만들지 않는다)."""
+    return json.loads(_Z_RE.sub("", ln) if '"z"' in ln else ln)
+
+
 _SIGS: dict[Path, tuple] = {}          # 쪽 → (원본 지문 · 요약) — 지문이 같으면 읽지도 쓰지도 않음
 
 
@@ -70,41 +90,56 @@ def read_samples(runs: Path, version: str, checkpoints: list[str],
     """뇌 넷 × 저장본의 per_sample 을 한 표로. 표본 순서 · 정답이 뇌마다 같은지 확인한다."""
     files: list[Path] = []
     cps: dict[str, Any] = {}
+
+    def load(b: str, cp: str) -> dict[str, Any] | None:
+        f = runs / f"projector-{b}-{version}" / f"eval-scored-{cp}.json"
+        if not f.exists():
+            return None
+        files.append(f)
+        try:
+            return json.loads(f.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            return None
+
     for cp in checkpoints:
-        brains: dict[str, dict[str, Any]] = {}
-        for b in BRAIN_ORDER:
-            f = runs / f"projector-{b}-{version}" / f"eval-scored-{cp}.json"
-            if f.exists():
-                files.append(f)
-                try:
-                    brains[b] = json.loads(f.read_text(encoding="utf-8"))
-                except (ValueError, OSError):
-                    continue
-        if "real" not in brains:
+        real = load("real", cp)                  # 뇌 하나씩 읽고 필요한 값만 남긴 뒤 버린다
+        if real is None:
             continue
-        real = brains["real"]
         ps = (real.get("per_sample") or [])[:max_samples]
         fields = [f for f in field_order if any(f in s.get("truth", {}) for s in ps)]
-        names = [b for b in BRAIN_ORDER if b in brains]
-        preds = {b: {(s.get("i"), s.get("seed")): s.get("pred") or {}
-                     for s in (brains[b].get("per_sample") or [])} for b in names}
-        rows, d_of, mismatched = [], {}, 0
+        names, acc = ["real"], {"real": real.get("accuracy") or {}}
+        baseline = real.get("majority_baseline") or {}
+        rows, index, d_of = [], {}, {}
         for s in ps:
-            key = (s.get("i"), s.get("seed"))
             d = d_of.get(s.get("seed"), 0)          # 에피소드 안 결정 번호(파일 순서)
             d_of[s.get("seed")] = d + 1
-            truth = s.get("truth") or {}
-            row_p = []
-            for b in names:
-                if key not in preds[b]:
-                    mismatched += 1
-                row_p.append([preds[b].get(key, {}).get(f) for f in fields])
+            truth, pred = s.get("truth") or {}, s.get("pred") or {}
+            index[(s.get("i"), s.get("seed"))] = len(rows)
             rows.append({"i": s.get("i"), "seed": s.get("seed"), "d": d,
-                         "t": [truth.get(f) for f in fields], "p": row_p})
+                         "t": [_intern(truth.get(f)) for f in fields],
+                         "p": [[_intern(pred.get(f)) for f in fields]]})
+        del real, ps
+        mismatched = 0
+        for b in BRAIN_ORDER[1:]:
+            other = load(b, cp)
+            if other is None:
+                continue
+            names.append(b)
+            acc[b] = other.get("accuracy") or {}
+            got = [None] * len(rows)
+            for s in other.get("per_sample") or []:
+                k = index.get((s.get("i"), s.get("seed")))
+                if k is not None:
+                    pred = s.get("pred") or {}
+                    got[k] = [_intern(pred.get(f)) for f in fields]
+            del other
+            for k, r in enumerate(rows):
+                if got[k] is None:
+                    mismatched += 1
+                r["p"].append(got[k] or [None] * len(fields))
         cps[cp] = {"brains": names, "fields": fields, "rows": rows,
                    "summary": summarize(rows, names, fields),
-                   "file_accuracy": {b: (brains[b].get("accuracy") or {}) for b in names},
-                   "baseline": real.get("majority_baseline") or {},
+                   "file_accuracy": acc, "baseline": baseline,
                    "missing_pairs": mismatched}
     return {"version": version, "checkpoints": cps, "_files": files}
 
@@ -165,6 +200,63 @@ def _act(a: Any) -> str:
             + (" · 멈춤" if a.get("stop") else ""))
 
 
+def _iter_decisions(path: Path, limit: int) -> Iterator[dict[str, Any]]:
+    """결정 기록을 한 줄씩(z 없이) — 상한 `limit` 줄에서 멈춘다."""
+    if limit <= 0:
+        return
+    k = 0
+    with path.open(encoding="utf-8") as fh:
+        for ln in fh:
+            try:
+                r = _loads_no_z(ln)
+            except ValueError:
+                continue
+            yield r
+            k += 1
+            if k >= limit:
+                return
+
+
+def _decision_row(r: dict[str, Any], caps: dict[str, int], raw_chars: int) -> list[Any]:
+    """결정 한 줄 → 페이지 자료 한 줄(필요한 칸만 · 행동은 글로 · 캡션은 번호)."""
+    t, a = _turn(r.get("teacher")), _turn(r.get("action"))
+    tr = r.get("truth") if isinstance(r.get("truth"), dict) else {}
+    cap = r.get("caption")
+    tier = r.get("tier")
+    return [r.get("d"), r.get("t_ms"), caps.get(cap) if isinstance(cap, str) else None,
+            tr.get("looming_azimuth_deg") if tr.get("looming_present") else None,
+            _intern(_act(r.get("teacher"))), _intern(_act(r.get("action"))),
+            _intern(r.get("source")), (r.get("raw") or "")[:raw_chars], r.get("valid"),
+            _intern(r.get("why")), r.get("odor_L"), r.get("odor_R"), r.get("food_bearing_deg"),
+            r.get("food_mm"), r.get("drive"), r.get("reflex_bins"),
+            _intern(TIER_KO.get(tier, tier)),
+            _intern(TRIGGER_KO.get(r.get("trigger"), r.get("trigger"))),
+            t is not None and t != a]
+
+
+class _DecisionRows(Mapping):
+    """구성 → {씨앗: 줄 목록} — 꺼낼 때마다 파일에서 흘려 만든다(들고 있지 않는다)."""
+
+    def __init__(self, sc: Path, limits: dict[str, int], caps: dict[str, int],
+                 raw_chars: int) -> None:
+        self.sc, self.limits, self.caps, self.raw_chars = sc, limits, caps, raw_chars
+
+    def __getitem__(self, c: str) -> dict[str, list]:
+        if c not in self.limits:
+            raise KeyError(c)
+        by_seed: dict[str, list] = {}
+        for r in _iter_decisions(self.sc / f"{c}.decisions.jsonl", self.limits[c]):
+            by_seed.setdefault(str(r.get("seed")), []).append(
+                _decision_row(r, self.caps, self.raw_chars))
+        return by_seed
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.limits)
+
+    def __len__(self) -> int:
+        return len(self.limits)
+
+
 def read_episodes(runs: Path, pattern: str, max_decisions: int,
                   raw_chars: int) -> dict[str, Any]:
     """씨앗 × 구성 에피소드 요약 + (있으면) 결정 기록. 도착 수는 scorecard.json 과 맞춰 본다."""
@@ -180,7 +272,7 @@ def read_episodes(runs: Path, pattern: str, max_decisions: int,
     seeds = list(card.get("seeds") or [])
     eps: dict[str, dict[str, Any]] = {}
     check: dict[str, Any] = {}
-    decisions: dict[str, dict[str, list]] = {}
+    limits: dict[str, int] = {}                 # 구성마다 읽을 결정 줄 수(상한 몫)
     has_dec: dict[str, bool] = {}
     budget = max_decisions
     caps: dict[str, int] = {}          # 같은 캡션 글은 한 번만(번호로 가리킴)
@@ -210,48 +302,33 @@ def read_episodes(runs: Path, pattern: str, max_decisions: int,
         if not has_dec[c]:
             continue
         files.append(dfile)
-        by_seed: dict[str, list] = {}
+        # 첫 번째 흘려 읽기 — 세기만(줄은 들지 않는다 · 줄은 페이지를 쓸 때 _DecisionRows 가 만든다)
         n = mism = tiered = calls = 0
         calls_by_seed: dict[str, list[int]] = {}       # 씨앗 → [LLM 호출, 층 기록 결정]
-        with dfile.open(encoding="utf-8") as fh:
-            for ln in fh:
-                if budget <= 0:
-                    break
-                try:
-                    r = json.loads(ln)
-                except ValueError:
-                    continue
-                t, a = _turn(r.get("teacher")), _turn(r.get("action"))
-                diff = t is not None and t != a
-                n += 1
-                mism += diff
-                budget -= 1
-                tr = r.get("truth") if isinstance(r.get("truth"), dict) else {}
-                loom = (tr.get("looming_azimuth_deg") if tr.get("looming_present") else None)
-                cap = r.get("caption")
-                cap_i = caps.setdefault(cap, len(caps)) if isinstance(cap, str) else None
-                tier = r.get("tier")                     # scorecard-v4 층 구조(없으면 None)
-                if tier is not None:
-                    tiered += 1
-                    calls += tier == "llm"
-                    cs = calls_by_seed.setdefault(str(r.get("seed")), [0, 0])
-                    cs[0] += tier == "llm"
-                    cs[1] += 1
-                by_seed.setdefault(str(r.get("seed")), []).append([
-                    r.get("d"), r.get("t_ms"), cap_i, loom, _act(r.get("teacher")),
-                    _act(r.get("action")), r.get("source"), (r.get("raw") or "")[:raw_chars],
-                    r.get("valid"), r.get("why"), r.get("odor_L"), r.get("odor_R"),
-                    r.get("food_bearing_deg"), r.get("food_mm"), r.get("drive"),
-                    r.get("reflex_bins"), TIER_KO.get(tier, tier),
-                    TRIGGER_KO.get(r.get("trigger"), r.get("trigger")), diff])
-        decisions[c] = by_seed
+        for r in _iter_decisions(dfile, budget):
+            t, a = _turn(r.get("teacher")), _turn(r.get("action"))
+            n += 1
+            mism += t is not None and t != a
+            cap = r.get("caption")
+            if isinstance(cap, str):
+                caps.setdefault(cap, len(caps))
+            tier = r.get("tier")                     # scorecard-v4 층 구조(없으면 None)
+            if tier is not None:
+                tiered += 1
+                calls += tier == "llm"
+                cs = calls_by_seed.setdefault(str(r.get("seed")), [0, 0])
+                cs[0] += tier == "llm"
+                cs[1] += 1
+        budget -= n
+        limits[c] = n
         check[c].update({"decision_rows": n, "turn_mismatch": mism})
         if tiered:
             check[c].update({"tier_rows": tiered, "llm_calls": calls,
                              "llm_rate": round(calls / tiered, 3), "calls_by_seed": calls_by_seed})
     return {"path": sc.name, "rule": (card.get("judgement") or {}).get("rule"),
             "configs": configs, "seeds": seeds, "episodes": eps, "check": check,
-            "has_decisions": has_dec, "decisions": decisions, "captions": list(caps),
+            "has_decisions": has_dec, "captions": list(caps),
+            "decisions": _DecisionRows(sc, limits, caps, raw_chars),
             "truncated": budget <= 0, "_files": files}
 
 
@@ -271,8 +348,8 @@ td.sel{outline:2px solid var(--a)}
 """
 
 
-def _page(title: str, css: str, body: str, blob, script: str) -> list[str]:
-    """조각 목록 — `blob` 은 문자열 하나 또는 조각 목록(큰 자료를 한 덩어리로 만들지 않으려고)."""
+def _page(title: str, css: str, body: str, blob, script: str) -> Iterator[str]:
+    """조각을 차례로 — `blob` 은 문자열 하나 또는 조각을 내는 것(큰 자료를 한 덩어리로 안 만듦)."""
     head = f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -292,7 +369,12 @@ const D = JSON.parse(document.getElementById('data').textContent);
 </body>
 </html>
 """
-    return [head, *([blob] if isinstance(blob, str) else blob), tail]
+    yield head
+    if isinstance(blob, str):
+        yield blob
+    else:
+        yield from blob
+    yield tail
 
 
 SAMPLES_JS = r"""
@@ -359,7 +441,7 @@ fill();
 
 
 def render_samples(s: dict[str, Any], field_ko: dict[str, str], judged: list[str],
-                   css: str = "") -> list[str]:
+                   css: str = "") -> Iterator[str]:
     cps = s["checkpoints"]
     if not cps:
         body = ("<h1>캡션 표본</h1><p class=\"muted\">아직 없음 — 판 "
@@ -412,10 +494,15 @@ def render_samples(s: dict[str, Any], field_ko: dict[str, str], judged: list[str
 </div>
 <div class="tbl"><table><thead id="head"></thead><tbody id="body"></tbody></table></div>
 <footer>R-5777 F-001 · 자료는 이 페이지 안에 있다(외부 파일 없음)</footer>"""
-    blob = _json_blob({"names": field_ko,
-                       "checkpoints": {k: {"brains": v["brains"], "fields": v["fields"],
-                                           "rows": v["rows"]} for k, v in cps.items()}})
-    return _page("캡션 표본", css, body, blob, SAMPLES_JS)
+    def blob() -> Iterator[str]:
+        """저장본 하나씩 JSON 으로 내보낸다 — 페이지 자료를 한 덩어리 문자열로 만들지 않는다."""
+        yield '{"names":' + _json_blob(field_ko) + ',"checkpoints":{'
+        for k, (cp, v) in enumerate(cps.items()):
+            yield (("," if k else "") + _json_blob(cp) + ":"
+                   + _json_blob({"brains": v["brains"], "fields": v["fields"], "rows": v["rows"]}))
+        yield "}}"
+
+    return _page("캡션 표본", css, body, blob(), SAMPLES_JS)
 
 
 EPISODES_JS = r"""
@@ -477,7 +564,8 @@ document.querySelectorAll('td.c').forEach(td =>
 """
 
 
-def render_episodes(e: dict[str, Any], field_ko: dict[str, str], css: str = "") -> list[str]:
+def render_episodes(e: dict[str, Any], field_ko: dict[str, str],
+                    css: str = "") -> Iterator[str]:
     if e.get("path") is None or e.get("error"):
         msg = e.get("error") or "성적표가 아직 없다"
         return _page("성적표 에피소드", css,
@@ -541,11 +629,14 @@ def render_episodes(e: dict[str, Any], field_ko: dict[str, str], css: str = "") 
 <footer>R-5777 F-003 · 자료는 이 페이지 안에 있다(외부 파일 없음)</footer>"""
     head = _json_blob({"names": field_ko, "has": e["has_decisions"], "caps": e["captions"],
                        "truncated": e.get("truncated", False)})[:-1]
-    parts = [head, ',"dec":{']
-    for k, (c, by_seed) in enumerate(e["decisions"].items()):   # 구성마다 따로 — 한 덩어리 금지
-        parts += ["," if k else "", _json_blob(c), ":", _json_blob(by_seed)]
-    parts.append("}}")
-    return _page("성적표 에피소드", css, body, parts, EPISODES_JS)
+    def parts() -> Iterator[str]:
+        """구성 하나씩 줄을 만들어 내보내고 버린다 — 한 번에 한 구성만 메모리에."""
+        yield head + ',"dec":{'
+        for k, c in enumerate(e["decisions"]):
+            yield ("," if k else "") + _json_blob(c) + ":" + _json_blob(e["decisions"][c])
+        yield "}}"
+
+    return _page("성적표 에피소드", css, body, parts(), EPISODES_JS)
 
 
 def _sample_files(runs: Path, version: str, checkpoints: list[str]) -> list[Path]:

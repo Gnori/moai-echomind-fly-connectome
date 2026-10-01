@@ -211,3 +211,43 @@ def test_tiered_records_add_tier_trigger_and_llm_rate(tmp_path):
     assert all(x[16] is None for x in e["decisions"]["vector"]["2000"])
     page = "".join(dashboard_debug.render_episodes(e, dashboard.FIELD_KO))
     assert "LLM 호출 · 호출률" in page and "6 / 12 · 0.500" in page
+
+
+def test_z_features_are_never_parsed_or_shipped(tmp_path):
+    """층 구성 기록의 압축 특징 z(결정마다 수백 개 수) — 있어도 페이지가 같고 z 는 실리지 않는다.
+
+    결정 기록은 구성 하나씩 흘려 만들어 쓰므로 `decisions` 는 들고 있지 않는 지연 매핑이다.
+    """
+    def write(root: Path, with_z: bool) -> None:
+        sc = _fake_scorecard(root, with_decisions=False)
+        rows = []
+        for s in (2000, 2001, 2002):
+            for d in range(300):                                   # 큰 가짜 기록
+                r = {"seed": s, "d": d, "t_ms": 300 * d, "caption": f"캡션 {d % 3}",
+                     "teacher": {"walk": 0.5, "turn": "left"},
+                     "action": {"walk": 0.5, "turn": "right" if d % 4 == 0 else "left"},
+                     "tier": "llm" if d % 5 == 0 else "fast", "trigger": "gap", "raw": "{}"}
+                if with_z:
+                    r["z"] = [1234.5678 + i for i in range(192)]
+                    if d % 2:                                      # z 가 맨 앞에 와도
+                        r = {"z": r.pop("z"), **r}
+                rows.append(r)
+        (sc / "vector.decisions.jsonl").write_text(
+            "\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
+
+    a, b = tmp_path / "a", tmp_path / "b"
+    a.mkdir()
+    b.mkdir()
+    write(a, with_z=True)
+    write(b, with_z=False)
+    ea = dashboard_debug.read_episodes(a, "scorecard-*", 20000, 200)
+    eb = dashboard_debug.read_episodes(b, "scorecard-*", 20000, 200)
+    assert not isinstance(ea["decisions"], dict)                   # 줄을 들고 있지 않는다
+    assert ea["check"] == eb["check"] and ea["captions"] == eb["captions"]
+    pa = "".join(dashboard_debug.render_episodes(ea, dashboard.FIELD_KO))
+    pb = "".join(dashboard_debug.render_episodes(eb, dashboard.FIELD_KO))
+    assert pa == pb and "1234.5678" not in pa and '"z"' not in pa
+    k = ea["check"]["vector"]
+    assert k["decision_rows"] == 900 and k["llm_calls"] == 180
+    assert '"z"' not in json.dumps(dashboard_debug._loads_no_z(
+        json.dumps({"z": [1, 2], "d": 0, "tail": {"z": None}})))  # 바깥 · 안쪽 z 모두 지움
