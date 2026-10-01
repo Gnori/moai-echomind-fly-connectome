@@ -19,6 +19,7 @@
 | 30 | `30-train/train-all.sh [--train-only=…] [--skip-train]` | **무거움** | `bin/run_full_v6.sh` — 학습 4 → 채점 평가 8 → 판정 2 → 성적표 | 약 2 일(뇌당 5~10 h · 성적표 약 12 h) |
 | 40 | `40-eval/eval-judge.sh <판> <묶음> [뇌…]` | **무거움(Qwen)** | 채점 평가 + 판정만 다시 | 약 2 h(1,708 표본) |
 | 40 | `40-eval/scorecard.sh <판> [씨앗]` | **무거움(Qwen · 몸)** | 성적표만 다시 + 결정 기록 분석 | 씨앗 40 × 7 약 12 h |
+| 40 | `40-eval/scorecard-tiered.sh <판> [씨앗] [--measure]` | **무거움(Qwen · 몸)** | 층 구조 성적표(R-1027) — 늘 부름 · fast-only · gated · 같은 호출률 무작위 · 주기 · 재배선 gated · fast-only · 끝나면 `useful_calls.py` | 아직 안 돌림 · `--measure` 로 씨앗 2 개 먼저 |
 | 90 | `90-wrap/finalize.sh <판>` | 가벼움 | 대장용 sha256 표 · ruff · pytest · 백업 | 수 분 |
 
 ## 2. 종류별
@@ -57,6 +58,7 @@
 | `50-analysis/control_dprime.py <odor-control.json>` | M1 d′ · 문턱 정답률 | LN4 는 부호가 아니라 문턱으로 봐야 |
 | `50-analysis/decision_turns.py <성적표 폴더>` | 교사와 같은 쪽으로 돈 비율(scorecard-v3 결정 기록) | v6: 진짜 0.558 · s0 0.508 · s1 0.580 · s2 0.556 |
 | `50-analysis/ledger_hashes.py <판>` | 10장 대장 표(손실 · sha256 · 지문) | v6 대장 1.3 |
+| `50-analysis/useful_calls.py <성적표 폴더>` | 층 구성에서 부른 결정이 쓸모 있었나(계기별 · 빠른 정책과 다름 · 교사 일치 LLM 대 빠른 정책) | R-1027 · 연구 노트 15 T3b |
 
 모두 `uv run python scripts/50-analysis/<이름>.py --help` 로 옵션을 본다. 09-29 에 실제 자료로 돌려 그때 값이 그대로 나오는 것을 확인했다.
 

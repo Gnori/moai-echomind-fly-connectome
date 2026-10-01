@@ -40,7 +40,7 @@ CONFIGS = ["vector", "text", "no_circuit", "rewired", "no_llm"]
 RECORD_VERSION = "scorecard-v4"
 TIER_SUFFIX = {"-gated": "gated", "-fast-only": "never", "-random-matched": "random",
                "-periodic-matched": "periodic"}
-TIER_INFO = ("tier", "trigger", "fast_conf", "threat", "conflict", "surprise", "z")
+TIER_INFO = ("tier", "trigger", "fast_conf", "threat", "conflict", "surprise", "fast_action", "z")
 RAW_CHARS = 200            # Qwen 원문은 앞 이만큼만(파일 크기)
 
 
