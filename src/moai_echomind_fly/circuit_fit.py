@@ -222,8 +222,41 @@ def _graphs(brain: str, rule: dict[str, Any]) -> tuple[Graph, Graph]:
     return g, graph_mod.rewire(g, int(rule["null_seed"]))
 
 
+def probe_sgbptt(g: Graph, lif, cell: cp.CellParams, window_steps: int, sg: dict[str, Any],
+                 device: str, seed: int = 0) -> dict[str, Any]:
+    """2 단계 한 창: 다가옴 자극(최대 세기) → GF 발화 수 → 역전파. 시간 · 메모리 · 기울기 크기."""
+    import torch
+
+    from .circuit_grad import FuncLIF
+    from .protocols import LoomSpec, loom_targets
+
+    spec = LoomSpec.from_config()
+    idx, amp, _ = loom_targets(g, spec)
+    scope = np.flatnonzero(cell.neuron_type(g) >= 0)
+    dtype = getattr(torch, str(sg["dtype"]))
+    f = FuncLIF(g, lif, cell, stim_idx=idx, readout_idx=g.select(type="DNp01"),
+                grad_scope=scope, beta=float(sg["surrogate_beta"]), dtype=dtype, device=device)
+    prob = np.asarray(amp) * spec.peak_hz * lif.dt_ms / 1000.0
+    kicks = np.random.default_rng(seed).random((window_steps, len(idx))) < prob
+    t0 = time.time()
+    _, counts, _ = f.run(f.initial_state(), kicks,
+                         checkpoint_steps=int(sg["checkpoint_steps"]))
+    t_fwd = time.time() - t0
+    if counts.requires_grad:
+        counts.sum().backward()
+    grads = {n: float(t.grad.abs().sum()) if t.grad is not None else 0.0
+             for n, t in zip(("tau", "vth", "alpha"), f.params())}
+    return {"window_steps": window_steps, "forward_s": round(t_fwd, 2),
+            "total_s": round(time.time() - t0, 2), "scope_neurons": int(len(scope)),
+            "gf_spikes": float(counts.detach().sum()), "grad_abs_sum": grads,
+            "footprint_gb": _footprint_gb(), "free_percent_after": _free_percent()}
+
+
 def main_probe(args: argparse.Namespace) -> int:
-    """평가 한 번(학습 그래프 + 대조)의 시간 · 메모리를 시행 수 둘로 잰다 — 저장 없음(기록만)."""
+    """평가 한 번(학습 그래프 + 대조)의 시간 · 메모리를 시행 수 둘로 잰다 — 저장 없음(기록만).
+
+    `--method sgbptt` 면 2 단계 한 창(대리 기울기 · 역전파)을 `--window-ms` 두 길이로 잰다.
+    """
     from .guard import GuardRefused, heavy
     from .sim import LIFParams
 
@@ -238,7 +271,16 @@ def main_probe(args: argparse.Namespace) -> int:
             cell = cp.init_scope(g, args.scope, lif.t_mbr_ms, lif.v_th_mV)
             n_theta = 2 * len(cell.types) + len(cell.alpha)
             rows = []
-            for n in [int(x) for x in args.trials.split(",")]:
+            if args.method == "sgbptt":
+                sg = fit_cfg["sgbptt"]
+                for ms in [float(x) for x in args.window_ms.split(",")]:
+                    r = probe_sgbptt(g, lif, cell, int(round(ms / lif.dt_ms)), sg, args.device)
+                    rows.append({"window_ms": ms, **r})
+                    print(f"[fit-probe sgbptt] 창 {ms} ms · {r['total_s']} s · 프로세스 "
+                          f"{r['footprint_gb']} GB · GF {r['gf_spikes']} · {r['grad_abs_sum']}",
+                          flush=True)
+            for n in ([] if args.method == "sgbptt" else
+                      [int(x) for x in args.trials.split(",")]):
                 obj = make_objective(g, null, lif, cell, args.scope, {**rule, "trials": n},
                                      sc.get("pair_dst"))
                 t0 = time.time()
@@ -253,12 +295,14 @@ def main_probe(args: argparse.Namespace) -> int:
         print(f"[guard] 막음 — {err}")
         return 2
     lam = int(rule.get("popsize") or 4 + math.floor(3 * math.log(n_theta)))
-    per_trial = (rows[-1]["wall_s"] / rows[-1]["trials"]) if rows else None
+    per_trial = (rows[-1]["wall_s"] / rows[-1]["trials"]) if rows and "trials" in rows[-1] \
+        else None
     est_h = (per_trial * int(rule["trials"]) * lam * int(rule["generations"]) / 3600
              if per_trial else None)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out = paths.runs_dir() / f"fit-probe-{args.scope}-{args.brain}-{stamp}.json"
     out.write_text(json.dumps({"scope": args.scope, "brain": args.brain, "params": n_theta,
+                               "method": args.method,
                                "popsize": lam, "rows": rows, "rule": rule,
                                "estimate_hours": est_h}, ensure_ascii=False, indent=2,
                               default=float), encoding="utf-8")
@@ -354,7 +398,9 @@ def register(sub) -> None:
     p = sub.add_parser("fit-probe", help="회로 학습 평가 한 번의 시간 · 메모리(무거움 · F-006)")
     p.add_argument("--scope", default="escape-small")
     p.add_argument("--brain", default="real")
-    p.add_argument("--trials", default="2,4", help="시행 수 둘 — 무엇에 비례하는지")
+    p.add_argument("--trials", default="2,4", help="시행 수 둘 — 무엇에 비례하는지(cmaes)")
+    p.add_argument("--method", default="cmaes", choices=["cmaes", "sgbptt"])
+    p.add_argument("--window-ms", default="10,30", help="창 길이 둘(sgbptt · I v2 §7.2)")
     p.add_argument("--device", default="cpu", choices=["cpu", "mps"])
     p.set_defaults(func=main_probe)
     f = sub.add_parser("fit", help="회로 학습 1 단계 CMA-ES(무거움 · 요구자 확인 뒤 · F-006)")

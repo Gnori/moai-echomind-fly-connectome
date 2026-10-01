@@ -25,3 +25,8 @@ cmaes:                          # 1 단계(I v2 §7.2) — 기울기 없음 · �
   nan_tolerances: 3.0           # 측정이 없을 때(GF 무반응 → 잠복 NaN) 벌점 = 이만큼 허용폭 밖
   null_seed: 1000               # 대조 항(rewired_gf_silent)용 재배선 씨앗 — 학습하는 그래프를 섞는다
   device: cpu
+sgbptt:                         # 2 단계(I v2 §7.2) — 희소 대리 기울기 + 잘림 BPTT + 체크포인트 · 값은 선언
+  surrogate_beta: 1.0           # 빠른 시그모이드 대리 도함수 1 / (1 + β|v − 문턱|)² (Zenke & Ganguli 2018 · 단위 1/mV)
+  window_steps: 3000            # 잘림 길이(0.1 ms × 3,000 = 300 ms · 결정 하나)
+  checkpoint_steps: 50          # 이 걸음마다 체크포인트(√3000 ≈ 55)
+  dtype: float32                # 시험은 float64(엔진과 발화 완전 일치)
