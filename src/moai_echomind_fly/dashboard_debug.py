@@ -9,6 +9,8 @@
   `loop/scorecard.py` `decision_row`)의 결정 표. 없으면
   "결정 기록 전(scorecard-v2)". 교사가 돌라는 쪽(`teacher.turn`)과 Qwen 이 돈 쪽(`action.turn`)이
   다르면 표시 — 냄새 좌우 병목을 눈으로 보는 자리.
+  층 구조 기록(scorecard-v4 · R-1027 — `tier` · `trigger`)이 있으면 결정 표에 층 · 계기 칸과
+  LLM 호출 수 · 호출률을 더한다(없는 옛 기록은 그대로).
 
 가벼움(R-7347): numpy 를 올리지 않고, 원본이 바뀌지 않았으면(경로 · 크기 · 수정 시각 지문)
 다시 쓰지 않는다. 결정 줄은 한 줄씩 읽어 필요한 값만 남긴다(`max_decisions` 에서 멈춤).
@@ -23,6 +25,9 @@ from typing import Any
 
 BRAIN_ORDER = ("real", "rewired-s0", "rewired-s1", "rewired-s2")
 TURN_KO = {"left": "왼쪽", "right": "오른쪽", "none": "안 돎"}
+TIER_KO = {"llm": "Qwen", "fast": "빠른 정책", "reflex": "반사"}
+TRIGGER_KO = {"goal": "목표", "gap": "간격", "conflict": "충돌", "ambiguous": "애매함",
+              "surprise": "놀람", "random": "무작위", "periodic": "주기"}
 _SIGS: dict[Path, tuple] = {}          # 쪽 → (원본 지문 · 요약) — 지문이 같으면 읽지도 쓰지도 않음
 
 
@@ -206,7 +211,8 @@ def read_episodes(runs: Path, pattern: str, max_decisions: int,
             continue
         files.append(dfile)
         by_seed: dict[str, list] = {}
-        n = mism = 0
+        n = mism = tiered = calls = 0
+        calls_by_seed: dict[str, list[int]] = {}       # 씨앗 → [LLM 호출, 층 기록 결정]
         with dfile.open(encoding="utf-8") as fh:
             for ln in fh:
                 if budget <= 0:
@@ -224,14 +230,25 @@ def read_episodes(runs: Path, pattern: str, max_decisions: int,
                 loom = (tr.get("looming_azimuth_deg") if tr.get("looming_present") else None)
                 cap = r.get("caption")
                 cap_i = caps.setdefault(cap, len(caps)) if isinstance(cap, str) else None
+                tier = r.get("tier")                     # scorecard-v4 층 구조(없으면 None)
+                if tier is not None:
+                    tiered += 1
+                    calls += tier == "llm"
+                    cs = calls_by_seed.setdefault(str(r.get("seed")), [0, 0])
+                    cs[0] += tier == "llm"
+                    cs[1] += 1
                 by_seed.setdefault(str(r.get("seed")), []).append([
                     r.get("d"), r.get("t_ms"), cap_i, loom, _act(r.get("teacher")),
                     _act(r.get("action")), r.get("source"), (r.get("raw") or "")[:raw_chars],
                     r.get("valid"), r.get("why"), r.get("odor_L"), r.get("odor_R"),
                     r.get("food_bearing_deg"), r.get("food_mm"), r.get("drive"),
-                    r.get("reflex_bins"), diff])
+                    r.get("reflex_bins"), TIER_KO.get(tier, tier),
+                    TRIGGER_KO.get(r.get("trigger"), r.get("trigger")), diff])
         decisions[c] = by_seed
         check[c].update({"decision_rows": n, "turn_mismatch": mism})
+        if tiered:
+            check[c].update({"tier_rows": tiered, "llm_calls": calls,
+                             "llm_rate": round(calls / tiered, 3), "calls_by_seed": calls_by_seed})
     return {"path": sc.name, "rule": (card.get("judgement") or {}).get("rule"),
             "configs": configs, "seeds": seeds, "episodes": eps, "check": check,
             "has_decisions": has_dec, "decisions": decisions, "captions": list(caps),
@@ -408,6 +425,7 @@ function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.clas
 function num(x, nd){ return (x===null||x===undefined)?'—':Number(x).toFixed(nd); }
 const COLS = ['결정','시각 ms','캡션(정답)','물체 방위°','교사','Qwen','좌우','출처','유효',
   '냄새 L','냄새 R','L−R','먹이 방위°','먹이 mm','drive','반사 칸','원문'];
+const TIER_COLS = ['층','계기'];
 function show(c, seed, td){
   document.querySelectorAll('td.sel').forEach(x=>x.classList.remove('sel'));
   td.classList.add('sel');
@@ -418,16 +436,25 @@ function show(c, seed, td){
   const rows = (D.dec[c]||{})[seed] || [];
   if (!rows.length){ box.appendChild(el('p','muted','이 에피소드의 결정 줄이 없다'
      + (D.truncated?' (상한 max_decisions 에서 잘림)':''))); return; }
-  const mis = rows.filter(r=>r[16]).length;
-  box.appendChild(el('p',null,'결정 '+rows.length+' · 교사와 Qwen 의 도는 쪽이 다른 결정 '+mis));
+  const mis = rows.filter(r=>r[18]).length;
+  const tiered = rows.some(r=>r[16]!==null && r[16]!==undefined);
+  const llm = rows.filter(r=>r[16]==='Qwen').length;
+  box.appendChild(el('p',null,'결정 '+rows.length+' · 교사와 Qwen 의 도는 쪽이 다른 결정 '+mis
+     + (tiered ? ' · LLM 호출 '+llm+' · 호출률 '+(llm/rows.length).toFixed(3) : '')));
   const wrap = el('div','tbl'), tb = el('table'), th = el('tr');
-  COLS.forEach(h=>th.appendChild(el('th',null,h)));
+  (tiered ? COLS.slice(0,2).concat(TIER_COLS, COLS.slice(2)) : COLS)
+    .forEach(h=>th.appendChild(el('th',null,h)));
   const thead = el('thead'); thead.appendChild(th); tb.appendChild(thead);
   const body = el('tbody');
   for (const r of rows){
-    const [d,t,cap,loom,te,ac,src,raw,valid,why,oL,oR,fb,fm,drv,rb,diff] = r;
+    const [d,t,cap,loom,te,ac,src,raw,valid,why,oL,oR,fb,fm,drv,rb,tier,trig,diff] = r;
     const row = el('tr');
-    [d, t, cap===null||cap===undefined?'—':D.caps[cap], loom===null?'없음':num(loom,0), te, ac]
+    row.appendChild(el('td',null,d)); row.appendChild(el('td',null,t));
+    if (tiered){
+      row.appendChild(el('td', tier==='Qwen'?'hit':'', tier===null||tier===undefined?'—':tier));
+      row.appendChild(el('td',null,trig===null||trig===undefined?'—':trig));
+    }
+    [cap===null||cap===undefined?'—':D.caps[cap], loom===null?'없음':num(loom,0), te, ac]
       .forEach(v=>row.appendChild(el('td',null,v)));
     row.appendChild(el('td', diff?'miss':'hit', diff?'다름':'같음'));
     row.appendChild(el('td',null,src===null||src===undefined?'—':src));
@@ -485,9 +512,17 @@ def render_episodes(e: dict[str, Any], field_ko: dict[str, str], css: str = "") 
         k = e["check"][c]
         mis.append(f"<td>{k['turn_mismatch']} / {k['decision_rows']}</td>"
                    if "decision_rows" in k else '<td class="dim">기록 전</td>')
+    rows_extra = "<tr>" + "".join(mis) + "</tr>"
+    if any("llm_calls" in e["check"][c] for c in configs):       # 층 구조 기록(scorecard-v4)
+        llm = ["<td>LLM 호출 · 호출률</td>"]
+        for c in configs:
+            k = e["check"][c]
+            llm.append(f"<td>{k['llm_calls']} / {k['tier_rows']} · {k['llm_rate']:.3f}</td>"
+                       if "llm_calls" in k else '<td class="dim">—</td>')
+        rows_extra += "<tr>" + "".join(llm) + "</tr>"
     table = (f'<div class="tbl"><table><thead><tr>{th}</tr></thead><tbody>'
-             + "".join(body_rows) + "<tr>" + "".join(tot) + "</tr><tr>" + "".join(mis)
-             + "</tr></tbody></table></div>")
+             + "".join(body_rows) + "<tr>" + "".join(tot) + "</tr>" + rows_extra
+             + "</tbody></table></div>")
     any_dec = any(e["has_decisions"].values())
     note = ("" if any_dec else
             '<p class="warn">이 성적표는 결정 기록 전(scorecard-v2) — 칸을 눌러도 결정 표가 없다. '

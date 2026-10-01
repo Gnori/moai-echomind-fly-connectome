@@ -331,6 +331,11 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tbody>
 </table></div>
 <p>| 30 | <strong><code>scripts/</code></strong> — 단계별 입구: <code>00-check/check.sh</code> · <code>10-data/{collect,replay}.sh</code> · <code>20-odor/{m1-odor-control,m1b-odor-contrast,m2-odor-windows,m4-body-check}.sh</code> · <code>30-train/{gate-and-probe,train-all}.sh</code> · <code>40-eval/{eval-judge,scorecard}.sh</code> · <code>90-wrap/finalize.sh</code> · 분석 <code>50-analysis/*.py</code>(6) | 12 | 단계마다(<a href="../../scripts/README.md">scripts/README.md</a>) | 스크립트가 잠금 · 여유를 본다 |</p>
+<p>| 31 | <code>uv run fly-connectome replay --pack &lt;묶음&gt; … --retino-rule &lt;대응표 판&gt;</code>(<code>3ba00d9</code>) | 12 | 재생 시 시야 조율을 이 대응표로(뒤섞은 표 = 시야 대조군 · <code>--no-retune</code> 없이) | 여유 40 % |
+| 32 | <code>uv run fly-connectome train-probe --dataset &lt;묶음&gt; --steps 12 --chunk k</code>(<code>323a6db</code>) | 08 | 층 k 개씩 묶어 역전파 — 메모리 · 걸음 시간 재기(기본 1 = 지금) · 아직 안 잼 | 여유 40 % + Qwen |
+| 33 | <code>uv run fly-connectome fit-probe --scope escape-small --trials 2,4</code> → <code>fit --scope escape-small --method cmaes [--generations N]</code>(<code>f3f2e0a</code> · R-7469 F-006) | 03 | 회로 학습 1 단계(CMA-ES · sim-v3 매개변수 44) — <strong>아직 실행 안 함</strong> · 시간 · 메모리 기록 없음(<code>fit-probe</code> 로 먼저) | 여유 40 % |
+| 34 | <code>uv run fly-connectome fast-policy fit --dataset &lt;묶음&gt; [--brains …]</code> · <code>fast-policy calibrate --dataset &lt;묶음&gt;</code>(R-1027 · <code>3c482f6</code>) | 연구 노트 11 §8.11 | 빠른 정책(초파리 신호 선형 읽기) 맞춤 · 보정 나눔으로 호출 문턱 제안(진짜: 호출률 0.298 · 교사 일치 0.858) | — |
+| 35 | 성적표 층 구성(scorecard-v4 · <code>e0cf3ee</code>): <code>scorecard --configs vector,vector-gated,fast-only,vector-random-matched,vector-periodic-matched,rewired-s0-gated,rewired-s0-fast-only,…</code> | 09 · 연구 노트 11 §8.11 | 아직 안 돌림 · 문턱은 <code>config/control.yaml</code>(control-v2 · 결과 전 잠금 <code>8756f86</code>) | 여유 40 % + Qwen |</p>
 <p>위 1~29 를 한 줄씩 돌리는 대신 <strong><code>scripts/</code></strong> 를 쓰면 잠금 · 메모리 대기 · 끝 코드 확인(실패면 멈춤)을 스크립트가 한다(<code>scripts/common.sh</code>). 순서와 확인값은 <a href="12-재현-절차와-다음-작업.html">12장 §2</a>.</p>
 <p><strong><code>--dataset</code> 기본값 = <code>config/datasets.yaml</code> 의 <code>current</code></strong>(지금 <code>fly-loop-v4</code> · 2026-09-29 <code>bf48c2d</code> 에서 통일 — 그전에는 명령마다 fly-loop-v1 · v2 를 박아 두었다 · <a href="12-재현-절차와-다음-작업.html">12장 §3</a>). 옛 자료 · 옛 결과는 <code>--dataset</code> 을 직접 준다.</p>
 <p>v1 자료 · v2 판을 다시 돌릴 때(지금 있는 결과): <code>--dataset fly-loop-v1 --brain rewired</code> · 평가 · 성적표에 <strong><code>--version train-v2</code></strong> — 기본은 지금 규칙 판(train-v4)이다.
@@ -401,6 +406,16 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 <td>지금 자료 묶음</td>
 <td><code>config/datasets.yaml</code> <strong>datasets-v1</strong> · <code>current: fly-loop-v4</code>(명령마다 <code>--dataset</code> · 재생 <code>--pack</code> 기본값)</td>
 <td>새 자료를 묶은 뒤 <code>current</code> 한 줄 · 옛 결과는 <code>--dataset</code> 직접</td>
+</tr>
+<tr>
+<td>회로 학습 범위</td>
+<td><code>config/fit.yaml</code> <strong>sim-v3</strong>(<code>escape-small</code> 매개변수 44 · 확정 2026-10-01) · <code>cellparams.CellParams</code></td>
+<td><code>fit-probe</code> → <code>fit</code> → 03 검산</td>
+</tr>
+<tr>
+<td>층 구조(호출 문턱)</td>
+<td><code>config/control.yaml</code> <strong>control-v2</strong>(보정 분위수 · 잠금) · 빠른 정책 <code>FAST_RULE</code> <strong>fast-v2</strong></td>
+<td><code>fast-policy fit/calibrate</code> → 성적표 층 구성</td>
 </tr>
 <tr>
 <td>감시 · 대시보드</td>

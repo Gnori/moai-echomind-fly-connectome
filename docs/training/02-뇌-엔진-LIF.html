@@ -208,6 +208,7 @@ v &gt; v_th 이면 발화 → v = v_reset, g = 0, A += b_adapt, 불응기 t_rfc 
 </table></div>
 <p>⚠️ 이 값들은 <strong>판 번호로 잠근다.</strong> 하나라도 바꾸면 <code>version</code> 을 올리고, 03장의 검산을 다시 돌리고, 그 판으로 모은 학습 자료(06장)도 새로 모아야 한다(채널 벡터가 달라진다).
 <code>sim-v1 → v2</code>(2026-09-23)는 후각 수용 뉴런에서 <strong>나가는</strong> 연결만 바꾼다 — 도망 반사 검산(시각 → 거대섬유)에는 후각 뉴런이 침묵이라 영향이 없고, 다시 돌리지 않았다. 학습 자료는 새로 모은다(<code>fly-loop-v2</code> · 06장). 시험 <code>tests/test_sim_ipsi.py</code> 가 규칙이 걸리는 연결만 바뀌는지 확인한다.</p>
+<p><strong>sim-v3(2026-10-01 · 회로 학습 준비)</strong> — sim-v3 매개변수 파일(<code>cellparams.py</code> <code>CellParams</code> · <code>config/fit.yaml</code> · <code>09df530</code>): 범위(scope) 안 <strong>종류마다 막 시간 상수 · 문턱</strong>, 범위 안 <strong>종류 쌍마다 연결 배율 α ≥ 0</strong>. 연결 수 · 부호 · 상대 · <code>w_scale</code> · <code>ipsi_release</code> 는 바꾸지 않는다. <code>Engine(cell=…)</code> 으로 넣고, <strong><code>cell</code> 이 없으면 지금(sim-v2)과 같은 길</strong>이다. 처음 값(<code>init</code>)은 sim-v2 와 같아 <strong>발화가 완전히 같다</strong>(시험 <code>tests/test_cellparams.py</code> <code>test_init_params_give_identical_spikes</code>). 범위 · 경계는 <code>config/fit.yaml</code>(<code>escape-small</code> 매개변수 44). 학습 절차는 <a href="03-뇌-맞추기와-검산.html">03장 6절</a> · 배경은 <a href="../research/fly-connectome/09-LIF-모델.html">연구 노트 09 §7</a>.</p>
 <h2 id="4-기준-구현과-발화-하나까지-맞추기">4. 기준 구현과 "발화 하나까지" 맞추기</h2>
 <p>새로 짠 엔진이 Shiu 모델과 같은지 확인하는 것이 뇌를 쓰기 전 첫 관문이다.
 작은 그래프에서 Brian2(Shiu 가 쓴 시뮬레이터) 판과 우리 엔진을 같은 씨앗으로 돌려 <strong>발화 (시각, 뉴런) 목록 전체</strong>를 비교한다(<code>tests/test_sim_parity.py</code>).</p>

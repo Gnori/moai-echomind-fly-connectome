@@ -42,6 +42,9 @@
 | 판정(stats-v2) | 진짜 배선이 "앞선다" = 재배선 앙상블 상위 5 % · 에피소드 부호 뒤집기 순열 Holm p < 0.05 · 찍기보다 높음. 운동 채널 · 냄새 쪽 칸은 판정 밖 |
 | 정직 목록 | 결과마다 "배선이 낸 것 / 코드가 더한 것"을 나눈 기록 |
 | 같은 쪽 방출(ipsi_release) | `sim-v2` — 후각 수용 뉴런의 같은 쪽 연결만 세기 × 1.4(Gaudry 2013). 연결 수는 그대로 |
+| sim-v3 · CellParams | 회로 학습 자리(2026-10-01 · `cellparams.py`) — 범위 안 **세포 종류마다** 막 시간 상수 · 문턱 + **종류 쌍마다** 연결 배율 α ≥ 0. 연결 수 · 부호는 그대로 · `cell` 이 없으면 sim-v2 와 같은 길 · 처음 값이면 발화 완전 일치(시험) |
+| scope(범위) | 무엇을 배우나를 이름으로 잠근 것(`config/fit.yaml`) — `escape-small` = 다가옴 LC/LPLC 13 종 + DNp01 · 02 · 04 · 11 · 출력 쌍 10 · 매개변수 44. 회로 학습 1 단계는 CMA-ES(아직 실행 안 함) |
+| 층 구조(R-1027) | 1 반사 → 2 빠른 정책(초파리 신호 선형 읽기) → 3 Qwen 은 **사건 때만**(목표 · 간격 · 충돌 · 애매함 · 놀람). 문턱 `config/control.yaml` control-v2 · 대조 = 같은 호출률 무작위 · 주기 |
 | 판 번호 | 설정 · 규칙을 잠그는 이름(`sim-v2` · `task-v4` · `channels-v3` · `retino-v2` · `stats-v2` · `compress-v3` · `train-v5` · `scorecard-v3`). 옛 설정 판은 `config/archive/<판>.yaml` |
 | 학습 안내서 | [docs/training/](docs/training/README.md) · 다음 학습 정의 [R-7469](docs/requirements/20260923-104151-7469_fly-learning-next_req.md) |
 
@@ -72,7 +75,7 @@ uv run fly-connectome backup                                        # git 밖 �
 **대시보드**(R-7928 · R-5777 · 읽기 전용 · 127.0.0.1 만 · 표준 라이브러리만) — `uv run fly-connectome dashboard --serve 8770 --every 30` → http://127.0.0.1:8770/ .
 `runs/dashboard/` 에 진행 · 결과 한 장(`index.html` · 자료 `state.json`)과 2단계 두 쪽을 같은 주기로 만든다:
 `samples.html` 캡션 표본(채점 평가 표본마다 진짜 · 재배선 셋 예측 나란히 · 칸 · 진짜만 맞음/틀림 · 에피소드로 거르기) ·
-`episodes.html` 성적표 에피소드 · 결정(씨앗 × 구성 → 결정 표 · 교사와 Qwen 의 도는 쪽이 다르면 표시 — 결정 표는 scorecard-v3 이후 성적표부터). 값 · 상한은 `config/dashboard.yaml`.
+`episodes.html` 성적표 에피소드 · 결정(씨앗 × 구성 → 결정 표 · 교사와 Qwen 의 도는 쪽이 다르면 표시 — 결정 표는 scorecard-v3 이후 성적표부터 · 층 구조 기록(scorecard-v4)이면 층 · 계기 칸과 LLM 호출률). 값 · 상한은 `config/dashboard.yaml`.
 
 학습 자료는 `data/datasets/<이름>/` 에 묶어 둔다 — [docs/datasets.md](docs/datasets.md).
 

@@ -78,6 +78,13 @@ w = (부호 × 시냅스 개수) × w_syn
 - 한 스텝(1 ms)은 「발화한 뉴런의 나가는 연결에 g 더하기」가 전부라, 활동이 1~5% 면 매 스텝 수십만~백만 번 더하기. 맥 GPU 로 밀리초 단위 스텝이 현실적이다(F1: 2 ms 스텝을 1.3~1.7 ms 에).
 - 학습을 붙이면(ConnecTorch) 역전파가 `연결 수 × 배치 × 스텝` 만큼 메모리를 먹는다 — 배치 4·8 스텝에 7.8 GiB, 배치 32·16 스텝이면 104 GiB. 맥 32GB 로는 작은 배치만.
 
+## 7. sim-v3 — 종류 단위로 배울 자리 (2026-10-01 · R-7469 F-006 준비)
+
+연결 하나하나(2,556만)를 배우면 "초파리 배선"이 아니게 된다(5절 ② 의 질문). 그래서 배울 자리를 **세포 종류 단위**로만 열었다.
+sim-v3 매개변수 파일(`cellparams.py` `CellParams` · `config/fit.yaml` · `09df530`): 범위(scope) 안 **종류마다 막 시간 상수 · 문턱**, 범위 안 **종류 쌍마다 연결 배율 α ≥ 0**. 연결 수 · 부호 · 상대 · `w_scale` · `ipsi_release` 는 바꾸지 않는다. `Engine(cell=…)` 으로 넣고, **`cell` 이 없으면 지금(sim-v2)과 같은 길**이다. 처음 값(`init`)은 sim-v2 와 같아 **발화가 완전히 같다**(시험 `tests/test_cellparams.py` `test_init_params_give_identical_spikes`).
+범위는 이름으로 잠근다 — 1 단계 `escape-small` = 다가옴 LC/LPLC 13 종 + 하강 DNp01 · 02 · 04 · 11 의 시간 상수 · 문턱과 **출력 쌍(LC/LPLC → DNp01/02/04/11) 10 쌍** α · **매개변수 44**(쌍을 전부 두면 85 쌍 · 119 — 목표 ≤ 50 을 넘어 출력 쌍만 둠 · 2026-10-01 확정 · 결과 전).
+학습 1 단계는 기울기 없는 CMA-ES 다(학습 안내서 [03장 6절](../../training/03-뇌-맞추기와-검산.md)) — **아직 돌리지 않았다.**
+
 ## 출처
 
 - [philshiu/Drosophila_brain_model — model.py](https://github.com/philshiu/Drosophila_brain_model/blob/main/model.py) · [Shiu 등 2024 Nature](https://doi.org/10.1038/s41586-024-07763-9)

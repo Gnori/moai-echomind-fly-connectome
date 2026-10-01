@@ -272,6 +272,7 @@ mlx-lm 의 층별 재계산(<code>grad_checkpoint</code>)은 전체를 한 번�
 4. 거꾸로: 학습 모드로 바꿔 마지막 층부터 한 층씩 vjp(저장한 입력으로) — 층마다 평가해 끊는다
 5. 임베딩에 대한 기울기(cot)를 얻으면 ⟨투영기 임베딩, cot⟩ 의 기울기 = 투영기 기울기
 </code></pre>
+<p><strong>층 묶어 역전파(<code>backprop_chunk</code> · 2026-10-01 · <code>323a6db</code>)</strong>: 층을 k 개씩 묶어 앞 · 뒤를 계산하면 GPU 동기화가 1/k 로 준다(층마다 하면 CPU 코어 하나 넘게 · 약 116 % 를 늘 씀). 기울기는 같다(시험 <code>test_layerwise_grads_match_full_graph</code> 가 묶음 크기마다 확인) · 대신 k 층 몫의 중간 상태를 들어 메모리가 는다 — 효과는 <code>train-probe --chunk k</code> 로 잴 예정(기본 1 = 지금과 같음).</p>
 <p>한 번에 한 층 몫만 메모리에 든다. 결과는 한 번에 미분한 것과 <strong>같다</strong> — 작은 가짜 Qwen 으로 두 방식을 나란히 돌려 1e-6 안에서 확인했다(<code>tests/test_train_layerwise.py</code>).</p>
 <h3 id="43-걸음마다">4.3 걸음마다</h3>
 <p><code>AdamW.update</code> → 평가 → <strong><code>mx.clear_cache()</code></strong>. 캐시 상한은 2 GB(<code>training_cache_limit_gb</code>).

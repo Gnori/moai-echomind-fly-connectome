@@ -183,3 +183,31 @@ def test_real_v5_files_recount_matches_accuracy_and_scorecard():
     if (sc / "scorecard.json").exists():
         e = dashboard_debug.read_episodes(runs, sc.name, 20000, 200)
         assert all(k["match"] and k["episodes"] == 40 for k in e["check"].values())
+
+
+def test_tiered_records_add_tier_trigger_and_llm_rate(tmp_path):
+    """scorecard-v4(R-1027) 층 기록 → 층 · 계기 칸과 LLM 호출 수 · 호출률 · 없는 구성은 그대로."""
+    sc = _fake_scorecard(tmp_path, with_decisions=True)
+    tiers = [("llm", "goal"), ("fast", None), ("reflex", None), ("llm", "surprise")]
+    rows = []
+    for s in (2000, 2001, 2002):
+        for d, (tier, trig) in enumerate(tiers):
+            rows.append({"seed": s, "d": d, "t_ms": 300 * d, "caption": "캡션",
+                         "teacher": {"walk": 0.5, "turn": "left"},
+                         "action": {"walk": 0.5, "turn": "left" if tier != "reflex" else "none"},
+                         "tier": tier, "trigger": trig, "fast_conf": 0.7, "threat": 0.0,
+                         "conflict": 0.1, "surprise": 0.2, "z": [0.1, 0.2]})
+    (sc / "rewired-s0.decisions.jsonl").write_text(
+        "\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
+    e = dashboard_debug.read_episodes(tmp_path, "scorecard-*", 20000, 200)
+    k = e["check"]["rewired-s0"]
+    assert (k["llm_calls"], k["tier_rows"], k["llm_rate"]) == (6, 12, 0.5)
+    assert k["calls_by_seed"]["2001"] == [2, 4]
+    r = e["decisions"]["rewired-s0"]["2000"]
+    assert [x[16] for x in r] == ["Qwen", "빠른 정책", "반사", "Qwen"]
+    assert [x[17] for x in r] == ["목표", None, None, "놀람"]
+    assert [x[-1] for x in r] == [False, False, True, False]      # 도는 쪽 다름은 마지막 그대로
+    assert "llm_calls" not in e["check"]["vector"]                 # 옛 기록(층 없음)은 그대로
+    assert all(x[16] is None for x in e["decisions"]["vector"]["2000"])
+    page = "".join(dashboard_debug.render_episodes(e, dashboard.FIELD_KO))
+    assert "LLM 호출 · 호출률" in page and "6 / 12 · 0.500" in page

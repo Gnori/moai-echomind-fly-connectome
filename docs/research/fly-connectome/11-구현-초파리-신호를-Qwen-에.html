@@ -1059,6 +1059,64 @@
 <p>진짜 배선은 섞은 배선 셋 <strong>모두</strong>보다 높다(순위 100 %) — 처음이다. 그러나 씨앗별 부호 뒤집기 <strong>p 0.056</strong> 으로 미리 정한 문턱(0.05)을 넘지 못해 <strong>섞은 배선 대조를 이기지 못했다</strong>고 적는다.
 결정 기록에서 진짜(0.592)와 섞은 배선 s1(0.588)이 거의 같다 — v6 과 같은 모양이다. 씨앗 수가 달라(40 → 100) v6 과 숫자를 바로 비교하지 않는다.
 파일: <code>runs/caption-judge-train-v7-final.json</code>(sha256 <code>8cf451a968586510</code>) · <code>runs/scorecard-20260930-151822/scorecard.json</code>(sha256 <code>69e0ca8f6ef173d0</code>). 대장은 <a href="../../training/10-학습-기록과-다음.html">학습 안내서 10장 1.2d · 2.8 · 2.9</a>.</p>
+<h2 id="811-층-구조--깊은-판단이-필요할-때만-qwen-r-1027--2026-10-01--준비만--성적표-아직">8.11 층 구조 — 깊은 판단이 필요할 때만 Qwen (R-1027 · 2026-10-01 · 준비만 · 성적표 아직)</h2>
+<p>지금 성적표는 <strong>결정마다</strong>(300 ms) Qwen 을 부른다. 사람도 걸음마다 깊이 생각하지 않는다 — 그래서 세 층으로 나눴다(<a href="15-깊은-판단-호출-조사.html">연구 노트 15</a> · <code>loop/tiered.py</code> · <code>loop/fast_policy.py</code> · <code>config/control.yaml</code>).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>층</th>
+<th>무엇이 모나</th>
+<th>언제</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 반사</td>
+<td>회로(도망 반사 · 거대섬유) · 규칙(위험 점수 문턱 — 지금은 끔)</td>
+<td>늘 · 뇌 구간 안에서</td>
+</tr>
+<tr>
+<td>2 빠른 정책</td>
+<td><strong>초파리 신호 선형 읽기</strong>(압축 특징 → 돌기 · 걷기 · 위험) — 참값은 보지 않는다</td>
+<td>사건이 없을 때</td>
+</tr>
+<tr>
+<td>3 Qwen</td>
+<td>지금처럼 신호 → 투영기 → Qwen</td>
+<td><strong>사건 때만</strong> — 목표(냄새 맡기 끝 첫 결정) · 시간 상한 · 충돌 · 애매함 · 놀람</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>사건의 정의</strong>(control-v2 · <code>3c482f6</code>): 놀람 = 빠른 정책의 <strong>전방 모형 오차²</strong> · 애매함 = 돌기 확신도(두 높은 점수 차)가 낮음 · 충돌 = 위험 × 먹이 쪽 확신도 · 간격 = 마지막 호출 뒤 결정 수.
+<strong>문턱은 보정 나눔의 분위수로 잠갔다</strong>(뇌마다 같은 절차 · 결과 전 · <code>8756f86</code>): 간격 상한 <strong>5</strong> 결정 · 최소 간격 <strong>2</strong> · 놀람 <strong>0.99</strong> · 애매함 <strong>0.05</strong> · 충돌 <strong>0.99</strong>.</p>
+<p><strong>대조</strong>: 같은 호출률로 <strong>무작위로</strong> 부르기(<code>vector-random-matched</code>) · <strong>주기적으로</strong> 부르기(<code>vector-periodic-matched</code>) · 빠른 정책만(<code>fast-only</code>) · 늘 부르기(<code>vector</code>) · 섞은 배선도 같은 층 구성(<code>rewired-sK-gated</code> · <code>-fast-only</code>).
+<strong>"사건 기반이 잘 골랐다"는 <code>vector-gated</code> 가 <code>vector-random-matched</code> 보다 높을 때만</strong>(씨앗별 부호 뒤집기 p &lt; 0.05) 쓴다 — 호출을 줄인 것만으로는 잘 고른 것이 아니다.</p>
+<p>실측(성적표 전):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>무엇</th>
+<th>진짜 배선</th>
+<th>섞은 배선</th>
+<th>찍기 · 기준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>빠른 정책 돌기 정확도(<code>fast-policy fit</code>)</td>
+<td><strong>0.666</strong></td>
+<td>0.569~0.577</td>
+<td>찍기 0.434</td>
+</tr>
+<tr>
+<td>보정(<code>fast-policy calibrate</code> · 진짜 · 보정 60 에피소드)</td>
+<td>호출률 <strong>0.298</strong>(예산 0.30) · 교사 일치 <strong>0.858</strong></td>
+<td>—</td>
+<td>빠른 정책만 0.731 · 같은 호출률 무작위 기댓값 0.811</td>
+</tr>
+</tbody>
+</table></div>
+<p>파일: <code>runs/fast-policy-fly-loop-v4-real-fast-v2/calibration-control-v2.json</code>. 성적표 층 구성(scorecard-v4 · <code>e0cf3ee</code>)은 <strong>아직 돌리지 않았다</strong> — 결과가 나오면 이 절에 적는다. 결정 기록에는 층(<code>tier</code>) · 계기(<code>trigger</code>)가 남고 대시보드 에피소드 쪽이 보여 준다.</p>
 <h2 id="9-정직하게-적어-둘-한계">9. 정직하게 적어 둘 한계</h2>
 <ul>
 <li><strong>행동을 정하는 판단은 여전히 Qwen(과 교사 규칙)의 것이다</strong>(07 의 판정). 초파리 뇌는 감각을 처리해 신호를 만드는 인코더 자리다.</li>

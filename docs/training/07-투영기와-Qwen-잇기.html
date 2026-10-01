@@ -171,6 +171,10 @@
 <td>생각 모드</td>
 <td>끔(<code>enable_thinking: false</code>) · 복호는 탐욕(온도 0) — 같은 입력이면 같은 출력</td>
 </tr>
+<tr>
+<td>학습 때 역전파</td>
+<td>층마다(기본) 또는 <strong>층 k 개씩 묶어</strong>(<code>backprop_chunk</code> · 2026-10-01 · 기울기 같음 시험 · 효과는 <code>train-probe --chunk</code> 로 잴 예정) — <a href="08-투영기-학습-절차.html">08장 4.2</a></td>
+</tr>
 </tbody>
 </table></div>
 <p><strong>끼워 넣기가 되는지 먼저 확인했다</strong>: 글 토큰 대신 <strong>그 토큰의 임베딩</strong>을 넣으면 로짓이 정확히 같다(차이 0.0). 그러니 임베딩 자리에 다른 벡터를 넣을 수 있다.</p>
