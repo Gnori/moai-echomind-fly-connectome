@@ -270,3 +270,26 @@ def test_judge_table_marks_pass_that_is_not_distinct_from_baseline():
     html = dashboard._compare_judge(j, 0.05)
     assert "찍기 대비 p" in html
     assert html.count("찍기와 구별 안 됨") == 1      # 물체 쪽만(p 0.14) · 다리는 그냥 통과
+
+
+def test_live_scorecard_counts_from_data_files(tmp_path):
+    import json
+
+    from moai_echomind_fly import dashboard as db
+
+    d = tmp_path / "scorecard-20261001-000000"
+    d.mkdir()
+    (d / "request.json").write_text(json.dumps(
+        {"seeds": [1, 2, 3], "configs": ["vector", "text", "no_llm"], "version": "train-v6"}))
+    (d / "vector.jsonl").write_text("".join(json.dumps({"seed": s, "reached": s != 2}) + "\n"
+                                           for s in (1, 2, 3)))
+    (d / "text.decisions.jsonl").write_text("".join(json.dumps({"seed": s, "d": k}) + "\n"
+                                                   for s in (1, 2) for k in range(3)))
+    live = db.read_scorecard_live(tmp_path, "scorecard-*", stale_s=3600)
+    assert live["done"] == 4 and live["total"] == 9 and not live["stale"]
+    assert [r["state"] for r in live["configs"]] == ["done", "running", "waiting"]
+    assert live["configs"][0]["reach_rate"] == 0.667
+    html = db._section_scorecard_live(live)
+    assert "4 / 9" in html and "도는 중" in html
+    (d / "scorecard.json").write_text("{}")
+    assert db.read_scorecard_live(tmp_path, "scorecard-*", stale_s=3600) is None

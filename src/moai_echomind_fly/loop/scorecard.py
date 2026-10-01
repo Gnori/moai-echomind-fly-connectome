@@ -310,6 +310,10 @@ def main(args: argparse.Namespace) -> int:
     configs = args.configs.split(",")
     out = paths.runs_dir() / f"scorecard-{time.strftime('%Y%m%d-%H%M%S')}"
     out.mkdir(parents=True)
+    # 대시보드가 도는 동안 진행을 세려고(자료 파일 · 로그 파싱 안 함)
+    (out / "request.json").write_text(json.dumps(
+        {"seeds": seeds, "configs": configs, "version": args.version or TRAIN_RULE["version"],
+         "started": time.strftime("%Y-%m-%d %H:%M:%S")}, ensure_ascii=False), encoding="utf-8")
     try:
         with heavy("scorecard", extra_gb=float(config.load("llm")["weights_gb"])) as guard:
             print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)

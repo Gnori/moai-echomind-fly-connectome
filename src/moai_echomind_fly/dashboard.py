@@ -380,6 +380,47 @@ def read_scorecard(runs: Path, pattern: str) -> dict[str, Any]:
             "wording": s.get("wording"), "judge": s.get("judge") or s.get("judgement")}
 
 
+def read_scorecard_live(runs: Path, pattern: str, stale_s: float) -> dict[str, Any] | None:
+    """도는(끝나지 않은) 성적표 — 가장 최근 `scorecard-*` 에 scorecard.json 이 없을 때.
+
+    자료 파일만 읽는다(로그 파싱 안 함): `request.json`(씨앗 · 구성 · 판) ·
+    끝난 구성 `<구성>.jsonl`(에피소드 줄) · 도는 구성 `<구성>.decisions.jsonl`(씨앗 수).
+    """
+    dirs = [p for p in runs.glob(pattern) if p.is_dir()]
+    if not dirs:
+        return None
+    d = max(dirs, key=lambda p: p.name)
+    if (d / "scorecard.json").exists() or (d / "aborted.json").exists():
+        return None
+    try:
+        req = _load_json(d / "request.json") if (d / "request.json").exists() else {}
+    except (ValueError, OSError):
+        req = {}
+    configs = list(req.get("configs") or [])
+    seeds = len(req.get("seeds") or []) or None
+    rows, done_eps, last_mtime = [], 0, d.stat().st_mtime
+    for c in configs or sorted({f.name.split(".")[0] for f in d.glob("*.jsonl")}):
+        ep, dec = d / f"{c}.jsonl", d / f"{c}.decisions.jsonl"
+        if ep.exists():
+            n = len(_lines(ep))
+            reached = sum(1 for line in _lines(ep) if json.loads(line).get("reached"))
+            rows.append({"config": c, "state": "done", "episodes": n,
+                         "reach_rate": round(reached / n, 3) if n else None})
+            done_eps += n
+            last_mtime = max(last_mtime, ep.stat().st_mtime)
+        elif dec.exists():
+            started = len({json.loads(line)["seed"] for line in _lines(dec)})
+            rows.append({"config": c, "state": "running", "episodes": max(started - 1, 0)})
+            done_eps += max(started - 1, 0)
+            last_mtime = max(last_mtime, dec.stat().st_mtime)
+        else:
+            rows.append({"config": c, "state": "waiting", "episodes": 0})
+    total = seeds * len(configs) if seeds and configs else None
+    return {"path": d.name, "version": req.get("version"), "seeds": seeds, "configs": rows,
+            "done": done_eps, "total": total, "started": req.get("started"),
+            "stale": (time.time() - last_mtime) > stale_s}
+
+
 def read_datasets(datasets_dir: Path, pattern: str) -> list[dict[str, Any]]:
     out = []
     for m in sorted(datasets_dir.glob(f"{pattern}/meta.json")):
@@ -422,6 +463,8 @@ def collect(runs: Path | None = None, datasets_dir: Path | None = None,
         "probe": read_linear_probe(runs, g["linear_probe"]),
         "gates": read_gates(runs, g["compress"]),
         "bump": read_bump(runs, g["bump"]), "scorecard": read_scorecard(runs, g["scorecard"]),
+        "scorecard_live": read_scorecard_live(runs, g["scorecard"],
+                                              60.0 * float(cfg.get("stale_minutes", 60))),
         "datasets": read_datasets(datasets_dir, cfg["datasets_glob"]),
         "backup": read_backup(backup_md),
         "links": cfg.get("links") or [], "refresh_s": int(cfg["refresh_s"]),
@@ -866,6 +909,23 @@ def _section_bump(b: dict[str, Any]) -> str:
                      rows))
 
 
+def _section_scorecard_live(s: dict[str, Any] | None) -> str:
+    if not s:
+        return ""
+    state = {"done": "끝", "running": "도는 중", "waiting": "남음"}
+    rows = [[_e(r["config"]), _e(state[r["state"]]),
+             f'{r["episodes"]}' + (f' / {s["seeds"]}' if s.get("seeds") else ""),
+             _f(r.get("reach_rate"), 2) if r["state"] == "done" else "—"]
+            for r in s["configs"]]
+    prog = (f'{s["done"]} / {s["total"]} 에피소드 ({100 * s["done"] / s["total"]:.0f} %)'
+            if s.get("total") else f'{s["done"]} 에피소드')
+    flag = _tag("bad", "멈춘 기록(갱신 없음)") if s.get("stale") else _tag("ok", "도는 중")
+    return (f'<h3>도는 성적표 — <code>{_e(s["path"])}</code> {flag}</h3>'
+            f'<p class="muted">투영기 판 {_e(s.get("version") or "—")} · 시작 '
+            f'{_e(s.get("started") or "—")} · {prog} · 판정은 끝난 뒤</p>'
+            + _table(["구성", "상태", "에피소드", "먹이 도착률(끝난 구성)"], rows))
+
+
 def _section_scorecard(s: dict[str, Any]) -> str:
     if s.get("path") is None:
         return f'<h3>성적표</h3><p class="muted">{NONE}</p>'
@@ -883,7 +943,7 @@ def _section_scorecard(s: dict[str, Any]) -> str:
     judge_txt = (f' · 규칙 {_e(judge.get("rule"))} · 순위 {_e(judge.get("rank_pct"))} %'
                  f' · p {_f(judge.get("p_sign_flip"))}' if judge else "")
     wording = f'<div class="wording">{_e(s["wording"])}</div>' if s.get("wording") else ""
-    return (f'<h3>성적표 — <code>{_e(s["path"])}</code></h3>'
+    return (f'<h3>마지막으로 끝난 성적표 — <code>{_e(s["path"])}</code></h3>'
             f'<p class="muted">씨앗 {s.get("seeds")} · {beats_txt}{judge_txt}'
             ' · <a href="episodes.html">에피소드 · 결정 보기</a></p>'
             + _table(["구성", "먹이 도착률", "끝 거리 mm", "회피율", "형식 위반"], rows) + wording)
@@ -904,7 +964,8 @@ def _section_data(d: dict[str, Any]) -> str:
 def render(d: dict[str, Any]) -> str:
     links = " · ".join(f'<a href="{_e(u)}">{_e(t)}</a>' for t, u in d["links"])
     results = (_section_probe(d["probe"]) + _section_gates(d["gates"])
-               + _section_bump(d["bump"]) + _section_scorecard(d["scorecard"]))
+               + _section_bump(d["bump"]) + _section_scorecard_live(d.get("scorecard_live"))
+               + _section_scorecard(d["scorecard"]))
     return f"""<!doctype html>
 <html lang="ko">
 <head>
