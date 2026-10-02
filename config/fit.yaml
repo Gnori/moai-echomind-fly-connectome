@@ -30,3 +30,19 @@ sgbptt:                         # 2 단계(I v2 §7.2) — 희소 대리 기울�
   window_steps: 3000            # 잘림 길이(0.1 ms × 3,000 = 300 ms · 결정 하나)
   checkpoint_steps: 50          # 이 걸음마다 체크포인트(√3000 ≈ 55)
   dtype: float32                # 시험은 float64(엔진과 발화 완전 일치)
+kc_probe:                       # M0(연구 노트 16 §6) — 학습 없이 지금 매개변수로 KC 희소성 · PN 발화율을 잰다(값은 선언 · 결과 전)
+  stimuli:
+    vinegar6: [ORN_DM1, ORN_DM4, ORN_DP1m, ORN_DM2, ORN_VA2, ORN_VM2]   # Semmelhack & Wang 2009 사과식초 3 ppm
+    dm1va2: [ORN_DM1, ORN_VA2]  # 지금 과제의 먹이 냄새 — 음성 대조(≤ 2 %)
+    none: []
+  random_sets: 3                # 무작위 10 사구체 세트 수(ORN_* 종류에서 씨앗으로 뽑음)
+  random_size: 10
+  random_seed: 0
+  orn_rate_hz: 150.0            # Shiu 기본 자극
+  windows_ms: [100, 300, 500]   # 한 번 500 ms 를 돌리고 앞 구간을 잘라 센다
+  seeds: [0, 1, 2]
+  brains: [real, rewired-s0]
+  pn_class: ALPN
+  pn_input_min: 0.10            # 자극 ORN 에서 받은 시냅스 비율이 이 이상인 PN 을 "자극 PN" 으로(노트 16 §2.1)
+  kc_min_type_size: 100         # KC 주요 종류(뉴런 ≥ 100 · 9 종 4,053)
+  apl_type: APL
