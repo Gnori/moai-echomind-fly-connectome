@@ -15,6 +15,18 @@ say() { echo "=== $(date '+%F %T') $*" | tee -a "$LOG"; }
 
 free_pct() { memory_pressure | sed -n 's/.*free percentage: \([0-9]*\)%.*/\1/p'; }
 
+# 사건 파일(대시보드 "단계" 표가 읽는다 · bin/run_full_v*.sh 와 같은 형식) — 한 줄 = 한 사건.
+# 2026-10-03: scripts/ 로 돌린 실행이 대시보드에 안 남던 것(요구자 "기록이 안되든듯")을 고침.
+JLOG="${LOG%.log}.jsonl"
+ev() {
+  local cmd=${2:-}; cmd=${cmd//\\/\\\\}; cmd=${cmd//\"/\\\"}
+  printf '{"ts":"%s","event":"%s","cmd":"%s","free":%s,"code":%s}\n' \
+    "$(date '+%F %T')" "$1" "$cmd" "$(free_pct)" "${3:-null}" >> "$JLOG"
+}
+_finish() { local rc=$?; if [ $rc -eq 0 ]; then ev done "$TAG"; else ev abort "$TAG" "$rc"; fi; }
+ev begin "$TAG $*"
+trap _finish EXIT
+
 guard_cfg() { "$PY" -c "from moai_echomind_fly import config; print(config.load('guard')['$1'])"; }
 
 # 메모리 여유가 $1 % 이상이 될 때까지 기다린다(간격 · 한도는 config/guard.yaml script_wait_*).
@@ -40,8 +52,10 @@ step() {
   local need=$1; shift
   [ "$need" -gt 0 ] && wait_free "$need"
   say "시작 · 여유 $(free_pct)% · $*"
+  ev start "$*"
   "$FC" "$@" >>"$LOG" 2>&1
   local rc=$?
+  ev end "$*" "$rc"
   say "끝 코드 $rc · $*"
   [ $rc -eq 0 ] || { say "중단 · 로그 $LOG"; exit 5; }
 }
@@ -49,8 +63,10 @@ step() {
 # run <명령…> — fly-connectome 이 아닌 명령(파이썬 분석 등)을 같은 규칙으로.
 run() {
   say "시작 · $*"
+  ev start "$*"
   "$@" >>"$LOG" 2>&1
   local rc=$?
+  ev end "$*" "$rc"
   say "끝 코드 $rc · $*"
   [ $rc -eq 0 ] || { say "중단 · 로그 $LOG"; exit 5; }
 }

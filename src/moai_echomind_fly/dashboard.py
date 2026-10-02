@@ -131,9 +131,33 @@ def read_full_jsonl(path: Path) -> dict[str, Any]:
             "mtime": time.strftime("%m-%d %H:%M", time.localtime(path.stat().st_mtime))}
 
 
-def read_full(runs: Path, jsonl_pattern: str, log_pattern: str) -> dict[str, Any]:
-    """전체 순서 — 사건 파일(jsonl)이 로그보다 새로우면 그것, 아니면 로그 파싱(v4 까지 · 대체)."""
-    j = _latest(list(runs.glob(jsonl_pattern)))
+def _jsonl_files(runs: Path, patterns: str | list[str]) -> list[Path]:
+    pats = [patterns] if isinstance(patterns, str) else list(patterns)
+    return [f for pat in pats for f in runs.glob(pat)]
+
+
+def read_history(runs: Path, patterns: str | list[str], n: int) -> list[dict[str, Any]]:
+    """최근 실행 순서들(run_full · scripts) — 사건 파일마다 한 줄 요약(새것 먼저)."""
+    # 시작 시각 순(옮겨 적은 파일은 파일 시각이 새것) · 파일 시각으로 먼저 거른다
+    files = sorted(_jsonl_files(runs, patterns), key=lambda f: f.stat().st_mtime,
+                   reverse=True)[: 4 * n]
+    out = []
+    for f in files:
+        r = read_full_jsonl(f)
+        bad = [s for s in r["steps"] if s["code"] not in (0, None)]
+        out.append({"path": r["path"], "started": r["started"], "done": r["done"],
+                    "aborted": r["aborted"], "steps": len(r["steps"]),
+                    "running": r["current"]["cmd"] if r["current"] else None,
+                    "failed": len(bad), "last": r["steps"][-1]["cmd"] if r["steps"] else None})
+    return sorted(out, key=lambda h: h["started"] or "", reverse=True)[:n]
+
+
+def read_full(runs: Path, jsonl_pattern: str | list[str], log_pattern: str) -> dict[str, Any]:
+    """전체 순서 — 사건 파일(jsonl)이 로그보다 새로우면 그것, 아니면 로그 파싱(v4 까지 · 대체).
+
+    사건 파일은 bin/run_full_v*.sh 와 scripts/(common.sh · 2026-10-03 부터) 둘 다 쓴다.
+    """
+    j = _latest(_jsonl_files(runs, jsonl_pattern))
     lg = _latest(list(runs.glob(log_pattern)))
     if j is not None and (lg is None or j.stat().st_mtime >= lg.stat().st_mtime):
         return read_full_jsonl(j)
@@ -457,6 +481,7 @@ def collect(runs: Path | None = None, datasets_dir: Path | None = None,
     return {
         "version": cfg["version"], "now": time.strftime("%Y-%m-%d %H:%M:%S"), "runs": str(runs),
         "lock": read_lock(runs), "full": full,
+        "history": read_history(runs, g["full_jsonl"], int(cfg.get("history_n", 8))),
         "free": memory_free(),
         "projectors": read_projectors(runs, g["projector"], g["eval_caption"],
                                       60.0 * float(cfg.get("stale_minutes", 60))),
@@ -617,6 +642,19 @@ def _section_status(d: dict[str, Any]) -> str:
         out += "<h3>단계</h3>" + _table(["명령", "시작", "끝", "상태"], rows)
         if full.get("notes"):
             out += "<p>" + "<br>".join(f"<code>{_e(n)}</code>" for n in full["notes"]) + "</p>"
+    hist = d.get("history") or []
+    if hist:
+        rows = []
+        for h in hist:
+            state = (_tag("bad", "중단") if h["aborted"] else _tag("ok", "끝") if h["done"]
+                     else _tag("warn", "도는 중") if h["running"]
+                     else _tag("muted", "기록 끝 없음"))
+            rows.append([f"<code>{_e(h['path'])}</code>", _e(h["started"] or "—"),
+                         _e(h["done"] or h["aborted"] or "—"), state,
+                         f'{h["steps"]} 단계' + (f' · 실패 {h["failed"]}' if h["failed"] else ""),
+                         f"<code>{_e(h['running'] or h['last'] or '')}</code>"])
+        out += ("<h3>최근 실행(사건 파일)</h3>"
+                + _table(["파일", "시작", "끝", "상태", "단계", "마지막(도는) 명령"], rows))
     return out
 
 

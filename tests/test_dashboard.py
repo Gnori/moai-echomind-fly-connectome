@@ -293,3 +293,26 @@ def test_live_scorecard_counts_from_data_files(tmp_path):
     assert "4 / 9" in html and "도는 중" in html
     (d / "scorecard.json").write_text("{}")
     assert db.read_scorecard_live(tmp_path, "scorecard-*", stale_s=3600) is None
+
+
+def test_history_reads_run_full_and_scripts_event_files(tmp_path):
+    import json
+
+    from moai_echomind_fly import dashboard as db
+
+    def write(name, events):
+        (tmp_path / name).write_text("".join(json.dumps(e) + "\n" for e in events))
+
+    write("full-v7-1.jsonl", [{"ts": "a", "event": "begin"},
+                              {"ts": "a", "event": "start", "cmd": "train"},
+                              {"ts": "b", "event": "end", "cmd": "train", "code": 0},
+                              {"ts": "b", "event": "done"}])
+    write("scripts-scorecard-2.jsonl", [{"ts": "c", "event": "begin"},
+                                        {"ts": "c", "event": "start", "cmd": "scorecard"}])
+    pats = ["full-v[0-9]-*.jsonl", "scripts-*.jsonl"]
+    hist = db.read_history(tmp_path, pats, 5)
+    assert {h["path"] for h in hist} == {"full-v7-1.jsonl", "scripts-scorecard-2.jsonl"}
+    run = next(h for h in hist if h["path"].startswith("scripts"))
+    assert run["running"] == "scorecard" and run["done"] is None
+    full = db.read_full(tmp_path, pats, "full-v[0-9]-*.log")
+    assert full["path"] in {"full-v7-1.jsonl", "scripts-scorecard-2.jsonl"}
