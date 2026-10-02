@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KC 희소성을 회로 학습 목표로 — 범위(scope) 제안</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li>
+<li><a href="12-다음-학습-조사.html">12 · 다음 학습 — 조사</a></li>
+<li><a href="13-회로-학습-설계-조사.html">13 · 회로 학습 설계 — 조사</a></li>
+<li><a href="14-냄새-좌우-조사.html">14 · 냄새 좌우 — 조사</a></li>
+<li><a href="15-깊은-판단-호출-조사.html">15 · 깊은 판단 호출 — 조사</a></li>
+<li><a href="16-KC-희소성-범위-조사.html" class="cur">16 · KC 희소성 범위 — 조사</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="16-KC-희소성-범위-조사.md">16-KC-희소성-범위-조사.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="16-kc-희소성을-회로-학습-목표로--범위scope-제안">16. KC 희소성을 회로 학습 목표로 — 범위(scope) 제안</h1>
+<blockquote>
+<p>2026-10-03 · 세션 <code>echomind-fly-research</code> · 조율 세션 일감(R-7469 F-006 새 목표 · F-007 준비).
+이 노트는 <strong>문헌 조사 · 그래프 조회 · 정상 상태 계산</strong>만 했다. 시뮬레이션은 돌리지 않았다 — 6 절은 조율 세션이 돌릴 <strong>측정 계획</strong>이다.
+확인 수준: <strong>[P]</strong> 원문 본문 · <strong>[P*]</strong> 요약 도구로 읽음 · <strong>[A]</strong> 초록 · <strong>[S]</strong> 2 차 · <strong>[그래프]</strong> 우리 연결 지도 · <strong>[계산]</strong> 우리 LIF 의 정상 상태 식.</p>
+</blockquote>
+<hr />
+<h2 id="0-한눈에">0. 한눈에</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>물음</th>
+<th>답</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① 왜 0.2 % 인가</td>
+<td><strong>자극이 좁아서다.</strong> KC 는 PN 입력(발톱) 6~7 개 중 <strong>약 3 개 이상이 동시에</strong> 켜져야 발화한다 [L5][L6]. DM1 + VA2 만 켜면 "켜진 PN 짝 ≥ 3" 인 KC 가 <strong>0.1 %</strong> [그래프] — 측정 0.2 % 와 같은 자릿수다. 문헌의 5~10 % 는 <strong>사구체를 많이 켜는 보통 냄새</strong>(PN 59 % 반응)에서 잰 값이다 [L1][L2]. 같은 셈으로 <strong>식초 사구체 6 개</strong>(Semmelhack 2009)는 <strong>9.9 %</strong> · 무작위 10 사구체는 8.7 % [그래프]. 그다음 원인은 우리 LIF 의 <strong>PN → KC 가 약함</strong>: 연결 하나(시냅스 중앙 16)가 PN 100 Hz 에서 KC 를 0.55 mV 올리고 문턱은 7 mV — 켜진 짝 3 개면 1.65 mV [계산]</td>
+</tr>
+<tr>
+<td>② 잠글 범위</td>
+<td><strong>먼저 재고(M0) 고른다.</strong> PN 이 식초 자극에서 <strong>약 120 Hz 이상</strong>이면 → <code>kc-sparse-a</code>: KC 주요 9 종 + APL 의 τ · 문턱(20) + KC → APL 배율(9) = <strong>29 개 · 코드 고침 없음</strong>. 120 Hz 아래면 PN → KC 이득이 필요 → <code>kc-sparse-b</code>: 종류 쌍이 아니라 <strong>묶음 배율 4 개</strong>(PN → KC · KC → APL · APL → KC · KC → KC) + 20 = <strong>24 개 · 코드 고침 필요</strong>(조율 세션 판단)</td>
+</tr>
+<tr>
+<td>③ 손실 측정</td>
+<td>식초 6 사구체 ORN 150 Hz · <strong>300 ms</strong>(결정 하나) · KC 4,064 중 한 번 이상 발화 비율 → [5, 10] % · DM1 + VA2 는 <strong>음성 대조</strong>(≤ 2 %) · 무자극 KC ≤ 0.5 % · 나머지 뇌 침묵(<code>cns_quiet_hz</code>) · 재배선에도 같은 절차</td>
+</tr>
+<tr>
+<td>④ 위험</td>
+<td>좁은 자극에 맞추면 보통 냄새에서 KC 대부분이 켜짐 · KC → KC 흥분(KC 입력의 55 %)이 양성 되먹임 · APL 은 KC 가 켜져야 맞출 수 있음 · 퇴화(매개변수를 생물 값으로 읽지 않음) · <strong>차수 보존 재배선은 같은 희소성을 낼 수 있다</strong>(희소성은 발톱 수의 성질)</td>
+</tr>
+<tr>
+<td>⑤ 측정</td>
+<td>M0 PN · KC 실측(학습 없음) 약 10 분 → 범위 확정 → CMA-ES 29 개 · 50 세대 약 4 시간(추정)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="1-출발점--이미-잰-값다시-재지-않음">1. 출발점 — 이미 잰 값(다시 재지 않음)</h2>
+<ul>
+<li><code>runs/plasticity-probe-20261003-071444.json</code>: ORN_DM1 · VA2 150 Hz · 100 ms 창 → <strong>KC 발화 0.197 %</strong>(4,064 중 8) · MBON 발화 합 5 · 보상 구획 MBON 0 → 가소성을 잴 수 없음.</li>
+<li><code>config/physiology.yaml</code> <code>kc_sparsity</code>: 목표 [0.05, 0.10] · Lin 2014 · 아직 어느 범위에도 안 들어감.</li>
+<li><code>escape-small</code> 1 단계는 처음 손실이 이미 0 → 목표를 바꾼다.</li>
+<li>학습 형식(<code>cellparams.py</code> · <code>config/fit.yaml</code>): 범위 안 <strong>종류마다</strong> 막 시간 상수 · 문턱 + 범위 안 <strong>종류 쌍마다</strong> 배율 α ≥ 0(최소 시냅스 수 · <code>pair_dst</code> 로 거름) · 연결 수 · 부호 불변 · 한계 τ [5, 200] ms · 문턱 [2, 15] mV(쉬는 전위 위) · α [0.1, 10] · CMA-ES 매개변수 ≤ 50 목표 · 평가 한 번 약 3.3 s/시행(+ 준비 5.8 s · 2.3 GB).</li>
+<li>LIF(<code>config/sim.yaml</code> sim-v2): 시냅스 하나 실효 세기 0.275 × 0.25 = <strong>0.069 mV</strong> · τ_syn 5 ms · 문턱 = 쉬는 전위 + <strong>7 mV</strong> · τ_m 20 ms · 불응 2.2 ms.</li>
+</ul>
+<hr />
+<h2 id="2-①-kc-가-02--만-켜지는-까닭">2. ① KC 가 0.2 % 만 켜지는 까닭</h2>
+<h3 id="21-그래프-실측-그래프--runskc-input-20261003json">2.1 그래프 실측 [그래프 · <code>runs/kc-input-20261003.json</code>]</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>양</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KC 종류</td>
+<td>15 — KCg-m 1,342 · KCab-s 657 · KCab-m 536 · KCab-c 488 · KCa′b′-ap2 291 · KCg-d 206 · KCa′b′-m 205 · KCa′b′-ap1 199 · KCab-p 129 · 작은 종류 6 개(KC · KCg · KCg-s1~s4 · 각 1~2)</td>
+</tr>
+<tr>
+<td>KC 당 PN 짝(발톱 근사)</td>
+<td>중앙 <strong>6</strong> · 평균 5.56 — 문헌 hemibrain 6 [L8] · FAFB 5.2 [L9] · 광학 7 [L7] 과 맞음</td>
+</tr>
+<tr>
+<td>KC 당 PN 시냅스</td>
+<td>중앙 97 · 연결 하나 중앙 <strong>16</strong></td>
+</tr>
+<tr>
+<td>먹이 냄새 PN(ORN_DM1 · VA2 입력 ≥ 10 %)</td>
+<td><strong>17 개 · 9 종류</strong> — DM1_lPN 2 · VA2_adPN 2 · M_lvPNm33 5 · M_lvPNm25 2 · M_lvPNm26 2 · VA7m_lPN · M_l2PNl20 · M_lvPNm27 · M_lvPNm46</td>
+</tr>
+<tr>
+<td>먹이 PN 에서 입력을 받는 KC</td>
+<td><strong>1,382(34 %)</strong> — 그중 1,179 개는 먹이 PN <strong>하나</strong>만 · 둘 199 · 셋 4</td>
+</tr>
+<tr>
+<td>KC 입력 구성(시냅스)</td>
+<td>KC → KC <strong>55.4 %</strong>(흥분 · 축삭끼리) · PN 18.7 % · APL(억제) 11.3 % · DAN 10.8 %(부호 0) · MBON 0.5 %</td>
+</tr>
+<tr>
+<td>APL</td>
+<td>2 개 · GABA · 부호 − · APL → KC 196,200 시냅스 · KC → APL 210,352 · PN → APL 5,416 · KC 당 APL 시냅스 중앙 50</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="22-켜진-pn-짝--k-셈-그래프--runskc-claw-count-20261003json">2.2 "켜진 PN 짝 ≥ k" 셈 [그래프 · <code>runs/kc-claw-count-20261003.json</code>]</h3>
+<p>켜진 사구체의 ORN 이 입력의 10 % 이상인 PN 을 "켜짐"으로 보고, KC 마다 켜진 PN 짝 수를 센다(발화 아님 · 구조만).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>자극</th>
+<th>켜진 PN</th>
+<th>KC ≥ 1</th>
+<th>≥ 2</th>
+<th><strong>≥ 3</strong></th>
+<th>≥ 4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DM1 + VA2</strong>(지금)</td>
+<td>17</td>
+<td>34.0 %</td>
+<td>5.0 %</td>
+<td><strong>0.1 %</strong></td>
+<td>0.0 %</td>
+</tr>
+<tr>
+<td><strong>식초 6</strong>(DM1 · DM4 · DP1m · DM2 · VA2 · VM2 [L13])</td>
+<td>65</td>
+<td>60.4 %</td>
+<td>29.1 %</td>
+<td><strong>9.9 %</strong></td>
+<td>1.9 %</td>
+</tr>
+<tr>
+<td>무작위 2 사구체(20 회 평균)</td>
+<td>15</td>
+<td>17.2 %</td>
+<td>1.4 %</td>
+<td>0.1 %</td>
+<td>0.0 %</td>
+</tr>
+<tr>
+<td>무작위 6</td>
+<td>49</td>
+<td>42.1 %</td>
+<td>10.6 %</td>
+<td>1.8 %</td>
+<td>0.2 %</td>
+</tr>
+<tr>
+<td>무작위 10</td>
+<td>91</td>
+<td>64.0 %</td>
+<td>28.6 %</td>
+<td><strong>8.7 %</strong></td>
+<td>1.9 %</td>
+</tr>
+<tr>
+<td>무작위 15</td>
+<td>141</td>
+<td>77.2 %</td>
+<td>47.3 %</td>
+<td>21.0 %</td>
+<td>6.9 %</td>
+</tr>
+<tr>
+<td>무작위 20</td>
+<td>188</td>
+<td>83.4 %</td>
+<td>60.4 %</td>
+<td>33.2 %</td>
+<td>14.5 %</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>문헌 규칙 "발톱 절반 이상 · 3 개면 거의 확실"[L5][L6]을 쓰면 <strong>DM1 + VA2 의 기대값은 약 0.1 %</strong> — 측정 0.2 % 는 <strong>이 자극에서는 정상에 가깝다.</strong> 조사 에이전트의 이항 추정(발톱 7 · 켜진 비율 0.04 → 0.20 %)도 같다.</li>
+<li>식초 6 사구체 · 무작위 10 사구체에서 ≥ 3 규칙이 <strong>5~10 % 안</strong>에 든다. 문헌 목표는 이런 자극에 대한 것이다.</li>
+<li>단일 · 두 사구체 자극에서 KC 반응 비율을 잰 <strong>실험값은 찾지 못했다</strong> — 위 표는 구조 셈이다.</li>
+</ul>
+<h3 id="23-우리-lif-에서-켜진-짝-3-개가-문턱에-닿나-계산">2.3 우리 LIF 에서 켜진 짝 3 개가 문턱에 닿나 [계산]</h3>
+<p>이 모형의 정상 상태: 막전위 상승 = Σ 시냅스 수 × 0.069 mV × PN 발화율 × τ_syn(5 ms) — <strong>τ_m 은 정상 상태 높이를 바꾸지 않고 오르는 속도만</strong> 바꾼다(그래서 범위의 τ 는 KC 를 켜는 손잡이가 아니다).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>양</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PN 연결 하나(16 시냅스)가 100 Hz 에서</td>
+<td><strong>0.55 mV</strong></td>
+</tr>
+<tr>
+<td>켜진 짝 3 개 · 100 Hz</td>
+<td>1.65 mV(문턱 7 mV 의 1/4)</td>
+</tr>
+<tr>
+<td>문턱 7 mV · 먹이 PN 만으로 닿는 KC</td>
+<td>PN 100 · 200 · 300 · 400 Hz 에서 0 · 0 · 0.3 · 1.8 %</td>
+</tr>
+<tr>
+<td>문턱 2 mV(학습 한계 최소) · 같은 셈</td>
+<td>1.0 · 9.5 · 18.1 · 23.1 %</td>
+</tr>
+<tr>
+<td>먹이 PN 의 구동(ORN 150 Hz · 억제 · 같은 쪽 배율 무시)</td>
+<td>중앙 <strong>7.6 mV</strong> — 문턱 바로 위 → 발화율 추정 약 19 Hz(거친 값)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>둘째 원인: <strong>ORN → PN 도, PN → KC 도 약하다.</strong> <code>w_scale 0.25</code> 는 거대섬유 도망 반사에 맞춘 전역 배율이다(sim.yaml) — 후각 경로에는 맞춘 적이 없다.</li>
+<li>실제 KC 는 문턱이 쉬는 전위보다 <strong>21.5 ± 5.6 mV</strong> 위이고 막 시간 상수 &gt; 200 ms · 단위 EPSP 1.4 mV [L2] — 우리(문턱 7 mV · τ_m 20 ms)와 다르다. 그러니 "문턱을 낮춘다"는 생물 값과 반대 방향이다. <strong>입력 세기(PN 발화율 · PN → KC 이득)</strong> 가 먼저 의심할 곳이다.</li>
+<li><strong>PN 실제 발화율은 재지 않았다</strong>(plasticity-probe 는 KC 만 셈) — 범위 선택이 이 값에 달려 있어 6 절 M0 가 먼저다.</li>
+</ul>
+<h3 id="24-문헌-요약">2.4 문헌 요약</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>출처</th>
+<th>수치</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Turner, Bazhenov &amp; Laurent 2008 [L2]</td>
+<td>냄새 하나에 KC <strong>6 ± 5 %</strong>(71) · PN 59 ± 14 %(37) · KC 자발 0.1 /s · 문턱 − 쉬는 전위 21.5 ± 5.6 mV · τ_m &gt; 200 ms · 단위 EPSP 1.4 mV · PN : KC 수렴 약 10 : 1</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Honegger, Campbell &amp; Turner 2011 [L1]</td>
+<td>단일 분자 냄새 평균 약 5 %(933 세포) · 냄새별 평균 ≤ 10 % · 반응 KC 는 보통 <strong>5~10 스파이크</strong> · 혼합은 준선형(9 % + 9 % → 11 %) · 사과식초도 더 조밀하지 않음</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Lin et al. 2014 [L3]</td>
+<td>"~5–10 %" · APL 을 막으면 반응이 크게 늘어남(배수는 그림에만 · 못 옮김)</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Gruntman &amp; Turner 2013 [L5]</td>
+<td>발톱 절반 넘게 켜져야 발화 · 발톱 하나로 발화한 세포 191 중 2</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Ahmed et al. 2023 [L6]</td>
+<td>발톱을 줄이면 반응 KC 약 절반 · 늘리면 약 2 배 · "3 개면 거의 확실 · 2 개면 자주"</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Inada et al. 2017 [L10]</td>
+<td>입력은 거의 선형 합 · 흥분성 α′β′ &gt; αβ &gt; γ</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Amin et al. 2020 · Prisco et al. 2021 [L11]</td>
+<td>실제 APL 은 스파이크를 내지 않고 억제가 국소적</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>Li et al. 2020 [L8]</td>
+<td>hemibrain calyx 에서 KC 입력의 11.9 % KC → KC · 9.5 % APL</td>
+<td>[P]</td>
+</tr>
+<tr>
+<td>모형들 [L12]</td>
+<td>대개 <strong>KC 문턱 + APL 세기</strong> 두 손잡이로 약 10 % — Kennedy 2019 문턱으로 20 % → APL 로 절반 · Abdelrahman 2021 함께 조정 · Litwin-Kumar 2017 코딩 수준 0.1 · 최적 입력 7 · <strong>전부 여러 사구체 입력 전제</strong></td>
+<td>[P][P*]</td>
+</tr>
+<tr>
+<td>Shiu et al. 2024</td>
+<td>KC 희소성은 검증하지 않음 · 스파이크 없는 뉴런은 모형에 없다고 스스로 적음</td>
+<td>[P]</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="3-②-매개변수--50-으로-잠글-범위">3. ② 매개변수 ≤ 50 으로 잠글 범위</h2>
+<p>[그래프 · <code>runs/kc-input-20261003.json</code> · <code>runs/kc-scope-count-20261003.json</code>] — 매개변수 = 2 × 종류 수 + 쌍 수.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>후보</th>
+<th>종류</th>
+<th>쌍(조건)</th>
+<th>매개변수</th>
+<th>코드</th>
+<th>평가</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KC 15 종 전부 · 쌍 KC 안</td>
+<td>15</td>
+<td>23~76(≥ 2,000 ~ ≥ 100)</td>
+<td>53~106</td>
+<td>없음</td>
+<td>❌ 넘침 · KC → KC 쌍뿐</td>
+</tr>
+<tr>
+<td><strong><code>kc-sparse-a</code></strong>: KC 주요 9 + APL · <code>pair_dst: [APL]</code></td>
+<td>10</td>
+<td><strong>9</strong>(KC → APL · ≥ 500 이면 모두)</td>
+<td><strong>29</strong></td>
+<td><strong>없음</strong></td>
+<td>✅ 단 PN 이 약하면 못 닿음</td>
+</tr>
+<tr>
+<td>KC 9 + APL + DM1_lPN · VA2_adPN · M_lvPNm33 · <code>pair_dst: KC 9</code></td>
+<td>13</td>
+<td>32~58(KC → KC 22~37 섞임)</td>
+<td>58~84</td>
+<td>없음</td>
+<td>❌ 넘침 · 먹이 PN 에만 맞춤(과적합)</td>
+</tr>
+<tr>
+<td>같은 · <code>pair_dst: KC 9 + APL</code></td>
+<td>13</td>
+<td>41~67</td>
+<td>67~93</td>
+<td>없음</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong><code>kc-sparse-b</code></strong>: KC 9 + APL 의 τ · 문턱 + <strong>묶음 배율 4</strong>(ALPN → KC · KC → APL · APL → KC · KC → KC)</td>
+<td>10</td>
+<td>묶음 4</td>
+<td><strong>24</strong></td>
+<td><strong>필요</strong>(<code>cellparams</code> 에 "class 묶음 배율")</td>
+<td>✅ PN → KC 이득을 냄새와 무관하게 하나로</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>작은 KC 종류 6 개(합 11 뉴런)는 범위에서 빼고 기본값으로 둔다(매개변수만 늘리고 비율에 영향이 거의 없음).</li>
+<li><strong><code>kc-sparse-a</code> 를 고를 조건</strong>: M0 에서 식초 6 자극의 PN 발화율이 <strong>약 120 Hz 이상</strong>(문턱 한계 2 mV 에서 켜진 짝 3 개가 닿는 값 · 2 / (3 × 16 × 0.069 × 0.005) ≈ 121 Hz [계산]).</li>
+<li>그 아래면 문턱만으로는 못 닿는다 → <code>kc-sparse-b</code>(PN → KC 이득 하나). 쌍 단위로 PN → KC 를 열면 KC → KC 쌍이 같이 들어오고(지금 코드는 도착 종류로만 거름) 먹이 PN 에만 맞춰진다.</li>
+<li><code>kc-sparse-b</code> 의 코드 고침(묶음 배율 · 또는 <code>pair_src</code>)은 <strong>이 세션이 하지 않는다</strong> — 조율 세션 판단.</li>
+<li>어느 쪽이든 <strong>ORN → PN 은 범위 밖</strong>에 둔다. PN 반응은 냄새 좌우 결과(R-7469 M1 · M4)의 바탕이라, 바꾸면 앞 결과를 다시 재야 한다.</li>
+</ul>
+<hr />
+<h2 id="4-③-손실-측정-정의-결과-전에-잠글-것">4. ③ 손실 측정 정의 (결과 전에 잠글 것)</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>자극</th>
+<th>창</th>
+<th>측정</th>
+<th>목표 · 허용</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kc_sparsity</code></td>
+<td><strong>식초 6 사구체 ORN</strong>(DM1 · DM4 · DP1m · DM2 · VA2 · VM2) 150 Hz</td>
+<td>시작부터 <strong>300 ms</strong>(결정 하나)</td>
+<td>KC 주요 9 종(4,053) 중 스파이크 ≥ 1 인 비율 · 포아송 씨앗 3 개 평균</td>
+<td>[0.05, 0.10] · 허용 0.03</td>
+<td>[L1][L2][L3] · 식초 사구체 [L13]</td>
+</tr>
+<tr>
+<td><code>kc_sparsity_narrow</code>(음성 대조)</td>
+<td>DM1 + VA2 150 Hz</td>
+<td>300 ms</td>
+<td>같은 비율</td>
+<td>[0, 0.02] · 0.01</td>
+<td>구조 셈 0.1 %(2.2)</td>
+</tr>
+<tr>
+<td><code>kc_spikes_per_responder</code></td>
+<td>식초 6</td>
+<td>300 ms</td>
+<td>반응한 KC 의 스파이크 수 중앙</td>
+<td>[2, 10] · 2</td>
+<td>5~10 스파이크/0.5~1 s [L1] — 300 ms 로 줄여 하한 2(선언)</td>
+</tr>
+<tr>
+<td><code>kc_spontaneous</code></td>
+<td>자극 없음</td>
+<td>300 ms</td>
+<td>KC 발화 비율</td>
+<td>[0, 0.005] · 0.005</td>
+<td>자발 0.1 /s [L2]</td>
+</tr>
+<tr>
+<td><code>cns_quiet_hz</code>(기존)</td>
+<td>식초 6</td>
+<td>300 ms</td>
+<td><strong>KC · APL · 자극 뉴런을 뺀</strong> 뉴런 평균 발화율</td>
+<td>[0, 0.05] Hz · 0.02 · 가중 2</td>
+<td>뇌가 들끓는 해 차단</td>
+</tr>
+<tr>
+<td><code>kc_claw_consistency</code>(진단 · 손실 아님)</td>
+<td>식초 6</td>
+<td>300 ms</td>
+<td>반응한 KC 중 "켜진 PN 짝 ≥ 2" 인 비율</td>
+<td>기록만</td>
+<td>발톱 일치 규칙[L5] — 배선이 정한 KC 가 켜지나</td>
+</tr>
+<tr>
+<td>재배선 대조</td>
+<td>같은 매개변수 · 차수 보존 재배선 s0</td>
+<td>같음</td>
+<td>위 전부</td>
+<td><strong>기록 · 나란히</strong></td>
+<td>R 2.0-6</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>KC 비율의 분모는 <strong>KC 주요 9 종 4,053 개</strong>로 고정한다(작은 종류 제외 · <code>plasticity-probe</code> 의 4,064 와 다름을 적는다).</li>
+<li>⚠️ <strong>재배선은 희소성을 그대로 낼 수 있다.</strong> 차수 보존 재배선은 KC 당 PN 짝 수(발톱 수)를 보존하므로 "몇 % 켜지나"는 비슷할 것이다. 희소성이 배선 덕인지는 <strong>"어느 KC 가 켜지나"</strong> 로 봐야 한다 — <code>kc_claw_consistency</code> 와, 두 냄새(식초 6 대 무작위 10 사구체)에서 켜진 KC 집합의 겹침을 진짜 · 재배선에 나란히 적는다. "재배선과 같은 비율"은 실패가 아니다(이 목표는 원래 배선 특이적이지 않다).</li>
+<li>일반화 확인(손실 밖): 맞춘 뒤 <strong>무작위 10 사구체 세트 5 개</strong>(학습에 안 쓴 것)에서 KC 비율이 [0.03, 0.15] 안인지.</li>
+</ul>
+<hr />
+<h2 id="5-④-위험">5. ④ 위험</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>위험</th>
+<th>내용</th>
+<th>막는 법</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>좁은 자극에 맞추기</td>
+<td>DM1 + VA2 로 5~10 % 를 만들면 보통 냄새에서 KC 대부분이 켜짐(무작위 15 사구체 ≥ 2 규칙이면 47 % · ≥ 1 이면 77 %)</td>
+<td>목표는 식초 6 · DM1 + VA2 는 음성 대조 · 무작위 세트로 일반화 확인</td>
+</tr>
+<tr>
+<td>KC → KC 양성 되먹임</td>
+<td>KC 입력의 55 % 가 KC → KC 흥분(점 뉴런 LIF 에서는 축삭끼리 연결도 막전위로 들어감) → 몇 개가 켜지면 번짐</td>
+<td>손실 상한(10 %) · 반응당 스파이크 상한 · <code>kc-sparse-b</code> 면 KC → KC 묶음 배율을 1 이하로 묶는 것도 선택지(선언)</td>
+</tr>
+<tr>
+<td>뇌 전체가 들끓는 해</td>
+<td>문턱 · 배율을 올리면 MB 밖으로 번짐</td>
+<td><code>cns_quiet_hz</code> 가중 2(기존) · 자극 없음 항</td>
+</tr>
+<tr>
+<td>APL 이 일하지 않음</td>
+<td>KC 가 거의 조용하면 APL 도 조용 → APL 매개변수가 정해지지 않음 · 실제 APL 은 스파이크를 안 냄 [L11]</td>
+<td>APL 매개변수는 <strong>KC 가 켜지는 자극에서만</strong> 의미 · 결과를 "생물 APL 값"으로 읽지 않음</td>
+</tr>
+<tr>
+<td>퇴화 · 비식별</td>
+<td>서로 다른 조합이 같은 비율 [L14] · KC 당 입력 수와 세기의 반비례 보상(hemibrain)을 종류 쌍 배율 하나가 깰 수 있음 [L12]</td>
+<td>규제(θ₀ 근처) · 결과 매개변수를 생물 값으로 해석하지 않음</td>
+</tr>
+<tr>
+<td>다른 범위 결과 훼손</td>
+<td>KC 는 도망 경로 밖이지만, PN 을 바꾸면 냄새 좌우(M4 · LN4)가 바뀜</td>
+<td>ORN → PN · PN 매개변수는 범위 밖</td>
+</tr>
+<tr>
+<td>가소성의 다음 단계</td>
+<td>KC 가 켜져도 DAN 은 부호 0 · MBON 반응은 따로 확인</td>
+<td>맞춘 뒤 plasticity-probe 를 <strong>식초 6 으로</strong> 다시</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="6-⑤-측정-계획-조율-세션--시간은-fit-probe-실측-33-s시행--준비-58-s-로-추정">6. ⑤ 측정 계획 (조율 세션 · 시간은 fit-probe 실측 3.3 s/시행 · 준비 5.8 s 로 추정)</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>무엇</th>
+<th>몇 회</th>
+<th>산출</th>
+<th>시간</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>M0</strong></td>
+<td>학습 없이 <strong>지금 매개변수</strong>로 재기: 자극 {식초 6 · DM1 + VA2 · 무작위 10 × 3 세트 · 없음} × 창 {100 · 300 · 500 ms} × 포아송 씨앗 3 × {진짜 · 재배선 s0}</td>
+<td>6 × 3 × 3 × 2 = 108 시행</td>
+<td><strong>PN 종류별 발화율</strong> · KC 비율 · 반응당 스파이크 · 켜진 짝 수별 KC 반응률 · APL · 나머지 뇌</td>
+<td>약 6~8 분</td>
+</tr>
+<tr>
+<td>M0 판정</td>
+<td>식초 6 · 300 ms 의 KC 비율이 이미 [0.05, 0.10] 이면 <strong>학습하지 않는다</strong>(목표는 자극을 바꾸는 것으로 끝) · PN 발화율 ≥ 120 Hz → <code>kc-sparse-a</code> · 아래 → <code>kc-sparse-b</code>(코드)</td>
+<td>—</td>
+<td>범위 · 손실을 <code>config/fit.yaml</code> · <code>physiology.yaml</code> 에 <strong>결과 전 커밋</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>M1</td>
+<td>CMA-ES · <code>kc-sparse-a</code>(29) — 개체 4 + ⌊3 ln 29⌋ = 14 · 평가 한 번 = 식초 6 × 3 씨앗 + DM1 + VA2 + 없음 + 재배선 식초 1 = 6 시행</td>
+<td>14 × 6 × 50 세대 = 4,200 시행</td>
+<td>손실 곡선 · 매개변수 · 항목별</td>
+<td>약 3.9 시간(50 세대) · 100 세대면 약 7.7 시간</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>맞춘 매개변수 검증 — 무작위 10 사구체 5 세트 × 씨앗 3 · 진짜 · 재배선 · 켜진 KC 집합 겹침 · 도망 5 항목 다시</td>
+<td>30 + 도망 40 시행</td>
+<td>일반화 · 다른 범위 훼손 여부</td>
+<td>약 5 분</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>plasticity-probe 를 식초 6 으로(맞춘 매개변수)</td>
+<td>기존과 같음</td>
+<td>MBON · 보상 구획 반응 → F-007 가능 여부</td>
+<td>수 분</td>
+</tr>
+</tbody>
+</table></div>
+<p>M0 하나로 ①의 남은 질문(PN 실제 발화율 · 켜진 짝 수와 KC 반응의 관계)이 풀리고, 학습이 필요한지조차 결정된다 — <strong>M0 먼저</strong>.</p>
+<hr />
+<h2 id="7-확인하지-못한-것">7. 확인하지 못한 것</h2>
+<ul>
+<li>단일 · 두 사구체 자극에서 KC 반응 비율 실험값 — 못 찾음(2.2 는 구조 셈).</li>
+<li>Lin 2014 의 APL 차단 배수 · Turner 2008 의 잠복 · 반응당 스파이크 평균 · Gruntman 2013 · Inada 2017 의 문턱 mV · PN 냄새 반응 발화율 실측(Olsen 2010 모형 상한 165 /s 만 확인).</li>
+<li>Zheng 2022 의 음식 반응 PN 무리에 DM1 · VA2 가 드는지(그림에만).</li>
+<li>우리 모형의 PN 실제 발화율(2.3 의 19 Hz 는 억제 · 같은 쪽 배율을 뺀 거친 계산) — M0 에서 잰다.</li>
+<li>"켜짐 = ORN 입력 ≥ 10 %" · "발톱 = PN 짝 하나" 는 셈을 위한 근사다(한 PN 이 한 KC 에 여러 발톱을 낼 수 있음).</li>
+<li>식초 사구체 6 개는 Semmelhack 2009 의 3 ppm 조건이다 — 농도가 오르면 더 많이 켜진다.</li>
+</ul>
+<hr />
+<h2 id="참고-문헌">참고 문헌</h2>
+<ul>
+<li>[L1] Honegger K.S., Campbell R.A.A., Turner G.C. 2011. Cellular-resolution population imaging reveals robust sparse coding in the Drosophila mushroom body. <em>J Neurosci</em> 31:11772–11785. [P]</li>
+<li>[L2] Turner G.C., Bazhenov M., Laurent G. 2008. Olfactory representations by Drosophila mushroom body neurons. <em>J Neurophysiol</em> 99:734–746. [P]</li>
+<li>[L3] Lin A.C., Bygrave A.M., de Calignon A., Lee T., Miesenböck G. 2014. Sparse, decorrelated odor coding in the mushroom body enhances learned odor discrimination. <em>Nat Neurosci</em> 17:559–568. [P]</li>
+<li>[L4] Murthy M., Fiete I., Laurent G. 2008. Testing odor response stereotypy in the Drosophila mushroom body. <em>Neuron</em> 59:1009–1023. [P]</li>
+<li>[L5] Gruntman E., Turner G.C. 2013. Integration of the olfactory code across dendritic claws of single mushroom body neurons. <em>Nat Neurosci</em> 16:1821–1829. [P]</li>
+<li>[L6] Ahmed M., …, Turner G.C. 2023. Input density tunes Kenyon cell sensory responses in the Drosophila mushroom body. <em>Curr Biol</em> 33:2742. [P]</li>
+<li>[L7] Caron S.J.C., Ruta V., Abbott L.F., Axel R. 2013. Random convergence of olfactory inputs in the Drosophila mushroom body. <em>Nature</em> 497:113–117. [P]</li>
+<li>[L8] Li F., et al. 2020. The connectome of the adult Drosophila mushroom body provides insights into function. <em>eLife</em> 9:e62576. [P]</li>
+<li>[L9] Zheng Z., et al. 2022. Structured sampling of olfactory input by the fly mushroom body. <em>Curr Biol</em> 32:3334–3349. [P]</li>
+<li>[L10] Inada K., Tsuchimoto Y., Kazama H. 2017. Origins of cell-type-specific olfactory processing in the Drosophila mushroom body circuit. <em>Neuron</em> 95:357–367. [P]</li>
+<li>[L11] Amin H., Apostolopoulou A.A., Suárez-Grimalt R., Vrontou E., Lin A.C. 2020. Localized inhibition in the Drosophila mushroom body. <em>eLife</em> 9:e56954 [P] · Prisco L., Deimel S.H., Yeliseyeva H., Fiala A., Tavosanis G. 2021. The anterior paired lateral neuron normalizes odour-evoked activity in the Drosophila mushroom body calyx. <em>eLife</em> 10:e74172 [P]</li>
+<li>[L12] Kennedy A. 2019. Learning with naturalistic odor representations in a dynamic model of the Drosophila olfactory system. bioRxiv 783191 [P*] · Abdelrahman N.Y., Vasilaki E., Lin A.C. 2021. Compensatory variability in network parameters enhances memory performance in the Drosophila mushroom body. <em>PNAS</em> 118:e2102158118 [P] · Litwin-Kumar A., Harris K.D., Axel R., Sompolinsky H., Abbott L.F. 2017. Optimal degrees of synaptic connectivity. <em>Neuron</em> 93:1153–1164 [P] · Rapp H., Nawrot M.P. 2020. A spiking neural program for sensorimotor control during foraging in flying insects. <em>PNAS</em> 117:28412 [P]</li>
+<li>[L13] Semmelhack J.L., Wang J.W. 2009. Select Drosophila glomeruli mediate innate olfactory attraction and aversion. <em>Nature</em> 459:218–223. [P — 사과식초 3 ppm 에서 DM1 · DM4 · DP1m · DM2 · VA2 · VM2]</li>
+<li>[L14] Prinz A.A., Bucher D., Marder E. 2004. Similar network activity from disparate circuit parameters. <em>Nat Neurosci</em> 7:1345–1352 [A] · Beiran M., Litwin-Kumar A. 2025. Prediction of neural activity in connectome-constrained recurrent networks. <em>Nat Neurosci</em> 28:2561 [A]</li>
+<li>Shiu P.K., et al. 2024. A Drosophila computational brain model reveals sensorimotor processing. <em>Nature</em> 634:210–219. [P]</li>
+</ul>
+<div class="pager"><a href="15-깊은-판단-호출-조사.html">← 15 · 깊은 판단 호출 — 조사</a><span></span></div>
+<footer>이 HTML 은 <code>16-KC-희소성-범위-조사.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>
