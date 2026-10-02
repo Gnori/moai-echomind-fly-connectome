@@ -52,7 +52,9 @@
 - [x] `config/plasticity.yaml`(plasticity-v1 · 규칙 · η 보정 목표 · 구획 · 사건 → DAN · 대조군 다섯)
 - [x] 구획 표를 그래프에서 생성 · `plasticity-probe` 코드(2026-10-01 · 미리 개발 · **실행 없음**) — `plasticity.py`: `compartments`(MBON 종류마다 시냅스 최다 DAN 종류) · `ThreeFactor`(KC 흔적 · 구획 DAN 신호 · 곱셈 약화 · 바닥 m_min · 창 단위 `update` → `apply`(엔진 KC → MBON 세기 = 처음 세기 × m · 새 `Engine.set_edge_weights`)) · `plasticity-probe --eta …`(KC 발화 비율 · MBON 이 KC 로 발화하나 · 짝짓기 1 s 뒤 보상 구획 MBON 의 CS+ 반응 변화). 시험 4(작은 버섯체 그래프).
   실측(traced-v1 · 그래프 읽기만): KC → MBON 연결 **61,210**(I v2 와 같음) · KC 4,064 · 구획 37 · 문헌 대조 **7/7 일치**(PPL101→MBON11 · PAM01→MBON01 · PAM08→MBON05 · PAM10→MBON06 · PAM11→MBON07 · PPL103→MBON12 · PPL106→MBON14)
-- [ ] `plasticity-probe` 실행(무거움 · 요구자 확인 뒤 · 회로 학습 뒤 순서)
+- [x] `plasticity-probe` 실행(2026-10-03 07:14 · 25 s · 1.7 GB · `runs/plasticity-probe-20261003-071444.json` · 냄새 ORN_DM1 · VA2 150 Hz · 창 100 ms · 짝짓기 1 s · η 0.001 / 0.01 / 0.1):
+  **KC 발화 비율 0.002(0.2 %) — 목표 5~10 %(Lin 2014 · physiology-v1 `kc_sparsity`)의 1/25~1/50** · MBON 발화 합 5 · 보상 구획 MBON 0 → 0 · m 평균 0.999~1.000 → **가소성을 잴 수 없다**(KC 가 거의 안 켜져 흔적이 없고 MBON 이 침묵). 규약대로 손으로 고치지 않고 기록(I v2 §8.3 "0 % 면 F-006 목표로").
+  → F-006 의 **아직 못 맞추는 목표**가 나왔다: KC 희소성(0.2 % → 5~10 %). 범위(PN → KC · APL 억제 등 종류)를 결과 전에 잠근 뒤 착수(요구자 확인)
 - [ ] `task-v3`(냄새 둘) · 대조군 다섯 · `value` 채널 해독(stats-v2)
 
 ## Task 7: retino-v2 (I v2 §9 · 가벼움)
