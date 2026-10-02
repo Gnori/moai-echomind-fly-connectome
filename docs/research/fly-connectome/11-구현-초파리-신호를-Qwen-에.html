@@ -1112,7 +1112,7 @@
 <li><strong>섞은 배선은 셋뿐</strong>이고 <strong>s2(0.42)는 구간이 겹친다.</strong></li>
 </ol>
 <p>파일: <code>runs/scorecard-20261001-162209/scorecard.json</code>(sha256 <code>09a35910eff2da08</code>). 대장은 <a href="../../training/10-학습-기록과-다음.html">학습 안내서 10장 2.10</a>.</p>
-<h2 id="811-층-구조--깊은-판단이-필요할-때만-qwen-r-1027--2026-10-01--준비만--성적표-아직">8.11 층 구조 — 깊은 판단이 필요할 때만 Qwen (R-1027 · 2026-10-01 · 준비만 · 성적표 아직)</h2>
+<h2 id="811-층-구조--깊은-판단이-필요할-때만-qwen-r-1027--2026-10-01-준비--10-02-성적표">8.11 층 구조 — 깊은 판단이 필요할 때만 Qwen (R-1027 · 2026-10-01 준비 · 10-02 성적표)</h2>
 <p>지금 성적표는 <strong>결정마다</strong>(300 ms) Qwen 을 부른다. 사람도 걸음마다 깊이 생각하지 않는다 — 그래서 세 층으로 나눴다(<a href="15-깊은-판단-호출-조사.html">연구 노트 15</a> · <code>loop/tiered.py</code> · <code>loop/fast_policy.py</code> · <code>config/control.yaml</code>).</p>
 <div class="tbl"><table>
 <thead>
@@ -1169,7 +1169,132 @@
 </tr>
 </tbody>
 </table></div>
-<p>파일: <code>runs/fast-policy-fly-loop-v4-real-fast-v2/calibration-control-v2.json</code>. 성적표 층 구성(scorecard-v4 · <code>e0cf3ee</code>)은 <strong>아직 돌리지 않았다</strong> — 결과가 나오면 이 절에 적는다. 결정 기록에는 층(<code>tier</code>) · 계기(<code>trigger</code>)가 남고 대시보드 에피소드 쪽이 보여 준다.</p>
+<p>파일: <code>runs/fast-policy-fly-loop-v4-real-fast-v2/calibration-control-v2.json</code>. 성적표 층 구성(scorecard-v4 · <code>e0cf3ee</code>)의 결과는 아래 "성적표 결과". 결정 기록에는 층(<code>tier</code>) · 계기(<code>trigger</code>)가 남고 대시보드 에피소드 쪽이 보여 준다.</p>
+<h3 id="성적표-결과-2026-10-02">성적표 결과 (2026-10-02)</h3>
+<p>씨앗 2000~2039(40) · 11 구성 · 문턱은 control-v2(결과 전 잠금 <code>8756f86</code>). ⚠️ <strong>투영기는 train-v6</strong> — 씨앗 100 성적표(8.10a)에서 대조군을 이긴 판이라 <strong>결과를 보고 고른 것</strong>이다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>구성</th>
+<th>먹이 도착</th>
+<th>호출(결정 대비)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>늘 부름(<code>vector</code> · 지금 방식)</td>
+<td>0.350</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>빠른 정책만(<code>fast-only</code>)</td>
+<td>0.475</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>사건 때만(<code>vector-gated</code>)</strong></td>
+<td><strong>0.575</strong></td>
+<td><strong>0.182</strong>(−82 %)</td>
+</tr>
+<tr>
+<td>같은 호출률 무작위(<code>vector-random-matched</code>)</td>
+<td>0.550</td>
+<td>0.191</td>
+</tr>
+<tr>
+<td>같은 호출률 주기(<code>vector-periodic-matched</code>)</td>
+<td>0.550</td>
+<td>0.143</td>
+</tr>
+<tr>
+<td>섞은 배선 사건 때만 s0 · s1 · s2</td>
+<td>0.500 · 0.450 · 0.475</td>
+<td>기록 없음</td>
+</tr>
+<tr>
+<td>섞은 배선 빠른 정책만 s0 · s1 · s2</td>
+<td>0.475 · 0.450 · 0.625</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>비용</strong>: Qwen 몫 벽시계 1,636 s → <strong>193 s(−88 %)</strong> · 에피소드 벽시계 합 96.8 → <strong>47.3 분(−51 %)</strong>.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>판정</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>사건 때만 대 같은 호출률 <strong>무작위</strong></td>
+<td>p <strong>0.51</strong> — 못 넘음</td>
+</tr>
+<tr>
+<td>사건 때만 대 같은 호출률 <strong>주기</strong></td>
+<td>p <strong>0.50</strong> — 못 넘음</td>
+</tr>
+<tr>
+<td>진짜 대 섞은 배선(사건 때만끼리)</td>
+<td>순위 100 % · p 0.12 — 못 넘음</td>
+</tr>
+<tr>
+<td>진짜 대 섞은 배선(빠른 정책만끼리)</td>
+<td>순위 33 % · p 0.71 — 못 넘음</td>
+</tr>
+<tr>
+<td>PGR</td>
+<td>늘 부름(0.350)이 빠른 정책만(0.475)보다 낮아 분모가 음수(−0.8) — <strong>의미 없음</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>→ <strong>"호출을 줄였다"까지만 쓴다.</strong> 사건 때만 부른 것이 같은 횟수를 무작위로 · 주기로 부른 것보다 낫다고 할 수 없어 <strong>"잘 골랐다"는 쓰지 않는다.</strong> 진짜 배선이 섞은 배선보다 낫다는 말도 이 성적표로는 쓰지 않는다.</p>
+<p><strong>쓸모 있는 호출</strong> — 계기별로 Qwen 이 교사와 같은 쪽을 고른 비율을, 같은 결정에서 빠른 정책이 골랐을 쪽과 나란히:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>계기</th>
+<th>횟수</th>
+<th>교사와 같음 — Qwen</th>
+<th>같은 결정에서 빠른 정책</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>애매함</td>
+<td>7</td>
+<td><strong>0.714</strong></td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>시간 상한</td>
+<td>49</td>
+<td>0.551</td>
+<td><strong>0.735</strong>(Qwen 이 오히려 나쁨)</td>
+</tr>
+<tr>
+<td>목표</td>
+<td>40</td>
+<td>0.675</td>
+<td>0.700</td>
+</tr>
+<tr>
+<td>충돌</td>
+<td>1</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>놀람</td>
+<td>0</td>
+<td>—</td>
+<td>— (0.99 분위수 문턱은 한 번도 켜지지 않음)</td>
+</tr>
+</tbody>
+</table></div>
+<p>읽는 법: 애매할 때 부른 7 번은 Qwen 이 빠른 정책보다 확실히 나았다. 그러나 가장 많은 <strong>시간 상한 호출(49 번)은 오히려 빠른 정책보다 나빴다</strong> — 시간이 지났다는 것만으로는 깊은 판단이 필요한 때가 아니다. 놀람 계기는 한 번도 켜지지 않았다.
+파일: <code>runs/scorecard-20261002-212213/scorecard.json</code>(sha256 <code>b5692ca234a53eb6</code>) · <strong>판정 정본은 같은 폴더 <code>scorecard.rejudged.json</code></strong>(sha256 <code>6f9d63610c4e25db</code> — 바탕 판정이 섞은 배선 층 구성까지 섞던 오류를 고친 뒤 다시 판정 · 원본 파일은 그대로 · <code>9df30d1</code>). 정본 R-1027 P Task 5 T4. 대장은 <a href="../../training/10-학습-기록과-다음.html">학습 안내서 10장 2.11</a> · 조사는 <a href="15-깊은-판단-호출-조사.html">연구 노트 15 §8</a>.</p>
 <h2 id="9-정직하게-적어-둘-한계">9. 정직하게 적어 둘 한계</h2>
 <ul>
 <li><strong>행동을 정하는 판단은 여전히 Qwen(과 교사 규칙)의 것이다</strong>(07 의 판정). 초파리 뇌는 감각을 처리해 신호를 만드는 인코더 자리다.</li>

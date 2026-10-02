@@ -775,6 +775,132 @@
 T4 는 무작위 · 주기 대조가 없으면 "사건 기반이 낫다"를 판정할 수 없으므로 구성에서 빼지 않는다.
 시간은 모두 추정이다 — T4 는 먼저 2 에피소드로 재고 늘린다(무거운 실행 규약).</p>
 <hr />
+<h2 id="8-측정-결과-조율-세션--2026-10-02">8. 측정 결과 (조율 세션 · 2026-10-02)</h2>
+<blockquote>
+<p>이 절은 조율 세션이 돌린 성적표 결과의 <strong>기록</strong>이다 — 위 1~7 절(조사 · 설계)은 고치지 않았다. 해석은 <a href="11-구현-초파리-신호를-Qwen-에.html">11 §8.11</a>.</p>
+</blockquote>
+<p>씨앗 2000~2039(40) · 11 구성 · 문턱은 control-v2(결과 전 잠금 <code>8756f86</code>). ⚠️ <strong>투영기는 train-v6</strong> — 씨앗 100 성적표(8.10a)에서 대조군을 이긴 판이라 <strong>결과를 보고 고른 것</strong>이다. 판정은 5.3 의 규칙 그대로(<code>gating-v1</code>).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>구성</th>
+<th>먹이 도착</th>
+<th>호출(결정 대비)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>늘 부름(<code>vector</code> · 지금 방식)</td>
+<td>0.350</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>빠른 정책만(<code>fast-only</code>)</td>
+<td>0.475</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>사건 때만(<code>vector-gated</code>)</strong></td>
+<td><strong>0.575</strong></td>
+<td><strong>0.182</strong>(−82 %)</td>
+</tr>
+<tr>
+<td>같은 호출률 무작위(<code>vector-random-matched</code>)</td>
+<td>0.550</td>
+<td>0.191</td>
+</tr>
+<tr>
+<td>같은 호출률 주기(<code>vector-periodic-matched</code>)</td>
+<td>0.550</td>
+<td>0.143</td>
+</tr>
+<tr>
+<td>섞은 배선 사건 때만 s0 · s1 · s2</td>
+<td>0.500 · 0.450 · 0.475</td>
+<td>기록 없음</td>
+</tr>
+<tr>
+<td>섞은 배선 빠른 정책만 s0 · s1 · s2</td>
+<td>0.475 · 0.450 · 0.625</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p>비용: Qwen 몫 벽시계 1,636 s → 193 s(−88 %) · 에피소드 벽시계 합 96.8 → 47.3 분(−51 %).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>판정</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>사건 때만 대 같은 호출률 <strong>무작위</strong></td>
+<td>p <strong>0.51</strong> — 못 넘음</td>
+</tr>
+<tr>
+<td>사건 때만 대 같은 호출률 <strong>주기</strong></td>
+<td>p <strong>0.50</strong> — 못 넘음</td>
+</tr>
+<tr>
+<td>진짜 대 섞은 배선(사건 때만끼리)</td>
+<td>순위 100 % · p 0.12 — 못 넘음</td>
+</tr>
+<tr>
+<td>진짜 대 섞은 배선(빠른 정책만끼리)</td>
+<td>순위 33 % · p 0.71 — 못 넘음</td>
+</tr>
+<tr>
+<td>PGR</td>
+<td>늘 부름(0.350)이 빠른 정책만(0.475)보다 낮아 분모가 음수(−0.8) — <strong>의미 없음</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>→ 5.3 의 규칙대로 <strong>"호출을 줄였다"까지만</strong> 쓴다(사건 때만 &gt; 같은 호출률 무작위가 아님).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>계기</th>
+<th>횟수</th>
+<th>교사와 같음 — Qwen</th>
+<th>같은 결정에서 빠른 정책</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>애매함</td>
+<td>7</td>
+<td><strong>0.714</strong></td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>시간 상한</td>
+<td>49</td>
+<td>0.551</td>
+<td><strong>0.735</strong>(Qwen 이 오히려 나쁨)</td>
+</tr>
+<tr>
+<td>목표</td>
+<td>40</td>
+<td>0.675</td>
+<td>0.700</td>
+</tr>
+<tr>
+<td>충돌</td>
+<td>1</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>놀람</td>
+<td>0</td>
+<td>—</td>
+<td>— (0.99 분위수 문턱은 한 번도 켜지지 않음)</td>
+</tr>
+</tbody>
+</table></div>
+<p>파일: <code>runs/scorecard-20261002-212213/scorecard.json</code>(sha256 <code>b5692ca234a53eb6</code>) · <strong>판정 정본은 같은 폴더 <code>scorecard.rejudged.json</code></strong>(sha256 <code>6f9d63610c4e25db</code> — 바탕 판정이 섞은 배선 층 구성까지 섞던 오류를 고친 뒤 다시 판정 · 원본 파일은 그대로 · <code>9df30d1</code>). 정본 R-1027 P Task 5 T4.</p>
 <h2 id="참고-문헌">참고 문헌</h2>
 <p><strong>신경과학 · 인지</strong>
 - [N1] Daw N.D., Niv Y., Dayan P. 2005. Uncertainty-based competition between prefrontal and dorsolateral striatal systems for behavioral control. <em>Nat Neurosci</em> 8:1704–1711. [P]

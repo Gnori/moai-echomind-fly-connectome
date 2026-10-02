@@ -1191,6 +1191,87 @@ v5 에서 no_llm 이 0 이었듯 이번에도 0 — 회로만으로 먹이에 �
 <li><strong>재배선은 셋뿐</strong>이고, <strong>s2(0.42)는 구간이 vector 와 겹친다</strong>(0.32~0.51 대 0.37~0.56).</li>
 </ol>
 <p>백업 대조 730/730. 정본: R-7469 F-005(<code>ba2d3df</code>).</p>
+<h3 id="211-층-구조-성적표r-1027--씨앗-20002039--11-구성--runsscorecard-20261002-212213--판정-scorecardrejudgedjson">2.11 층 구조 성적표(R-1027) — 씨앗 2000~2039 · 11 구성 · <code>runs/scorecard-20261002-212213/</code> · 판정 <code>scorecard.rejudged.json</code></h3>
+<p>씨앗 2000~2039(40) · 11 구성 · 문턱은 control-v2(결과 전 잠금 <code>8756f86</code>). ⚠️ <strong>투영기는 train-v6</strong> — 씨앗 100 성적표(8.10a)에서 대조군을 이긴 판이라 <strong>결과를 보고 고른 것</strong>이다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>구성</th>
+<th>먹이 도착</th>
+<th>호출(결정 대비)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>늘 부름(<code>vector</code> · 지금 방식)</td>
+<td>0.350</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>빠른 정책만(<code>fast-only</code>)</td>
+<td>0.475</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>사건 때만(<code>vector-gated</code>)</strong></td>
+<td><strong>0.575</strong></td>
+<td><strong>0.182</strong>(−82 %)</td>
+</tr>
+<tr>
+<td>같은 호출률 무작위(<code>vector-random-matched</code>)</td>
+<td>0.550</td>
+<td>0.191</td>
+</tr>
+<tr>
+<td>같은 호출률 주기(<code>vector-periodic-matched</code>)</td>
+<td>0.550</td>
+<td>0.143</td>
+</tr>
+<tr>
+<td>섞은 배선 사건 때만 s0 · s1 · s2</td>
+<td>0.500 · 0.450 · 0.475</td>
+<td>기록 없음</td>
+</tr>
+<tr>
+<td>섞은 배선 빠른 정책만 s0 · s1 · s2</td>
+<td>0.475 · 0.450 · 0.625</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p>비용: Qwen 몫 벽시계 1,636 s → 193 s(−88 %) · 에피소드 벽시계 합 96.8 → 47.3 분(−51 %).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>판정</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>사건 때만 대 같은 호출률 <strong>무작위</strong></td>
+<td>p <strong>0.51</strong> — 못 넘음</td>
+</tr>
+<tr>
+<td>사건 때만 대 같은 호출률 <strong>주기</strong></td>
+<td>p <strong>0.50</strong> — 못 넘음</td>
+</tr>
+<tr>
+<td>진짜 대 섞은 배선(사건 때만끼리)</td>
+<td>순위 100 % · p 0.12 — 못 넘음</td>
+</tr>
+<tr>
+<td>진짜 대 섞은 배선(빠른 정책만끼리)</td>
+<td>순위 33 % · p 0.71 — 못 넘음</td>
+</tr>
+<tr>
+<td>PGR</td>
+<td>늘 부름(0.350)이 빠른 정책만(0.475)보다 낮아 분모가 음수(−0.8) — <strong>의미 없음</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>→ <strong>"호출을 줄였다"까지만</strong>("잘 골랐다"는 쓰지 않는다). 쓸모 있는 호출(교사와 같음 Qwen 대 빠른 정책): 애매함 7 번 0.714 대 0.000 · 시간 상한 49 번 0.551 대 0.735(오히려 나쁨) · 목표 40 번 0.675 대 0.700 · 충돌 1 · 놀람 0.
+파일: <code>runs/scorecard-20261002-212213/scorecard.json</code>(sha256 <code>b5692ca234a53eb6</code>) · <strong>판정 정본은 같은 폴더 <code>scorecard.rejudged.json</code></strong>(sha256 <code>6f9d63610c4e25db</code> — 바탕 판정이 섞은 배선 층 구성까지 섞던 오류를 고친 뒤 다시 판정 · 원본 파일은 그대로 · <code>9df30d1</code>). 정본 R-1027 P Task 5 T4. 해석은 <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">연구 노트 11 §8.11</a>.</p>
 <h2 id="3-해석--막힌-곳은-앞이-아니라-전달이다">3. 해석 — 막힌 곳은 앞이 아니라 전달이다</h2>
 <div class="tbl"><table>
 <thead>
