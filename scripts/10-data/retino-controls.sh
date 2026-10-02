@@ -11,8 +11,8 @@ no_lock
 for spec in "real:" "az:retino-v2.shuffled-azimuth-s0" "aztype:retino-v2.shuffled-azimuth-type-s0"; do
   tag=${spec%%:*}; rule=${spec#*:}
   RR=(); [ -n "$rule" ] && RR=(--retino-rule "$rule")
-  step 40 replay --pack "$SRC" --split eval --name "v5ret-$tag-eval" --rewired-seeds "" "${RR[@]}"
-  step 40 replay --pack "$SRC" --split train --name "v5ret-$tag-train" --rewired-seeds "" --seeds "$TSEEDS" "${RR[@]}"
+  step 40 replay --pack "$SRC" --split eval --name "v5ret-$tag-eval" --rewired-seeds "" ${RR[@]+"${RR[@]}"}
+  step 40 replay --pack "$SRC" --split train --name "v5ret-$tag-train" --rewired-seeds "" --seeds "$TSEEDS" ${RR[@]+"${RR[@]}"}
   step 0 dataset pack --name "fly-loop-v5-ret-$tag" --train "v5ret-$tag-train" --eval "v5ret-$tag-eval"
   step 0 dataset verify "fly-loop-v5-ret-$tag"
 done
