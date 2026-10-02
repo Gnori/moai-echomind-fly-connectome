@@ -1059,6 +1059,59 @@
 <p>진짜 배선은 섞은 배선 셋 <strong>모두</strong>보다 높다(순위 100 %) — 처음이다. 그러나 씨앗별 부호 뒤집기 <strong>p 0.056</strong> 으로 미리 정한 문턱(0.05)을 넘지 못해 <strong>섞은 배선 대조를 이기지 못했다</strong>고 적는다.
 결정 기록에서 진짜(0.592)와 섞은 배선 s1(0.588)이 거의 같다 — v6 과 같은 모양이다. 씨앗 수가 달라(40 → 100) v6 과 숫자를 바로 비교하지 않는다.
 파일: <code>runs/caption-judge-train-v7-final.json</code>(sha256 <code>8cf451a968586510</code>) · <code>runs/scorecard-20260930-151822/scorecard.json</code>(sha256 <code>69e0ca8f6ef173d0</code>). 대장은 <a href="../../training/10-학습-기록과-다음.html">학습 안내서 10장 1.2d · 2.8 · 2.9</a>.</p>
+<h3 id="810a-train-v6-성적표-다시--씨앗-100-2026-10-01--결과-전에-정한-재실행--처음으로-대조군-통과">8.10a train-v6 성적표 다시 — 씨앗 100 (2026-10-01 · 결과 전에 정한 재실행) · 처음으로 대조군 통과</h3>
+<p>8.9 의 v6 투영기 · 과제 · 규칙을 <strong>그대로</strong> 두고 씨앗만 40 → 100 으로 늘려 다시 쟀다(씨앗 40 은 구간 ±0.15 라 가를 수 없었다 · 재실행은 결과 전에 정함).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>방식</th>
+<th>먹이 도착(95 % 구간)</th>
+<th>끝났을 때 먹이까지</th>
+<th>교사가 돌라 한 결정에서 같은 쪽</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>벡터</strong> (진짜 배선)</td>
+<td><strong>0.46</strong>(0.37~0.56)</td>
+<td>5.6 mm</td>
+<td>0.598</td>
+</tr>
+<tr>
+<td>섞은 배선 s0 · s1 · s2</td>
+<td>0.19 · 0.33 · 0.42</td>
+<td>19.9 · 9.2 · 8.8 mm</td>
+<td>0.478 · 0.559 · 0.545</td>
+</tr>
+<tr>
+<td>글</td>
+<td>0.00</td>
+<td>46.1 mm</td>
+<td>—</td>
+</tr>
+<tr>
+<td>회로 없음(참값 숫자)</td>
+<td>0.47</td>
+<td>15.8 mm</td>
+<td>0.687</td>
+</tr>
+<tr>
+<td>LLM 없음</td>
+<td>0.00</td>
+<td>5.6 mm</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>진짜 배선이 섞은 배선 셋 모두보다 높고(순위 100 %) 씨앗별 <strong>부호 뒤집기 p 0.0048</strong> → 미리 정한 판정(scorecard-v2)을 <strong>처음으로 통과했다</strong> — 규칙(R 2.0-6)이 허용하는 문구로 적는다: <strong>"초파리 배선 벡터가 섞은 배선보다 나았다."</strong>
+재현: 앞 씨앗 40 은 09-28 성적표(8.9)와 <strong>에피소드마다 같다</strong>(40/40). 뒤 씨앗 60 만 보면 vector 0.533 · 섞은 배선 0.183 / 0.300 / 0.500 · 회로 없음 0.567.</p>
+<p>⚠️ 이 문장은 <strong>아래 셋과 함께만</strong> 쓴다.</p>
+<ol>
+<li><strong>같은 자료 · 입력의 train-v7(8.10)은 씨앗 100 에서 p 0.056 으로 못 넘었다.</strong></li>
+<li><strong>벡터(0.46)는 참값 글(회로 없음 0.47)과 같은 수준이다</strong> — 회로 신호가 참값만큼 쓰였다는 뜻이지, 참값보다 낫다는 뜻이 아니다.</li>
+<li><strong>섞은 배선은 셋뿐</strong>이고 <strong>s2(0.42)는 구간이 겹친다.</strong></li>
+</ol>
+<p>파일: <code>runs/scorecard-20261001-162209/scorecard.json</code>(sha256 <code>09a35910eff2da08</code>). 대장은 <a href="../../training/10-학습-기록과-다음.html">학습 안내서 10장 2.10</a>.</p>
 <h2 id="811-층-구조--깊은-판단이-필요할-때만-qwen-r-1027--2026-10-01--준비만--성적표-아직">8.11 층 구조 — 깊은 판단이 필요할 때만 Qwen (R-1027 · 2026-10-01 · 준비만 · 성적표 아직)</h2>
 <p>지금 성적표는 <strong>결정마다</strong>(300 ms) Qwen 을 부른다. 사람도 걸음마다 깊이 생각하지 않는다 — 그래서 세 층으로 나눴다(<a href="15-깊은-판단-호출-조사.html">연구 노트 15</a> · <code>loop/tiered.py</code> · <code>loop/fast_policy.py</code> · <code>config/control.yaml</code>).</p>
 <div class="tbl"><table>
