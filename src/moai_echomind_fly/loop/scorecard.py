@@ -282,7 +282,10 @@ def judge(results: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     """
     from .stats import STATS_RULE, bootstrap_ci, sign_flip_p
 
-    rew = sorted(c for c in results if c.startswith("rewired"))
+    # 층 구성(-gated · -fast-only …)은 바탕 판정에 섞지 않는다 — 그 쌍은 paired() 로 따로
+    # (2026-10-03 고침: 층 성적표에서 늘 부름 vector 를 재배선 층 구성 여섯과 비교했다)
+    rew = sorted(c for c in results if c.startswith("rewired")
+                 and parse_config(c)["tier_mode"] is None)
     if "vector" not in results or not rew:
         return {"rule": "scorecard-v2", "vector_beats_rewired": None}
     seeds = [e["seed"] for e in results["vector"]]

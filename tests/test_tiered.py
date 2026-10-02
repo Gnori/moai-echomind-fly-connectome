@@ -264,3 +264,17 @@ def test_matched_rate_and_gating_verdict(tmp_path: Path):
     res["vector-random-matched"] = eps([1] * n)
     assert "쓰지 않는다" in gating_verdict(res)["wording"]
     assert gating_verdict({"vector": eps([1])}) is None
+
+
+def test_base_judge_ignores_tier_configs():
+    from moai_echomind_fly.loop.scorecard import judge
+
+    def ep(seed, reached):
+        return {"seed": seed, "reached": reached, "reach_ms": None, "final_food_mm": 1.0,
+                "looming": False, "looming_hit": None, "decisions": 5}
+
+    res = {"vector": [ep(i, False) for i in range(4)],
+           "vector-gated": [ep(i, True) for i in range(4)],
+           "rewired-s0-gated": [ep(i, True) for i in range(4)],
+           "rewired-s0-fast-only": [ep(i, True) for i in range(4)]}
+    assert judge(res)["vector_beats_rewired"] is None          # 바탕 재배선 구성이 없다
