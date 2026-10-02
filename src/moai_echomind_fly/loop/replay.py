@@ -169,7 +169,8 @@ def replay(pack: str, split: str, out_name: str, rewired_seeds: list[int], *,
     cfgs = {n: config.load(n)["version"] for n in ("sim", "loom", "task", "channels", "retino")}
     if retino_rule:
         cfgs["retino"] = retino_rule
-    writer.save({"graph": g.name, "rewired_seeds": rewired_seeds, "rewired_seed": rewired_seeds[0],
+    writer.save({"graph": g.name, "rewired_seeds": rewired_seeds,
+                 "rewired_seed": rewired_seeds[0] if rewired_seeds else None,
                  "seeds": sorted(by), "versions": cfgs, "replay_of": {"pack": pack, "split": split,
                                                                        "retune": retune,
                                                                        "retino_rule": retino_rule},

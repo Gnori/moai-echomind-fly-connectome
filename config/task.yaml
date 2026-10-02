@@ -1,6 +1,7 @@
 # C 단계 과제 · 감각 인코더 · 행동 디코더 (R-3340 F-010 · F-011 · F-014)
 # 값마다 출처 또는 "선언" 을 적는다 — 선언한 값은 정직 목록에 그대로 실린다.
-version: task-v4   # 2026-09-26 — task-v2.1 + 냄새 맡기 구간(처음 결정 몇 개는 몸을 세워 둠) · 먹이 가깝게 · 옆 방위(연구 노트 14 M4 · 요구자 "냄새 맡기 구간 · 작은 시험 먼저").
+version: task-v5   # 2026-10-03 — task-v4 + 시야 조율에 방위까지(retinotopic2 · retino-v2 방위 · R-7469 Task 7 · 요구자 "다음 진행해"). 옛 판 config/archive/task-v4.yaml
+# task-v4 = 2026-09-26 — task-v2.1 + 냄새 맡기 구간(처음 결정 몇 개는 몸을 세워 둠) · 먹이 가깝게 · 옆 방위(연구 노트 14 M4 · 요구자 "냄새 맡기 구간 · 작은 시험 먼저").
 #   task-v3 이름은 R-7469 F-007(냄새 둘 CS+/CS−)에 예약. 옛 판 config/archive/task-v2.1.yaml · task-v2.yaml · task-v1.yaml
 # task-v2.1 = 2026-09-26 — task-v2 + 냄새 센서를 더듬이(2 · 3)로 바로잡음(연구 노트 14 §3.1)
 # task-v2 = 2026-09-23 — task-v1 + 물체 고도 · 시야 자리별(고도) LC 입력(R-7469 F-008)
@@ -33,8 +34,9 @@ encoder:
                                    #   처음 200 은 '중간' 거리에서 LC/LPLC 자극이 거의 0 이었다(2026-09-22 pilot)
     gain_max: 3.0
     side_softness_deg: 15.0        # 앞쪽 물체는 두 눈에 나눠 준다(시그모이드 폭) — 선언
-    mode: retinotopic              # lr_sigmoid(task-v1: 좌우만) | retinotopic(좌우 × LC 마다 고도 가우시안 · retino-v1)
+    mode: retinotopic2             # task-v5: 고도 × 방위 가우시안(retino-v2) · lr_sigmoid(task-v1: 좌우만) | retinotopic(좌우 × LC 마다 고도 가우시안 · retino-v1)
     elevation_sigma_deg: 25.0      # LC 고도 조율 폭 — 선언(LC 수용장 수십 도). 좌표 없는 LC 는 조율 없이 1
+    azimuth_sigma_deg: 25.0        # LC 방위 조율 폭 — 선언(task-v5 · 고도와 같은 값 · 같은 근거 "LC 수용장 수십 도"). 방위 없는 LC 는 고도만
   smell:                    # 먹이(식초) 냄새 → DM1 · VA2 사구체 ORN — Semmelhack & Wang 2009 Nature 459:218
     types: [ORN_DM1, ORN_VA2]
     rate_max_hz: 150.0             # Shiu 기본 자극 발화율

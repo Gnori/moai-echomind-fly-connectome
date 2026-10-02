@@ -245,8 +245,11 @@ def test_task_v4_places_food_near_and_to_the_side():
     from moai_echomind_fly import config
     from moai_echomind_fly.loop.world import make_task
 
-    cfg = config.load("task")
+    cfg = config.load("task", version="task-v4")
     assert cfg["version"] == "task-v4" and cfg["episode"]["sniff_decisions"] == 4
+    now = config.load("task")          # task-v5 는 시야 조율만 바꿨다 — 과제 뽑기는 같다
+    assert now["episode"] == cfg["episode"] and now["world"] == cfg["world"]
+    assert now["encoder"]["vision"]["mode"] == "retinotopic2"
     sides = []
     for seed in range(200):
         x, y = make_task(seed, cfg)["odor_xy"]
