@@ -95,6 +95,8 @@ def pack(name: str, train: str, eval_: str, generated_with: str = "") -> Path:
                                      "channel_units", "sensory_map", "teacher_rules")},
         # 재배선 여럿(R-7469 F-002) — 2026-09-27 까지는 옮기지 않아 카드에 "씨앗 0"만 적혔다(fly-loop-v2 · v4)
         "rewired_seeds": src_meta.get("rewired_seeds", [src_meta["rewired_seed"]]),
+        # 재생으로 만든 묶음이면 원본 · 시야 대응표 판(2026-10-03 · C 대조군이 어느 대응표인지)
+        **({"replay_of": src_meta["replay_of"]} if "replay_of" in src_meta else {}),
     }
     (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     (out / "README.md").write_text(card(meta), encoding="utf-8")
