@@ -534,6 +534,48 @@ Qwen 가중치 지문은 네 학습 모두 학습 전후 같음(<code>a4cfcb8d0a
 </tbody>
 </table></div>
 <p>Qwen 가중치 지문: 두 학습 모두 전후 <code>a4cfcb8d…</code> <strong>같음</strong>(파인튜닝 아님). 설정 판: sim-v1 · loom-v1 · task-v1 · channels-v1 · llm-v1.</p>
+<h3 id="14-회로-학습f-006--연구-노트-16--진짜와-재배선-나란히">1.4 회로 학습(F-006 · 연구 노트 16) — 진짜와 재배선 나란히</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>이름</th>
+<th>뇌</th>
+<th>범위 · 목표</th>
+<th>방법</th>
+<th>처음 → 최선 손실</th>
+<th>식초 6 KC 전 → 뒤</th>
+<th>안 쓴 냄새 5([3, 15] %)</th>
+<th>params.npz sha256</th>
+<th>상태</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fit-kc-sparse-b-sim-v3-real-20261003-141045</code></td>
+<td>진짜</td>
+<td>kc-sparse-b(24) · physiology-v3</td>
+<td>CMA-ES 13 × 50 · 약 3 h 20 m · 2.2 GB</td>
+<td>1.77 → 0.079</td>
+<td>1.0 → 4.8 %</td>
+<td>2/5</td>
+<td><code>ac46ed34f42117e4</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>fit-kc-sparse-b-sim-v3-rewired-s0-20261003-173311</code></td>
+<td>재배선 s0</td>
+<td>같음</td>
+<td>같음</td>
+<td>2.09 → 0.213</td>
+<td>0.44 → 4.7 %</td>
+<td>4/5</td>
+<td><code>d277e8b7cc26e303</code></td>
+<td>✅</td>
+</tr>
+</tbody>
+</table></div>
+<p>발톱 일치 진짜 1.00 · 재배선 0(학습 전부터 같음) · 켜진 KC 겹침 0.018 · 도망 반사 그대로(GF 0.60 · 1.25 · 36 ms). 진짜가 배운 배율 PN→KC 0.93 · KC→APL 1.78 · APL→KC 0.79 · KC→KC 2.10.
+판정: 희소성은 <strong>둘 다</strong> 맞춘다(배선 특이적 아님) · 진짜는 일반화가 약하다 · "회로 학습으로 초파리다운 희소성을 얻었다"는 쓰지 않는다. M3: 보상 구획 MBON 0 → 0(KC → MBON 이 다음 막힌 곳). 자세히 <a href="03-뇌-맞추기와-검산.html">03장 6.3</a> · 정본 R-7469 core P Task 5 · 6(<code>863ecfe</code>).</p>
 <h2 id="2-결과-2026-09-23-0449--전체-순서-끝-코드-0--train-v2--fly-loop-v1">2. 결과 (2026-09-23 04:49 · 전체 순서 끝 코드 0 · train-v2 · fly-loop-v1)</h2>
 <h3 id="21-캡션-평가--학습에-안-쓴-105-결정">2.1 캡션 평가 — 학습에 안 쓴 105 결정</h3>
 <div class="tbl"><table>
