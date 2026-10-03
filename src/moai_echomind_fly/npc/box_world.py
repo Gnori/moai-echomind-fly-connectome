@@ -104,6 +104,13 @@ class BoxWorld:
                         "heading_deg": 0.0, "speed_m_s": 0.0})
         return out
 
+    def neural(self, ref: str, payload: dict[str, Any]) -> None:
+        """신경 상태 띠(보기용 · 판정에 안 씀) — 입구가 없으면 조용히 넘어간다."""
+        try:
+            self._req("POST", f"/exp/neural/{ref}", payload)
+        except Exception:                             # 보기용 — 실험을 멈추지 않는다
+            pass
+
     # -------------------------------------------------------- 움직임
     def steer(self, ref: str, heading_deg: float, speed_m_s: float, dt_s: float) -> dict:
         got = self._req("POST", f"/exp/steer/{ref}",

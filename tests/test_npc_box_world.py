@@ -61,3 +61,33 @@ def test_axes_map_and_hazard_is_steered_and_blocked_means_hit():
     steer = [c for c in http.calls if c[1] == "/exp/steer/hazard"][0][2]
     assert steer["heading_deg"] == pytest.approx(180.0)                  # 우리 −x 쪽 = 세계 −z
     assert w.hit
+
+
+def test_neural_summary_shapes_and_post_is_best_effort():
+    import numpy as np
+
+    from moai_echomind_fly.npc.run import neural_summary
+
+    class Smap:
+        vision = {"L": np.array([0, 1]), "R": np.array([2])}
+        smell = {"L": np.array([3]), "R": np.array([4])}
+
+    class Loom:
+        peak_hz = 5.0
+
+    class Loop:
+        smap, loom = Smap(), Loom()
+        cfg = {"encoder": {"vision": {"gain_max": 10.0}, "smell": {"rate_max_hz": 150.0}}}
+        last_stim = [np.array([50.0, 50.0, 0.0, 150.0, 0.0])]
+
+    class Step:
+        drive, reflex_bins, t_ms, decision, info = (0.2, 0.8), 1, 900.0, 3, {}
+
+    n = neural_summary(Loop(), Step(), "real")
+    assert n["looming"] == {"left": 1.0, "right": 0.0} and n["escape"]
+    assert n["motor"]["turn"] == 0.3 and n["goal"]["left"] == 1.0 and n["label"] == "real"
+
+    def broken(req, timeout=None):
+        raise OSError("입구 없음")
+
+    BoxWorld("http://127.0.0.1:9412", [9212], opener=broken).neural("npc", n)   # 멈추지 않음

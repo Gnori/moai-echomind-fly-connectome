@@ -32,6 +32,32 @@ def stand_policy(vectors, truth, obs, d):
     return dict(STAND), {"source": "stand"}
 
 
+def neural_summary(loop, step, label: str) -> dict[str, Any]:
+    """결정 하나의 신경 요약(3D 창 머리 위 띠 · 보기용) — 마지막 구간 자극 · 회로 구동 · 반사.
+
+    다가옴 = 시각 뉴런 좌 · 우 평균 발화율 / (peak_hz × gain_max) · 목표 = 냄새 뉴런 / rate_max ·
+    걷기 · 돌기 = 디코더 구동(왼 · 오른)의 평균 · 반차(+ 왼쪽).
+    """
+    m, enc = loop.smap, loop.cfg["encoder"]
+    sens = loop.last_stim[-1] if getattr(loop, "last_stim", None) else None
+    vmax = float(loop.loom.peak_hz) * float(enc["vision"]["gain_max"])
+    smax = float(enc["smell"]["rate_max_hz"])
+
+    def lvl(idx, top):
+        if sens is None or len(idx) == 0 or top <= 0:
+            return 0.0
+        return round(float(min(1.0, sens[idx].mean() / top)), 3)
+
+    left, right = step.drive
+    return {"t_sim_s": round(step.t_ms / 1000.0, 2), "decision": step.decision,
+            "looming": {"left": lvl(m.vision["L"], vmax), "right": lvl(m.vision["R"], vmax)},
+            "escape": bool(step.reflex_bins > 0),
+            "motor": {"walk": round(max(0.0, min(1.0, 0.5 * (left + right))), 3),
+                      "turn": round(max(-1.0, min(1.0, 0.5 * (right - left))), 3)},
+            "goal": {"left": lvl(m.smell["L"], smax), "right": lvl(m.smell["R"], smax)},
+            "tier": (step.info or {}).get("tier"), "label": label}
+
+
 def hazard_seeds(start: int, n: int, cfg: dict[str, Any]) -> list[int]:
     """위험이 나오는 과제 씨앗 n 개(start 부터) — S1 은 위험 있는 장면만."""
     out, s = [], start
@@ -110,9 +136,12 @@ def main(args: argparse.Namespace) -> int:
                 eps = []
                 with (out / f"{c}.decisions.jsonl").open("w", encoding="utf-8") as dec:
                     for s in seeds:
-                        def on_step(step, vectors, s=s):
+                        def on_step(step, vectors, s=s, c=c, loop=loop):
                             dec.write(json.dumps(decision_row(s, step), ensure_ascii=False)
                                       + "\n")
+                            w = loop.body.world
+                            if hasattr(w, "neural"):          # 상자 월드 — 3D 창 신경 띠
+                                w.neural("npc", neural_summary(loop, step, c))
 
                         pol = (stand_policy if config.load("npc").get("s1", {}).get("policy")
                                == "stand" else walk_policy)
