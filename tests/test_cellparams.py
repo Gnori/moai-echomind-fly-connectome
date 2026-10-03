@@ -93,3 +93,27 @@ def test_pair_dst_keeps_only_pairs_into_those_types():
     cell = cp.init(g, TYPES, P.t_mbr_ms, P.v_th_mV, pair_min_synapses=1, pair_dst=["T2"])
     assert len(cell.pairs) > 0 and (cell.pairs[:, 1] == 2).all()
     assert (g.columns["type"][g.dst][cell.pair_id >= 0] == "T2").all()
+
+
+def test_groups_share_one_alpha_and_keep_type_pairs_first():
+    g = small_graph()
+    groups = [{"name": "T0-any", "src": {"type": ["T0"]}, "dst": {"type": ["T1", "T2"]}},
+              {"name": "T0-T1", "src": {"type": ["T0"]}, "dst": {"type": ["T1"]}}]
+    cell = cp.init(g, TYPES, P.t_mbr_ms, P.v_th_mV, None, groups=groups)
+    assert cell.meta["groups"] == ["T0-any", "T0-T1"] and len(cell.alpha) == 2
+    src_t, dst_t = g.columns["type"][g.src()], g.columns["type"][g.dst]
+    m = (src_t == "T0") & np.isin(dst_t, ["T1", "T2"])
+    assert (cell.pair_id[m] == 0).all() and (cell.pair_id[~m] == -1).all()   # 앞 묶음이 먼저
+    cell.check(g)
+    both = cp.init(g, TYPES, P.t_mbr_ms, P.v_th_mV, 50, groups=groups[:1])
+    n_pairs = len(both.alpha) - 1
+    assert (both.pair_id[m] >= 0).all() and (both.pair_id[m] < n_pairs).any()   # 종류 쌍이 먼저
+    assert tuple(both.pairs[-1]) == (-1, -1)
+
+
+def test_kc_scopes_count_as_proposed():
+    from moai_echomind_fly import config
+
+    cfg = config.load("fit")
+    assert len(cp.scope_types("kc-sparse-a", cfg)) == 10
+    assert len(cfg["scopes"]["kc-sparse-b"]["groups"]) == 4

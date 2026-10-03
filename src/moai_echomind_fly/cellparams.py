@@ -92,12 +92,27 @@ def scope_types(scope: str, cfg: dict[str, Any] | None = None) -> list[str]:
     return types + [t for t in sc.get("types", []) if t not in types]
 
 
+def _match(graph: Graph, idx: np.ndarray, sel: dict[str, list[str]]) -> np.ndarray:
+    """뉴런 idx 가 고르기(sel: class · type 목록)에 드나."""
+    ok = np.ones(len(idx), bool)
+    for key in ("class", "type"):
+        if key in sel:
+            ok &= np.isin(graph.columns[key][idx], list(sel[key]))
+    return ok
+
+
 def init(graph: Graph, types: list[str], t_mbr_ms: float, v_th_mV: float,
-         pair_min_synapses: int, meta: dict[str, Any] | None = None,
-         pair_dst: list[str] | None = None) -> CellParams:
+         pair_min_synapses: int | None, meta: dict[str, Any] | None = None,
+         pair_dst: list[str] | None = None,
+         groups: list[dict[str, Any]] | None = None) -> CellParams:
     """처음 값 = sim 설정 그대로(α = 1). 쌍은 범위 안 종류끼리 시냅스 ≥ 문턱인 것만.
 
     `pair_dst` 가 있으면 도착 종류가 그 안인 쌍만(예: 하강 뉴런으로 가는 출력 쌍).
+    `pair_min_synapses` 가 None 이면 종류 쌍을 두지 않는다.
+    `groups`(묶음 배율 · 연구 노트 16 kc-sparse-b): [{name, src: {class|type}, dst: {class|type}}]
+    — 고르기에 맞는 연결 전부가 α 하나를 나눠 쓴다(종류 쌍이 아닌 연결 묶음).
+    종류 쌍에 이미 든 연결은 그대로 두고, 묶음끼리는 앞 묶음이 먼저다.
+    `pairs` 의 묶음 줄은 (−1 − 묶음 번호, −1).
     """
     types_arr = np.array(types, dtype=object)
     pos = {t: i for i, t in enumerate(types)}
@@ -109,24 +124,37 @@ def init(graph: Graph, types: list[str], t_mbr_ms: float, v_th_mV: float,
     code = np.where(inside, ks * len(types) + kd, -1)
     syn = np.bincount(code[inside], weights=graph.count[inside],
                       minlength=len(types) ** 2)
-    keep = np.flatnonzero(syn >= pair_min_synapses)
+    keep = (np.flatnonzero(syn >= pair_min_synapses) if pair_min_synapses is not None
+            else np.zeros(0, np.int64))
     pairs = np.stack([keep // len(types), keep % len(types)], 1).astype(np.int64)
     lookup = np.full(len(types) ** 2, -1, dtype=np.int32)
     lookup[keep] = np.arange(len(keep), dtype=np.int32)
     pair_id = np.where(code >= 0, lookup[np.maximum(code, 0)], -1).astype(np.int32)
+    group_names, group_syn = [], []
+    src = graph.src()
+    for gi, gr in enumerate(groups or []):
+        m = (pair_id < 0) & _match(graph, src, gr["src"]) & _match(graph, graph.dst, gr["dst"])
+        pair_id[m] = len(keep) + gi
+        pairs = np.vstack([pairs, [[-1 - gi, -1]]]) if len(pairs) else np.array([[-1 - gi, -1]])
+        group_names.append(str(gr["name"]))
+        group_syn.append(int(graph.count[m].sum()))
     t = len(types)
     return CellParams(types_arr, np.full(t, float(t_mbr_ms)), np.full(t, float(v_th_mV)),
-                      pairs, np.ones(len(keep)), pair_id,
-                      {"graph": graph.name, "pair_min_synapses": int(pair_min_synapses),
-                       "pair_synapses": syn[keep].astype(int).tolist(), **(meta or {})})
+                      pairs.astype(np.int64).reshape(-1, 2),
+                      np.ones(len(keep) + len(group_names)), pair_id,
+                      {"graph": graph.name, "pair_min_synapses": pair_min_synapses,
+                       "pair_synapses": syn[keep].astype(int).tolist(),
+                       "groups": group_names, "group_synapses": group_syn, **(meta or {})})
 
 
 def init_scope(graph: Graph, scope: str, t_mbr_ms: float, v_th_mV: float) -> CellParams:
     cfg = config.load("fit")
     sc = cfg["scopes"][scope]
+    pms = sc.get("pair_min_synapses")
     return init(graph, scope_types(scope, cfg), t_mbr_ms, v_th_mV,
-                int(sc["pair_min_synapses"]), {"scope": scope, "version": cfg["version"]},
-                pair_dst=sc.get("pair_dst"))
+                int(pms) if pms is not None else None,
+                {"scope": scope, "version": cfg["version"]},
+                pair_dst=sc.get("pair_dst"), groups=sc.get("groups"))
 
 
 def path_for(graph_name: str, version: str, scope: str) -> Path:

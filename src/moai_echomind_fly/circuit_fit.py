@@ -54,9 +54,12 @@ def from_theta(theta: np.ndarray, cell: cp.CellParams, v0_mV: float,
                    alpha=np.exp(th[2 * t:]), meta=dict(cell.meta))
 
 
-def transfer(cell: cp.CellParams, graph: Graph, pair_dst: list[str] | None) -> cp.CellParams:
+def transfer(cell: cp.CellParams, graph: Graph, pair_dst: list[str] | None,
+             groups: list[dict[str, Any]] | None = None) -> cp.CellParams:
     """같은 종류 매개변수를 다른 그래프(섞은 배선)에 옮긴다 — 쌍 이름이 같으면 같은 α, 없으면 1."""
-    out = cp.init(graph, list(cell.types), 0.0, 0.0, 1, dict(cell.meta), pair_dst=pair_dst)
+    out = cp.init(graph, list(cell.types), 0.0, 0.0,
+                  1 if cell.meta.get("pair_min_synapses") is not None else None,
+                  dict(cell.meta), pair_dst=pair_dst, groups=groups)
     out.tau_ms, out.v_th_mV = cell.tau_ms.copy(), cell.v_th_mV.copy()
     alpha = {(int(a), int(b)): float(x) for (a, b), x in zip(cell.pairs, cell.alpha)}
     out.alpha = np.array([alpha.get((int(a), int(b)), 1.0) for a, b in out.pairs])
@@ -170,7 +173,8 @@ def measure_escape(graph: Graph, lif, cell: cp.CellParams | None, trials: int, s
 
 def make_objective(graph: Graph, null_graph: Graph, lif, template: cp.CellParams, scope: str,
                    rule: dict[str, Any], pair_dst: list[str] | None,
-                   measure: Callable = measure_escape) -> Callable:
+                   measure: Callable = measure_escape,
+                   groups: list[dict[str, Any]] | None = None) -> Callable:
     """θ → (손실, 기록). `measure` 는 시험에서 바꿔 끼운다."""
     phys = config.load("physiology")
     lo, hi = bounds_log(template, config.load("fit")["bounds"])
@@ -179,7 +183,8 @@ def make_objective(graph: Graph, null_graph: Graph, lif, template: cp.CellParams
     def objective(theta: np.ndarray) -> tuple[float, dict[str, Any]]:
         cell = from_theta(theta, template, lif.v0_mV, lo, hi)
         m = measure(graph, lif, cell, rule["trials"], rule["seed"], rule["device"])
-        null = measure(null_graph, lif, transfer(cell, null_graph, pair_dst), rule["trials"],
+        null = measure(null_graph, lif, transfer(cell, null_graph, pair_dst, groups),
+                       rule["trials"],
                        rule["seed"], rule["device"])
         m["null_gf_hit"] = null["gf_hit"]
         phys_l, parts = physiology_loss(m, scope, phys, float(rule["nan_tolerances"]))
@@ -282,7 +287,8 @@ def main_probe(args: argparse.Namespace) -> int:
             for n in ([] if args.method == "sgbptt" else
                       [int(x) for x in args.trials.split(",")]):
                 obj = make_objective(g, null, lif, cell, args.scope, {**rule, "trials": n},
-                                     sc.get("pair_dst"))
+                                     sc.get("pair_dst"),
+                                     groups=sc.get("groups"))
                 t0 = time.time()
                 loss, info = obj(to_theta(cell, lif.v0_mV))
                 rows.append({"trials": n, "wall_s": round(time.time() - t0, 1),
@@ -354,7 +360,8 @@ def main_fit(args: argparse.Namespace) -> int:
             h0 = graph_hash(g)
             sc = fit_cfg["scopes"][args.scope]
             cell = cp.init_scope(g, args.scope, lif.t_mbr_ms, lif.v_th_mV)
-            obj = make_objective(g, null, lif, cell, args.scope, rule, sc.get("pair_dst"))
+            obj = make_objective(g, null, lif, cell, args.scope, rule, sc.get("pair_dst"),
+                                 groups=sc.get("groups"))
             dog = Watchdog("fit")
             why: list[str] = []
             log_f = (out / "loss.jsonl").open("w", encoding="utf-8")
