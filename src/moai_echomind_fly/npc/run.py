@@ -147,6 +147,7 @@ def register(sub) -> None:
     p.add_argument("--stage", default="s1")
     p.add_argument("--configs", default="real,rewired-s0,rewired-s1,rewired-s2,no_brain")
     p.add_argument("--seeds", default="", help="비우면 위험 있는 과제 씨앗 --n 개")
-    p.add_argument("--seed-start", type=int, default=3000)
+    p.add_argument("--seed-start", type=int, default=4000,
+                   help="재기(3000 대)와 겹치지 않게 본 실행은 4000 대(10-03)")
     p.add_argument("--n", type=int, default=40)
     p.set_defaults(func=main)
