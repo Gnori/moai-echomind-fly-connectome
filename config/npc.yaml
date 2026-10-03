@@ -19,4 +19,10 @@ senses:
   contact_force: 1.0            # 그때 다리 힘(인코더 force_ref 단위 · 선언)
 s1:                             # S1 반사 장면(10-03 · 결과 전 · S0 재기에서 위험이 걷는 NPC 를 비껴가 반사 0 → 장면을 바꿈)
   policy: stand                 # stand(제자리 · 반사만 시험) | walk
-  hazard_pursue: true           # 위험이 NPC 의 지금 자리를 쫓아옴(비껴가지 않게)
+  hazard_pursue: false          # 위험은 생겨날 때 NPC 가 있던 자리로 곧게(서 있으면 맞음). true(쫓아옴)는 반사 속도 < 위험 속도라 어떤 반사로도 못 피함 — reflex-probe 뒤 바꿈
+reflex:                         # 반사 움직임(선언)
+  mode: sidestep                # sidestep(위협 반대쪽 옆으로 · 곧게 오는 물체를 피하는 방향) | retreat(위협 반대 방향)
+encoder_override:               # NPC 실험에만 쓰는 시야 인코더(초파리 실험 task.yaml 은 그대로) — reflex-probe(runs/reflex-probe-20261003-221921.json) 뒤 · S1 결과 전
+  vision:                       # task-v5(retinotopic2 · 상한 3) 는 정면 다가옴에 GF 0 · 좌우만 + 상한 10 은 5 mm(0.2 s 전)에서 GF 15~16
+    mode: lr_sigmoid
+    gain_max: 10.0

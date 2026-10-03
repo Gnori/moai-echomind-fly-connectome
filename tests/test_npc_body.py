@@ -35,7 +35,7 @@ def test_drive_moves_forward_and_right_faster_turns_left():
 
 
 def test_hazard_appears_looms_and_reflex_retreats_away():
-    b = NpcBody()
+    b = NpcBody({**config.load("npc"), "reflex": {"mode": "retreat"}})
     b.reset(0, TASK)
     o = b.step((0.0, 0.0), 100.0)
     assert o.looming["present"] and o.looming["azimuth_deg"] == pytest.approx(40.0, abs=1.0)
@@ -95,3 +95,13 @@ def test_s1_hazard_pursues_standing_npc_and_hits_without_reflex():
         if o.looming["distance_mm"] is not None:
             dmin = min(dmin, o.looming["distance_mm"])
     assert dmin <= task["looming"]["radius_mm"] + 1.0               # 반사 없으면 부딪힘
+
+
+def test_sidestep_moves_across_the_threat_path():
+    cfg = {**config.load("npc"), "reflex": {"mode": "sidestep"}}
+    b = NpcBody(cfg)
+    b.reset(0, {**TASK, "looming": {**TASK["looming"], "bearing_deg": 0.0}})   # 정면에서
+    b.step((0.0, 0.0), 100.0)
+    b.step((0.0, 0.0), 100.0, reflex=True)
+    h = b.world.state(ME)["heading_deg"]
+    assert abs(abs(wrap_deg(h)) - 90.0) < 1.0                         # 옆으로

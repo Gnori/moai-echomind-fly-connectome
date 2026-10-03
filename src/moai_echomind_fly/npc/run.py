@@ -95,6 +95,17 @@ def main(args: argparse.Namespace) -> int:
                 brain = c if c.startswith("rewired") else "real"
                 gg = g if brain == "real" else graph_mod.rewire(g, int(brain.rsplit("-s", 1)[1]))
                 loop = Loop({brain: gg}, brain, body=False)
+                ov = config.load("npc").get("encoder_override") or {}
+                if ov:                    # NPC 실험만의 시야 인코더(task.yaml 은 그대로)
+                    import copy
+
+                    from ..loop.encoder import Encoder
+
+                    cfg2 = copy.deepcopy(loop.cfg)
+                    for k, v in ov.items():
+                        cfg2["encoder"][k].update(v)
+                    loop.cfg = cfg2
+                    loop.encoder = Encoder(loop.smap, cfg2, loop.loom)
                 loop.body = NpcBody(reflex_enabled=(c != "no_brain"))
                 eps = []
                 with (out / f"{c}.decisions.jsonl").open("w", encoding="utf-8") as dec:

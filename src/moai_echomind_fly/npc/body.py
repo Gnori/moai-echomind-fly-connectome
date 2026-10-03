@@ -117,6 +117,10 @@ class NpcBody:
         threat = next((o for o in self.world.neighbors(ME, 1e9) if o["ref"] == HAZARD), None)
         if reflex and self.reflex_enabled and threat is not None:
             away = math.degrees(math.atan2(me["y"] - threat["y"], me["x"] - threat["x"]))
+            if self.cfg.get("reflex", {}).get("mode", "retreat") == "sidestep":
+                # 위협이 다가오는 길에서 옆으로 — 위협이 왼쪽(+)이면 오른쪽(−90°)으로
+                toward = wrap_deg(away + 180.0 - me["heading_deg"])
+                away = wrap_deg(me["heading_deg"] + (-90.0 if toward >= 0 else 90.0))
             heading, speed_mm = away, float(m["reflex_retreat_mm_s"])
         else:
             left, right = drive
