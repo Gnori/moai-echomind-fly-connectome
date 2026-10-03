@@ -32,6 +32,16 @@ def stand_policy(vectors, truth, obs, d):
     return dict(STAND), {"source": "stand"}
 
 
+def make_world():
+    """config/npc.yaml world.kind — fake(가짜 세계) | box(상자 월드 클라이언트)."""
+    w = config.load("npc")["world"]
+    if w.get("kind") == "box":
+        from .box_world import BoxWorld
+
+        return BoxWorld(str(w["box_url"]), list(w["forbidden_ports"]))
+    return None
+
+
 def neural_summary(loop, step, label: str) -> dict[str, Any]:
     """결정 하나의 신경 요약(3D 창 머리 위 띠 · 보기용) — 마지막 구간 자극 · 회로 구동 · 반사.
 
@@ -49,13 +59,19 @@ def neural_summary(loop, step, label: str) -> dict[str, Any]:
         return round(float(min(1.0, sens[idx].mean() / top)), 3)
 
     left, right = step.drive
-    return {"t_sim_s": round(step.t_ms / 1000.0, 2), "decision": step.decision,
+    tier = (step.info or {}).get("tier")
+    out = {"t_sim_s": round(step.t_ms / 1000.0, 2), "decision": step.decision,
             "looming": {"left": lvl(m.vision["L"], vmax), "right": lvl(m.vision["R"], vmax)},
             "escape": bool(step.reflex_bins > 0),
             "motor": {"walk": round(max(0.0, min(1.0, 0.5 * (left + right))), 3),
                       "turn": round(max(-1.0, min(1.0, 0.5 * (right - left))), 3)},
             "goal": {"left": lvl(m.smell["L"], smax), "right": lvl(m.smell["R"], smax)},
-            "tier": (step.info or {}).get("tier"), "label": label}
+            "label": label}
+    if tier in ("reflex", "fast", "llm"):          # 모르는 tier 는 월드가 422 — 없으면 뺀다
+        out["tier"] = tier
+    elif step.reflex_bins > 0:
+        out["tier"] = "reflex"
+    return out
 
 
 def hazard_seeds(start: int, n: int, cfg: dict[str, Any]) -> list[int]:
@@ -132,7 +148,7 @@ def main(args: argparse.Namespace) -> int:
                         cfg2["encoder"][k].update(v)
                     loop.cfg = cfg2
                     loop.encoder = Encoder(loop.smap, cfg2, loop.loom)
-                loop.body = NpcBody(reflex_enabled=(c != "no_brain"))
+                loop.body = NpcBody(reflex_enabled=(c != "no_brain"), world=make_world())
                 eps = []
                 with (out / f"{c}.decisions.jsonl").open("w", encoding="utf-8") as dec:
                     for s in seeds:
