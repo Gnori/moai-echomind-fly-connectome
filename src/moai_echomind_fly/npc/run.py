@@ -21,10 +21,15 @@ from ..guard import GuardRefused, Watchdog, heavy
 from ..loop.world import make_task
 
 WALK = {"walk": 0.8, "turn": "none", "turn_strength": 0.0, "stop": False, "groom": False}
+STAND = {"walk": 0.0, "turn": "none", "turn_strength": 0.0, "stop": True, "groom": False}
 
 
 def walk_policy(vectors, truth, obs, d):
     return dict(WALK), {"source": "walk"}
+
+
+def stand_policy(vectors, truth, obs, d):
+    return dict(STAND), {"source": "stand"}
 
 
 def hazard_seeds(start: int, n: int, cfg: dict[str, Any]) -> list[int]:
@@ -98,7 +103,9 @@ def main(args: argparse.Namespace) -> int:
                             dec.write(json.dumps(decision_row(s, step), ensure_ascii=False)
                                       + "\n")
 
-                        r = loop.episode(s, walk_policy, on_step=on_step)
+                        pol = (stand_policy if config.load("npc").get("s1", {}).get("policy")
+                               == "stand" else walk_policy)
+                        r = loop.episode(s, pol, on_step=on_step)
                         r.pop("task", None)
                         eps.append(r)
                         print(f"[{c}] seed {s} · 부딪힘 {r['looming_hit']} · 최소 거리 "

@@ -82,3 +82,16 @@ def test_no_brain_ignores_reflex_and_judge_hits():
     assert v["real_beats_rewired"] and v["real_below_no_brain"]
     res["real"] = eps([True] * n)
     assert not judge_hits(res)["real_beats_rewired"]
+
+
+def test_s1_hazard_pursues_standing_npc_and_hits_without_reflex():
+    cfg = {**config.load("npc"), "s1": {"policy": "stand", "hazard_pursue": True}}
+    b = NpcBody(cfg)
+    task = {**TASK, "looming": {**TASK["looming"], "bearing_deg": 90.0}}
+    b.reset(0, task)
+    dmin = 1e9
+    for _ in range(40):
+        o = b.step((0.0, 0.0), 50.0)
+        if o.looming["distance_mm"] is not None:
+            dmin = min(dmin, o.looming["distance_mm"])
+    assert dmin <= task["looming"]["radius_mm"] + 1.0               # 반사 없으면 부딪힘

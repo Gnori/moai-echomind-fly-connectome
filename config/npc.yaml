@@ -17,3 +17,6 @@ senses:
   goal_peak: null               # null = 과제의 odor_peak(FlyGym 과 같은 '거리 제곱에 반비례')
   contact_near_mm: 0.5          # 막힘 · 이 거리 안의 사람 · 물건 → 앞다리 접촉(선언)
   contact_force: 1.0            # 그때 다리 힘(인코더 force_ref 단위 · 선언)
+s1:                             # S1 반사 장면(10-03 · 결과 전 · S0 재기에서 위험이 걷는 NPC 를 비껴가 반사 0 → 장면을 바꿈)
+  policy: stand                 # stand(제자리 · 반사만 시험) | walk
+  hazard_pursue: true           # 위험이 NPC 의 지금 자리를 쫓아옴(비껴가지 않게)

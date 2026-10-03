@@ -107,6 +107,10 @@ class NpcBody:
         lo = self.task.get("looming")
         if lo and not self.hazard_spawned and self.t_ms >= lo["t0_ms"]:
             self._spawn_hazard()
+        if self.hazard_spawned and self.cfg.get("s1", {}).get("hazard_pursue"):
+            me0 = self.world.state(ME)            # 위험이 지금 자리를 쫓는다(S1 장면)
+            if HAZARD in getattr(self.world, "things", {}):
+                self.world.things[HAZARD].target = (me0["x"], me0["y"])
         me = self.world.state(ME)
         m = self.cfg["motor"]
         heading, speed_mm = me["heading_deg"], 0.0
