@@ -71,7 +71,7 @@ def summarize(graph: Graph, steps: np.ndarray, neurons: np.ndarray, dt_ms: float
 
 
 def run(graph: Graph, lif, cfg: dict[str, Any], stim_types: list[str], seed: int,
-        device: str) -> dict[str, Any]:
+        device: str, cell=None, windows_ms: list[float] | None = None) -> dict[str, Any]:
     from .sim import Engine
 
     cls, types = graph.columns["class"], graph.columns["type"]
@@ -90,17 +90,40 @@ def run(graph: Graph, lif, cfg: dict[str, Any], stim_types: list[str], seed: int
     kc_pos[kc] = np.arange(len(kc))
     e = (kc_pos[graph.dst] >= 0) & (cls[src] == cfg["pn_class"])
     kc_pn = (kc_pos[graph.dst[e]], src[e])
-    eng = Engine(graph, lif, device=device, seed=seed)
+    eng = Engine(graph, lif, device=device, seed=seed, cell=cell)
+    windows = [float(w) for w in (windows_ms or cfg["windows_ms"])]
     if len(orn):
         eng.set_poisson(orn, np.full(len(orn), float(cfg["orn_rate_hz"])))
     t0 = time.time()
-    eng.run(float(max(cfg["windows_ms"])))
+    eng.run(max(windows))
     steps, neurons = eng.spikes()
     idx = {"kc": kc, "stim_pn": pn_s, "apl": apl, "rest": rest}
     return {"stim_types": stim_types, "seed": seed, "kc_neurons": int(len(kc)),
             "stim_pns": int(len(pn_s)), "wall_s": round(time.time() - t0, 1),
             "windows": [summarize(graph, steps, neurons, lif.dt_ms, float(w), idx, kc_pn)
-                        for w in cfg["windows_ms"]]}
+                        for w in windows]}
+
+
+def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
+               cfg: dict[str, Any] | None = None) -> dict[str, float]:
+    """회로 학습(F-006) 평가용 — 양성 자극을 씨앗 `trials` 개로 · 음성 · 무자극 한 번씩.
+
+    돌려주는 칸(physiology `mb.*` 측정 이름): kc_active_fraction · kc_spikes_per_responder ·
+    kc_negative_fraction · kc_spontaneous_fraction · pop_rate_hz(KC · APL · 자극 · PN 밖).
+    """
+    cfg = cfg or config.load("fit")["kc_probe"]
+    w = [float(cfg["loss_window_ms"])]
+    pos = [run(graph, lif, cfg, cfg["stimuli"][cfg["target_stimulus"]], seed + k, device,
+               cell, w)["windows"][0] for k in range(int(trials))]
+    neg = run(graph, lif, cfg, cfg["stimuli"][cfg["negative_stimulus"]], seed, device, cell,
+              w)["windows"][0]
+    nil = run(graph, lif, cfg, [], seed, device, cell, w)["windows"][0]
+    return {"kc_active_fraction": float(np.mean([x["kc_active_fraction"] for x in pos])),
+            "kc_spikes_per_responder": float(np.mean([x["kc_spikes_per_responder_median"]
+                                                      for x in pos])),
+            "kc_negative_fraction": float(neg["kc_active_fraction"]),
+            "kc_spontaneous_fraction": float(nil["kc_active_fraction"]),
+            "pop_rate_hz": float(np.mean([x["rest_rate_hz"] for x in pos]))}
 
 
 def main(args: argparse.Namespace) -> int:

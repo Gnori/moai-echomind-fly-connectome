@@ -78,10 +78,13 @@ def item_loss(value: float, target: list[float], tol: float, nan_tol: float) -> 
 
 def physiology_loss(measures: dict[str, float], scope: str, phys: dict[str, Any],
                     nan_tol: float) -> tuple[float, dict[str, float]]:
-    """physiology 판의 항목 중 이 범위 · 도망(`escape.`) 측정만. 없는 측정은 건너뛴다(기록)."""
+    """physiology 판의 항목 중 이 범위 것만(측정 이름 `<묶음>.<칸>` 의 칸으로 찾음).
+
+    없는 측정은 건너뛴다(기록) — 범위마다 평가 함수가 내는 칸이 다르다(escape · mb).
+    """
     total, parts = 0.0, {}
     for it in phys["items"]:
-        if scope not in it["scope"] or not str(it["measure"]).startswith("escape."):
+        if scope not in it["scope"]:
             continue
         key = it["measure"].split(".", 1)[1]
         if key not in measures:
@@ -186,7 +189,7 @@ def make_objective(graph: Graph, null_graph: Graph, lif, template: cp.CellParams
         null = measure(null_graph, lif, transfer(cell, null_graph, pair_dst, groups),
                        rule["trials"],
                        rule["seed"], rule["device"])
-        m["null_gf_hit"] = null["gf_hit"]
+        m.update({f"null_{k}": v for k, v in null.items()})  # 대조 항(escape.null_gf_hit 등)
         phys_l, parts = physiology_loss(m, scope, phys, float(rule["nan_tolerances"]))
         reg = float(rule["reg_lambda"]) * float(np.sum((np.clip(theta, lo, hi) - theta0) ** 2))
         return phys_l + reg, {"measures": m, "parts": parts, "reg": round(reg, 6)}
@@ -218,6 +221,18 @@ def run_cmaes(objective: Callable, theta0: np.ndarray, rule: dict[str, Any], *,
 
 
 # ---------------------------------------------------------------- 명령
+def measure_for(sc: dict[str, Any]) -> Callable:
+    """범위 설정 `measure`(escape | mb) → 평가 함수."""
+    kind = sc.get("measure", "escape")
+    if kind == "escape":
+        return measure_escape
+    if kind == "mb":
+        from .mb_probe import measure_kc
+
+        return measure_kc
+    raise ValueError(f"평가 종류 {kind!r} — escape | mb")
+
+
 def _graphs(brain: str, rule: dict[str, Any]) -> tuple[Graph, Graph]:
     from . import graph as graph_mod
 
@@ -288,7 +303,7 @@ def main_probe(args: argparse.Namespace) -> int:
                       [int(x) for x in args.trials.split(",")]):
                 obj = make_objective(g, null, lif, cell, args.scope, {**rule, "trials": n},
                                      sc.get("pair_dst"),
-                                     groups=sc.get("groups"))
+                                     measure=measure_for(sc), groups=sc.get("groups"))
                 t0 = time.time()
                 loss, info = obj(to_theta(cell, lif.v0_mV))
                 rows.append({"trials": n, "wall_s": round(time.time() - t0, 1),
@@ -361,7 +376,7 @@ def main_fit(args: argparse.Namespace) -> int:
             sc = fit_cfg["scopes"][args.scope]
             cell = cp.init_scope(g, args.scope, lif.t_mbr_ms, lif.v_th_mV)
             obj = make_objective(g, null, lif, cell, args.scope, rule, sc.get("pair_dst"),
-                                 groups=sc.get("groups"))
+                                 measure=measure_for(sc), groups=sc.get("groups"))
             dog = Watchdog("fit")
             why: list[str] = []
             log_f = (out / "loss.jsonl").open("w", encoding="utf-8")

@@ -46,3 +46,19 @@ def test_summarize_counts_windows_and_claws():
     assert w100["stim_pn_rate_hz_mean"] == 10.0
     w300 = mb_probe.summarize(g, steps, neurons, 0.1, 300.0, idx, kc_pn)
     assert w300["kc_active_fraction"] == 1.0
+
+
+def test_measure_kc_returns_physiology_fields_and_measure_for_picks_it():
+    from moai_echomind_fly import circuit_fit as cf
+    from moai_echomind_fly.sim import LIFParams
+
+    g = mb()
+    cfg = {**CFG, "stimuli": {"pos": ["ORN_A"], "neg": ["ORN_B"]}, "target_stimulus": "pos",
+           "negative_stimulus": "neg", "loss_window_ms": 50, "orn_rate_hz": 150.0,
+           "kc_min_type_size": 1, "apl_type": "APL", "windows_ms": [50]}
+    m = mb_probe.measure_kc(g, LIFParams(w_scale=1.0), None, 2, 0, "cpu", cfg)
+    assert set(m) == {"kc_active_fraction", "kc_spikes_per_responder", "kc_negative_fraction",
+                      "kc_spontaneous_fraction", "pop_rate_hz"}
+    assert m["kc_spontaneous_fraction"] == 0.0
+    assert cf.measure_for({"measure": "mb"}) is mb_probe.measure_kc
+    assert cf.measure_for({}) is cf.measure_escape
