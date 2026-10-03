@@ -166,6 +166,10 @@
 <td>속도</td>
 <td>모의 100 ms = 벽시계 약 1.6 s(실시간의 1/16)</td>
 </tr>
+<tr>
+<td><strong>NPC 몸</strong>(R-5138 · 2026-10-03)</td>
+<td>같은 몸 자리에 <strong>사람 NPC</strong> 를 끼울 수 있다(<code>npc/body.py</code> <code>NpcBody</code> · <code>config/npc.yaml</code>) — 입력: 위험 좌표 → 다가옴 방위 · 크기 · 확대 속도 · 목표 → 냄새 센서 좌우 · 막힘 → 앞다리 접촉 · 출력: 구동 → 속도 · 회전 · 반사 → 옆으로 비켜서기 · 시야는 NPC 만 좌우 · 상한 10 · 축척 0.15 m/mm · <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">연구 노트 11 §8.12</a></td>
+</tr>
 </tbody>
 </table></div>
 <p>과제는 씨앗으로 뽑는다(<code>world.make_task</code> · <code>config/task.yaml</code> 의 <code>world</code>):

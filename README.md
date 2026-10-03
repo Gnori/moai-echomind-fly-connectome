@@ -25,6 +25,7 @@
 | A 시뮬레이터 코어 | 공식 데이터 → 그래프 → Shiu LIF(맥 GPU) → 알려진 반사로 검산 | 도망 반사 채점 통과 · 섞은 배선 대조군 침묵 |
 | B 도구 서버 | MCP(stdio) — LLM 이 실험자, 커넥톰이 피험체 | 클로드 코드가 실험 하나를 끝까지 |
 | C 닫힌 고리 | 몸(FlyGym) → 초파리 회로 → **신호 벡터 → 투영기 → Qwen** → 행동 → 몸 | 글 요약 · 대조군 대비 성적표 |
+| D NPC(R-5138 · `src/moai_echomind_fly/npc/` · `config/npc.yaml`) | 몸 자리에 **사람 NPC 하나**를 끼움 — 뇌 · 인코더 · 디코더는 그대로 · 세계는 가짜 세계 → 상자 월드(라이브 9212 금지) · 단계 S0 연결 → S1 반사 → S2 목표 → S3 함께 → S4 깊은 판단만 LLM → S5 대화 | 단계마다 진짜 대 섞은 배선(R 2.0-6) · **S1 실행 중** |
 
 ## 용어
 
@@ -45,6 +46,10 @@
 | 같은 쪽 방출(ipsi_release) | `sim-v2` — 후각 수용 뉴런의 같은 쪽 연결만 세기 × 1.4(Gaudry 2013). 연결 수는 그대로 |
 | sim-v3 · CellParams | 회로 학습 자리(2026-10-01 · `cellparams.py`) — 범위 안 **세포 종류마다** 막 시간 상수 · 문턱 + **종류 쌍마다** 연결 배율 α ≥ 0. 연결 수 · 부호는 그대로 · `cell` 이 없으면 sim-v2 와 같은 길 · 처음 값이면 발화 완전 일치(시험) |
 | scope(범위) | 무엇을 배우나를 이름으로 잠근 것(`config/fit.yaml`) — `escape-small` = 다가옴 LC/LPLC 13 종 + DNp01 · 02 · 04 · 11 · 출력 쌍 10 · 매개변수 44. 회로 학습 1 단계는 CMA-ES(아직 실행 안 함) |
+| NPC 몸 | `npc/body.py` `NpcBody` — `Loop` 의 몸(FlyGym) 자리에 끼우는 같은 모양(`reset` · `step` · `close`). 감각은 FlyGym 과 같은 식으로 NPC 위치에서 계산 · 구동 → 속도 · 회전 · 반사 → 옆으로 비켜서기 |
+| 가짜 세계 · 상자 월드 | 가짜 세계 = 시험용 2D(점 · 원 · 직선 이동 · `npc/fake_world.py`) · 상자 월드 = 에코마인드 월드 서버의 시험용 사본(다른 포트 · 라이브 DB 안 씀). **라이브 월드(9212)에는 붙지 않는다**(`forbidden_ports`) |
+| lockstep | 세계를 결정 하나(0.3 s)씩만 진행 — 뇌가 실시간보다 느려서(약 16 배) 세계가 기다린다 |
+| 축척 0.15 m/mm | 초파리 1 mm = NPC 0.15 m(선언 · 초파리 몸 약 3 mm ↔ 사람 어깨 폭 약 0.45 m) · 구동 1.0 = 12 mm/s = 1.8 m/s |
 | 층 구조(R-1027) | 1 반사 → 2 빠른 정책(초파리 신호 선형 읽기) → 3 Qwen 은 **사건 때만**(목표 · 간격 · 충돌 · 애매함 · 놀람). 문턱 `config/control.yaml` control-v2 · 대조 = 같은 호출률 무작위 · 주기 |
 | 판 번호 | 설정 · 규칙을 잠그는 이름(`sim-v2` · `task-v4` · `channels-v3` · `retino-v2` · `stats-v2` · `compress-v3` · `train-v5` · `scorecard-v3`). 옛 설정 판은 `config/archive/<판>.yaml` |
 | 학습 안내서 | [docs/training/](docs/training/README.md) · 다음 학습 정의 [R-7469](docs/requirements/20260923-104151-7469_fly-learning-next_req.md) |
@@ -70,6 +75,8 @@ uv run fly-connectome train --brain real                            # 투영기 
 uv run fly-connectome scorecard --seeds 2000-2039 --configs vector,text,no_circuit,rewired-s0,rewired-s1,rewired-s2,no_llm
 bin/run_full_v4.sh                                                  # v4 전체: 압축 · 관문 → 학습 4 → 캡션 평가 8 → 성적표(--skip-train 은 평가만)
 bin/run_full.sh                                                     # (v2 순서) 학습 둘 → 캡션 평가 → 성적표
+uv run fly-connectome reflex-probe                                  # 반사 진단(정면 다가옴에 GF 가 켜지나 · 시야 모드 × 상한) · scripts/20-odor/reflex-probe.sh
+uv run fly-connectome npc-run --stage s1                            # NPC 하나를 초파리 뇌로(R-5138) · scripts/40-eval/npc-run.sh s1 40
 uv run fly-connectome backup                                        # git 밖 결과를 두 곳에 복사 · 대조
 ```
 

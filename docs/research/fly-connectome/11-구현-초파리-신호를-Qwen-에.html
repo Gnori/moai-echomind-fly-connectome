@@ -1296,6 +1296,122 @@
 </table></div>
 <p>읽는 법: 애매할 때 부른 7 번은 Qwen 이 빠른 정책보다 확실히 나았다. 그러나 가장 많은 <strong>시간 상한 호출(49 번)은 오히려 빠른 정책보다 나빴다</strong> — 시간이 지났다는 것만으로는 깊은 판단이 필요한 때가 아니다. 놀람 계기는 한 번도 켜지지 않았다.
 파일: <code>runs/scorecard-20261002-212213/scorecard.json</code>(sha256 <code>b5692ca234a53eb6</code>) · <strong>판정 정본은 같은 폴더 <code>scorecard.rejudged.json</code></strong>(sha256 <code>6f9d63610c4e25db</code> — 바탕 판정이 섞은 배선 층 구성까지 섞던 오류를 고친 뒤 다시 판정 · 원본 파일은 그대로 · <code>9df30d1</code>). 정본 R-1027 P Task 5 T4. 대장은 <a href="../../training/10-학습-기록과-다음.html">학습 안내서 10장 2.11</a> · 조사는 <a href="15-깊은-판단-호출-조사.html">연구 노트 15 §8</a>.</p>
+<h2 id="812-npc-하나를-초파리-뇌로-r-5138--2026-10-03--s1-실행-중--결과-아직">8.12 NPC 하나를 초파리 뇌로 (R-5138 · 2026-10-03 · S1 실행 중 · 결과 아직)</h2>
+<p>요구자(10-03): <em>"깊은 생각이 필요한 상황만 LLM 으로 · 대부분은 즉각 반응이 필요한건 초파리 뇌에서"</em> · <em>"사람 케릭터를 … NPC 하나를 초파리 뇌로 움직이게"</em>.
+8.11 의 층 구조를 초파리 몸이 아니라 <strong>사람 NPC</strong> 에 옮기는 일이다.</p>
+<p><strong>모양 — 몸 자리에 NPC 를 끼운다.</strong> <code>Loop</code> · 뇌 · 인코더 · 디코더 · 채널 표 · 성적표 꼴은 그대로이고, 몸(FlyGym <code>BodyClient</code>) 자리에 <code>npc/body.py</code> <code>NpcBody</code> 가 들어간다(같은 <code>reset</code> · <code>step</code> · <code>close</code>).
+과제(<code>make_task</code> · 초파리 mm)를 세계(미터)로 옮겨 장면을 만들고(축척 0.15 m/mm · 선언), 감각은 FlyGym 과 같은 식으로 NPC 위치에서 계산한다. 세계는 결정 하나(0.3 s)씩만 진행한다(lockstep).
+세계: 지금은 시험용 <strong>가짜 세계</strong>(<code>npc/fake_world.py</code> · 2D 점 · 원 · 직선 이동) → 다음은 <strong>상자 월드</strong>(에코마인드 월드 서버의 시험용 사본) — <strong>라이브 월드(9212)에는 붙지 않는다</strong>. 월드 쪽 연동 설계는 에코마인드 저장소의 <code>fly-npc-world-integration-design.md</code>(echomind-world 세션 · 읽기만).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>단계</th>
+<th>무엇</th>
+<th>LLM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S0 연결</td>
+<td>감각 → 초파리 감각 뉴런 · 하강 뉴런 → NPC 명령 · 한 걸음씩 · 같은 씨앗 같은 결과</td>
+<td>없음</td>
+</tr>
+<tr>
+<td><strong>S1 반사</strong></td>
+<td>다가오는 것을 <strong>도망 회로만으로</strong> 피함 — 진짜 &lt; 섞은 배선(부딪힘)</td>
+<td>없음</td>
+</tr>
+<tr>
+<td>S2 목표로 가기</td>
+<td>빠른 선형 읽기(8.11 의 2 층)로 목표 쪽 · 회로 자체 조향은 S2b(DNa02 침묵)</td>
+<td>없음</td>
+</tr>
+<tr>
+<td>S3 함께</td>
+<td>반사가 목표 걷기를 끊고 돌아옴</td>
+<td>없음</td>
+</tr>
+<tr>
+<td>S4 깊은 판단만 LLM</td>
+<td>사건 때만 Qwen 이 목표 · 방향 · 답은 늦게 반영 · 같은 호출률 무작위와 비교</td>
+<td>사건 때만</td>
+</tr>
+<tr>
+<td>S5 대화 · 기억</td>
+<td>에코마인드 연결 — 따로 R</td>
+<td>대화 때</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>감각 대응</strong>(<code>config/npc.yaml</code> npc-v1 · 선언)</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>NPC 쪽</th>
+<th>초파리 쪽(인코더 입력)</th>
+<th>식</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>다가오는 위험의 좌표</td>
+<td>다가옴 방위 · 시각 크기 · 확대 속도</td>
+<td>방위 = 머리 방향 기준 각(+ 왼쪽) · 크기 = 2·atan(반지름/거리) · 확대 = 크기 변화/dt</td>
+</tr>
+<tr>
+<td>목표</td>
+<td>냄새 센서 좌 · 우</td>
+<td>좌우 감지점(간격 0.342 mm · 머리 앞 0.3 mm)에서 봉우리/거리² — 좌우 차가 방향</td>
+</tr>
+<tr>
+<td>막힘 · 가까운 것(0.5 mm 안)</td>
+<td>앞다리 접촉</td>
+<td>힘 1.0(선언)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>명령 대응</strong>: 구동(왼 · 오른) → 속도 = 평균 × 12 mm/s(= 1.8 m/s) · 회전 = (오른 − 왼) × 180 °/s · <strong>반사(GF 발화) → 위협 반대쪽 옆으로 비켜서기</strong> 30 mm/s(= 4.5 m/s · 선언).</p>
+<p><strong>반사 진단(S1 전 · <code>runs/reflex-probe-20261003-221921.json</code> · <code>reflex-probe</code>)</strong> — 처음 S1 재기에서 진짜 뇌도 뇌 없음도 부딪히고 반사가 0 이었다. 같은 정면 다가옴(25 mm → 0 · 25 mm/s · 반지름 1.5 mm)을 시야 설정 여럿으로 뇌에만 넣어 GF 발화를 셌다(씨앗 2):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>시야 모드 · 증폭 상한</th>
+<th>GF 발화</th>
+<th>처음 켜진 거리</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>고도 + 방위(<code>retinotopic2</code> · task-v5) · 3</td>
+<td><strong>0</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>고도만(<code>retinotopic</code>) · 3</td>
+<td>1</td>
+<td>2.5 mm(부딪히는 순간)</td>
+</tr>
+<tr>
+<td>고도만 · 10</td>
+<td>7~9</td>
+<td>2.5 mm</td>
+</tr>
+<tr>
+<td><strong>좌우만(<code>lr_sigmoid</code>) · 3</strong></td>
+<td>8~10</td>
+<td>5 mm</td>
+</tr>
+<tr>
+<td><strong>좌우만 · 10</strong></td>
+<td><strong>15~16</strong></td>
+<td>5 mm(약 0.2 s 전)</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ NPC 실험에만 시야 인코더를 <strong>좌우만 · 상한 10</strong> 으로(<code>encoder_override</code> · 초파리 실험의 <code>task.yaml</code> 은 그대로 · S1 결과 전 <code>b27fc34</code>).
+<strong>장면 다시 정함(재기 <code>s1probe</code>)</strong>: 걷는 NPC 는 위험이 비껴가 반사 0 → NPC 는 <strong>제자리</strong>에 두고 위험이 <strong>곧게</strong> 옴(쫓아오면 반사 속도 &lt; 위험 속도라 어떤 반사로도 못 피함) · 비켜서기 18 mm/s 는 반사가 켜져도 판정선 안(최소 1.8 mm) → <strong>30 mm/s</strong> · 본 실행 씨앗은 <strong>4000 대</strong>(재기 3000 대와 분리 · <code>5dbad3b</code>) — 모두 S1 결과 전.</p>
+<p><strong>판정(결과 전 · I §5)</strong>: 부딪힘 비율 진짜 &lt; 섞은 배선 s0 · s1 · s2 전부 · 씨앗 부호 뒤집기 p &lt; 0.05 · 뇌 없음(반사 무시 · 그대로)보다 낮음. 이기지 못하면 "초파리 뇌로 움직였다"는 쓰지 않는다.
+<strong>S1 본 실행 중</strong> — 결과가 나오면 이 절에 적는다. 정본 R-5138 · I(<code>docs/requirements/20261003-220009-5138_*</code>).</p>
 <h2 id="9-정직하게-적어-둘-한계">9. 정직하게 적어 둘 한계</h2>
 <ul>
 <li><strong>행동을 정하는 판단은 여전히 Qwen(과 교사 규칙)의 것이다</strong>(07 의 판정). 초파리 뇌는 감각을 처리해 신호를 만드는 인코더 자리다.</li>
