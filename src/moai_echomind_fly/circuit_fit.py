@@ -182,14 +182,18 @@ def make_objective(graph: Graph, null_graph: Graph, lif, template: cp.CellParams
     phys = config.load("physiology")
     lo, hi = bounds_log(template, config.load("fit")["bounds"])
     theta0 = to_theta(template, lif.v0_mV)
+    # 섞은 배선 측정은 손실에 그것을 쓰는 항목(null_*)이 있을 때만 — 없으면 같은 절차를 재배선 뇌에
+    # 따로 돌려 나란히 둔다(I v2 §7.4 · KC 범위는 평가 시간이 절반)
+    needs_null = any(scope in it["scope"] and ".null_" in str(it["measure"])
+                     for it in phys["items"])
 
     def objective(theta: np.ndarray) -> tuple[float, dict[str, Any]]:
         cell = from_theta(theta, template, lif.v0_mV, lo, hi)
         m = measure(graph, lif, cell, rule["trials"], rule["seed"], rule["device"])
-        null = measure(null_graph, lif, transfer(cell, null_graph, pair_dst, groups),
-                       rule["trials"],
-                       rule["seed"], rule["device"])
-        m.update({f"null_{k}": v for k, v in null.items()})  # 대조 항(escape.null_gf_hit 등)
+        if needs_null:
+            null = measure(null_graph, lif, transfer(cell, null_graph, pair_dst, groups),
+                           rule["trials"], rule["seed"], rule["device"])
+            m.update({f"null_{k}": v for k, v in null.items()})  # 대조 항(escape.null_gf_hit)
         phys_l, parts = physiology_loss(m, scope, phys, float(rule["nan_tolerances"]))
         reg = float(rule["reg_lambda"]) * float(np.sum((np.clip(theta, lo, hi) - theta0) ** 2))
         return phys_l + reg, {"measures": m, "parts": parts, "reg": round(reg, 6)}
@@ -281,7 +285,8 @@ def main_probe(args: argparse.Namespace) -> int:
     from .sim import LIFParams
 
     fit_cfg = config.load("fit")
-    rule = {**fit_cfg["cmaes"], "device": args.device}
+    rule = {**fit_cfg["cmaes"], **(fit_cfg["scopes"][args.scope].get("cmaes") or {}),
+            "device": args.device}
     try:
         with heavy("fit-probe") as guard:
             print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
@@ -361,7 +366,8 @@ def main_fit(args: argparse.Namespace) -> int:
     if args.method != "cmaes":
         raise SystemExit("2 단계(sgbptt)는 아직 없다 — I v2 §7.2")
     fit_cfg = config.load("fit")
-    rule = {**fit_cfg["cmaes"], "device": args.device}
+    rule = {**fit_cfg["cmaes"], **(fit_cfg["scopes"][args.scope].get("cmaes") or {}),
+            "device": args.device}
     if args.generations:
         rule["generations"] = args.generations
     out = paths.runs_dir() / (f"fit-{args.scope}-{fit_cfg['version']}-{args.brain}-"
