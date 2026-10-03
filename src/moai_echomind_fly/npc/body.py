@@ -42,6 +42,8 @@ class NpcBody:
     def reset(self, seed: int, task: dict[str, Any]) -> Obs:
         if self.world is None or isinstance(self.world, FakeWorld):
             self.world = FakeWorld()
+        else:
+            self.world.reset(seed)                     # 상자 월드 — 같은 씨앗 같은 시작
         self.task, self.t_ms, self.prev_size, self.hazard_spawned = task, 0.0, None, False
         h0 = math.degrees(float(task.get("heading0", 0.0)))
         self.world.add(Thing(ME, "resident", 0.0, 0.0, heading_deg=h0))
@@ -96,6 +98,8 @@ class NpcBody:
                        "expansion_deg_s": exp,
                        "elevation_deg": float(self.task["looming"].get("elevation_deg", 0.0)),
                        "distance_mm": d}
+        if getattr(self.world, "hit", False) and looming["present"]:
+            looming["distance_mm"] = 0.0   # 상자 월드: 몸이 안 겹침 — 막힘 · 접촉 = 부딪힘
         force = float(sc["contact_force"]) if near else 0.0
         legs = {leg: (force if leg in ("LF", "RF") else 0.0) for leg in LEGS}
         return Obs(self.t_ms, (x, y), h, [cl, cr, cl, cr], legs, looming,
