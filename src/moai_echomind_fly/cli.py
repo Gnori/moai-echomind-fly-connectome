@@ -161,6 +161,8 @@ def main(argv: list[str] | None = None) -> int:
     mb_probe.register(sub)
     from .npc import run as npc_run
     npc_run.register(sub)
+    from .npc import reflex_probe
+    reflex_probe.register(sub)
     from . import datasets
     datasets.register(sub)
     from . import backup
