@@ -38,7 +38,8 @@ def make_world():
     if w.get("kind") == "box":
         from .box_world import BoxWorld
 
-        return BoxWorld(str(w["box_url"]), list(w["forbidden_ports"]))
+        return BoxWorld(str(w["box_url"]), list(w["forbidden_ports"]),
+                        origin=tuple(w.get("origin_xz") or (0.0, 0.0)))
     return None
 
 

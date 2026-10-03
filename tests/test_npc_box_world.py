@@ -48,7 +48,9 @@ def test_live_port_is_refused():
 def test_axes_map_and_hazard_is_steered_and_blocked_means_hit():
     http = FakeHTTP()
     w = BoxWorld("http://127.0.0.1:9412", [9212], opener=http)
-    assert BoxWorld.to_world(1.0, 2.0) == (2.0, 1.0)
+    assert w.to_world(1.0, 2.0) == (2.0, 1.0)
+    w2 = BoxWorld("http://127.0.0.1:9412", [9212], opener=http, origin=(-76.0, 260.0))
+    assert w2.to_world(1.0, 2.0) == (-74.0, 261.0) and w2.from_world(-74.0, 261.0) == (1.0, 2.0)
     w.add(Thing("npc", "resident", 1.0, 2.0))
     w.add(Thing("goal", "object", 5.0, 5.0))
     w.add(Thing("hazard", "resident", 4.0, 2.0, speed_m_s=1.0, target=(1.0, 2.0)))

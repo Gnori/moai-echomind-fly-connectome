@@ -23,11 +23,12 @@ from .fake_world import Thing
 
 class BoxWorld:
     def __init__(self, base_url: str, forbidden_ports: list[int], timeout_s: float = 30.0,
-                 opener=None) -> None:
+                 opener=None, origin: tuple[float, float] = (0.0, 0.0)) -> None:
         port = urlparse(base_url).port
         if port in set(forbidden_ports):
             raise ValueError(f"포트 {port} 는 라이브 월드 — 붙지 않는다(config/npc.yaml)")
         self.base = base_url.rstrip("/")
+        self.origin = (float(origin[0]), float(origin[1]))   # 우리 (0, 0) 의 세계 (x, z) — 빈 땅
         self.timeout = timeout_s
         self.open = opener or urllib.request.urlopen
         self.things: dict[str, Thing] = {}           # 우리가 조종하는 몸(목표 · 위험 · NPC)
@@ -46,13 +47,11 @@ class BoxWorld:
         return json.loads(raw) if raw else {}
 
     # -------------------------------------------------------- 좌표
-    @staticmethod
-    def to_world(x: float, y: float) -> tuple[float, float]:
-        return y, x                                   # (세계 x, 세계 z)
+    def to_world(self, x: float, y: float) -> tuple[float, float]:
+        return y + self.origin[0], x + self.origin[1]          # (세계 x, 세계 z)
 
-    @staticmethod
-    def from_world(wx: float, wz: float) -> tuple[float, float]:
-        return wz, wx
+    def from_world(self, wx: float, wz: float) -> tuple[float, float]:
+        return wz - self.origin[1], wx - self.origin[0]
 
     # -------------------------------------------------------- 장면
     def reset(self, seed: int) -> None:

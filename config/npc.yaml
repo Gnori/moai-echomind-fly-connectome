@@ -1,16 +1,17 @@
 # NPC 하나를 초파리 뇌로(R-5138 · I · S0 · S1) — 값은 선언(결과 전 잠금). 바꾸면 판을 올린다.
 # 원칙: 몸(FlyGym) 자리에 NPC 를 끼운다 — 과제(make_task) · 인코더 · 디코더 · 뇌 · 성적표는 그대로.
 #   세계 좌표(미터) ↔ 과제 좌표(초파리 mm)를 scale 로 바꾸고, 감각은 FlyGym 과 같은 식으로 NPC 위치에서 계산한다.
-version: npc-v1
+version: npc-v2   # 2026-10-04 — v1 + 상자 월드(echomind-world 5012b6f25): 세계 box · 원점 · 걷기 1.3 m/s(몸 규약) · 반사 = 위험 길에 직각(S1b). 옛 판 config/archive/npc-v1.yaml(S1 가짜 세계 결과의 판)
 world:
-  kind: fake                    # fake(시험 · 서버 없음) | box(상자 월드 · echomind-world 구현 뒤)
-  box_url: null                 # 상자 월드 주소 — echomind-world 가 알려 준 뒤
+  kind: box                     # fake(시험 · 서버 없음) | box(상자 월드 · 9412 · --experiment --lockstep)
+  box_url: http://127.0.0.1:9412  # 상자 월드(라이브 아님)
+  origin_xz: [-76.0, 260.0]     # 우리 (0, 0) = 세계 (x, z) — 마을 빈 잔디밭(echomind-world 사진 · 창 at=-76,260)
   forbidden_ports: [9212]       # 라이브 월드 — 붙지 않는다(echomind-world 10-03)
 scale_m_per_mm: 0.15            # 초파리 1 mm = NPC 0.15 m(선언 · 초파리 몸 약 3 mm ↔ 사람 어깨 폭 약 0.45 m)
 motor:
-  max_speed_mm_s: 12.0          # 구동 1.0 일 때 속도(과제 단위 · 초파리 걷기 약 10~15 mm/s · 선언) → NPC 1.8 m/s
+  max_speed_mm_s: 8.67          # v2: 상자 월드 몸 걷기 최대 1.3 m/s ÷ 0.15(echomind-world body · 넘으면 서버가 자름) · v1 12.0(1.8 m/s)
   turn_gain_deg_s: 180.0        # (오른 − 왼) 구동 1.0 당 회전 속도(+ = 왼쪽 · 선언)
-  reflex_retreat_mm_s: 30.0     # 반사(도망 뉴런 발화) 때 비켜서는 속도(선언 · NPC 4.5 m/s 순간 피하기) — 18 은 S1 재기(씨앗 3000 · 3002)에서 반사가 켜져도 판정선 안(최소 1.8 mm) · 초파리 도약은 이보다 훨씬 빠름
+  reflex_retreat_mm_s: 8.67     # v2: 같은 1.3 m/s(달리기 허용은 echomind-world 총괄 판정 대기) · v1 30.0(4.5 m/s · 가짜 세계 S1)
 senses:
   antenna_half_mm: 0.171        # 좌우 감지점 간격의 반(초파리 더듬이 0.342 mm · 노트 14 §3.1)
   antenna_forward_mm: 0.3       # 머리 앞쪽으로(선언)
@@ -21,7 +22,7 @@ s1:                             # S1 반사 장면(10-03 · 결과 전 · S0 재
   policy: stand                 # stand(제자리 · 반사만 시험) | walk
   hazard_pursue: false          # 위험은 생겨날 때 NPC 가 있던 자리로 곧게(서 있으면 맞음). true(쫓아옴)는 반사 속도 < 위험 속도라 어떤 반사로도 못 피함 — reflex-probe 뒤 바꿈
 reflex:                         # 반사 움직임(선언)
-  mode: sidestep                # sidestep(위협 반대쪽 옆으로 · 곧게 오는 물체를 피하는 방향) | retreat(위협 반대 방향)
+  mode: sidestep_path           # v2: 위험 길에 직각(S1b · 사후 수정) · sidestep(위협 반대쪽 옆으로 · 곧게 오는 물체를 피하는 방향) | retreat(위협 반대 방향)
 encoder_override:               # NPC 실험에만 쓰는 시야 인코더(초파리 실험 task.yaml 은 그대로) — reflex-probe(runs/reflex-probe-20261003-221921.json) 뒤 · S1 결과 전
   vision:                       # task-v5(retinotopic2 · 상한 3) 는 정면 다가옴에 GF 0 · 좌우만 + 상한 10 은 5 mm(0.2 s 전)에서 GF 15~16
     mode: lr_sigmoid
