@@ -391,6 +391,58 @@ MaleCNS 는 Shiu 가 맞춘 FlyWire 와 시냅스를 세는 방식이 달라서,
 </tr>
 </tbody>
 </table></div>
+<h3 id="62-버섯체--kc-희소성-m0-2026-10-03--연구-노트-16--학습-없이-지금-매개변수로">6.2 버섯체 — KC 희소성 M0 (2026-10-03 · <a href="../research/fly-connectome/16-KC-희소성-범위-조사.html">연구 노트 16</a> · 학습 없이 지금 매개변수로)</h3>
+<p>버섯체의 케니언 세포(KC)는 냄새 하나에 <strong>5~10 %</strong> 만 켜지는 것이 생체다(희소 부호). 회로 학습의 다음 범위를 고르려고, 학습 전에 지금 뇌가 몇 % 를 켜는지 쟀다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>자극(300 ms · 씨앗 3 평균)</th>
+<th>진짜 KC</th>
+<th>재배선 s0 KC</th>
+<th>진짜 자극 PN 평균</th>
+<th>진짜 APL</th>
+<th>진짜 나머지 뇌</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>식초 6</td>
+<td><strong>1.0 %</strong></td>
+<td>0.44 %</td>
+<td>86 Hz</td>
+<td>125 Hz</td>
+<td>0.43 Hz</td>
+</tr>
+<tr>
+<td>DM1 + VA2</td>
+<td>0.35 %</td>
+<td>0.15 %</td>
+<td>86 Hz</td>
+<td>113 Hz</td>
+<td>0.36 Hz</td>
+</tr>
+<tr>
+<td>무작위 10 × 3</td>
+<td>0.47~0.69 %</td>
+<td>0.36~0.38 %</td>
+<td>87~102 Hz</td>
+<td>122~135 Hz</td>
+<td>0.45~0.50 Hz</td>
+</tr>
+<tr>
+<td>없음</td>
+<td>0</td>
+<td>0</td>
+<td>—</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p>식초 6 의 사구체 하나짜리 PN 은 빠르다(142~255 Hz · DP1m_adPN 255 · DM1_lPN 247 · VA2_adPN 242 · DM4_adPN 190 · DM2_lPN 187 · VM2_adPN 142 Hz) — 평균 86 Hz 는 여러 사구체 PN 이 끌어내린 값이다. 반응당 스파이크 중앙 4 · KC 반응은 켜진 PN 짝이 많을수록 조금 오른다(8 짝 1.6 % · 11 짝 8 %) — <strong>PN 은 충분히 빠른데 PN → KC 가 약하다</strong>.
+판정(결과 전 규칙): 식초 6 의 KC 1.0 % &lt; 5 % → <strong>학습 필요</strong> · 자극 PN 평균 86 Hz &lt; 120 Hz → 범위 <strong><code>kc-sparse-b</code></strong>(묶음 배율 · 코드 <code>bc0b0b4</code> 준비됨).
+⚠️ <strong>손실 정의 문제</strong>: 생리 목표 physiology-v2 의 <code>cns_quiet</code>(나머지 뇌 ≤ 0.05 Hz)를 냄새 자극 중에 재면 <strong>처음부터 0.43 Hz</strong> 다(처음 손실이 다른 항을 덮는다). 고칠 안은 <strong>요구자 확인 대기</strong>다.
+파일 <code>runs/kc-probe-20261003-132005.json</code> · <code>scripts/20-odor/kc-probe.sh</code>(2026-10-03 13:18 → 13:20 · 2 분) · 정본 R-7469 core P Task 5(<code>e85d9e9</code>).</p>
 <h2 id="7-확인-체크리스트">7. 확인 체크리스트</h2>
 <ul>
 <li>[ ] 규칙(<code>FIT_RULE</code>)을 바꿨다면 <code>version</code> 을 올렸다</li>

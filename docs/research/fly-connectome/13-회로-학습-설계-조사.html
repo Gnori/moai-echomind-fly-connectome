@@ -1235,6 +1235,51 @@ Takemura 2017(α 엽 FIB-SEM [49][P]): DAN→KC 시냅스는 <strong>KC 축삭 �
 <li>⚠️ <strong>방위를 섞어도 전체 상관이 0.78 이다</strong> — 섞는 단위가 "종류 × 눈"이라 <strong>좌우(어느 눈인가)는 남는다</strong>. 이 대조군은 "눈 안의 자리"만 지운다.
   좌우 정보까지 지운 대조군이 필요하면 섞는 단위를 종류로 바꿔야 한다(<code>shuffled()</code> 의 묶음 키 한 줄 · 코드 고침이라 조율 세션 판단).</li>
 </ul>
+<h3 id="46-결과--시야-대응표-대조-c-조율-세션--2026-10-03">4.6 결과 — 시야 대응표 대조 C (조율 세션 · 2026-10-03)</h3>
+<p>4.3 의 방위를 입력에 실제로 써서(retino-v2) 4.5 의 뒤섞은 대응표와 나란히 쟀다. 두 눈까지 섞는 대조(<code>--within type</code> · <code>ebff77a</code>)는 4.5 끝에 적은 "좌우까지 지운 대조군"이다.
+과제 <code>task-v5</code>(시각 <code>retinotopic2</code> = 고도 × <strong>방위</strong> 가우시안 · 방위 폭 25° 선언 · <code>69eb8cc</code>) · 원본 <code>fly-loop-v4</code> 를 <strong>진짜 뇌만</strong> 재생 · 평가 200 + 학습 0~119 에피소드 × 대응표 셋 → <code>data/datasets/fly-loop-v5-ret-{real,az,aztype}</code>(메타 <code>replay_of.retino_rule</code>) · 2026-10-03 07:44 → 13:17 · <code>scripts/10-data/retino-controls.sh</code> → <code>scripts/50-analysis/retino_controls.py</code>.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸(시각 채널 선형 검사 · 평가 1,708 · stats-v3)</th>
+<th>진짜 대응표</th>
+<th>눈 안 방위 섞음(<code>az</code>)</th>
+<th>두 눈까지 섞음(<code>aztype</code>)</th>
+<th>찍기</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>물체 쪽</strong>(판정 칸 · 결과 전에 정함)</td>
+<td><strong>0.794</strong></td>
+<td>0.797</td>
+<td>0.775</td>
+<td>0.667</td>
+</tr>
+<tr>
+<td>물체 있음(참고)</td>
+<td>0.859</td>
+<td>0.860</td>
+<td>0.850</td>
+<td>—</td>
+</tr>
+<tr>
+<td>거리(참고)</td>
+<td>0.730</td>
+<td>0.740</td>
+<td>0.734</td>
+<td>—</td>
+</tr>
+<tr>
+<td>움직임(참고)</td>
+<td>0.796</td>
+<td>0.797</td>
+<td>0.794</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>판정: 물체 쪽 진짜 0.794 대 섞은 대응표 0.797 · 0.775 · <strong>p 0.064 → 못 넘음</strong>. 눈 <strong>안</strong> 방위 자리를 섞어도 물체 쪽 읽기가 같다(0.794 대 0.797) — 물체 쪽은 <strong>어느 눈인가(좌우)</strong> 로 실리고, 눈 안 방위 자리는 이 선형 읽기에 쓰이지 않는다. 두 눈까지 섞으면 조금 낮다(0.775). task-v4 시각 물체 쪽 0.790 과도 같다. <strong>"시야 자리가 쓰였다"는 쓰지 않는다.</strong> 정본 R-7469 core P Task 7(<code>e85d9e9</code>).</p>
 <h2 id="5-종합--순서--무게--요구자-확인-지점">5. 종합 — 순서 · 무게 · 요구자 확인 지점</h2>
 <div class="tbl"><table>
 <thead>

@@ -627,6 +627,60 @@
 <li>식초 사구체 6 개는 Semmelhack 2009 의 3 ppm 조건이다 — 농도가 오르면 더 많이 켜진다.</li>
 </ul>
 <hr />
+<h2 id="8-측정-결과--m0-조율-세션--2026-10-03">8. 측정 결과 — M0 (조율 세션 · 2026-10-03)</h2>
+<blockquote>
+<p>이 절은 6 절 M0 을 돌린 결과의 <strong>기록</strong>이다 — 1~7 절(조사 · 설계)은 고치지 않았다.</p>
+</blockquote>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>자극(300 ms · 씨앗 3 평균)</th>
+<th>진짜 KC</th>
+<th>재배선 s0 KC</th>
+<th>진짜 자극 PN 평균</th>
+<th>진짜 APL</th>
+<th>진짜 나머지 뇌</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>식초 6</td>
+<td><strong>1.0 %</strong></td>
+<td>0.44 %</td>
+<td>86 Hz</td>
+<td>125 Hz</td>
+<td>0.43 Hz</td>
+</tr>
+<tr>
+<td>DM1 + VA2</td>
+<td>0.35 %</td>
+<td>0.15 %</td>
+<td>86 Hz</td>
+<td>113 Hz</td>
+<td>0.36 Hz</td>
+</tr>
+<tr>
+<td>무작위 10 × 3</td>
+<td>0.47~0.69 %</td>
+<td>0.36~0.38 %</td>
+<td>87~102 Hz</td>
+<td>122~135 Hz</td>
+<td>0.45~0.50 Hz</td>
+</tr>
+<tr>
+<td>없음</td>
+<td>0</td>
+<td>0</td>
+<td>—</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p>식초 6 의 사구체 하나짜리 PN 은 빠르다(142~255 Hz · DP1m_adPN 255 · DM1_lPN 247 · VA2_adPN 242 · DM4_adPN 190 · DM2_lPN 187 · VM2_adPN 142 Hz) — 평균 86 Hz 는 여러 사구체 PN 이 끌어내린 값이다. 반응당 스파이크 중앙 4 · KC 반응은 켜진 PN 짝이 많을수록 조금 오른다(8 짝 1.6 % · 11 짝 8 %) — <strong>PN 은 충분히 빠른데 PN → KC 가 약하다</strong>.
+판정(결과 전 규칙): 식초 6 의 KC 1.0 % &lt; 5 % → <strong>학습 필요</strong> · 자극 PN 평균 86 Hz &lt; 120 Hz → 범위 <strong><code>kc-sparse-b</code></strong>(묶음 배율 · 코드 <code>bc0b0b4</code> 준비됨).
+⚠️ <strong>손실 정의 문제</strong>: 생리 목표 physiology-v2 의 <code>cns_quiet</code>(나머지 뇌 ≤ 0.05 Hz)를 냄새 자극 중에 재면 <strong>처음부터 0.43 Hz</strong> 다(처음 손실이 다른 항을 덮는다). 고칠 안은 <strong>요구자 확인 대기</strong>다.
+파일 <code>runs/kc-probe-20261003-132005.json</code> · <code>scripts/20-odor/kc-probe.sh</code>(2026-10-03 13:18 → 13:20 · 2 분) · 정본 R-7469 core P Task 5(<code>e85d9e9</code>).</p>
 <h2 id="참고-문헌">참고 문헌</h2>
 <ul>
 <li>[L1] Honegger K.S., Campbell R.A.A., Turner G.C. 2011. Cellular-resolution population imaging reveals robust sparse coding in the Drosophila mushroom body. <em>J Neurosci</em> 31:11772–11785. [P]</li>
