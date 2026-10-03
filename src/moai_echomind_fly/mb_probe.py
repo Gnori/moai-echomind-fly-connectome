@@ -109,7 +109,8 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
     """회로 학습(F-006) 평가용 — 양성 자극을 씨앗 `trials` 개로 · 음성 · 무자극 한 번씩.
 
     돌려주는 칸(physiology `mb.*` 측정 이름): kc_active_fraction · kc_spikes_per_responder ·
-    kc_negative_fraction · kc_spontaneous_fraction · pop_rate_hz(KC · APL · 자극 · PN 밖).
+    kc_negative_fraction · kc_spontaneous_fraction · pop_rate_hz(양성 중 나머지 뇌) ·
+    pop_rate_spont_hz(무자극 중 나머지 뇌).
     """
     cfg = cfg or config.load("fit")["kc_probe"]
     w = [float(cfg["loss_window_ms"])]
@@ -123,7 +124,8 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
                                                       for x in pos])),
             "kc_negative_fraction": float(neg["kc_active_fraction"]),
             "kc_spontaneous_fraction": float(nil["kc_active_fraction"]),
-            "pop_rate_hz": float(np.mean([x["rest_rate_hz"] for x in pos]))}
+            "pop_rate_hz": float(np.mean([x["rest_rate_hz"] for x in pos])),
+            "pop_rate_spont_hz": float(nil["rest_rate_hz"])}
 
 
 def main(args: argparse.Namespace) -> int:

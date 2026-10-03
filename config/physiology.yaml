@@ -6,7 +6,8 @@
 # 손실: L = Σ_k weight_k · ((측정_k − target_k) / tolerance_k)² + 과제 항(관문 통과 칸 선형 해독) + 규제(초기값에서 멀어진 정도).
 #   범위 목표([lo, hi])는 안에 들면 0, 벗어난 거리를 tolerance 로 나눈다.
 # 확인 수준: P = 원문 · A = 초록/그림 · S = 2차 자료(연구 노트 13 §2.4 표 · 참고 문헌 번호는 그 노트).
-version: physiology-v2   # 2026-10-03 — v1 + KC 희소성 항목을 범위 kc-sparse-a · b 에(연구 노트 16 §4 · **M0 측정 결과 전에** 잠금). 옛 판 config/archive/physiology-v1.yaml
+version: physiology-v3   # 2026-10-03 — v2 의 cns_quiet 를 KC 범위에서 빼고 무자극 침묵 + 냄새 중 들끓음 상한으로 바꿈(M0 에서 냄새 중 나머지 뇌가 이미 0.43 Hz · 요구자 "진행해" · 학습 결과 전). 옛 판 config/archive/physiology-v2.yaml
+# v2 = 2026-10-03 — v1 + KC 희소성 항목을 범위 kc-sparse-a · b 에(연구 노트 16 §4 · **M0 측정 결과 전에** 잠금). 옛 판 config/archive/physiology-v1.yaml
 items:
   # ---- 도망 반사 (scope escape-small · escape) — bench/escape.py 의 채점 5 항목 그대로
   - name: gf_response_prob
@@ -34,7 +35,7 @@ items:
     source: "von Reyn 2014"
     level: A
   - name: cns_quiet_hz
-    scope: [escape-small, escape, space, kc-sparse-a, kc-sparse-b]
+    scope: [escape-small, escape, space]  # v3: KC 범위에서 뺌(아래 kc_quiet_spontaneous · kc_odor_rest_bounded)
     measure: escape.pop_rate_hz           # 자극받지 않은 뉴런 평균 발화율
     target: [0.0, 0.05]
     tolerance: 0.02
@@ -126,3 +127,20 @@ items:
     weight: 1.0
     source: "Turner et al. 2008 — KC 자발 발화 약 0.1 /s(연구 노트 16 [L2])"
     level: A
+  # ---- v3(2026-10-03) — KC 범위의 '뇌 침묵' 두 갈래. 냄새는 외측뿔 등을 정당하게 켠다(M0 식초 중 나머지 뇌 0.43 Hz)
+  - name: kc_quiet_spontaneous
+    scope: [kc-sparse-a, kc-sparse-b]
+    measure: mb.pop_rate_spont_hz         # 무자극 300 ms 의 나머지 뇌(KC · APL · 자극 밖) — M0 에서 0
+    target: [0.0, 0.05]
+    tolerance: 0.02
+    weight: 2.0
+    source: "Shiu 2024 — 쉬는 상태 침묵(cns_quiet_hz 와 같은 값 · 재는 조건만 무자극으로)"
+    level: P
+  - name: kc_odor_rest_bounded
+    scope: [kc-sparse-a, kc-sparse-b]
+    measure: mb.pop_rate_hz               # 식초 6 · 300 ms 의 나머지 뇌
+    target: [0.0, 0.86]                   # = M0 처음 값 0.43 Hz × 2(runs/kc-probe-20261003-132005.json) — 들끓음 상한 · 선언
+    tolerance: 0.2
+    weight: 1.0
+    source: "선언 — 학습이 뇌 전체를 들끓게 만드는 해를 막는 상한(값은 M0 측정 × 2)"
+    level: S

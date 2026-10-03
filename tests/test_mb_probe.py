@@ -58,7 +58,7 @@ def test_measure_kc_returns_physiology_fields_and_measure_for_picks_it():
            "kc_min_type_size": 1, "apl_type": "APL", "windows_ms": [50]}
     m = mb_probe.measure_kc(g, LIFParams(w_scale=1.0), None, 2, 0, "cpu", cfg)
     assert set(m) == {"kc_active_fraction", "kc_spikes_per_responder", "kc_negative_fraction",
-                      "kc_spontaneous_fraction", "pop_rate_hz"}
+                      "kc_spontaneous_fraction", "pop_rate_hz", "pop_rate_spont_hz"}
     assert m["kc_spontaneous_fraction"] == 0.0
     assert cf.measure_for({"measure": "mb"}) is mb_probe.measure_kc
     assert cf.measure_for({}) is cf.measure_escape
