@@ -3,7 +3,7 @@
 자극 묶음(식초 6 · DM1+VA2 · 무작위 10 사구체 · 없음) × 포아송 씨앗 × 뇌(진짜 · 재배선)마다 한 번
 가장 긴 창만큼 돌리고, 앞 구간(100 · 300 · 500 ms)을 잘라 센다:
 KC 주요 종류 중 한 번 이상 발화한 비율 · 반응 KC 스파이크 수 중앙 · 자극 PN 평균 발화율(종류별) ·
-켜진 PN 짝 수별 KC 반응률(발톱 진단) · APL 발화율 · 나머지 뇌 발화율(KC · APL · 자극 · PN 제외).
+켜진 PN 짝 수별 KC 반응률(발톱 진단) · APL 발화율 · 나머지 뇌 발화율(KC · APL · 자극 제외).
 값은 config/fit.yaml `kc_probe`(결과 전 선언). 무거움(뇌 전체 · 짧음) — scripts/20-odor/kc-probe.sh.
 """
 
@@ -81,9 +81,9 @@ def run(graph: Graph, lif, cfg: dict[str, Any], stim_types: list[str], seed: int
     orn = graph.select(type=stim_types) if stim_types else np.zeros(0, np.int64)
     pn_s = stim_pns(graph, orn, cfg) if len(orn) else np.zeros(0, np.int64)
     apl = graph.select(type=cfg["apl_type"])
-    pn_all = np.flatnonzero(cls == cfg["pn_class"])
     excl = np.zeros(graph.n, bool)
-    excl[np.concatenate([kc, orn, apl, pn_all, np.flatnonzero(cls == "Kenyon_Cell")])] = True
+    # 나머지 뇌 = KC(전부) · APL · 자극 ORN 밖(연구 노트 16 §4 cns_quiet 정의 · PN 은 포함)
+    excl[np.concatenate([orn, apl, np.flatnonzero(cls == "Kenyon_Cell")])] = True
     rest = np.flatnonzero(~excl)
     src = graph.src()
     kc_pos = np.full(graph.n, -1)
