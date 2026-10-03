@@ -122,13 +122,14 @@ def _window(eng, stim: list[tuple[np.ndarray, float]] | None, ms: float):
 
 
 def probe(graph: Graph, lif, cfg: dict[str, Any], eta: float, odor_types: list[str],
-          odor_hz: float, window_ms: float, seed: int, device: str) -> dict[str, Any]:
+          odor_hz: float, window_ms: float, seed: int, device: str,
+          cell=None) -> dict[str, Any]:
     """(i) KC 발화 비율 (ii) MBON 이 KC 로 발화하나 (iii) 짝짓기 뒤 구획 MBON 의 CS+ 반응 변화."""
     from .sim import Engine
 
     comp = compartments(graph, cfg)
     tf = ThreeFactor(graph, cfg, eta, comp["table"])
-    eng = Engine(graph, lif, device=device, seed=seed)
+    eng = Engine(graph, lif, device=device, seed=seed, cell=cell)  # 회로 학습 매개변수
     odor = graph.select(type=odor_types)
     mbon = np.flatnonzero(np.isin(graph.columns["class"], cfg["targets"]["post_class"]))
     pair = cfg["eta"]["pairing"]
@@ -173,9 +174,16 @@ def main_probe(args: argparse.Namespace) -> int:
             print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
             g = graph_mod.load()
             lif = LIFParams.from_config()
+            cell = None
+            if args.cell_from:
+                from pathlib import Path
+
+                from . import cellparams as cp
+
+                cell = cp.CellParams.load(Path(args.cell_from) / "params.npz")
             for eta in [float(x) for x in args.eta.split(",")]:
                 r = probe(g, lif, cfg, eta, args.odor.split(","), args.odor_hz, args.window_ms,
-                          args.seed, args.device)
+                          args.seed, args.device, cell)
                 rows.append(r)
                 print(f"[plasticity-probe] η {eta:g} · KC 발화 {r['kc_active_fraction']:.3f} · "
                       f"MBON {r['mbon_spikes_before']} · 보상 구획 MBON "
@@ -202,4 +210,5 @@ def register(sub) -> None:
     p.add_argument("--window-ms", type=float, default=100.0)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--device", default="cpu", choices=["cpu", "mps"])
+    p.add_argument("--cell-from", default="", help="회로 학습 결과 폴더(params.npz) — 진짜 뇌만")
     p.set_defaults(func=main_probe)
