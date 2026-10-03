@@ -105,3 +105,14 @@ def test_sidestep_moves_across_the_threat_path():
     b.step((0.0, 0.0), 100.0, reflex=True)
     h = b.world.state(ME)["heading_deg"]
     assert abs(abs(wrap_deg(h)) - 90.0) < 1.0                         # 옆으로
+
+
+def test_sidestep_path_moves_perpendicular_to_threat_path():
+    cfg = {**config.load("npc"), "reflex": {"mode": "sidestep_path"}}
+    b = NpcBody(cfg)
+    b.reset(0, {**TASK, "looming": {**TASK["looming"], "bearing_deg": 43.0}})
+    b.step((0.0, 0.0), 100.0)
+    hz = b.world.things[HAZARD]
+    b.step((0.0, 0.0), 100.0, reflex=True)
+    h = b.world.state(ME)["heading_deg"]
+    assert abs(abs(wrap_deg(h - hz.heading_deg)) - 90.0) < 1.0      # 위협 길에 직각
