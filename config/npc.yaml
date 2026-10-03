@@ -1,0 +1,19 @@
+# NPC 하나를 초파리 뇌로(R-5138 · I · S0 · S1) — 값은 선언(결과 전 잠금). 바꾸면 판을 올린다.
+# 원칙: 몸(FlyGym) 자리에 NPC 를 끼운다 — 과제(make_task) · 인코더 · 디코더 · 뇌 · 성적표는 그대로.
+#   세계 좌표(미터) ↔ 과제 좌표(초파리 mm)를 scale 로 바꾸고, 감각은 FlyGym 과 같은 식으로 NPC 위치에서 계산한다.
+version: npc-v1
+world:
+  kind: fake                    # fake(시험 · 서버 없음) | box(상자 월드 · echomind-world 구현 뒤)
+  box_url: null                 # 상자 월드 주소 — echomind-world 가 알려 준 뒤
+  forbidden_ports: [9212]       # 라이브 월드 — 붙지 않는다(echomind-world 10-03)
+scale_m_per_mm: 0.15            # 초파리 1 mm = NPC 0.15 m(선언 · 초파리 몸 약 3 mm ↔ 사람 어깨 폭 약 0.45 m)
+motor:
+  max_speed_mm_s: 12.0          # 구동 1.0 일 때 속도(과제 단위 · 초파리 걷기 약 10~15 mm/s · 선언) → NPC 1.8 m/s
+  turn_gain_deg_s: 180.0        # (오른 − 왼) 구동 1.0 당 회전 속도(+ = 왼쪽 · 선언)
+  reflex_retreat_mm_s: 18.0     # 반사(도망 뉴런 발화) 때 위협 반대쪽으로 물러나는 속도(선언)
+senses:
+  antenna_half_mm: 0.171        # 좌우 감지점 간격의 반(초파리 더듬이 0.342 mm · 노트 14 §3.1)
+  antenna_forward_mm: 0.3       # 머리 앞쪽으로(선언)
+  goal_peak: null               # null = 과제의 odor_peak(FlyGym 과 같은 '거리 제곱에 반비례')
+  contact_near_mm: 0.5          # 막힘 · 이 거리 안의 사람 · 물건 → 앞다리 접촉(선언)
+  contact_force: 1.0            # 그때 다리 힘(인코더 force_ref 단위 · 선언)

@@ -123,7 +123,10 @@ class Loop:
                 drive, reflex = self.decoder.drive(spikes[self.primary], self.bin_ms)
                 reflex_bins += int(reflex)
                 tb = time.time()
-                obs = self.body.step(drive, self.bin_ms)
+                if getattr(self.body, "wants_reflex", False):   # NPC 몸(R-5138) — 반사면 물러남
+                    obs = self.body.step(drive, self.bin_ms, reflex=reflex)
+                else:
+                    obs = self.body.step(drive, self.bin_ms)
                 timing["body_s"] += time.time() - tb
                 lo = obs.looming
                 if lo["present"] and lo["distance_mm"] is not None:
