@@ -61,7 +61,7 @@ def neural_summary(loop, step, label: str) -> dict[str, Any]:
 
     left, right = step.drive
     tier = (step.info or {}).get("tier")
-    out = {"t_sim_s": round(step.t_ms / 1000.0, 2), "decision": step.decision,
+    out = {"t_sim_s": round(step.t_ms / 1000.0, 2), "decision": str(step.decision),  # 월드는 문자열
             "looming": {"left": lvl(m.vision["L"], vmax), "right": lvl(m.vision["R"], vmax)},
             "escape": bool(step.reflex_bins > 0),
             "motor": {"walk": round(max(0.0, min(1.0, 0.5 * (left + right))), 3),

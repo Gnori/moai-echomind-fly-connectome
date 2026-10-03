@@ -89,6 +89,7 @@ def test_neural_summary_shapes_and_post_is_best_effort():
     assert n["looming"] == {"left": 1.0, "right": 0.0} and n["escape"]
     assert n["motor"]["turn"] == 0.3 and n["goal"]["left"] == 1.0 and n["label"] == "real"
     assert n["tier"] == "reflex"                                     # 반사 구간이 있으면
+    assert n["decision"] == "3"                                      # 월드는 문자열로 받는다
 
     def broken(req, timeout=None):
         raise OSError("입구 없음")

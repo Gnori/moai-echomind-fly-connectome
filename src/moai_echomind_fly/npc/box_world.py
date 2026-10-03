@@ -107,8 +107,10 @@ class BoxWorld:
         """신경 상태 띠(보기용 · 판정에 안 씀) — 입구가 없으면 조용히 넘어간다."""
         try:
             self._req("POST", f"/exp/neural/{ref}", payload)
-        except Exception:                             # 보기용 — 실험을 멈추지 않는다
-            pass
+        except Exception as err:                      # 보기용 — 실험은 멈추지 않되 한 번은 알린다
+            if not getattr(self, "_neural_warned", False):
+                self._neural_warned = True
+                print(f"[npc] 신경 띠 보내기 실패(보기용 · 실험 계속): {err}", flush=True)
 
     # -------------------------------------------------------- 움직임
     def steer(self, ref: str, heading_deg: float, speed_m_s: float, dt_s: float) -> dict:
