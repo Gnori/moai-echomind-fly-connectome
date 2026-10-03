@@ -66,3 +66,8 @@ kc_probe:                       # M0(연구 노트 16 §6) — 학습 없이 지
   target_stimulus: vinegar6     # 회로 학습 평가(measure_kc)의 양성 자극 · 노트 16 §4
   negative_stimulus: dm1va2     # 음성 대조(≤ 2 % 목표)
   loss_window_ms: 300           # 결정 하나
+  generalize:                   # M2(노트 16 §4 · §6) — 학습에 안 쓴 무작위 10 사구체 세트에서 KC 비율이 이 안인지
+    sets: 5
+    seed: 1                     # M0 · 학습의 무작위 세트(씨앗 0)와 다른 세트
+    range: [0.03, 0.15]
+    escape_trials: 20           # 도망 반사 재채점(bench fit-v1 과 같은 시행 수)

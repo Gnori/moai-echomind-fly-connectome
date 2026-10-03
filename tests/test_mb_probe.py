@@ -62,3 +62,24 @@ def test_measure_kc_returns_physiology_fields_and_measure_for_picks_it():
     assert m["kc_spontaneous_fraction"] == 0.0
     assert cf.measure_for({"measure": "mb"}) is mb_probe.measure_kc
     assert cf.measure_for({}) is cf.measure_escape
+
+
+def test_overlap_jaccard_between_two_eval_files(tmp_path):
+    import json
+
+    a = {"before": {"target_active_kc": [1, 2, 3]}, "after": {"target_active_kc": [1, 2]}}
+    b = {"before": {"target_active_kc": [2, 3, 4]}, "after": {"target_active_kc": [5]}}
+    pa, pb = tmp_path / "a.json", tmp_path / "b.json"
+    pa.write_text(json.dumps(a))
+    pb.write_text(json.dumps(b))
+    assert mb_probe.overlap(str(pa), str(pb)) == {"before": 0.5, "after": 0.0}
+
+
+def test_active_kc_reports_claw_consistency():
+    from moai_echomind_fly.sim import LIFParams
+
+    g = mb()
+    cfg = {"kc_min_type_size": 1, "orn_rate_hz": 150.0, "loss_window_ms": 50, "pn_class": "ALPN"}
+    on, claw = mb_probe.active_kc(g, LIFParams(w_scale=1.0), cfg, ["ORN_A"], 0, "cpu")
+    assert set(on.tolist()) <= {4, 5}
+    assert np.isnan(claw) or 0.0 <= claw <= 1.0

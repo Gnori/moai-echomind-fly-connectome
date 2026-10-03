@@ -128,6 +128,98 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
             "pop_rate_spont_hz": float(nil["rest_rate_hz"])}
 
 
+def active_kc(graph: Graph, lif, cfg: dict[str, Any], stim: list[str], seed: int, device: str,
+              cell=None) -> tuple[np.ndarray, float]:
+    """이 자극 · 창에서 발화한 KC 번호와 '켜진 PN 짝 ≥ 2' 인 반응 KC 비율(발톱 일치)."""
+    from .sim import Engine
+
+    cls, types = graph.columns["class"], graph.columns["type"]
+    sizes = Counter(types[cls == "Kenyon_Cell"])
+    kc = np.flatnonzero((cls == "Kenyon_Cell") & np.isin(
+        types, [t for t, n in sizes.items() if n >= int(cfg["kc_min_type_size"])]))
+    orn = graph.select(type=stim)
+    eng = Engine(graph, lif, device=device, seed=seed, cell=cell)
+    eng.set_poisson(orn, np.full(len(orn), float(cfg["orn_rate_hz"])))
+    eng.run(float(cfg["loss_window_ms"]))
+    _, neurons = eng.spikes()
+    cnt = np.bincount(neurons, minlength=graph.n)
+    on = kc[cnt[kc] > 0]
+    src = graph.src()
+    pn = cls == cfg["pn_class"]
+    e = np.isin(graph.dst, on) & pn[src] & (cnt[src] > 0)
+    claws = np.bincount(graph.dst[e], minlength=graph.n)[on]
+    return on, (float((claws >= 2).mean()) if len(on) else float("nan"))
+
+
+def evaluate_fit(run_dir, device: str = "cpu") -> dict[str, Any]:
+    """M2 — 학습한 매개변수로 일반화(안 쓴 무작위 세트) · 손실 측정 · 도망 재채점 · 발톱 일치."""
+    from pathlib import Path
+
+    from . import cellparams as cp
+    from . import graph as graph_mod
+    from .circuit_fit import measure_escape
+    from .sim import LIFParams
+
+    run_dir = Path(run_dir)
+    meta = json.loads((run_dir / "meta.json").read_text(encoding="utf-8"))
+    cell = cp.CellParams.load(run_dir / "params.npz")
+    cfg = config.load("fit")["kc_probe"]
+    gen = cfg["generalize"]
+    base = graph_mod.load()
+    brain = meta["brain"]
+    g = base if brain == "real" else graph_mod.rewire(base, int(brain.rsplit("-s", 1)[1]))
+    lif = LIFParams.from_config()
+    orn = sorted({t for t in g.columns["type"].astype(str) if t.startswith("ORN_")})
+    rng = np.random.default_rng(int(gen["seed"]))
+    sets = [sorted(rng.choice(orn, size=int(cfg["random_size"]), replace=False).tolist())
+            for _ in range(int(gen["sets"]))]
+    out: dict[str, Any] = {"run": run_dir.name, "brain": brain, "sets": sets}
+    for name, c in (("before", None), ("after", cell)):
+        fr = [run(g, lif, cfg, st, 0, device, c, [float(cfg["loss_window_ms"])])["windows"][0]
+              ["kc_active_fraction"] for st in sets]
+        on, claw = active_kc(g, lif, cfg, cfg["stimuli"][cfg["target_stimulus"]], 0, device, c)
+        esc = measure_escape(g, lif, c, int(gen["escape_trials"]), 0, device)
+        out[name] = {"loss_measures": measure_kc(g, lif, c, 3, 0, device, cfg),
+                     "generalize_fractions": [round(x, 5) for x in fr],
+                     "generalize_in_range": bool(all(gen["range"][0] <= x <= gen["range"][1]
+                                                     for x in fr)),
+                     "target_active_kc": on.tolist(), "claw_consistency": claw,
+                     "escape": esc}
+    return out
+
+
+def main_eval(args: argparse.Namespace) -> int:
+    from .guard import GuardRefused, heavy
+
+    try:
+        with heavy("fit-eval") as guard:
+            print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
+            res = evaluate_fit(args.run, args.device)
+    except GuardRefused as err:
+        print(f"[guard] 막음 — {err}")
+        return 2
+    out = paths.runs_dir() / f"fit-eval-{res['run']}.json"
+    out.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
+    for k in ("before", "after"):
+        r = res[k]
+        print(f"[fit-eval] {res['brain']} {k:6} KC {r['loss_measures']['kc_active_fraction']:.4f}"
+              f" · 일반화 {r['generalize_fractions']} 범위 안 {r['generalize_in_range']}"
+              f" · 발톱 일치 {r['claw_consistency']:.3f} · GF {r['escape']['gf_hit']:.2f}",
+              flush=True)
+    print(f"[fit-eval] {out}")
+    return 0
+
+
+def overlap(a_json: str, b_json: str) -> dict[str, float]:
+    """두 fit-eval 결과(진짜 · 재배선)의 식초 자극 켜진 KC 집합 겹침(Jaccard) — 학습 전 · 뒤."""
+    a, b = (json.loads(open(p, encoding="utf-8").read()) for p in (a_json, b_json))
+    out = {}
+    for k in ("before", "after"):
+        x, y = set(a[k]["target_active_kc"]), set(b[k]["target_active_kc"])
+        out[k] = round(len(x & y) / max(len(x | y), 1), 4)
+    return out
+
+
 def main(args: argparse.Namespace) -> int:
     from . import graph as graph_mod
     from .guard import GuardRefused, heavy
@@ -170,3 +262,7 @@ def register(sub) -> None:
     p = sub.add_parser("kc-probe", help="KC 희소성 M0 — 냄새 자극 KC · PN 반응(무거움 · 짧음)")
     p.add_argument("--device", default="cpu", choices=["cpu", "mps"])
     p.set_defaults(func=main)
+    e = sub.add_parser("fit-eval", help="회로 학습 뒤 M2 — 일반화 · 도망 재채점(무거움 · 짧음)")
+    e.add_argument("--run", required=True, help="runs/fit-<범위>-<판>-<뇌>-<시각> 폴더")
+    e.add_argument("--device", default="cpu", choices=["cpu", "mps"])
+    e.set_defaults(func=main_eval)
