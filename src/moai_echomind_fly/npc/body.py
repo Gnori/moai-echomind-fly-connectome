@@ -43,7 +43,10 @@ class NpcBody:
     def reset(self, seed: int, task: dict[str, Any]) -> Obs:
         if self.persistent and self.world is not None and ME in getattr(self.world, "things", {}):
             if HAZARD in self.world.things:            # 지난 위험만 치우고 NPC 는 그 자리에
-                self.world.remove(HAZARD)
+                if hasattr(self.world, "park"):
+                    self.world.park(HAZARD)            # 상자 — 지우지 않고 멀리(다음엔 place)
+                else:
+                    self.world.remove(HAZARD)
             self.world.hit = False
             self.task, self.t_ms, self.prev_size, self.hazard_spawned = task, 0.0, None, False
             return self._obs(0.0)

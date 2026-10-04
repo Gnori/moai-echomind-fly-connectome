@@ -150,6 +150,11 @@ def main(args: argparse.Namespace) -> int:
                         cfg2["encoder"][k].update(v)
                     loop.cfg = cfg2
                     loop.encoder = Encoder(loop.smap, cfg2, loop.loom)
+                if args.persistent:       # 시연 — 냄새 맡기 정지 구간 없이 바로 걷기
+                    import copy as _copy
+
+                    loop.cfg = _copy.deepcopy(loop.cfg)
+                    loop.cfg["episode"]["sniff_decisions"] = 0
                 if args.persistent and shared_body is not None:
                     loop.body = shared_body               # 보기용 — 같은 NPC 한 몸을 이어서
                     loop.body.reflex_enabled = c != "no_brain"

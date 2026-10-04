@@ -59,18 +59,36 @@ class BoxWorld:
         self.things, self.virtual, self.last, self.hit, self.t_s = {}, set(), {}, False, 0.0
 
     def add(self, thing: Thing) -> str:
+        known = thing.ref in self.things and thing.ref not in self.virtual
         self.things[thing.ref] = thing
+        if known:                     # 이미 있는 몸 — 지우지 않고 옮김(창에서 안 깜빡)
+            self.place(thing.ref, thing.x, thing.y, thing.heading_deg)
+            return thing.ref
         if thing.kind == "object":                    # 목표는 세계에 없다(감각은 과제 좌표로)
             self.virtual.add(thing.ref)
             return thing.ref
         wx, wz = self.to_world(thing.x, thing.y)
         body = {"id": thing.ref, "x": wx, "z": wz, "heading_deg": thing.heading_deg,
                 "height_m": thing.height_m}
-        if thing.ref != "npc":            # 위험 몸은 작게 · 통과(날아오는 공 · 10-04 요청)
+        if thing.ref != "npc":            # 위험 몸 = 작은 공 · 통과(10-04 · 요구자 판정)
             body["radius_m"] = thing.radius_m
             body["solid"] = False
+            body["shape"] = "ball"
         self._req("POST", "/exp/bodies", body)
         return thing.ref
+
+    def place(self, ref: str, x: float, y: float, heading_deg: float = 0.0) -> dict:
+        """걷지 않고 새 자리로(월드 /exp/bodies/{id}/place · 81ef3db18)."""
+        wx, wz = self.to_world(x, y)
+        return self._req("POST", f"/exp/bodies/{ref}/place",
+                         {"x": wx, "z": wz, "heading_deg": heading_deg % 360.0})
+
+    def park(self, ref: str, far_m: float = 60.0) -> None:
+        """시연 — 에피소드 사이에 멀리 옮겨 둠(지우면 창에서 깜빡)."""
+        t = self.things.get(ref)
+        if t is not None:
+            t.speed_m_s, t.target = 0.0, None
+            self.place(ref, 0.0, far_m)
 
     def remove(self, ref: str) -> None:
         self.things.pop(ref, None)
