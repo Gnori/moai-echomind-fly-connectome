@@ -1,7 +1,7 @@
 # NPC 하나를 초파리 뇌로(R-5138 · I · S0 · S1) — 값은 선언(결과 전 잠금). 바꾸면 판을 올린다.
 # 원칙: 몸(FlyGym) 자리에 NPC 를 끼운다 — 과제(make_task) · 인코더 · 디코더 · 뇌 · 성적표는 그대로.
 #   세계 좌표(미터) ↔ 과제 좌표(초파리 mm)를 scale 로 바꾸고, 감각은 FlyGym 과 같은 식으로 NPC 위치에서 계산한다.
-version: npc-v2   # 2026-10-04 — v1 + 상자 월드(echomind-world 5012b6f25): 세계 box · 원점 · 걷기 1.3 m/s(몸 규약) · 반사 = 위험 길에 직각(S1b). 옛 판 config/archive/npc-v1.yaml(S1 가짜 세계 결과의 판)
+version: npc-v3   # 2026-10-04 — v2 + 상자 월드 시험 몸 규약 풀림(echomind-world 2a5a7cb06 · 1823bffc9 · --run-speed-mps 4.5 · 위험 몸 반경): 비켜서기 4.5 m/s. 옛 판 config/archive/npc-v2.yaml
 world:
   kind: box                     # fake(시험 · 서버 없음) | box(상자 월드 · 9412 · --experiment --lockstep)
   box_url: http://127.0.0.1:9412  # 상자 월드(라이브 아님)
@@ -11,7 +11,7 @@ scale_m_per_mm: 0.15            # 초파리 1 mm = NPC 0.15 m(선언 · 초파�
 motor:
   max_speed_mm_s: 8.67          # v2: 상자 월드 몸 걷기 최대 1.3 m/s ÷ 0.15(echomind-world body · 넘으면 서버가 자름) · v1 12.0(1.8 m/s)
   turn_gain_deg_s: 180.0        # (오른 − 왼) 구동 1.0 당 회전 속도(+ = 왼쪽 · 선언)
-  reflex_retreat_mm_s: 8.67     # v2: 같은 1.3 m/s(달리기 허용은 echomind-world 총괄 판정 대기) · v1 30.0(4.5 m/s · 가짜 세계 S1)
+  reflex_retreat_mm_s: 30.0     # v3: 4.5 m/s(상자 run_speed_mps 4.5 · 요구자 승인 10-04) · v2 8.67(1.3 m/s 잘림)
 senses:
   antenna_half_mm: 0.171        # 좌우 감지점 간격의 반(초파리 더듬이 0.342 mm · 노트 14 §3.1)
   antenna_forward_mm: 0.3       # 머리 앞쪽으로(선언)
