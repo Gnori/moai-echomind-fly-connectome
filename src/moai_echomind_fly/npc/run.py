@@ -154,8 +154,11 @@ def main(args: argparse.Namespace) -> int:
                     loop.body = shared_body               # 보기용 — 같은 NPC 한 몸을 이어서
                     loop.body.reflex_enabled = c != "no_brain"
                 else:
-                    loop.body = NpcBody(reflex_enabled=(c != "no_brain"), world=make_world(),
-                                        persistent=args.persistent)
+                    ncfg = config.load("npc")
+                    if args.pursue:                         # 시연 — 위험이 걷는 NPC 를 따라옴
+                        ncfg = {**ncfg, "s1": {**ncfg.get("s1", {}), "hazard_pursue": True}}
+                    loop.body = NpcBody(ncfg, reflex_enabled=(c != "no_brain"),
+                                        world=make_world(), persistent=args.persistent)
                     shared_body = loop.body
                 eps = []
                 with (out / f"{c}.decisions.jsonl").open("w", encoding="utf-8") as dec:
@@ -167,8 +170,8 @@ def main(args: argparse.Namespace) -> int:
                             if hasattr(w, "neural"):          # 상자 월드 — 3D 창 신경 띠
                                 w.neural("npc", neural_summary(loop, step, c))
 
-                        pol = (stand_policy if config.load("npc").get("s1", {}).get("policy")
-                               == "stand" else walk_policy)
+                        want = args.policy or config.load("npc").get("s1", {}).get("policy")
+                        pol = stand_policy if want == "stand" else walk_policy
                         r = loop.episode(s, pol, on_step=on_step)
                         r.pop("task", None)
                         eps.append(r)
@@ -203,6 +206,9 @@ def register(sub) -> None:
     p.add_argument("--seed-start", type=int, default=4000,
                    help="재기(3000 대)와 겹치지 않게 본 실행은 4000 대(10-03)")
     p.add_argument("--n", type=int, default=40)
+    p.add_argument("--policy", default="", choices=["", "stand", "walk"],
+                   help="비우면 config/npc.yaml s1.policy · 시연은 walk(걸으며 피하기)")
+    p.add_argument("--pursue", action="store_true", help="시연 — 위험이 NPC 를 따라옴(판정용 아님)")
     p.add_argument("--persistent", action="store_true",
                    help="보기용 — NPC 한 몸 그대로 · 위험만 새로(판정용 아님)")
     p.set_defaults(func=main)
