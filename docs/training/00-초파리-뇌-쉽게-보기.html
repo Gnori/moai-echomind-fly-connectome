@@ -162,32 +162,220 @@
 <li>맥 한 대의 그래픽 칩(GPU)으로 돌린다. 원래 프로그램(Brian2)과 <strong>발화가 완전히 같게</strong> 나오는 것을 확인했다.</li>
 </ul>
 <h3 id="13-입력과-출력">1.3 입력과 출력</h3>
+<p>뇌와 바깥이 만나는 곳은 셋이다 — <strong>입력</strong>(감각을 넣는 곳) · <strong>출력</strong>(몸에 내리는 명령) · <strong>신호 벡터</strong>(LLM 에 넘기는 뇌 속 요약).
+세 곳 모두 뉴런을 연결 지도의 <strong>주석(종류 이름 · 분류)으로만</strong> 고른다 — 사람이 손으로 고른 뉴런은 0 개다. 자세한 공식은 <a href="04-감각-넣기와-신호-읽기.html">04장</a>.</p>
+<h4 id="1-입력--감각-세-가지--뉴런-4551-개">(1) 입력 — 감각 세 가지 · 뉴런 4,551 개</h4>
+<blockquote>
+<p>비유: 눈 · 코 · 발바닥으로 들어오는 신호. 넣는 방법은 Shiu 모형 그대로 — 정한 빈도(Hz)로 무작위 시점에 뉴런을 "톡" 쳐서 발화시킨다(포아송 자극).</p>
+</blockquote>
 <div class="tbl"><table>
 <thead>
 <tr>
-<th></th>
-<th>무엇</th>
-<th>비유</th>
+<th>감각</th>
+<th>세계에서 재는 것</th>
+<th>넣는 뉴런 (개수)</th>
+<th>세기</th>
+<th>근거</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>입력(감각)</strong></td>
-<td>눈 · 더듬이(냄새) · 다리(촉각)에 해당하는 뉴런 약 4,500 개에 "얼마나 세게 자극이 왔나"를 넣는다</td>
-<td>눈과 코로 들어오는 신호</td>
+<td><strong>시각 — 다가오는 물체</strong></td>
+<td>물체가 커지는 속도(°/초) · 방향(좌우 · 위아래)</td>
+<td>시각 투사 뉴런 LC · LPLC <strong>13 종 2,526 개</strong>(왼 1,264 · 오른 1,262). 많은 순: LC12 498 · LC17 353 · LC9 219 · LC18 208 · LPLC2 185 · LC16 182 · LC21 153 · LC11 143 · LPLC1 134 · LC4 126 · LC15 126 · LC6 124 · LC26 75</td>
+<td>종류마다 상대 세기(LC17 1.0 → LC11 0.31) × 5 Hz × 게인(커지는 속도 60°/초 에서 1 · 최대 3) · 왼눈/오른눈 나눔(정면 물체는 두 눈에) · 뉴런마다 맡은 시야 자리(고도 · 방위 ±25°) 에 가까울수록 세게</td>
+<td>Turner 2022(종류별 세기) · 60°/초 와 ±25° 는 <strong>선언</strong></td>
 </tr>
 <tr>
-<td><strong>출력(하강 뉴런)</strong></td>
-<td>뇌에서 몸으로 내려가는 명령 뉴런 — 걷기(DNp09) · 돌기(DNa02) · 도망(거대섬유 DNp01)</td>
-<td>뇌가 근육에 보내는 지시</td>
+<td><strong>냄새 — 먹이</strong></td>
+<td>왼 · 오른 더듬이 자리의 냄새 농도</td>
+<td>후각 수용 뉴런 <code>ORN_DM1</code> · <code>ORN_VA2</code>(식초에 반응하는 두 사구체) <strong>148 개</strong>(왼 68 · 오른 80)</td>
+<td>농도의 로그에 비례 · 최대 150 Hz</td>
+<td>Semmelhack &amp; Wang 2009 · 150 Hz 는 Shiu 기본</td>
 </tr>
 <tr>
-<td><strong>신호 벡터</strong></td>
-<td>뇌 곳곳(시각 · 냄새 · 촉각 · 몸 · 운동 · 공간 등 11 갈래)의 뉴런 활동을 숫자 약 3만 3천 개로 요약</td>
-<td>뇌 속 상황을 찍은 스냅사진</td>
+<td><strong>촉각 — 다리 6 개</strong></td>
+<td>다리마다 땅을 누르는 힘</td>
+<td>다리 신경(앞 ProLN · 가운데 MesoLN · 뒤 MetaLN)으로 들어오는 촉각 뉴런 <strong>1,877 개</strong> — 왼앞 151 · 왼가운데 378 · 왼뒤 394 · 오른앞 115 · 오른가운데 428 · 오른뒤 411</td>
+<td>힘 3 에서 최대 100 Hz</td>
+<td>걷는 동안 다리당 힘 1.5~4.2 실측에 맞춘 <strong>선언</strong></td>
 </tr>
 </tbody>
 </table></div>
+<p><strong>넣지 않는 것</strong>(알고 쓴다):
+- <strong>눈의 광수용체 · 라미나</strong> — 이 길로 넣으면 회로에서 발화가 0 이었다(실측). 그래서 시각 입구를 한 단계 뒤인 LC · LPLC 로 옮겼다. 그 결과 <strong>모양 · 색 · 밝기는 들어가지 않고</strong> "무언가 다가온다 · 어느 쪽 · 얼마나 빨리" 만 들어간다. 사물 종류를 구분하려면 이 길을 다시 여는 일이 필요하다(R-5138 S0c 안 · 확인 뒤 착수).
+- <strong>청각 · 미각 · 페로몬</strong> — 입력으로는 넣지 않는다(신호 벡터로 읽기만 한다).
+- <strong>냄새는 한 가지(먹이)</strong> — 회로 학습 실험(KC 희소성)에서만 식초 6 사구체(DM1 · DM4 · DP1m · DM2 · VA2 · VM2)를 쓴다.
+- <strong>에코월드 NPC</strong>(R-5138)에서도 입구는 같다 — 몸 대신 월드의 물체 거리 · 방향을 "다가옴"으로 바꿔 LC · LPLC 에 넣는다.</p>
+<h4 id="2-출력--하강-뉴런-3-종--6-개">(2) 출력 — 하강 뉴런 3 종 · 6 개</h4>
+<blockquote>
+<p>비유: 뇌가 근육에 보내는 지시. ⚠️ LLM 의 명령을 그대로 몸에 보내지 않는다 — 명령을 하강 뉴런에 넣고, <strong>회로가 실제로 낸 발화</strong>를 읽어 몸을 움직인다.</p>
+</blockquote>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>명령</th>
+<th>뉴런 (개수)</th>
+<th>넣는 것</th>
+<th>몸에서 일어나는 것</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>걷기</strong></td>
+<td>DNp09 (왼 1 · 오른 1)</td>
+<td>LLM 행동의 걷기 세기(0~1) × 100 Hz</td>
+<td>회로가 낸 DNp09 발화 ÷ 100 Hz = 앞으로 가는 힘</td>
+<td>Bidaye 2020</td>
+</tr>
+<tr>
+<td><strong>돌기</strong></td>
+<td>DNa02 (왼 1 · 오른 1)</td>
+<td>도는 쪽 DNa02 에만 세기(0~1) × 100 Hz</td>
+<td>(왼 − 오른 발화) ÷ 100 Hz × 0.8 만큼 좌우 다리 힘 차이 → 그쪽으로 돈다</td>
+<td>Rayshubskiy</td>
+</tr>
+<tr>
+<td><strong>도망</strong>(거대섬유)</td>
+<td>DNp01 (왼 1 · 오른 1)</td>
+<td><strong>넣지 않는다</strong> — 회로가 스스로 낼 때만</td>
+<td>한 번이라도 발화하면 그 구간은 명령보다 우선해 <strong>멈춘다</strong>(몸 모형 FlyGym 이 도약을 못 해서)</td>
+<td>03장 도망 반사</td>
+</tr>
+<tr>
+<td>멈춤 · 몸단장</td>
+<td>—</td>
+<td>멈춤 = 목표 0 · 몸단장은 맞는 뉴런이 없어 기록만</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>좌우 다리 힘은 −0.5 ~ 1.5 로 자른다. 명령을 바꿀 때 첫 구간은 이전 명령과 반씩 섞는다.</li>
+<li>실측: 걷기 · 돌기 명령은 위 회로가 거의 더하지 않아 <strong>사실상 그대로 지나간다</strong>(10-04 확인). 뇌가 스스로 내는 출력은 지금 <strong>도망 반사뿐</strong>이다(진짜 40/40 대 섞은 배선 0/120 · 2절).</li>
+</ul>
+<h4 id="3-신호-벡터--11-갈래--숫자-33450-개">(3) 신호 벡터 — 11 갈래 · 숫자 33,450 개</h4>
+<blockquote>
+<p>비유: 뇌 속 상황을 0.3 초마다 찍은 스냅사진. 이것이 투영기를 거쳐 LLM 의 입력 자리에 들어간다(4절).</p>
+</blockquote>
+<p><strong>만드는 법</strong>: 0.3 초 창을 0.1 초 세 칸으로 나누고, 칸마다 같은 종류 · 같은 쪽 뉴런을 한 묶음(단위)으로 ① <strong>발화율</strong> ② <strong>문턱 아래 평균 막전위</strong>(발화는 안 했지만 얼마나 달아올랐나)를 잰다. 그래서 숫자 수 = 단위 수 × 3 칸 × 2. 발화율은 20 Hz, 막전위는 7 mV(쉬는 전위 → 문턱)를 1 로 맞춘다.
+⚠️ <strong>우리가 직접 켜는 뉴런(위 입력 4,551 개 · 걷기/돌기 하강 뉴런)은 뺀다</strong> — 넣지 않으면 LLM 이 뇌가 아니라 우리 입력을 되읽는다.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>갈래</th>
+<th>무엇을 보나</th>
+<th>고르는 뉴런</th>
+<th>뉴런</th>
+<th>단위</th>
+<th>숫자</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vision 시각</td>
+<td>눈 → 뇌로 가는 시각 정보</td>
+<td>시각 투사 뉴런 전체(입력 LC 는 뺌)</td>
+<td>6,675</td>
+<td>655</td>
+<td>3,930</td>
+</tr>
+<tr>
+<td>touch 촉각</td>
+<td>다리 털 · 관절 · 날개 · 몸 기계감각</td>
+<td>기계감각 3 분류(입력 촉각 뉴런은 뺌) — 단위 = 분류 × 들어오는 신경</td>
+<td>3,868</td>
+<td>72</td>
+<td>432</td>
+</tr>
+<tr>
+<td>hearing 청각</td>
+<td>더듬이 존스턴 기관</td>
+<td>청각 뉴런</td>
+<td>115</td>
+<td>22</td>
+<td>132</td>
+</tr>
+<tr>
+<td>smell 후각</td>
+<td>냄새 → 버섯체 · 측각으로 가는 길</td>
+<td>후각 투사 뉴런(PN)</td>
+<td>686</td>
+<td>358</td>
+<td>2,148</td>
+</tr>
+<tr>
+<td>smell_ln 후각 국소</td>
+<td>냄새의 좌우</td>
+<td>안테나엽 국소 뉴런 4 종(PN 보다 좌우를 잘 가름)</td>
+<td>26</td>
+<td>8</td>
+<td>48</td>
+</tr>
+<tr>
+<td>taste 미각</td>
+<td>맛 · 접촉 페로몬</td>
+<td>미각 뉴런 — 단위 = 분류 × 수용체</td>
+<td>1,428</td>
+<td>24</td>
+<td>144</td>
+</tr>
+<tr>
+<td>courtship 구애 · 성</td>
+<td>성 행동 회로</td>
+<td>fru/dsx 발현 추정 또는 암수 차이 표시(감각 뉴런 제외)</td>
+<td>5,495</td>
+<td>2,076</td>
+<td><strong>12,456</strong></td>
+</tr>
+<tr>
+<td>value 가치</td>
+<td>좋다/나쁘다(학습 출력)</td>
+<td>버섯체 출력 MBON — 지금은 냄새에 거의 침묵(3.3)</td>
+<td>97</td>
+<td>74</td>
+<td>444</td>
+</tr>
+<tr>
+<td>body 몸 상태</td>
+<td>몸 → 뇌로 올라오는 정보</td>
+<td>상행 뉴런</td>
+<td>1,846</td>
+<td>1,095</td>
+<td>6,570</td>
+</tr>
+<tr>
+<td>motor 운동</td>
+<td>뇌가 스스로 내는 운동 명령</td>
+<td>하강 뉴런(명령용 DNp09 · DNa02 는 뺌)</td>
+<td>1,310</td>
+<td>949</td>
+<td>5,694</td>
+</tr>
+<tr>
+<td>space 공간</td>
+<td>방향 감각(나침반) · 이동 · 목표 · 회전</td>
+<td>중심복합체(EPG · PEN · PFN · FC2 · PFL3 …) · 회전 감지(HS · VS) — 단위 = 구획</td>
+<td>656</td>
+<td>242</td>
+<td>1,452</td>
+</tr>
+<tr>
+<td><strong>합계</strong></td>
+<td></td>
+<td></td>
+<td><strong>22,202</strong></td>
+<td><strong>5,575</strong></td>
+<td><strong>33,450</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>가장 큰 갈래는 <strong>구애 · 성(37 %)</strong> 과 몸 상태 · 운동이다. 지금 과제(먹이 찾기 · 피하기)와 관계가 먼 갈래가 숫자 대부분을 차지한다 — 숫자 3만 3천 개에 비해 학습 표본이 수백~수천이라, 갈래를 골라 줄이는 <strong>투영기 다이어트</strong>가 다음 과제다(6절).</li>
+<li>갈래 이름 · 개수는 <code>config/channels.yaml</code>(판 <code>channels-v3</code>)에서 온다. 바뀌면 이 표도 바뀐다.</li>
+</ul>
 <h3 id="14-정직-장치-섞은-배선-대조군">1.4 정직 장치: "섞은 배선" 대조군</h3>
 <ul>
 <li>진짜 배선과 <strong>뉴런 수 · 연결 수는 똑같지만, 누가 누구와 이어졌는지를 무작위로 섞은 가짜 뇌</strong>를 3 개 만든다.</li>
