@@ -64,9 +64,11 @@ class BoxWorld:
             self.virtual.add(thing.ref)
             return thing.ref
         wx, wz = self.to_world(thing.x, thing.y)
-        self._req("POST", "/exp/bodies", {"id": thing.ref, "x": wx, "z": wz,
-                                          "heading_deg": thing.heading_deg,
-                                          "height_m": thing.height_m})
+        body = {"id": thing.ref, "x": wx, "z": wz, "heading_deg": thing.heading_deg,
+                "height_m": thing.height_m}
+        if thing.ref != "npc":                        # 위험 몸은 작게(월드 radius_m · 10-04 요청)
+            body["radius_m"] = thing.radius_m
+        self._req("POST", "/exp/bodies", body)
         return thing.ref
 
     def remove(self, ref: str) -> None:
