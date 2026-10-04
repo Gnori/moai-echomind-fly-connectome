@@ -28,9 +28,10 @@ class NpcBody:
     wants_reflex = True                     # Loop 이 반사 여부를 넘겨 준다(FlyGym 몸은 안 받음)
 
     def __init__(self, cfg: dict[str, Any] | None = None, world=None,
-                 reflex_enabled: bool = True) -> None:
+                 reflex_enabled: bool = True, persistent: bool = False) -> None:
         self.cfg = cfg or config.load("npc")
         self.reflex_enabled = reflex_enabled   # False = 대조 '뇌 없음'(반사 무시 · 그대로 걸음)
+        self.persistent = persistent           # 보기용 — NPC 한 몸 그대로 · 위험만 새로
         self.s = float(self.cfg["scale_m_per_mm"])
         self.world = world
         self.task: dict[str, Any] = {}
@@ -40,6 +41,12 @@ class NpcBody:
 
     # ---------------------------------------------------------- 장면
     def reset(self, seed: int, task: dict[str, Any]) -> Obs:
+        if self.persistent and self.world is not None and ME in getattr(self.world, "things", {}):
+            if HAZARD in self.world.things:            # 지난 위험만 치우고 NPC 는 그 자리에
+                self.world.remove(HAZARD)
+            self.world.hit = False
+            self.task, self.t_ms, self.prev_size, self.hazard_spawned = task, 0.0, None, False
+            return self._obs(0.0)
         if self.world is None or isinstance(self.world, FakeWorld):
             self.world = FakeWorld()
         else:

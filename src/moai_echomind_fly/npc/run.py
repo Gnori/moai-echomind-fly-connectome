@@ -134,6 +134,7 @@ def main(args: argparse.Namespace) -> int:
             g = graph_mod.load()
             dog = Watchdog("scorecard")
             done = 0
+            shared_body = None
             for c in configs:
                 brain = c if c.startswith("rewired") else "real"
                 gg = g if brain == "real" else graph_mod.rewire(g, int(brain.rsplit("-s", 1)[1]))
@@ -149,7 +150,13 @@ def main(args: argparse.Namespace) -> int:
                         cfg2["encoder"][k].update(v)
                     loop.cfg = cfg2
                     loop.encoder = Encoder(loop.smap, cfg2, loop.loom)
-                loop.body = NpcBody(reflex_enabled=(c != "no_brain"), world=make_world())
+                if args.persistent and shared_body is not None:
+                    loop.body = shared_body               # 보기용 — 같은 NPC 한 몸을 이어서
+                    loop.body.reflex_enabled = c != "no_brain"
+                else:
+                    loop.body = NpcBody(reflex_enabled=(c != "no_brain"), world=make_world(),
+                                        persistent=args.persistent)
+                    shared_body = loop.body
                 eps = []
                 with (out / f"{c}.decisions.jsonl").open("w", encoding="utf-8") as dec:
                     for s in seeds:
@@ -196,4 +203,6 @@ def register(sub) -> None:
     p.add_argument("--seed-start", type=int, default=4000,
                    help="재기(3000 대)와 겹치지 않게 본 실행은 4000 대(10-03)")
     p.add_argument("--n", type=int, default=40)
+    p.add_argument("--persistent", action="store_true",
+                   help="보기용 — NPC 한 몸 그대로 · 위험만 새로(판정용 아님)")
     p.set_defaults(func=main)
