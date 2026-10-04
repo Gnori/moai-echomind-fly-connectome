@@ -1,7 +1,7 @@
 # NPC 하나를 초파리 뇌로(R-5138 · I · S0 · S1) — 값은 선언(결과 전 잠금). 바꾸면 판을 올린다.
 # 원칙: 몸(FlyGym) 자리에 NPC 를 끼운다 — 과제(make_task) · 인코더 · 디코더 · 뇌 · 성적표는 그대로.
 #   세계 좌표(미터) ↔ 과제 좌표(초파리 mm)를 scale 로 바꾸고, 감각은 FlyGym 과 같은 식으로 NPC 위치에서 계산한다.
-version: npc-v3   # 2026-10-04 — v2 + 상자 월드 시험 몸 규약 풀림(echomind-world 2a5a7cb06 · 1823bffc9 · --run-speed-mps 4.5 · 위험 몸 반경): 비켜서기 4.5 m/s. 옛 판 config/archive/npc-v2.yaml
+version: npc-v4   # 2026-10-04 — v3 + perceive(S0b 물체 인식 시험 · 결과 전 잠금 · R-5138). 옛 판 config/archive/npc-v3.yaml
 world:
   kind: box                     # fake(시험 · 서버 없음) | box(상자 월드 · 9412 · --experiment --lockstep)
   box_url: http://127.0.0.1:9412  # 상자 월드(라이브 아님)
@@ -27,3 +27,16 @@ encoder_override:               # NPC 실험에만 쓰는 시야 인코더(초�
   vision:                       # task-v5(retinotopic2 · 상한 3) 는 정면 다가옴에 GF 0 · 좌우만 + 상한 10 은 5 mm(0.2 s 전)에서 GF 15~16
     mode: lr_sigmoid
     gain_max: 10.0
+perceive:                       # S0b 물체 인식 시험(R-5138 · 결과 전 잠금 · npc-v4) — 판정 기준은 R 에
+  near_m: 3.0                   # 참값 ① 반경 — 이 안에 무언가 있다
+  close_m: 1.5                  # 참값 ③ 가까움 / 멂
+  approach_m_s: 0.05            # 참값 ④ 다가옴 = 거리 줄어드는 속도 > 이 값
+  near_radius_m: 12.0           # 감각에 넣는 물체 반경(/exp/near r)
+  start_radius_m: 15.0          # NPC 시작 자리 = 원점(빈 잔디밭) 둘레 이 반경 안 무작위(씨앗)
+  turn_every_s: 4.0             # 방향 흔들기 간격(± 45° · 실험 규칙 — 뇌는 걷기 구동만)
+  walkers: 3                    # 걷는 시험 몸 사람(통과 · 사람 모양)
+  walker_speed_m_s: 1.2
+  walker_start_m: [3.0, 8.0]    # NPC 둘레 이 거리에서 출발해 반대편으로(길을 가로지름)
+  max_decisions: 40             # 에피소드 길이(결정 0.3 s × 40 = 12 s · task 의 20 대신)
+  vision:                       # encoder_override 위에 덮음
+    multi_cap: 1.0              # 물체 합 상한 = 한 물체 최대(peak × gain_max) × 이 값

@@ -163,6 +163,8 @@ def main(argv: list[str] | None = None) -> int:
     npc_run.register(sub)
     from .npc import reflex_probe
     reflex_probe.register(sub)
+    from .npc import perceive as npc_perceive
+    npc_perceive.register(sub)
     from . import datasets
     datasets.register(sub)
     from . import backup

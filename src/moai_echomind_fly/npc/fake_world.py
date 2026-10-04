@@ -37,6 +37,11 @@ class FakeWorld:
     def remove(self, ref: str) -> None:
         self.things.pop(ref, None)
 
+    def place(self, ref: str, x: float, y: float, heading_deg: float = 0.0) -> dict:
+        t = self.things[ref]
+        t.x, t.y, t.heading_deg = x, y, heading_deg
+        return self.state(ref)
+
     def state(self, ref: str) -> dict[str, Any]:
         t = self.things[ref]
         return {"ref": ref, "x": t.x, "y": t.y, "heading_deg": t.heading_deg,

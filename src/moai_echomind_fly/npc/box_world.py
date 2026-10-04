@@ -73,7 +73,8 @@ class BoxWorld:
         if thing.ref != "npc":            # 위험 몸 = 작은 공 · 통과(10-04 · 요구자 판정)
             body["radius_m"] = thing.radius_m
             body["solid"] = False
-            body["shape"] = "ball"
+            if thing.kind != "walker":    # 걷는 시험 몸(S0b)은 사람 모양 그대로
+                body["shape"] = "ball"
         self._req("POST", "/exp/bodies", body)
         return thing.ref
 
@@ -112,7 +113,8 @@ class BoxWorld:
         for o in self._req("GET", f"/exp/near/{ref}?r={r}")["near"]:
             x, y = self.from_world(o["x"], o["z"])
             size = o.get("size") or {}
-            out.append({"ref": o["id"], "kind": o.get("class"), "x": x, "y": y,
+            out.append({"ref": o["id"], "kind": o.get("class"), "cls": o.get("class"),
+                        "size": size, "x": x, "y": y,
                         "radius_m": float(size.get("radius_m") or 0.3),
                         "height_m": float(size.get("height_m") or 1.7),
                         "heading_deg": o.get("heading_deg", 0.0),
