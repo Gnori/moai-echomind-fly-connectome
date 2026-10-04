@@ -61,7 +61,13 @@ def summarize(graph: Graph, steps: np.ndarray, neurons: np.ndarray, dt_ms: float
     claws = np.bincount(k_kc[active_pn], minlength=len(kc))
     claw_resp = {int(c): round(float((kc_c[claws == c] > 0).mean()), 4)
                  for c in sorted(set(claws.tolist())) if (claws == c).sum() >= 5}
+    lobes = {}
+    if "kc_lobe" in idx:                     # 엽마다 켜진 비율(physiology-v4)
+        lb = idx["kc_lobe"]
+        lobes = {str(name): round(float((kc_c[lb == name] > 0).mean()), 5)
+                 for name in sorted(set(lb.tolist())) if name}
     return {"window_ms": window_ms, "kc_active_fraction": round(float((kc_c > 0).mean()), 5),
+            "kc_lobe_fractions": lobes,
             "kc_spikes_per_responder_median": float(np.median(resp)) if len(resp) else 0.0,
             "stim_pn_rate_hz_mean": round(float(pn_rate.mean()), 1) if len(pn_rate) else None,
             "stim_pn_rate_by_type": by_type,
@@ -98,6 +104,9 @@ def run(graph: Graph, lif, cfg: dict[str, Any], stim_types: list[str], seed: int
     eng.run(max(windows))
     steps, neurons = eng.spikes()
     idx = {"kc": kc, "stim_pn": pn_s, "apl": apl, "rest": rest}
+    if cfg.get("lobes"):
+        lobe_of = {t: name for name, ts in cfg["lobes"].items() for t in ts}
+        idx["kc_lobe"] = np.array([lobe_of.get(str(t), "") for t in types[kc]], dtype=object)
     return {"stim_types": stim_types, "seed": seed, "kc_neurons": int(len(kc)),
             "stim_pns": int(len(pn_s)), "wall_s": round(time.time() - t0, 1),
             "windows": [summarize(graph, steps, neurons, lif.dt_ms, float(w), idx, kc_pn)
@@ -110,7 +119,8 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
 
     돌려주는 칸(physiology `mb.*` 측정 이름): kc_active_fraction · kc_spikes_per_responder ·
     kc_negative_fraction · kc_spontaneous_fraction · pop_rate_hz(양성 중 나머지 뇌) ·
-    pop_rate_spont_hz(무자극 중 나머지 뇌).
+    pop_rate_spont_hz(무자극 중 나머지 뇌) · 설정에 `lobes` 가 있으면 kc_lobe_fraction_min · max
+    (엽 γ · αβ · α′β′ 마다 켜진 비율을 씨앗 평균한 뒤의 최소 · 최대).
     """
     cfg = cfg or config.load("fit")["kc_probe"]
     w = [float(cfg["loss_window_ms"])]
@@ -119,7 +129,13 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
     neg = run(graph, lif, cfg, cfg["stimuli"][cfg["negative_stimulus"]], seed, device, cell,
               w)["windows"][0]
     nil = run(graph, lif, cfg, [], seed, device, cell, w)["windows"][0]
-    return {"kc_active_fraction": float(np.mean([x["kc_active_fraction"] for x in pos])),
+    lobe = {}
+    if cfg.get("lobes"):                     # 씨앗 평균한 엽별 비율의 최소 · 최대(physiology-v4)
+        mean = {k: float(np.mean([x["kc_lobe_fractions"][k] for x in pos]))
+                for k in pos[0]["kc_lobe_fractions"]}
+        lobe = {"kc_lobe_fraction_min": min(mean.values()),
+                "kc_lobe_fraction_max": max(mean.values())}
+    return {**lobe,"kc_active_fraction": float(np.mean([x["kc_active_fraction"] for x in pos])),
             "kc_spikes_per_responder": float(np.mean([x["kc_spikes_per_responder_median"]
                                                       for x in pos])),
             "kc_negative_fraction": float(neg["kc_active_fraction"]),

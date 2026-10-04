@@ -83,3 +83,21 @@ def test_active_kc_reports_claw_consistency():
     on, claw = mb_probe.active_kc(g, LIFParams(w_scale=1.0), cfg, ["ORN_A"], 0, "cpu")
     assert set(on.tolist()) <= {4, 5}
     assert np.isnan(claw) or 0.0 <= claw <= 1.0
+
+
+def test_lobe_fractions_in_summary_and_measure():
+    from moai_echomind_fly.sim import LIFParams
+
+    g = mb()
+    g.columns["type"][5] = "KCab"
+    idx = {"kc": np.array([4, 5]), "stim_pn": np.array([2]), "apl": np.array([6]),
+           "rest": np.array([7]), "kc_lobe": np.array(["gamma", "ab"], dtype=object)}
+    kc_pn = (np.array([0, 1, 1]), np.array([2, 2, 3]))
+    w = mb_probe.summarize(g, np.array([10]), np.array([4]), 0.1, 100.0, idx, kc_pn)
+    assert w["kc_lobe_fractions"] == {"ab": 0.0, "gamma": 1.0}
+    cfg = {**CFG, "stimuli": {"pos": ["ORN_A"], "neg": ["ORN_B"]}, "target_stimulus": "pos",
+           "negative_stimulus": "neg", "loss_window_ms": 50, "orn_rate_hz": 150.0,
+           "kc_min_type_size": 1, "apl_type": "APL", "windows_ms": [50],
+           "lobes": {"gamma": ["KCg"], "ab": ["KCab"]}}
+    m = mb_probe.measure_kc(g, LIFParams(w_scale=1.0), None, 2, 0, "cpu", cfg)
+    assert 0.0 <= m["kc_lobe_fraction_min"] <= m["kc_lobe_fraction_max"] <= 1.0

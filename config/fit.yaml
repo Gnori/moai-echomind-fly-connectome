@@ -29,6 +29,18 @@ scopes:
       - {name: KC-KC, src: {class: [Kenyon_Cell]}, dst: {class: [Kenyon_Cell]}}
     measure: mb
     cmaes: {trials: 3, generations: 50}   # 연구 노트 16 §6 M1 — 양성 씨앗 3 · 50 세대(범위별 덮어쓰기)
+  kc-sparse-c:                  # 2026-10-05 · 결과 전 — kc-sparse-b 와 매개변수 · 묶음이 같고 손실만 다름(physiology-v4 엽 항목)
+    # 왜: b 의 진짜 학습이 KCab-m 문턱만 낮춰 KC 를 한 종류에 몰았다(αβ-m 37 % · 나머지 8 종 0 · 평균 4.9 %) →
+    #     MBON 67/97 에 KC 발화 0(runs/mbon-probe-20261005-010155.json). 요구자 "승인할게 진행해"(10-05)
+    types: [KCg-m, KCab-s, KCab-m, KCab-c, "KCa'b'-ap2", KCg-d, "KCa'b'-m", "KCa'b'-ap1", KCab-p, APL]
+    pair_min_synapses: null
+    groups:
+      - {name: ALPN-KC, src: {class: [ALPN]}, dst: {class: [Kenyon_Cell]}}
+      - {name: KC-APL, src: {class: [Kenyon_Cell]}, dst: {type: [APL]}}
+      - {name: APL-KC, src: {type: [APL]}, dst: {class: [Kenyon_Cell]}}
+      - {name: KC-KC, src: {class: [Kenyon_Cell]}, dst: {class: [Kenyon_Cell]}}
+    measure: mb
+    cmaes: {trials: 3, generations: 50}   # 연구 노트 16 §6 M1 — 양성 씨앗 3 · 50 세대(범위별 덮어쓰기)
   # ⚠️ kc-sparse-a · b 는 제안(연구 노트 16) — M0(kc-probe) 결과로 하나를 고른 뒤 확정한다. ORN → PN 은 범위 밖
   space: null                   # 중심복합체 21 종(연구 노트 13 §2.1) — 종류 목록을 잠근 뒤
   escape: null                  # 시각 투사 346 + 하강 480 — 같음
@@ -62,6 +74,10 @@ kc_probe:                       # M0(연구 노트 16 §6) — 학습 없이 지
   pn_class: ALPN
   pn_input_min: 0.10            # 자극 ORN 에서 받은 시냅스 비율이 이 이상인 PN 을 "자극 PN" 으로(노트 16 §2.1)
   kc_min_type_size: 100         # KC 주요 종류(뉴런 ≥ 100 · 9 종 4,053)
+  lobes:                        # 엽 묶음(physiology-v4 kc_lobe_* · 2026-10-05 결과 전) — 주요 9 종을 KC 이름의 엽으로
+    gamma: [KCg-m, KCg-d]
+    ab: [KCab-s, KCab-m, KCab-c, KCab-p]
+    apbp: ["KCa'b'-ap1", "KCa'b'-ap2", "KCa'b'-m"]
   apl_type: APL
   target_stimulus: vinegar6     # 회로 학습 평가(measure_kc)의 양성 자극 · 노트 16 §4
   negative_stimulus: dm1va2     # 음성 대조(≤ 2 % 목표)
