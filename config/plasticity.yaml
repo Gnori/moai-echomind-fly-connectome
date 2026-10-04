@@ -40,3 +40,11 @@ probe_first:                     # 잠금이 풀린 뒤 몸 없이 창 몇 개�
   - mbon_fires_from_kc
   - dan_pulse_changes_compartment_mbon
   - eta_calibration
+mbon_probe:                      # M3 뒤 진단(2026-10-05 · 결과 전 선언) — MBON 마다 입력이 문턱에 얼마나 못 미치나(mbon_probe.py)
+  stimulus: vinegar6             # config/fit.yaml kc_probe.stimuli 이름(M3 와 같은 냄새)
+  orn_rate_hz: 150.0             # Shiu 기본 자극(kc_probe 와 같음)
+  windows_ms: [100, 300, 1000]   # M3 창 0.1 s · 결정 하나 0.3 s · 1 s(느린 누적이 닿나)
+  top_sources: 3                 # MBON 마다 억제 출처 · KC 종류를 몇 개까지 적나(보기용)
+  kc_type_min: 100               # 종류별 KC 켜짐 비율을 적을 최소 뉴런 수(fit.yaml kc_min_type_size 와 같음)
+  verdict:                       # 침묵 까닭 — fires(발화 ≥ 1) · inhibition(KC+흥분은 문턱 넘는데 억제로 못 넘음) ·
+    kc_none_mV: 0.01             #   no_kc_input(KC 몫 평균 ≤ 이 값) · weak_kc(나머지 — KC 몫이 모자람 · 필요 배수를 함께 적음)

@@ -159,6 +159,8 @@ def main(argv: list[str] | None = None) -> int:
     plasticity.register(sub)
     from . import mb_probe
     mb_probe.register(sub)
+    from . import mbon_probe
+    mbon_probe.register(sub)
     from .npc import run as npc_run
     npc_run.register(sub)
     from .npc import reflex_probe
