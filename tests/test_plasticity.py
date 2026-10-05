@@ -77,3 +77,41 @@ def test_apply_scales_engine_weights_on_kc_mbon_edges_only():
     tf.m[:] = 1.0
     tf.apply(eng)                                            # 처음 세기 기준(누적되지 않음)
     assert torch.equal(eng.w, w_before)
+
+
+def test_controls_helpers_and_verdict():
+    t = {"MBON01": "PAM01", "MBON11": "PPL101", "MBON05": "PAM08"}
+    s = pl.shuffled_table(t, 3)
+    assert sorted(s) == sorted(t) and sorted(s.values()) == sorted(t.values())
+    rows = [{"k": [10, 4]}, {"k": [10, 6]}]
+    assert pl.change(rows, "k") == {"before": 20, "after": 10, "change": -0.5, "seeds_down": 2}
+    pc = CFG["probe_controls"]
+
+    def ch(x):
+        return {"change": x}
+
+    summ = {"paired": {"cs_plus.reward": ch(-0.6), "cs_minus.reward": ch(0.1)},
+            "unpaired": {"cs_plus.reward": ch(-0.1)}, "shuffled": {"cs_plus.reward": ch(-0.4)},
+            "off": {"cs_plus.reward": ch(0.1)},
+            "punish": {"cs_plus.reward": ch(-0.05), "cs_plus.punish": ch(-0.7)}}
+    v = pl.verdict_controls(summ, pc)
+    assert v == {"paired": True, "cs_minus": True, "unpaired": True, "shuffled": False,
+                 "off": True, "punish": True}
+
+
+def test_run_condition_paired_weakens_and_off_does_not():
+    g = mb_graph()
+    cfg = {**CFG, "probe_controls": {**CFG["probe_controls"], "eta": 0.5, "test_ms": 20,
+                                     "update_ms": 10, "unpaired_gap_s": 0.01},
+           "eta": {**CFG["eta"], "pairing": {"odor_s": 0.05, "dan_s": 0.05}}}
+    sets = {"table": {"MBON01": "PAM01", "MBON11": "PPL101"}, "mbon": np.array([4, 5]),
+            "reward_mbon": np.array([4]), "punish_mbon": np.array([5]),
+            "reward_dan": np.array([6]), "punish_dan": np.array([7]),
+            "cs_plus": np.array([0, 2]), "cs_minus": np.array([3])}
+    lif = LIFParams(w_scale=1.0)
+    on = pl.run_condition(g, lif, cfg, None, "paired", 0, "cpu", sets)
+    off = pl.run_condition(g, lif, cfg, None, "off", 0, "cpu", sets)
+    assert on["changed"] > 0 and off["changed"] == 0
+    for cond in ("unpaired", "punish", "shuffled"):
+        r = pl.run_condition(g, lif, cfg, None, cond, 0, "cpu", sets)
+        assert len(r["cs_plus.reward"]) == 2

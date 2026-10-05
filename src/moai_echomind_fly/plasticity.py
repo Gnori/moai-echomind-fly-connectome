@@ -162,6 +162,169 @@ def probe(graph: Graph, lif, cfg: dict[str, Any], eta: float, odor_types: list[s
             "compartment_check": comp["check"]}
 
 
+def cs_minus_types(graph: Graph, cs_plus: list[str], n: int, seed: int) -> list[str]:
+    """짝 안 지은 냄새 — CS+ 를 뺀 ORN 종류에서 씨앗으로 n 개(결과 전 선언 · config)."""
+    orn = sorted({t for t in graph.columns["type"].astype(str)
+                  if t.startswith("ORN_") and t not in cs_plus})
+    return sorted(np.random.default_rng(seed).choice(orn, size=n, replace=False).tolist())
+
+
+def shuffled_table(table: dict[str, str], seed: int) -> dict[str, str]:
+    """구획 표 섞기 대조 — MBON 종류마다 짝지은 DAN 종류를 씨앗으로 뒤섞는다."""
+    keys = sorted(table)
+    vals = np.random.default_rng(seed).permutation([table[k] for k in keys])
+    return dict(zip(keys, vals.tolist()))
+
+
+def run_condition(graph: Graph, lif, cfg: dict[str, Any], cell, cond: str, seed: int,
+                  device: str, sets: dict[str, Any]) -> dict[str, Any]:
+    """조건 하나(paired · cs_minus 는 paired 안에서 · unpaired · punish · shuffled · off).
+
+    짝짓기 전 · 뒤에 CS+ 와 CS− 를 시험 창만큼 주고 보상 · 처벌 구획 MBON 발화를 센다(I v2 §8.3).
+    """
+    from .sim import Engine
+
+    pc = cfg["probe_controls"]
+    eta = 0.0 if cond == "off" else float(pc["eta"])
+    table = (shuffled_table(sets["table"], int(pc["shuffle_seed"]) + seed)
+             if cond == "shuffled" else sets["table"])
+    tf = ThreeFactor(graph, cfg, eta, table)
+    eng = Engine(graph, lif, device=device, seed=seed, cell=cell)
+    win, hz = float(pc["test_ms"]), float(pc["odor_hz"])
+    step_ms = float(pc["update_ms"])
+    dan_hz = float(cfg["teaching"]["rate_hz"])
+    dan = sets["punish_dan"] if cond == "punish" else sets["reward_dan"]
+
+    def test(odor: np.ndarray) -> dict[str, Any]:
+        eng.reset()
+        _, n = _window(eng, [(odor, hz)], win)
+        cnt = np.bincount(n, minlength=graph.n)
+        return {"reward": int(cnt[sets["reward_mbon"]].sum()),
+                "punish": int(cnt[sets["punish_mbon"]].sum()),
+                "all": int(cnt[sets["mbon"]].sum()),
+                "kc_on": np.flatnonzero(cnt[tf.kc] > 0)}
+
+    before = {"cs_plus": test(sets["cs_plus"]), "cs_minus": test(sets["cs_minus"])}
+    eng.reset()
+    t0 = eng.step
+
+    def phase(stim: list[tuple[np.ndarray, float]], ms: float) -> None:
+        nonlocal t0
+        for _ in range(int(round(ms / step_ms))):
+            _window(eng, stim, step_ms)
+            tf.update(*eng.spikes_since(t0), step_ms)
+            t0 = eng.step
+            tf.apply(eng)
+
+    odor_ms = float(cfg["eta"]["pairing"]["odor_s"]) * 1000
+    if cond == "unpaired":                    # 보상 먼저 → 쉼 → 냄새(시간이 어긋난 보상)
+        phase([(dan, dan_hz)], odor_ms)
+        phase([], float(pc["unpaired_gap_s"]) * 1000)
+        phase([(sets["cs_plus"], hz)], odor_ms)
+    else:
+        phase([(sets["cs_plus"], hz), (dan, dan_hz)], odor_ms)
+    after = {"cs_plus": test(sets["cs_plus"]), "cs_minus": test(sets["cs_minus"])}
+    out: dict[str, Any] = {"cond": cond, "seed": seed, "eta": eta, **tf.state()}
+    for k in ("cs_plus", "cs_minus"):
+        for g in ("reward", "punish", "all"):
+            out[f"{k}.{g}"] = [before[k][g], after[k][g]]
+    a, b = set(before["cs_plus"]["kc_on"].tolist()), set(before["cs_minus"]["kc_on"].tolist())
+    out["kc_overlap_cs"] = round(len(a & b) / max(len(a | b), 1), 4)
+    return out
+
+
+def change(rows: list[dict[str, Any]], key: str) -> dict[str, Any]:
+    """씨앗 합 전 → 뒤와 변화율(뒤/전 − 1) · 씨앗마다 감소했는지."""
+    b = sum(r[key][0] for r in rows)
+    a = sum(r[key][1] for r in rows)
+    return {"before": b, "after": a, "change": (round(a / b - 1, 4) if b else None),
+            "seeds_down": sum(r[key][1] < r[key][0] for r in rows)}
+
+
+def verdict_controls(summary: dict[str, dict[str, Any]], pc: dict[str, Any]) -> dict[str, Any]:
+    """결과 전 선언한 기준(config `probe_controls.pass`)으로 조건마다 통과 여부."""
+    c = pc["pass"]
+
+    def drop(cond: str, key: str) -> float | None:
+        ch = summary[cond][key]["change"]
+        return None if ch is None else -ch
+
+    lo, hi = c["paired_drop"]
+    out = {}
+    d = drop("paired", "cs_plus.reward")
+    out["paired"] = d is not None and lo <= d <= hi
+    ch = summary["paired"]["cs_minus.reward"]["change"]
+    out["cs_minus"] = None if ch is None else abs(ch) <= c["control_change_max"]
+    for cond in ("unpaired", "shuffled", "off"):
+        d = drop(cond, "cs_plus.reward")
+        out[cond] = None if d is None else d <= c["control_change_max"]
+    dr, dp = drop("punish", "cs_plus.reward"), drop("punish", "cs_plus.punish")
+    out["punish"] = (None if dr is None or dp is None
+                     else dr <= c["control_change_max"] and dp >= c["punish_drop_min"])
+    return out
+
+
+def main_controls(args: argparse.Namespace) -> int:
+    from . import graph as graph_mod
+    from .cellparams import CellParams
+    from .guard import GuardRefused, heavy
+    from .sim import LIFParams
+
+    cfg = config.load("plasticity")
+    pc = cfg["probe_controls"]
+    rows: list[dict[str, Any]] = []
+    try:
+        with heavy("plasticity-controls") as guard:
+            print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
+            g = graph_mod.load()
+            if args.brain != "real":
+                g = graph_mod.rewire(g, int(args.brain.rsplit("-s", 1)[1]))
+            lif = LIFParams.from_config()
+            from pathlib import Path
+
+            cell = CellParams.load(Path(args.cell_from) / "params.npz")
+            comp = compartments(g, cfg)
+            types = g.columns["type"]
+            mbon = np.flatnonzero(np.isin(g.columns["class"], cfg["targets"]["post_class"]))
+            rew, pun = (cfg["teaching"][k]["dan_types"] for k in ("reward", "punishment"))
+            cs_plus = list(pc["cs_plus"])
+            cs_minus = cs_minus_types(g, cs_plus, int(pc["cs_minus_n"]), int(pc["cs_minus_seed"]))
+            sets = {"table": comp["table"], "mbon": mbon,
+                    "reward_mbon": mbon[np.isin(types[mbon], [m for m, d in comp["table"].items()
+                                                              if d in rew])],
+                    "punish_mbon": mbon[np.isin(types[mbon], [m for m, d in comp["table"].items()
+                                                              if d in pun])],
+                    "reward_dan": g.select(type=rew), "punish_dan": g.select(type=pun),
+                    "cs_plus": g.select(type=cs_plus), "cs_minus": g.select(type=cs_minus)}
+            for seed in [int(x) for x in args.seeds.split(",")]:
+                for cond in pc["conditions"]:
+                    r = run_condition(g, lif, cfg, cell, cond, seed, args.device, sets)
+                    rows.append(r)
+                    print(f"[plasticity-controls] 씨앗 {seed} {cond:9} CS+ 보상 "
+                          f"{r['cs_plus.reward']} 처벌 {r['cs_plus.punish']} · CS− 보상 "
+                          f"{r['cs_minus.reward']}", flush=True)
+    except GuardRefused as err:
+        print(f"[guard] 막음 — {err}")
+        return 2
+    summary = {cond: {k: change([r for r in rows if r["cond"] == cond], k)
+                      for k in ("cs_plus.reward", "cs_plus.punish", "cs_minus.reward",
+                                "cs_plus.all")}
+               for cond in pc["conditions"]}
+    passed = verdict_controls(summary, pc)
+    for cond, v in summary.items():
+        print(f"[plasticity-controls] {cond:9} CS+ 보상 {v['cs_plus.reward']} · CS+ 처벌 "
+              f"{v['cs_plus.punish']} · CS− 보상 {v['cs_minus.reward']}", flush=True)
+    print(f"[plasticity-controls] 판정 {passed}", flush=True)
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    out = paths.runs_dir() / f"plasticity-controls-{args.brain}-{stamp}.json"
+    out.write_text(json.dumps({"rule": cfg["version"], "controls": pc, "cs_minus": cs_minus,
+                               "brain": args.brain, "cell_from": args.cell_from,
+                               "summary": summary, "pass": passed, "rows": rows},
+                              ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    print(f"[plasticity-controls] {out}")
+    return 0
+
+
 def main_probe(args: argparse.Namespace) -> int:
     from . import graph as graph_mod
     from .guard import GuardRefused, heavy
@@ -215,3 +378,10 @@ def register(sub) -> None:
     p.add_argument("--brain", default="real", help="real | rewired-s<씨앗>(대조)")
     p.add_argument("--cell-from", default="", help="회로 학습 폴더(params.npz · 같은 뇌)")
     p.set_defaults(func=main_probe)
+    c = sub.add_parser("plasticity-controls",
+                       help="가소성 대조 다섯(F-007 · I v2 §8.3 · 무거움 · 짧음)")
+    c.add_argument("--cell-from", required=True, help="회로 학습 폴더(params.npz · 같은 뇌)")
+    c.add_argument("--brain", default="real", help="real | rewired-s<씨앗>")
+    c.add_argument("--seeds", default="0,1,2,3,4")
+    c.add_argument("--device", default="cpu", choices=["cpu", "mps"])
+    c.set_defaults(func=main_controls)

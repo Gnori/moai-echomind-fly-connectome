@@ -48,3 +48,19 @@ mbon_probe:                      # M3 뒤 진단(2026-10-05 · 결과 전 선언
   kc_type_min: 100               # 종류별 KC 켜짐 비율을 적을 최소 뉴런 수(fit.yaml kc_min_type_size 와 같음)
   verdict:                       # 침묵 까닭 — fires(발화 ≥ 1) · inhibition(KC+흥분은 문턱 넘는데 억제로 못 넘음) ·
     kc_none_mV: 0.01             #   no_kc_input(KC 몫 평균 ≤ 이 값) · weak_kc(나머지 — KC 몫이 모자람 · 필요 배수를 함께 적음)
+probe_controls:                  # 2026-10-06 · 결과 전 선언 — 가소성 대조(I v2 §8.3 의 다섯을 몸 없이 짧게) · 요구자 "응 남은것 진행해"
+  # 10-06 첫 재기(진짜 kc-mbon-a · 시험 100 ms · η 0.001): 보상 구획 CS+ 76 → 28(−63 % · 5/5) · η 0: 76 → 84.
+  eta: 0.001                     # 위 재기로 고른 값(0.01 은 → 0 으로 과함)
+  test_ms: 300                   # 시험 창(100 ms 는 발화 13~18 로 작아 늘림)
+  update_ms: 100                 # 규칙 갱신 창(첫 재기와 같음)
+  odor_hz: 150.0
+  cs_plus: [ORN_DM1, ORN_DM4, ORN_DP1m, ORN_DM2, ORN_VA2, ORN_VM2]   # 식초 6(fit.yaml kc_probe vinegar6)
+  cs_minus_n: 6                  # 짝 안 지은 냄새 = CS+ 를 뺀 ORN 종류에서 씨앗으로 6 개(고른 목록은 결과 파일에)
+  cs_minus_seed: 0
+  unpaired_gap_s: 3.0            # 시간이 어긋난 보상: 보상 1 s → 쉼 3 s → 냄새 1 s(DAN 신호 τ 0.3 s 라 겹침 거의 없음)
+  shuffle_seed: 100              # 구획 표 섞기 씨앗(+ 시행 씨앗)
+  conditions: [paired, unpaired, punish, shuffled, off]   # cs_minus 는 paired 안에서 함께 잰다
+  pass:                          # 씨앗 합 기준
+    paired_drop: [0.5, 0.9]      # 짝지은 냄새 · 보상 구획 MBON 감소(Hige 2015 약 80 % · eta.target_cs_plus_drop 과 같음)
+    control_change_max: 0.25     # 짝 안 지은 냄새 · 어긋난 보상 · 표 섞기 · 가소성 끔 — 보상 구획 변화(감소) 상한(eta.target_unpaired_change_max 와 같음)
+    punish_drop_min: 0.5         # 처벌 DAN 짝짓기 — 처벌 구획 MBON 은 이만큼 줄고 보상 구획은 control_change_max 이하
