@@ -56,6 +56,21 @@ scopes:
       - {name: KC-MBON, src: {class: [Kenyon_Cell]}, dst: {class: [MBON]}}
     measure: mb
     cmaes: {trials: 3, generations: 50}
+  kc-mbon-b:                    # 2026-10-06 · 결과 전 — kc-mbon-a 와 매개변수 같음(25) · 학습 냄새를 식초 + 무작위 3 묶음으로(physiology-v6)
+    # 왜: a 는 식초 하나로 맞춰 보상 구획 MBON 이 식초에만 반응(다른 냄새 20 묶음 중 최대 15 % · runs/plasticity-cs-screen-20261006-070702.json)
+    #     → 짝 안 지은 냄새 대조를 잴 수 없었고 탐색에서 CS− 도 −84 %. 요구자 "니가 가장 맞다고 생각하는쪽으로해"(10-06).
+    types: [KCg-m, KCab-s, KCab-m, KCab-c, "KCa'b'-ap2", KCg-d, "KCa'b'-m", "KCa'b'-ap1", KCab-p, APL]
+    pair_min_synapses: null
+    groups:
+      - {name: ALPN-KC, src: {class: [ALPN]}, dst: {class: [Kenyon_Cell]}}
+      - {name: KC-APL, src: {class: [Kenyon_Cell]}, dst: {type: [APL]}}
+      - {name: APL-KC, src: {type: [APL]}, dst: {class: [Kenyon_Cell]}}
+      - {name: KC-KC, src: {class: [Kenyon_Cell]}, dst: {class: [Kenyon_Cell]}}
+      - {name: KC-MBON, src: {class: [Kenyon_Cell]}, dst: {class: [MBON]}}
+    measure: mb
+    kc_probe:                    # 이 범위만 measure_kc 에 덧붙임
+      extra_odors: {n: 3, size: 6, seed: 101}   # 식초 밖 ORN 6 종 × 3(씨앗 101~103) — 대조 후보(1~20) · 일반화(씨앗 1 · 10 종)와 다름
+    cmaes: {trials: 3, generations: 50}
   # ⚠️ kc-sparse-a · b 는 제안(연구 노트 16) — M0(kc-probe) 결과로 하나를 고른 뒤 확정한다. ORN → PN 은 범위 밖
   space: null                   # 중심복합체 21 종(연구 노트 13 §2.1) — 종류 목록을 잠근 뒤
   escape: null                  # 시각 투사 346 + 하강 480 — 같음

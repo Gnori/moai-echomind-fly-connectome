@@ -110,3 +110,15 @@ def test_mbon_response_in_summary():
     kc_pn = (np.array([0, 1, 1]), np.array([2, 2, 3]))
     w = mb_probe.summarize(g, np.array([10, 20, 30]), np.array([7, 7, 4]), 0.1, 100.0, idx, kc_pn)
     assert w["mbon_fire_fraction"] == 0.5 and w["mbon_rate_hz"] == 10.0
+
+
+def test_extra_odor_sets_exclude_target_and_measure_for_partial():
+    from moai_echomind_fly import circuit_fit as cf
+
+    g = mb()
+    cfg = {**CFG, "stimuli": {"pos": ["ORN_A"]}, "target_stimulus": "pos",
+           "extra_odors": {"n": 2, "size": 1, "seed": 101}}
+    sets = mb_probe.extra_odor_sets(g, cfg)
+    assert sets == [["ORN_B"], ["ORN_B"]]
+    f = cf.measure_for({"measure": "mb", "kc_probe": {"extra_odors": {"n": 1}}})
+    assert f.func is mb_probe.measure_kc and f.keywords["cfg"]["extra_odors"] == {"n": 1}

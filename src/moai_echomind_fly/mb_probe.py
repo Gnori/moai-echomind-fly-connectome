@@ -120,6 +120,19 @@ def run(graph: Graph, lif, cfg: dict[str, Any], stim_types: list[str], seed: int
                         for w in windows]}
 
 
+def extra_odor_sets(graph: Graph, cfg: dict[str, Any]) -> list[list[str]]:
+    """학습에 더 쓰는 냄새 묶음(`extra_odors`: n · size · seed) — 양성 자극 밖 ORN 에서 씨앗마다.
+
+    plasticity.cs_minus_types 와 같은 뽑기(씨앗만 다름) — 대조 후보(씨앗 1~20)와 씨앗을 겹치지 않게.
+    """
+    ex = cfg["extra_odors"]
+    target = set(cfg["stimuli"][cfg["target_stimulus"]])
+    orn = sorted({t for t in graph.columns["type"].astype(str)
+                  if t.startswith("ORN_") and t not in target})
+    return [sorted(np.random.default_rng(int(ex["seed"]) + i).choice(
+        orn, size=int(ex["size"]), replace=False).tolist()) for i in range(int(ex["n"]))]
+
+
 def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
                cfg: dict[str, Any] | None = None) -> dict[str, float]:
     """회로 학습(F-006) 평가용 — 양성 자극을 씨앗 `trials` 개로 · 음성 · 무자극 한 번씩.
@@ -146,6 +159,16 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
     if cfg.get("mbon_class"):                # 씨앗 평균(physiology-v5)
         for k in ("mbon_fire_fraction", "mbon_rate_hz"):
             lobe[k] = float(np.mean([x[k] for x in pos]))
+    if cfg.get("extra_odors"):               # 학습 냄새 여럿(physiology-v6 · 범위 kc-mbon-b)
+        ex = [run(graph, lif, cfg, st, seed, device, cell, w)["windows"][0]
+              for st in extra_odor_sets(graph, cfg)]
+        kcs = [float(np.mean([x["kc_active_fraction"] for x in pos]))]
+        kcs += [x["kc_active_fraction"] for x in ex]
+        lobe["kc_fraction_min_odor"] = min(kcs)
+        lobe["kc_fraction_max_odor"] = max(kcs)
+        if cfg.get("mbon_class"):
+            mbs = [lobe["mbon_fire_fraction"]] + [x["mbon_fire_fraction"] for x in ex]
+            lobe["mbon_fire_min_odor"] = min(mbs)
     return {**lobe,"kc_active_fraction": float(np.mean([x["kc_active_fraction"] for x in pos])),
             "kc_spikes_per_responder": float(np.mean([x["kc_spikes_per_responder_median"]
                                                       for x in pos])),

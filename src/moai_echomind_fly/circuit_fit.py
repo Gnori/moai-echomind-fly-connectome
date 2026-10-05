@@ -233,6 +233,10 @@ def measure_for(sc: dict[str, Any]) -> Callable:
     if kind == "mb":
         from .mb_probe import measure_kc
 
+        if sc.get("kc_probe"):                # 범위별 덧붙임(예: kc-mbon-b 의 extra_odors)
+            from functools import partial
+
+            return partial(measure_kc, cfg={**config.load("fit")["kc_probe"], **sc["kc_probe"]})
         return measure_kc
     raise ValueError(f"평가 종류 {kind!r} — escape | mb")
 
