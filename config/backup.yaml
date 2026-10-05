@@ -8,8 +8,8 @@ items:                      # 저장소 뿌리 기준
 exclude:
   - .heavy.lock
   - .DS_Store
-destinations:               # 있는 곳에만 복사한다(없는 USB 는 건너뜀)
-  - path: ~/Backups/moai-echomind-fly-connectome
+destinations:               # 2026-10-05 요구자 "백업 앞으로 (~/Backups) 여기에 해" — 맥 안 한 곳만
+  - path: ~/Backups/moai-echomind-fly-connectome   # 실제 경로 /Users/jackylim/Backups/moai-echomind-fly-connectome
     why: 맥 안 · 늘 있음 — 저장소를 실수로 지웠을 때
-  - path: /Volumes/JKL-USB/Backups/moai-echomind-fly-connectome
-    why: 다른 기기(USB) — 맥 디스크가 고장 났을 때
+  # USB /Volumes/JKL-USB/Backups/moai-echomind-fly-connectome 는 10-05 부터 쓰지 않는다(쓰기 권한 오류 · 요구자 결정).
+  #   거기 있는 것은 10-04 까지의 사본이다.

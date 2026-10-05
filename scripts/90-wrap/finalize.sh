@@ -10,4 +10,4 @@ say "위 표를 10장 1.3 에 옮긴다 · 전체 표 $(ls -t runs/scripts-ledge
 run "$ROOT/.venv/bin/ruff" check src tests scripts
 run "$ROOT/.venv/bin/pytest" -q -m "not heavy"
 step 0 backup
-say "USB(JKL-USB)가 없으면 건너뛴다 — 꽂은 뒤 다시: $FC backup"
+say "백업 자리: ~/Backups/moai-echomind-fly-connectome(10-05 부터 한 곳)"

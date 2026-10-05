@@ -146,7 +146,7 @@ vector 는 참값 글(no_circuit 0.47)과 같다(회로 신호가 참값만큼 �
 - 형식: `<type>(<scope>): <subject>` — `feat`·`fix`·`docs`·`refactor`·`test`·`chore`.
   본문에는 **무엇을 왜, 그리고 실측 숫자**(로그·측정값)를 적는다.
 - `data/` · `runs/` · `.venv/` 는 커밋하지 않는다(`.gitignore` — 큰 산출물 확장자 · 비밀 · 도구 흔적도 막아 둠). 커밋 전 `ruff check` 를 통과시킨다.
-- git 밖 결과는 **`uv run fly-connectome backup`** 으로 백업한다(`~/Backups/…` · USB `JKL-USB` · 대조까지). 학습 · 평가를 새로 돌린 뒤 한 번.
+- git 밖 결과는 **`uv run fly-connectome backup`** 으로 백업한다(`~/Backups/moai-echomind-fly-connectome` 한 곳 · 대조까지 — 요구자 2026-10-05 USB 는 쓰지 않음). 학습 · 평가를 새로 돌린 뒤 한 번.
 
 ---
 
