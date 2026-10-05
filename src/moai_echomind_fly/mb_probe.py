@@ -66,8 +66,13 @@ def summarize(graph: Graph, steps: np.ndarray, neurons: np.ndarray, dt_ms: float
         lb = idx["kc_lobe"]
         lobes = {str(name): round(float((kc_c[lb == name] > 0).mean()), 5)
                  for name in sorted(set(lb.tolist())) if name}
+    mbon = {}
+    if "mbon" in idx and len(idx["mbon"]):   # MBON 반응(physiology-v5 · 범위 kc-mbon-a)
+        mc = cnt[idx["mbon"]]
+        mbon = {"mbon_fire_fraction": round(float((mc > 0).mean()), 5),
+                "mbon_rate_hz": round(float(mc.mean() / sec), 3)}
     return {"window_ms": window_ms, "kc_active_fraction": round(float((kc_c > 0).mean()), 5),
-            "kc_lobe_fractions": lobes,
+            "kc_lobe_fractions": lobes, **mbon,
             "kc_spikes_per_responder_median": float(np.median(resp)) if len(resp) else 0.0,
             "stim_pn_rate_hz_mean": round(float(pn_rate.mean()), 1) if len(pn_rate) else None,
             "stim_pn_rate_by_type": by_type,
@@ -104,6 +109,8 @@ def run(graph: Graph, lif, cfg: dict[str, Any], stim_types: list[str], seed: int
     eng.run(max(windows))
     steps, neurons = eng.spikes()
     idx = {"kc": kc, "stim_pn": pn_s, "apl": apl, "rest": rest}
+    if cfg.get("mbon_class"):
+        idx["mbon"] = np.flatnonzero(cls == cfg["mbon_class"])
     if cfg.get("lobes"):
         lobe_of = {t: name for name, ts in cfg["lobes"].items() for t in ts}
         idx["kc_lobe"] = np.array([lobe_of.get(str(t), "") for t in types[kc]], dtype=object)
@@ -120,7 +127,8 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
     돌려주는 칸(physiology `mb.*` 측정 이름): kc_active_fraction · kc_spikes_per_responder ·
     kc_negative_fraction · kc_spontaneous_fraction · pop_rate_hz(양성 중 나머지 뇌) ·
     pop_rate_spont_hz(무자극 중 나머지 뇌) · 설정에 `lobes` 가 있으면 kc_lobe_fraction_min · max
-    (엽 γ · αβ · α′β′ 마다 켜진 비율을 씨앗 평균한 뒤의 최소 · 최대).
+    (엽 γ · αβ · α′β′ 마다 켜진 비율을 씨앗 평균한 뒤의 최소 · 최대) · `mbon_class` 가 있으면
+    mbon_fire_fraction(양성 중 한 번 이상 발화한 MBON 비율) · mbon_rate_hz(MBON 평균 발화율).
     """
     cfg = cfg or config.load("fit")["kc_probe"]
     w = [float(cfg["loss_window_ms"])]
@@ -135,6 +143,9 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
                 for k in pos[0]["kc_lobe_fractions"]}
         lobe = {"kc_lobe_fraction_min": min(mean.values()),
                 "kc_lobe_fraction_max": max(mean.values())}
+    if cfg.get("mbon_class"):                # 씨앗 평균(physiology-v5)
+        for k in ("mbon_fire_fraction", "mbon_rate_hz"):
+            lobe[k] = float(np.mean([x[k] for x in pos]))
     return {**lobe,"kc_active_fraction": float(np.mean([x["kc_active_fraction"] for x in pos])),
             "kc_spikes_per_responder": float(np.mean([x["kc_spikes_per_responder_median"]
                                                       for x in pos])),

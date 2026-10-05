@@ -1,0 +1,165 @@
+# 생리 목표 physiology-v1 (R-7469 F-006 · I v2 §7.3) — 회로 학습의 손실에 넣는 **알려진 생리 반응**.
+# ⚠️ 결과를 보기 전에 적었다(2026-09-23). 항목을 더하거나 값을 바꾸면 판을 올린다.
+#
+# 왜: 커넥톰을 고정해도 종류 매개변수의 여러 조합이 같은 과제 출력을 낸다(퇴화 · Beiran & Litwin-Kumar 2025).
+#     과제 손실만으로 맞추면 생물학적 해가 보장되지 않는다 → 소수 뉴런의 알려진 반응을 제약으로 건다.
+# 손실: L = Σ_k weight_k · ((측정_k − target_k) / tolerance_k)² + 과제 항(관문 통과 칸 선형 해독) + 규제(초기값에서 멀어진 정도).
+#   범위 목표([lo, hi])는 안에 들면 0, 벗어난 거리를 tolerance 로 나눈다.
+# 확인 수준: P = 원문 · A = 초록/그림 · S = 2차 자료(연구 노트 13 §2.4 표 · 참고 문헌 번호는 그 노트).
+version: physiology-v4   # 2026-10-05 — v3 + KC 엽별 항목 둘(kc_lobe_fraction_min · max · 범위 kc-sparse-c) · 학습 결과 전 · 요구자 "승인할게 진행해". 옛 판 config/archive/physiology-v3.yaml
+# v3 = 2026-10-03 — v2 의 cns_quiet 를 KC 범위에서 빼고 무자극 침묵 + 냄새 중 들끓음 상한으로 바꿈(M0 에서 냄새 중 나머지 뇌가 이미 0.43 Hz · 요구자 "진행해" · 학습 결과 전). 옛 판 config/archive/physiology-v2.yaml
+# v2 = 2026-10-03 — v1 + KC 희소성 항목을 범위 kc-sparse-a · b 에(연구 노트 16 §4 · **M0 측정 결과 전에** 잠금). 옛 판 config/archive/physiology-v1.yaml
+items:
+  # ---- 도망 반사 (scope escape-small · escape) — bench/escape.py 의 채점 5 항목 그대로
+  - name: gf_response_prob
+    scope: [escape-small, escape]
+    measure: escape.gf_hit                # 다가옴 시행 중 GF 가 반응한 비율(loom-v1 · 40 시행)
+    target: [0.5, 1.0]
+    tolerance: 0.1
+    weight: 1.0
+    source: "von Reyn et al. 2014 Nat Neurosci 17:962 — 다가옴 대부분이 문턱 근처"
+    level: A
+  - name: gf_spikes_per_response
+    scope: [escape-small, escape]
+    measure: escape.gf_per_hit
+    target: [1.0, 2.0]
+    tolerance: 0.5
+    weight: 1.0
+    source: "von Reyn 2014 · 2017 — 단일 GF 기록"
+    level: A
+  - name: gf_latency_ms
+    scope: [escape-small, escape]
+    measure: escape.gf_latency_ms
+    target: [10.0, 60.0]
+    tolerance: 10.0
+    weight: 0.5
+    source: "von Reyn 2014"
+    level: A
+  - name: cns_quiet_hz
+    scope: [escape-small, escape, space]  # v3: KC 범위에서 뺌(아래 kc_quiet_spontaneous · kc_odor_rest_bounded)
+    measure: escape.pop_rate_hz           # 자극받지 않은 뉴런 평균 발화율
+    target: [0.0, 0.05]
+    tolerance: 0.02
+    weight: 2.0                           # 뇌가 들끓는 해를 강하게 막는다
+    source: "Shiu 2024 — 쉬는 상태 침묵 · FLYCNS 채점"
+    level: P
+  - name: rewired_gf_silent
+    scope: [escape-small, escape]
+    measure: escape.null_gf_hit           # 같은 매개변수를 재배선에 넣었을 때 GF 반응(대조)
+    target: [0.0, 0.1]
+    tolerance: 0.05
+    weight: 1.0
+    source: "R-3340 F-004 · 배선 덕인지 가르는 항 — 학습이 재배선까지 살리면 실패"
+    level: P
+  # ---- 다가옴 조율 (scope escape) — LC/LPLC 13 종의 상대 반응 세기
+  - name: loom_tuning_profile
+    scope: [escape]
+    measure: loom.relative_response       # 종류별 최대 발화율을 LC17 로 나눈 벡터 · 코사인 유사도
+    target: loom-v1.amplitude             # config/loom.yaml 의 Turner 2022 상대 세기
+    tolerance: 0.1                        # 1 − 코사인 유사도
+    weight: 1.0
+    source: "Turner, Krieger, Pang & Clandinin 2022 eLife 11:e82587 (Dryad)"
+    level: P
+  # ---- 중심복합체 나침반 (scope space)
+  - name: epg_bump_fwhm_deg
+    scope: [space]
+    measure: bump.fwhm_deg                # 시야 자리 단서를 돌릴 때 EPG 봉우리 반치폭
+    target: 82.3
+    tolerance: 11.5
+    weight: 1.0
+    source: "Seelig & Jayaraman 2015 Nature 521:186 — FWHM 82.3 ± 11.5°"
+    level: P
+  - name: epg_bump_tracks_heading
+    scope: [space]
+    measure: bump.circ_corr               # inspect bump 의 |원형 상관|(EPG 위상 대 몸 방향)
+    target: [0.5, 1.0]
+    tolerance: 0.2
+    weight: 1.0
+    source: "Seelig & Jayaraman 2015 · Turner-Evans 2017 eLife — 봉우리 속도 = 몸 각속도"
+    level: P
+  - name: epg_bump_persists_dark_s
+    scope: [space]
+    measure: bump.persist_s               # 단서를 끈 뒤 봉우리(길이 > 0.3)가 유지되는 시간
+    target: [2.0, 30.0]                   # 30 s 넘게 유지된다(원문) — 우리 창 길이에 맞춰 하한 2 s
+    tolerance: 1.0
+    weight: 0.5
+    source: "Seelig & Jayaraman 2015 — 어둠에서 30 s 이상"
+    level: P
+  # ---- 수평계 (scope space · 검증에만 · 이미 y 축 확인에 씀)
+  - name: hs_receptive_field_order
+    scope: [space]
+    measure: hs.rf_elevation_order        # HSN > HSE > HSS 의 수용장 고도 순서(순위 상관)
+    target: 1.0
+    tolerance: 0.5
+    weight: 0.3
+    source: "Schnell et al. 2010 J Neurophysiol 103:1646"
+    level: A
+  # ---- 후각 · 버섯체 (F-007 준비 · scope 는 v2 에서)
+  - name: kc_sparsity
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]     # v2: 식초 6 사구체 ORN 150 Hz · 300 ms · KC 주요 9 종(4,053) · 씨앗 평균(노트 16 §4)
+    measure: mb.kc_active_fraction        # 냄새 자극 시 발화한 KC 비율
+    target: [0.05, 0.10]
+    tolerance: 0.03
+    weight: 1.0
+    source: "Lin et al. 2014 Nat Neurosci 17:559 — 냄새당 KC 5~10 %"
+    level: P
+  # ---- v2(2026-10-03 · 연구 노트 16 §4) — KC 희소성의 짝 항목. 측정은 mb_probe.measure_kc(같은 300 ms)
+  - name: kc_sparsity_narrow
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    measure: mb.kc_negative_fraction      # 음성 대조 — DM1 + VA2 만(지금 과제의 먹이 냄새)
+    target: [0.0, 0.02]
+    tolerance: 0.01
+    weight: 1.0
+    source: "연구 노트 16 §2.2 — 구조 셈 0.1 %(켜진 PN 짝 ≥ 3) · 좁은 자극에 맞추면 보통 냄새에서 KC 대부분이 켜짐"
+    level: S
+  - name: kc_spikes_per_responder
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    measure: mb.kc_spikes_per_responder   # 반응한 KC 스파이크 수 중앙
+    target: [2.0, 10.0]
+    tolerance: 2.0
+    weight: 1.0
+    source: "Honegger, Campbell & Turner 2011 — 반응 KC 5~10 스파이크/0.5~1 s · 300 ms 로 줄여 하한 2(선언)"
+    level: P
+  - name: kc_spontaneous
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    measure: mb.kc_spontaneous_fraction   # 자극 없음 300 ms
+    target: [0.0, 0.005]
+    tolerance: 0.005
+    weight: 1.0
+    source: "Turner et al. 2008 — KC 자발 발화 약 0.1 /s(연구 노트 16 [L2])"
+    level: A
+  # ---- v3(2026-10-03) — KC 범위의 '뇌 침묵' 두 갈래. 냄새는 외측뿔 등을 정당하게 켠다(M0 식초 중 나머지 뇌 0.43 Hz)
+  - name: kc_quiet_spontaneous
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    measure: mb.pop_rate_spont_hz         # 무자극 300 ms 의 나머지 뇌(KC · APL · 자극 밖) — M0 에서 0
+    target: [0.0, 0.05]
+    tolerance: 0.02
+    weight: 2.0
+    source: "Shiu 2024 — 쉬는 상태 침묵(cns_quiet_hz 와 같은 값 · 재는 조건만 무자극으로)"
+    level: P
+  - name: kc_odor_rest_bounded
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    measure: mb.pop_rate_hz               # 식초 6 · 300 ms 의 나머지 뇌
+    target: [0.0, 0.86]                   # = M0 처음 값 0.43 Hz × 2(runs/kc-probe-20261003-132005.json) — 들끓음 상한 · 선언
+    tolerance: 0.2
+    weight: 1.0
+    source: "선언 — 학습이 뇌 전체를 들끓게 만드는 해를 막는 상한(값은 M0 측정 × 2)"
+    level: S
+  # ---- v4(2026-10-05 · 결과 전) — 엽마다 켜지기. b 의 학습이 KC 를 αβ-m 한 종류에 몰아(37 % · 나머지 8 종 0) 평균만 맞췄다
+  #      → γ · α′β′ 엽 MBON 에 KC 발화 0(runs/mbon-probe-20261005-010155.json). 엽 = config/fit.yaml kc_probe.lobes
+  - name: kc_lobe_all_respond
+    scope: [kc-sparse-c]
+    measure: mb.kc_lobe_fraction_min      # 엽(γ · αβ · α′β′)마다 켜진 비율을 씨앗 평균한 뒤 가장 낮은 엽
+    target: [0.02, 1.0]
+    tolerance: 0.01
+    weight: 1.0
+    source: "Turner, Bazhenov & Laurent 2008 J Neurophysiol 99:734 · Honegger 2011 — 냄새는 엽마다 KC 를 켠다(엽별 차이는 있으나 0 은 아님) · 하한 2 % 는 선언"
+    level: S
+  - name: kc_lobe_none_dominates
+    scope: [kc-sparse-c]
+    measure: mb.kc_lobe_fraction_max      # 가장 많이 켜진 엽
+    target: [0.0, 0.20]
+    tolerance: 0.05
+    weight: 1.0
+    source: "Lin 2014 전체 5~10 % 의 두 배를 엽 상한으로 — 선언(한 엽에 몰리는 해를 막는다)"
+    level: S

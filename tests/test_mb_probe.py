@@ -101,3 +101,12 @@ def test_lobe_fractions_in_summary_and_measure():
            "lobes": {"gamma": ["KCg"], "ab": ["KCab"]}}
     m = mb_probe.measure_kc(g, LIFParams(w_scale=1.0), None, 2, 0, "cpu", cfg)
     assert 0.0 <= m["kc_lobe_fraction_min"] <= m["kc_lobe_fraction_max"] <= 1.0
+
+
+def test_mbon_response_in_summary():
+    g = mb()
+    idx = {"kc": np.array([4, 5]), "stim_pn": np.array([2]), "apl": np.array([6]),
+           "rest": np.array([7]), "mbon": np.array([6, 7])}
+    kc_pn = (np.array([0, 1, 1]), np.array([2, 2, 3]))
+    w = mb_probe.summarize(g, np.array([10, 20, 30]), np.array([7, 7, 4]), 0.1, 100.0, idx, kc_pn)
+    assert w["mbon_fire_fraction"] == 0.5 and w["mbon_rate_hz"] == 10.0

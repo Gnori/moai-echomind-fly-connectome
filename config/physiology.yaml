@@ -6,7 +6,8 @@
 # 손실: L = Σ_k weight_k · ((측정_k − target_k) / tolerance_k)² + 과제 항(관문 통과 칸 선형 해독) + 규제(초기값에서 멀어진 정도).
 #   범위 목표([lo, hi])는 안에 들면 0, 벗어난 거리를 tolerance 로 나눈다.
 # 확인 수준: P = 원문 · A = 초록/그림 · S = 2차 자료(연구 노트 13 §2.4 표 · 참고 문헌 번호는 그 노트).
-version: physiology-v4   # 2026-10-05 — v3 + KC 엽별 항목 둘(kc_lobe_fraction_min · max · 범위 kc-sparse-c) · 학습 결과 전 · 요구자 "승인할게 진행해". 옛 판 config/archive/physiology-v3.yaml
+version: physiology-v5   # 2026-10-05 — v4 + MBON 반응 항목 둘(범위 kc-mbon-a) · 학습 결과 전 · 요구자 "(가) MBON 학습 진행해". 옛 판 config/archive/physiology-v4.yaml
+# v4 = 2026-10-05 — v3 + KC 엽별 항목 둘(kc_lobe_fraction_min · max · 범위 kc-sparse-c) · 학습 결과 전 · 요구자 "승인할게 진행해". 옛 판 config/archive/physiology-v3.yaml
 # v3 = 2026-10-03 — v2 의 cns_quiet 를 KC 범위에서 빼고 무자극 침묵 + 냄새 중 들끓음 상한으로 바꿈(M0 에서 냄새 중 나머지 뇌가 이미 0.43 Hz · 요구자 "진행해" · 학습 결과 전). 옛 판 config/archive/physiology-v2.yaml
 # v2 = 2026-10-03 — v1 + KC 희소성 항목을 범위 kc-sparse-a · b 에(연구 노트 16 §4 · **M0 측정 결과 전에** 잠금). 옛 판 config/archive/physiology-v1.yaml
 items:
@@ -96,7 +97,7 @@ items:
     level: A
   # ---- 후각 · 버섯체 (F-007 준비 · scope 는 v2 에서)
   - name: kc_sparsity
-    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]     # v2: 식초 6 사구체 ORN 150 Hz · 300 ms · KC 주요 9 종(4,053) · 씨앗 평균(노트 16 §4)
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c, kc-mbon-a]     # v2: 식초 6 사구체 ORN 150 Hz · 300 ms · KC 주요 9 종(4,053) · 씨앗 평균(노트 16 §4)
     measure: mb.kc_active_fraction        # 냄새 자극 시 발화한 KC 비율
     target: [0.05, 0.10]
     tolerance: 0.03
@@ -105,7 +106,7 @@ items:
     level: P
   # ---- v2(2026-10-03 · 연구 노트 16 §4) — KC 희소성의 짝 항목. 측정은 mb_probe.measure_kc(같은 300 ms)
   - name: kc_sparsity_narrow
-    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c, kc-mbon-a]
     measure: mb.kc_negative_fraction      # 음성 대조 — DM1 + VA2 만(지금 과제의 먹이 냄새)
     target: [0.0, 0.02]
     tolerance: 0.01
@@ -113,7 +114,7 @@ items:
     source: "연구 노트 16 §2.2 — 구조 셈 0.1 %(켜진 PN 짝 ≥ 3) · 좁은 자극에 맞추면 보통 냄새에서 KC 대부분이 켜짐"
     level: S
   - name: kc_spikes_per_responder
-    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c, kc-mbon-a]
     measure: mb.kc_spikes_per_responder   # 반응한 KC 스파이크 수 중앙
     target: [2.0, 10.0]
     tolerance: 2.0
@@ -121,7 +122,7 @@ items:
     source: "Honegger, Campbell & Turner 2011 — 반응 KC 5~10 스파이크/0.5~1 s · 300 ms 로 줄여 하한 2(선언)"
     level: P
   - name: kc_spontaneous
-    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c, kc-mbon-a]
     measure: mb.kc_spontaneous_fraction   # 자극 없음 300 ms
     target: [0.0, 0.005]
     tolerance: 0.005
@@ -130,7 +131,7 @@ items:
     level: A
   # ---- v3(2026-10-03) — KC 범위의 '뇌 침묵' 두 갈래. 냄새는 외측뿔 등을 정당하게 켠다(M0 식초 중 나머지 뇌 0.43 Hz)
   - name: kc_quiet_spontaneous
-    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c, kc-mbon-a]
     measure: mb.pop_rate_spont_hz         # 무자극 300 ms 의 나머지 뇌(KC · APL · 자극 밖) — M0 에서 0
     target: [0.0, 0.05]
     tolerance: 0.02
@@ -138,7 +139,7 @@ items:
     source: "Shiu 2024 — 쉬는 상태 침묵(cns_quiet_hz 와 같은 값 · 재는 조건만 무자극으로)"
     level: P
   - name: kc_odor_rest_bounded
-    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c]
+    scope: [kc-sparse-a, kc-sparse-b, kc-sparse-c, kc-mbon-a]
     measure: mb.pop_rate_hz               # 식초 6 · 300 ms 의 나머지 뇌
     target: [0.0, 0.86]                   # = M0 처음 값 0.43 Hz × 2(runs/kc-probe-20261003-132005.json) — 들끓음 상한 · 선언
     tolerance: 0.2
@@ -148,7 +149,7 @@ items:
   # ---- v4(2026-10-05 · 결과 전) — 엽마다 켜지기. b 의 학습이 KC 를 αβ-m 한 종류에 몰아(37 % · 나머지 8 종 0) 평균만 맞췄다
   #      → γ · α′β′ 엽 MBON 에 KC 발화 0(runs/mbon-probe-20261005-010155.json). 엽 = config/fit.yaml kc_probe.lobes
   - name: kc_lobe_all_respond
-    scope: [kc-sparse-c]
+    scope: [kc-sparse-c, kc-mbon-a]
     measure: mb.kc_lobe_fraction_min      # 엽(γ · αβ · α′β′)마다 켜진 비율을 씨앗 평균한 뒤 가장 낮은 엽
     target: [0.02, 1.0]
     tolerance: 0.01
@@ -156,10 +157,28 @@ items:
     source: "Turner, Bazhenov & Laurent 2008 J Neurophysiol 99:734 · Honegger 2011 — 냄새는 엽마다 KC 를 켠다(엽별 차이는 있으나 0 은 아님) · 하한 2 % 는 선언"
     level: S
   - name: kc_lobe_none_dominates
-    scope: [kc-sparse-c]
+    scope: [kc-sparse-c, kc-mbon-a]
     measure: mb.kc_lobe_fraction_max      # 가장 많이 켜진 엽
     target: [0.0, 0.20]
     tolerance: 0.05
     weight: 1.0
     source: "Lin 2014 전체 5~10 % 의 두 배를 엽 상한으로 — 선언(한 엽에 몰리는 해를 막는다)"
+    level: S
+  # ---- v5(2026-10-05 · 결과 전) — MBON 이 냄새에 반응하기. c 에서 KC 입력이 MBON 90/97 에 닿았으나 발화 3/97
+  #      (runs/mbon-probe-20261005-090304.json). 측정 = 식초 6 · 300 ms · 씨앗 평균(mb_probe.measure_kc)
+  - name: mbon_odor_responding
+    scope: [kc-mbon-a]
+    measure: mb.mbon_fire_fraction        # 식초 중 한 번 이상 발화한 MBON 비율(97 뉴런)
+    target: [0.3, 1.0]
+    tolerance: 0.1
+    weight: 1.0
+    source: "Hige, Aso, Rubin & Turner 2015 Nature 526:258 · Hige 2015 Neuron 88:985 — MBON 은 여러 냄새에 넓게 반응(γ1pedc CS 118 발화/1 s) · 하한 30 % 는 선언(구획마다 냄새 선호가 달라 전부는 아님)"
+    level: S
+  - name: mbon_odor_rate_bounded
+    scope: [kc-mbon-a]
+    measure: mb.mbon_rate_hz              # 식초 중 MBON 97 개 평균 발화율
+    target: [2.0, 60.0]
+    tolerance: 2.0
+    weight: 1.0
+    source: "Hige 2015 — 냄새 반응 수십 Hz(118 발화/1 s 가 상단) · 하한 2 Hz · 상한 60 Hz 는 선언(들끓는 해 막기)"
     level: S
