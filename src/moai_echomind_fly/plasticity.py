@@ -306,6 +306,9 @@ def main_controls(args: argparse.Namespace) -> int:
     except GuardRefused as err:
         print(f"[guard] 막음 — {err}")
         return 2
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    out = paths.runs_dir() / f"plasticity-controls-{args.brain}-{stamp}.json"
+    out.write_text(json.dumps({"rows": rows}, default=str), encoding="utf-8")   # 판정 전 먼저 저장
     summary = {cond: {k: change([r for r in rows if r["cond"] == cond], k)
                       for k in ("cs_plus.reward", "cs_plus.punish", "cs_minus.reward",
                                 "cs_plus.all")}
@@ -315,8 +318,6 @@ def main_controls(args: argparse.Namespace) -> int:
         print(f"[plasticity-controls] {cond:9} CS+ 보상 {v['cs_plus.reward']} · CS+ 처벌 "
               f"{v['cs_plus.punish']} · CS− 보상 {v['cs_minus.reward']}", flush=True)
     print(f"[plasticity-controls] 판정 {passed}", flush=True)
-    stamp = time.strftime("%Y%m%d-%H%M%S")
-    out = paths.runs_dir() / f"plasticity-controls-{args.brain}-{stamp}.json"
     out.write_text(json.dumps({"rule": cfg["version"], "controls": pc, "cs_minus": cs_minus,
                                "brain": args.brain, "cell_from": args.cell_from,
                                "summary": summary, "pass": passed, "rows": rows},

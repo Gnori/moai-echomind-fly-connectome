@@ -115,3 +115,8 @@ def test_run_condition_paired_weakens_and_off_does_not():
     for cond in ("unpaired", "punish", "shuffled"):
         r = pl.run_condition(g, lif, cfg, None, cond, 0, "cpu", sets)
         assert len(r["cs_plus.reward"]) == 2
+
+
+def test_condition_names_are_strings():
+    assert all(isinstance(c, str) for c in CFG["probe_controls"]["conditions"])
+    assert "off" in CFG["probe_controls"]["conditions"]

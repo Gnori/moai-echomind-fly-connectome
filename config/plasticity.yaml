@@ -59,7 +59,7 @@ probe_controls:                  # 2026-10-06 · 결과 전 선언 — 가소성
   cs_minus_seed: 0
   unpaired_gap_s: 3.0            # 시간이 어긋난 보상: 보상 1 s → 쉼 3 s → 냄새 1 s(DAN 신호 τ 0.3 s 라 겹침 거의 없음)
   shuffle_seed: 100              # 구획 표 섞기 씨앗(+ 시행 씨앗)
-  conditions: [paired, unpaired, punish, shuffled, off]   # cs_minus 는 paired 안에서 함께 잰다
+  conditions: [paired, unpaired, punish, shuffled, "off"]   # cs_minus 는 paired 안에서 함께 잰다 · "off" 는 따옴표(YAML 이 거짓으로 읽음 · 10-06 첫 실행이 이것으로 깨짐)
   pass:                          # 씨앗 합 기준
     paired_drop: [0.5, 0.9]      # 짝지은 냄새 · 보상 구획 MBON 감소(Hige 2015 약 80 % · eta.target_cs_plus_drop 과 같음)
     control_change_max: 0.25     # 짝 안 지은 냄새 · 어긋난 보상 · 표 섞기 · 가소성 끔 — 보상 구획 변화(감소) 상한(eta.target_unpaired_change_max 와 같음)
