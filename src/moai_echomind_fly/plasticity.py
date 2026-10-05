@@ -264,6 +264,86 @@ def verdict_controls(summary: dict[str, dict[str, Any]], pc: dict[str, Any]) -> 
     return out
 
 
+def cs_minus_ok(summary: dict[str, dict[str, Any]], pc: dict[str, Any]) -> bool | None:
+    """짝 안 지은 냄새만 다시 잴 때의 판정(기준은 verdict_controls 와 같음)."""
+    ch = summary["paired"]["cs_minus.reward"]["change"]
+    return None if ch is None else abs(ch) <= pc["pass"]["control_change_max"]
+
+
+def screen_cs_minus(graph: Graph, lif, cfg: dict[str, Any], cell, device: str
+                    ) -> dict[str, Any]:
+    """짝 안 지은 냄새 고르기(짝짓기 전 반응만 · config `probe_controls.cs_minus_screen`).
+
+    후보마다 시험 창 한 번: 보상 구획 MBON 발화 · CS+ 와 켜진 KC 겹침(Jaccard).
+    """
+    from .sim import Engine
+
+    pc = cfg["probe_controls"]
+    sc = pc["cs_minus_screen"]
+    comp = compartments(graph, cfg)
+    types = graph.columns["type"]
+    mbon = np.flatnonzero(np.isin(graph.columns["class"], cfg["targets"]["post_class"]))
+    rew = cfg["teaching"]["reward"]["dan_types"]
+    reward_mbon = mbon[np.isin(types[mbon], [m for m, d in comp["table"].items() if d in rew])]
+    kc = np.flatnonzero(np.isin(graph.columns["class"], cfg["targets"]["pre_class"]))
+    eng = Engine(graph, lif, device=device, seed=int(sc["sim_seed"]), cell=cell)
+
+    def resp(odor_types: list[str]) -> tuple[int, set]:
+        eng.reset()
+        _, n = _window(eng, [(graph.select(type=odor_types), float(pc["odor_hz"]))],
+                       float(pc["test_ms"]))
+        cnt = np.bincount(n, minlength=graph.n)
+        return int(cnt[reward_mbon].sum()), set(kc[cnt[kc] > 0].tolist())
+
+    plus_r, plus_kc = resp(list(pc["cs_plus"]))
+    rows = []
+    for s in range(int(sc["first_seed"]), int(sc["first_seed"]) + int(sc["candidates"])):
+        cand = cs_minus_types(graph, list(pc["cs_plus"]), int(pc["cs_minus_n"]), s)
+        r, k = resp(cand)
+        ov = len(k & plus_kc) / max(len(k | plus_kc), 1)
+        rows.append({"seed": s, "types": cand, "reward_spikes": r,
+                     "rel": round(r / plus_r, 4) if plus_r else None,
+                     "kc_overlap": round(ov, 4), "kc_on": len(k)})
+    ok = [r for r in rows if r["rel"] is not None and r["rel"] >= sc["min_rel_response"]
+          and r["kc_overlap"] <= sc["max_kc_overlap"]]
+    pick = max(ok, key=lambda r: r["reward_spikes"]) if ok else None
+    return {"cs_plus_reward_spikes": plus_r, "cs_plus_kc_on": len(plus_kc), "rows": rows,
+            "pick": pick}
+
+
+def main_screen(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from . import graph as graph_mod
+    from .cellparams import CellParams
+    from .guard import GuardRefused, heavy
+    from .sim import LIFParams
+
+    cfg = config.load("plasticity")
+    try:
+        with heavy("plasticity-cs-screen") as guard:
+            print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
+            g = graph_mod.load()
+            res = screen_cs_minus(g, LIFParams.from_config(), cfg,
+                                  CellParams.load(Path(args.cell_from) / "params.npz"),
+                                  args.device)
+    except GuardRefused as err:
+        print(f"[guard] 막음 — {err}")
+        return 2
+    for r in res["rows"]:
+        print(f"[cs-screen] 씨앗 {r['seed']:2} 보상 구획 {r['reward_spikes']:3} "
+              f"(CS+ 의 {r['rel']}) · KC 겹침 {r['kc_overlap']} · {','.join(r['types'])}",
+              flush=True)
+    print(f"[cs-screen] CS+ 보상 구획 {res['cs_plus_reward_spikes']} · 고름 {res['pick']}",
+          flush=True)
+    out = paths.runs_dir() / f"plasticity-cs-screen-{time.strftime('%Y%m%d-%H%M%S')}.json"
+    out.write_text(json.dumps({"screen": cfg["probe_controls"]["cs_minus_screen"],
+                               "cell_from": args.cell_from, **res}, ensure_ascii=False,
+                              indent=2), encoding="utf-8")
+    print(f"[cs-screen] {out}")
+    return 0
+
+
 def main_controls(args: argparse.Namespace) -> int:
     from . import graph as graph_mod
     from .cellparams import CellParams
@@ -288,7 +368,8 @@ def main_controls(args: argparse.Namespace) -> int:
             mbon = np.flatnonzero(np.isin(g.columns["class"], cfg["targets"]["post_class"]))
             rew, pun = (cfg["teaching"][k]["dan_types"] for k in ("reward", "punishment"))
             cs_plus = list(pc["cs_plus"])
-            cs_minus = cs_minus_types(g, cs_plus, int(pc["cs_minus_n"]), int(pc["cs_minus_seed"]))
+            cs_minus = (args.cs_minus.split(",") if args.cs_minus else
+                        cs_minus_types(g, cs_plus, int(pc["cs_minus_n"]), int(pc["cs_minus_seed"])))
             sets = {"table": comp["table"], "mbon": mbon,
                     "reward_mbon": mbon[np.isin(types[mbon], [m for m, d in comp["table"].items()
                                                               if d in rew])],
@@ -296,8 +377,9 @@ def main_controls(args: argparse.Namespace) -> int:
                                                               if d in pun])],
                     "reward_dan": g.select(type=rew), "punish_dan": g.select(type=pun),
                     "cs_plus": g.select(type=cs_plus), "cs_minus": g.select(type=cs_minus)}
+            conds = args.conditions.split(",") if args.conditions else list(pc["conditions"])
             for seed in [int(x) for x in args.seeds.split(",")]:
-                for cond in pc["conditions"]:
+                for cond in conds:
                     r = run_condition(g, lif, cfg, cell, cond, seed, args.device, sets)
                     rows.append(r)
                     print(f"[plasticity-controls] 씨앗 {seed} {cond:9} CS+ 보상 "
@@ -312,8 +394,9 @@ def main_controls(args: argparse.Namespace) -> int:
     summary = {cond: {k: change([r for r in rows if r["cond"] == cond], k)
                       for k in ("cs_plus.reward", "cs_plus.punish", "cs_minus.reward",
                                 "cs_plus.all")}
-               for cond in pc["conditions"]}
-    passed = verdict_controls(summary, pc)
+               for cond in conds}
+    passed = (verdict_controls(summary, pc) if set(conds) >= set(pc["conditions"])
+              else {"cs_minus": cs_minus_ok(summary, pc)} if "paired" in conds else {})
     for cond, v in summary.items():
         print(f"[plasticity-controls] {cond:9} CS+ 보상 {v['cs_plus.reward']} · CS+ 처벌 "
               f"{v['cs_plus.punish']} · CS− 보상 {v['cs_minus.reward']}", flush=True)
@@ -385,4 +468,11 @@ def register(sub) -> None:
     c.add_argument("--brain", default="real", help="real | rewired-s<씨앗>")
     c.add_argument("--seeds", default="0,1,2,3,4")
     c.add_argument("--device", default="cpu", choices=["cpu", "mps"])
+    c.add_argument("--cs-minus", default="", help="CS− ORN 종류(쉼표) · 비우면 설정")
+    c.add_argument("--conditions", default="", help="조건 일부만(쉼표) — 비우면 전부")
     c.set_defaults(func=main_controls)
+    s = sub.add_parser("plasticity-cs-screen",
+                       help="짝 안 지은 냄새 고르기 — 짝짓기 전 반응만(무거움 · 짧음)")
+    s.add_argument("--cell-from", required=True)
+    s.add_argument("--device", default="cpu", choices=["cpu", "mps"])
+    s.set_defaults(func=main_screen)

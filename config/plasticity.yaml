@@ -57,6 +57,13 @@ probe_controls:                  # 2026-10-06 · 결과 전 선언 — 가소성
   cs_plus: [ORN_DM1, ORN_DM4, ORN_DP1m, ORN_DM2, ORN_VA2, ORN_VM2]   # 식초 6(fit.yaml kc_probe vinegar6)
   cs_minus_n: 6                  # 짝 안 지은 냄새 = CS+ 를 뺀 ORN 종류에서 씨앗으로 6 개(고른 목록은 결과 파일에)
   cs_minus_seed: 0
+  cs_minus_screen:               # 2026-10-06 · 결과 전 — 첫 CS−(씨앗 0)가 보상 구획 MBON 을 안 켜 특이성을 잴 수 없었음 → 다시 고른다
+    candidates: 20               # CS+ 밖 ORN 6 종 묶음 20 개(씨앗 first_seed ~ +19)
+    first_seed: 1
+    sim_seed: 0
+    min_rel_response: 0.3        # 짝짓기 전 보상 구획 MBON 발화가 CS+ 의 30 % 이상
+    max_kc_overlap: 0.3          # 켜진 KC 가 CS+ 와 30 % 이하로 겹침(Jaccard)
+    pick: max_reward_spikes      # 남은 것 중 보상 구획 발화가 가장 큰 것 — 판정 기준은 pass.control_change_max 그대로
   unpaired_gap_s: 3.0            # 시간이 어긋난 보상: 보상 1 s → 쉼 3 s → 냄새 1 s(DAN 신호 τ 0.3 s 라 겹침 거의 없음)
   shuffle_seed: 100              # 구획 표 섞기 씨앗(+ 시행 씨앗)
   conditions: [paired, unpaired, punish, shuffled, "off"]   # cs_minus 는 paired 안에서 함께 잰다 · "off" 는 따옴표(YAML 이 거짓으로 읽음 · 10-06 첫 실행이 이것으로 깨짐)

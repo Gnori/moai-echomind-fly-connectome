@@ -120,3 +120,10 @@ def test_run_condition_paired_weakens_and_off_does_not():
 def test_condition_names_are_strings():
     assert all(isinstance(c, str) for c in CFG["probe_controls"]["conditions"])
     assert "off" in CFG["probe_controls"]["conditions"]
+
+
+def test_cs_minus_ok_uses_same_threshold():
+    pc = CFG["probe_controls"]
+    assert pl.cs_minus_ok({"paired": {"cs_minus.reward": {"change": -0.1}}}, pc) is True
+    assert pl.cs_minus_ok({"paired": {"cs_minus.reward": {"change": -0.4}}}, pc) is False
+    assert pl.cs_minus_ok({"paired": {"cs_minus.reward": {"change": None}}}, pc) is None
