@@ -33,6 +33,7 @@
 | `20-odor/m2-odor-windows.sh <묶음> [채널…]` | 여러 창 선형 검사 + 전 채널 선형 검사 | `runs/odor-windows-*.json` · `linear-probe-*.json` | v2 · v2-ln 찍기 수준 · **v4 LN4 냄새 맡기 4 누적 0.725** |
 | `20-odor/mbon-probe.sh [진짜 학습 폴더] [재배선 학습 폴더]` | MBON 침묵 진단 — 출처별 평균 탈분극 대 문턱(F-007) | `runs/mbon-probe-*.json` | 10-05: 학습 뒤 KC 가 αβ-m 하나에만(37 %) → MBON 67/97 KC 입력 0 · αβ MBON 은 APL 억제 · 재배선 ×250 |
 | `20-odor/plasticity-probe.sh [냄새] [η] [학습 폴더] [씨앗들] [뇌]` | 가소성 먼저 재기 — 짝짓기 1 s 뒤 보상 구획 MBON CS+ 변화(F-007) | `runs/plasticity-probe-*.json` | 10-06 진짜 kc-mbon-a: η 0.001 에서 76 → 28(−63 % · 5/5) · η 0 76 → 84 · 재배선 MBON 침묵 |
+| `20-odor/plasticity-controls.sh [진짜 폴더] [재배선 폴더] [씨앗들]` | 가소성 대조 다섯(짝짓기 · 어긋난 보상 · 처벌 DAN · 구획 표 섞기 · 끔 + CS−) | `runs/plasticity-controls-<뇌>-*.json` | 10-06 진짜: −64 % · 처벌 DAN 이면 처벌 구획 −65 % · 대조 +4 / −12 / +4 % · 재배선 MBON 침묵 |
 | `bin/run_m3.sh` · `bin/run_m4_pilot.sh` · `bin/run_m4_full.sh` | 그때 돈 순서 그대로(기록용) | — | 위 10 · 20 단계 스크립트로 같은 일을 한다 |
 
 ### 2.2 자료
