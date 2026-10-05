@@ -173,6 +173,8 @@ def main_probe(args: argparse.Namespace) -> int:
         with heavy("plasticity-probe") as guard:
             print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
             g = graph_mod.load()
+            if args.brain != "real":                       # 대조 — 섞은 배선
+                g = graph_mod.rewire(g, int(args.brain.rsplit("-s", 1)[1]))
             lif = LIFParams.from_config()
             cell = None
             if args.cell_from:
@@ -210,5 +212,6 @@ def register(sub) -> None:
     p.add_argument("--window-ms", type=float, default=100.0)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--device", default="cpu", choices=["cpu", "mps"])
-    p.add_argument("--cell-from", default="", help="회로 학습 결과 폴더(params.npz) — 진짜 뇌만")
+    p.add_argument("--brain", default="real", help="real | rewired-s<씨앗>(대조)")
+    p.add_argument("--cell-from", default="", help="회로 학습 폴더(params.npz · 같은 뇌)")
     p.set_defaults(func=main_probe)
