@@ -176,11 +176,45 @@ def shuffled_table(table: dict[str, str], seed: int) -> dict[str, str]:
     return dict(zip(keys, vals.tolist()))
 
 
+def drive_split(tf: ThreeFactor, graph: Graph, reward_mbon: np.ndarray, kc_plus: np.ndarray,
+                kc_minus: np.ndarray, kc_paired: np.ndarray) -> dict[str, Any]:
+    """보상 구획 MBON 에 닿는 KC 입력을 CS+ 와 겹치는 몫으로 나눈다(F-007 · 10-06 탐색).
+
+    kc_plus · kc_minus = 짝짓기 전 시험 창의 KC 발화 수(tf.kc 순서) · kc_paired = 짝짓기 동안
+    발화한 KC(불) · 입력 = 발화 수 × 처음 세기(tf.w0)의 합. 남은 몫 = 같은 발화에 짝짓기 뒤
+    배율 m 을 곱한 입력 / 처음 입력 — 발화 수가 그대로라는 가정의 예측이다(실제 MBON 발화
+    변화와 견준다).
+    """
+    edge = np.isin(graph.dst[tf.edges], reward_mbon) & (tf.edge_comp >= 0)
+    k, w0, m = tf.edge_kc[edge], tf.w0[edge], tf.m[edge]
+    to_reward = np.zeros(len(tf.kc), bool)
+    to_reward[k] = True
+
+    def jac(a: np.ndarray, b: np.ndarray) -> float:
+        return round(float((a & b).sum() / max((a | b).sum(), 1)), 4)
+
+    out: dict[str, Any] = {
+        "kc_to_reward": int(to_reward.sum()),
+        "jaccard_all": jac(kc_plus > 0, kc_minus > 0),
+        "jaccard_reward": jac((kc_plus > 0) & to_reward, (kc_minus > 0) & to_reward)}
+    for name, cnt in (("cs_plus", kc_plus), ("cs_minus", kc_minus)):
+        d = cnt[k] * w0
+        tot = float(d.sum())
+        on = int(((cnt > 0) & to_reward).sum())
+        out[name] = {
+            "kc_on_reward": on, "drive": round(tot, 3),
+            "share_with_cs_plus": round(float(d[kc_plus[k] > 0].sum()) / tot, 4) if tot else None,
+            "share_paired_kc": round(float(d[kc_paired[k]].sum()) / tot, 4) if tot else None,
+            "predicted_remaining": round(float((d * m).sum()) / tot, 4) if tot else None}
+    return out
+
+
 def run_condition(graph: Graph, lif, cfg: dict[str, Any], cell, cond: str, seed: int,
-                  device: str, sets: dict[str, Any]) -> dict[str, Any]:
+                  device: str, sets: dict[str, Any], detail: bool = False) -> dict[str, Any]:
     """조건 하나(paired · cs_minus 는 paired 안에서 · unpaired · punish · shuffled · off).
 
     짝짓기 전 · 뒤에 CS+ 와 CS− 를 시험 창만큼 주고 보상 · 처벌 구획 MBON 발화를 센다(I v2 §8.3).
+    detail 이면 보상 구획 KC 입력의 겹침 분해(`drive_split`)를 함께 적는다.
     """
     from .sim import Engine
 
@@ -202,17 +236,20 @@ def run_condition(graph: Graph, lif, cfg: dict[str, Any], cell, cond: str, seed:
         return {"reward": int(cnt[sets["reward_mbon"]].sum()),
                 "punish": int(cnt[sets["punish_mbon"]].sum()),
                 "all": int(cnt[sets["mbon"]].sum()),
-                "kc_on": np.flatnonzero(cnt[tf.kc] > 0)}
+                "kc_on": np.flatnonzero(cnt[tf.kc] > 0), "kc_cnt": cnt[tf.kc]}
 
     before = {"cs_plus": test(sets["cs_plus"]), "cs_minus": test(sets["cs_minus"])}
     eng.reset()
     t0 = eng.step
+    kc_paired = np.zeros(len(tf.kc), bool)
 
     def phase(stim: list[tuple[np.ndarray, float]], ms: float) -> None:
         nonlocal t0
         for _ in range(int(round(ms / step_ms))):
             _window(eng, stim, step_ms)
-            tf.update(*eng.spikes_since(t0), step_ms)
+            st, ne = eng.spikes_since(t0)
+            kc_paired[np.searchsorted(tf.kc, ne[np.isin(ne, tf.kc)])] = True
+            tf.update(st, ne, step_ms)
             t0 = eng.step
             tf.apply(eng)
 
@@ -230,6 +267,9 @@ def run_condition(graph: Graph, lif, cfg: dict[str, Any], cell, cond: str, seed:
             out[f"{k}.{g}"] = [before[k][g], after[k][g]]
     a, b = set(before["cs_plus"]["kc_on"].tolist()), set(before["cs_minus"]["kc_on"].tolist())
     out["kc_overlap_cs"] = round(len(a & b) / max(len(a | b), 1), 4)
+    if detail and tf.w0 is not None:
+        out["split"] = drive_split(tf, graph, sets["reward_mbon"], before["cs_plus"]["kc_cnt"],
+                                   before["cs_minus"]["kc_cnt"], kc_paired)
     return out
 
 
@@ -380,8 +420,17 @@ def main_controls(args: argparse.Namespace) -> int:
             conds = args.conditions.split(",") if args.conditions else list(pc["conditions"])
             for seed in [int(x) for x in args.seeds.split(",")]:
                 for cond in conds:
-                    r = run_condition(g, lif, cfg, cell, cond, seed, args.device, sets)
+                    r = run_condition(g, lif, cfg, cell, cond, seed, args.device, sets,
+                                      detail=args.detail)
                     rows.append(r)
+                    if "split" in r:
+                        sp = r["split"]
+                        print(f"[plasticity-controls] 씨앗 {seed} 겹침 KC 전체 "
+                              f"{sp['jaccard_all']} · 보상 구획 KC {sp['jaccard_reward']} · "
+                              f"CS− 입력 중 CS+ KC 몫 {sp['cs_minus']['share_with_cs_plus']} · "
+                              f"짝짓기 KC 몫 {sp['cs_minus']['share_paired_kc']} · 남을 입력 "
+                              f"CS+ {sp['cs_plus']['predicted_remaining']} CS− "
+                              f"{sp['cs_minus']['predicted_remaining']}", flush=True)
                     print(f"[plasticity-controls] 씨앗 {seed} {cond:9} CS+ 보상 "
                           f"{r['cs_plus.reward']} 처벌 {r['cs_plus.punish']} · CS− 보상 "
                           f"{r['cs_minus.reward']}", flush=True)
@@ -470,6 +519,8 @@ def register(sub) -> None:
     c.add_argument("--device", default="cpu", choices=["cpu", "mps"])
     c.add_argument("--cs-minus", default="", help="CS− ORN 종류(쉼표) · 비우면 설정")
     c.add_argument("--conditions", default="", help="조건 일부만(쉼표) — 비우면 전부")
+    c.add_argument("--detail", action="store_true",
+                   help="보상 구획 KC 입력의 CS+ · CS− 겹침 분해도 적는다(탐색)")
     c.set_defaults(func=main_controls)
     s = sub.add_parser("plasticity-cs-screen",
                        help="짝 안 지은 냄새 고르기 — 짝짓기 전 반응만(무거움 · 짧음)")

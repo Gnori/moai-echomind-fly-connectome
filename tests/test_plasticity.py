@@ -127,3 +127,35 @@ def test_cs_minus_ok_uses_same_threshold():
     assert pl.cs_minus_ok({"paired": {"cs_minus.reward": {"change": -0.1}}}, pc) is True
     assert pl.cs_minus_ok({"paired": {"cs_minus.reward": {"change": -0.4}}}, pc) is False
     assert pl.cs_minus_ok({"paired": {"cs_minus.reward": {"change": None}}}, pc) is None
+
+
+def test_drive_split_counts_shared_kc_and_predicts_remaining():
+    g = mb_graph()
+    tf = pl.ThreeFactor(g, CFG, eta=0.05, table={"MBON01": "PAM01", "MBON11": "PPL101"})
+    tf.w0 = np.ones(len(tf.edges))
+    src, dst = g.src()[tf.edges], g.dst[tf.edges]
+    tf.m[(dst == 4) & (src == 0)] = 0.5                      # KC 0 → 보상 MBON 만 약해짐
+    plus = np.array([2, 0, 0, 0])                             # CS+ = KC 0
+    minus = np.array([2, 0, 2, 0])                            # CS− = KC 0 · 2
+    paired = np.array([True, False, False, False])
+    sp = pl.drive_split(tf, g, np.array([4]), plus, minus, paired)
+    assert sp["kc_to_reward"] == 3                           # KC 0 · 1 · 2 → MBON 4
+    assert sp["jaccard_all"] == 0.5 and sp["jaccard_reward"] == 0.5
+    assert sp["cs_minus"]["share_with_cs_plus"] == 0.5
+    assert sp["cs_minus"]["share_paired_kc"] == 0.5
+    assert sp["cs_minus"]["predicted_remaining"] == 0.75
+    assert sp["cs_plus"]["predicted_remaining"] == 0.5
+
+
+def test_run_condition_detail_adds_split():
+    g = mb_graph()
+    cfg = {**CFG, "probe_controls": {**CFG["probe_controls"], "eta": 0.5, "test_ms": 20,
+                                     "update_ms": 10},
+           "eta": {**CFG["eta"], "pairing": {"odor_s": 0.05, "dan_s": 0.05}}}
+    sets = {"table": {"MBON01": "PAM01", "MBON11": "PPL101"}, "mbon": np.array([4, 5]),
+            "reward_mbon": np.array([4]), "punish_mbon": np.array([5]),
+            "reward_dan": np.array([6]), "punish_dan": np.array([7]),
+            "cs_plus": np.array([0, 2]), "cs_minus": np.array([3])}
+    r = pl.run_condition(g, LIFParams(w_scale=1.0), cfg, None, "paired", 0, "cpu", sets,
+                         detail=True)
+    assert {"jaccard_all", "jaccard_reward", "cs_plus", "cs_minus"} <= set(r["split"])
