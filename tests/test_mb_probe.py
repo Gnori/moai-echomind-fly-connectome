@@ -122,3 +122,21 @@ def test_extra_odor_sets_exclude_target_and_measure_for_partial():
     assert sets == [["ORN_B"], ["ORN_B"]]
     f = cf.measure_for({"measure": "mb", "kc_probe": {"extra_odors": {"n": 1}}})
     assert f.func is mb_probe.measure_kc and f.keywords["cfg"]["extra_odors"] == {"n": 1}
+
+
+def test_max_jaccard_and_measure_kc_odor_overlap():
+    from moai_echomind_fly.sim import LIFParams
+
+    assert mb_probe.max_jaccard([np.array([1, 2]), np.array([2, 3]), np.array([1, 2, 3])]) \
+        == 2 / 3
+    assert mb_probe.max_jaccard([np.array([], int), np.array([], int)]) == 0.0
+    g = mb()
+    cfg = {**CFG, "stimuli": {"pos": ["ORN_A"], "neg": ["ORN_B"]}, "target_stimulus": "pos",
+           "negative_stimulus": "neg", "loss_window_ms": 50, "orn_rate_hz": 150.0,
+           "kc_min_type_size": 1, "apl_type": "APL", "windows_ms": [50],
+           "extra_odors": {"n": 1, "size": 1, "seed": 0}, "odor_overlap": True}
+    m = mb_probe.measure_kc(g, LIFParams(w_scale=1.0), None, 1, 0, "cpu", cfg)
+    assert 0.0 <= m["kc_overlap_max_odor"] <= 1.0
+    cfg.pop("odor_overlap")
+    assert "kc_overlap_max_odor" not in mb_probe.measure_kc(g, LIFParams(w_scale=1.0), None, 1,
+                                                            0, "cpu", cfg)

@@ -82,7 +82,9 @@ def summarize(graph: Graph, steps: np.ndarray, neurons: np.ndarray, dt_ms: float
 
 
 def run(graph: Graph, lif, cfg: dict[str, Any], stim_types: list[str], seed: int,
-        device: str, cell=None, windows_ms: list[float] | None = None) -> dict[str, Any]:
+        device: str, cell=None, windows_ms: list[float] | None = None,
+        keep_kc: bool = False) -> dict[str, Any]:
+    """keep_kc 이면 첫 창에서 발화한 KC 번호(`kc_on` · numpy · JSON 에 싣지 않는다)도 돌려준다."""
     from .sim import Engine
 
     cls, types = graph.columns["class"], graph.columns["type"]
@@ -114,10 +116,25 @@ def run(graph: Graph, lif, cfg: dict[str, Any], stim_types: list[str], seed: int
     if cfg.get("lobes"):
         lobe_of = {t: name for name, ts in cfg["lobes"].items() for t in ts}
         idx["kc_lobe"] = np.array([lobe_of.get(str(t), "") for t in types[kc]], dtype=object)
-    return {"stim_types": stim_types, "seed": seed, "kc_neurons": int(len(kc)),
-            "stim_pns": int(len(pn_s)), "wall_s": round(time.time() - t0, 1),
-            "windows": [summarize(graph, steps, neurons, lif.dt_ms, float(w), idx, kc_pn)
-                        for w in windows]}
+    out = {"stim_types": stim_types, "seed": seed, "kc_neurons": int(len(kc)),
+           "stim_pns": int(len(pn_s)), "wall_s": round(time.time() - t0, 1),
+           "windows": [summarize(graph, steps, neurons, lif.dt_ms, float(w), idx, kc_pn)
+                       for w in windows]}
+    if keep_kc:
+        m = steps * lif.dt_ms < windows[0]
+        out["kc_on"] = np.intersect1d(kc, neurons[m])
+    return out
+
+
+def max_jaccard(sets: list[np.ndarray]) -> float:
+    """KC 집합들의 짝마다 Jaccard 중 가장 큰 값(physiology-v7 · 냄새끼리 KC 겹침)."""
+    best = 0.0
+    for i in range(len(sets)):
+        for j in range(i + 1, len(sets)):
+            u = len(np.union1d(sets[i], sets[j]))
+            if u:
+                best = max(best, len(np.intersect1d(sets[i], sets[j])) / u)
+    return best
 
 
 def extra_odor_sets(graph: Graph, cfg: dict[str, Any]) -> list[list[str]]:
@@ -141,12 +158,15 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
     kc_negative_fraction · kc_spontaneous_fraction · pop_rate_hz(양성 중 나머지 뇌) ·
     pop_rate_spont_hz(무자극 중 나머지 뇌) · 설정에 `lobes` 가 있으면 kc_lobe_fraction_min · max
     (엽 γ · αβ · α′β′ 마다 켜진 비율을 씨앗 평균한 뒤의 최소 · 최대) · `mbon_class` 가 있으면
-    mbon_fire_fraction(양성 중 한 번 이상 발화한 MBON 비율) · mbon_rate_hz(MBON 평균 발화율).
+    mbon_fire_fraction(양성 중 한 번 이상 발화한 MBON 비율) · mbon_rate_hz(MBON 평균 발화율) ·
+    `extra_odors` · `odor_overlap` 이 있으면 kc_overlap_max_odor(학습 냄새끼리 KC Jaccard 최대).
     """
     cfg = cfg or config.load("fit")["kc_probe"]
     w = [float(cfg["loss_window_ms"])]
-    pos = [run(graph, lif, cfg, cfg["stimuli"][cfg["target_stimulus"]], seed + k, device,
-               cell, w)["windows"][0] for k in range(int(trials))]
+    ov = bool(cfg.get("odor_overlap"))       # 냄새끼리 KC 겹침(physiology-v7 · 범위 kc-mbon-c)
+    pos_runs = [run(graph, lif, cfg, cfg["stimuli"][cfg["target_stimulus"]], seed + k, device,
+                    cell, w, keep_kc=ov) for k in range(int(trials))]
+    pos = [r["windows"][0] for r in pos_runs]
     neg = run(graph, lif, cfg, cfg["stimuli"][cfg["negative_stimulus"]], seed, device, cell,
               w)["windows"][0]
     nil = run(graph, lif, cfg, [], seed, device, cell, w)["windows"][0]
@@ -160,8 +180,12 @@ def measure_kc(graph: Graph, lif, cell, trials: int, seed: int, device: str,
         for k in ("mbon_fire_fraction", "mbon_rate_hz"):
             lobe[k] = float(np.mean([x[k] for x in pos]))
     if cfg.get("extra_odors"):               # 학습 냄새 여럿(physiology-v6 · 범위 kc-mbon-b)
-        ex = [run(graph, lif, cfg, st, seed, device, cell, w)["windows"][0]
-              for st in extra_odor_sets(graph, cfg)]
+        ex_runs = [run(graph, lif, cfg, st, seed, device, cell, w, keep_kc=ov)
+                   for st in extra_odor_sets(graph, cfg)]
+        ex = [r["windows"][0] for r in ex_runs]
+        if ov:                               # 같은 씨앗(seed)의 식초와 학습 냄새 묶음끼리
+            lobe["kc_overlap_max_odor"] = max_jaccard(
+                [pos_runs[0]["kc_on"]] + [r["kc_on"] for r in ex_runs])
         kcs = [float(np.mean([x["kc_active_fraction"] for x in pos]))]
         kcs += [x["kc_active_fraction"] for x in ex]
         lobe["kc_fraction_min_odor"] = min(kcs)
