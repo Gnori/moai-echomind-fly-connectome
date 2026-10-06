@@ -71,6 +71,22 @@ scopes:
     kc_probe:                    # 이 범위만 measure_kc 에 덧붙임
       extra_odors: {n: 3, size: 6, seed: 101}   # 식초 밖 ORN 6 종 × 3(씨앗 101~103) — 대조 후보(1~20) · 일반화(씨앗 1 · 10 종)와 다름
     cmaes: {trials: 3, generations: 50}
+  kc-mbon-c:                    # 2026-10-06 · 결과 전 — kc-mbon-b 와 매개변수 · 학습 냄새 같음(25) · 손실에 냄새끼리 KC 겹침 상한(physiology-v7)
+    # 왜: b 뒤 짝짓기가 CS− 도 약화(−40 %) · 까닭 = CS− 의 보상 구획 KC 입력 79 % 가 CS+ KC · 겹침은 회로 학습 단계마다 커짐
+    #     (runs/plasticity-controls-*-20261006-19*.json · 20*). 요구자 "순서로대해"(10-06 · (다) → (가)).
+    types: [KCg-m, KCab-s, KCab-m, KCab-c, "KCa'b'-ap2", KCg-d, "KCa'b'-m", "KCa'b'-ap1", KCab-p, APL]
+    pair_min_synapses: null
+    groups:
+      - {name: ALPN-KC, src: {class: [ALPN]}, dst: {class: [Kenyon_Cell]}}
+      - {name: KC-APL, src: {class: [Kenyon_Cell]}, dst: {type: [APL]}}
+      - {name: APL-KC, src: {type: [APL]}, dst: {class: [Kenyon_Cell]}}
+      - {name: KC-KC, src: {class: [Kenyon_Cell]}, dst: {class: [Kenyon_Cell]}}
+      - {name: KC-MBON, src: {class: [Kenyon_Cell]}, dst: {class: [MBON]}}
+    measure: mb
+    kc_probe:
+      extra_odors: {n: 3, size: 6, seed: 101}   # kc-mbon-b 와 같음
+      odor_overlap: true                        # mb.kc_overlap_max_odor 를 잰다
+    cmaes: {trials: 3, generations: 50}
   # ⚠️ kc-sparse-a · b 는 제안(연구 노트 16) — M0(kc-probe) 결과로 하나를 고른 뒤 확정한다. ORN → PN 은 범위 밖
   space: null                   # 중심복합체 21 종(연구 노트 13 §2.1) — 종류 목록을 잠근 뒤
   escape: null                  # 시각 투사 346 + 하강 480 — 같음
