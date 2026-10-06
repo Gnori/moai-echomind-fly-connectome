@@ -36,6 +36,7 @@
 | `20-odor/plasticity-controls.sh [진짜 폴더] [재배선 폴더] [씨앗들]` | 가소성 대조 다섯(짝짓기 · 어긋난 보상 · 처벌 DAN · 구획 표 섞기 · 끔 + CS−) | `runs/plasticity-controls-<뇌>-*.json` | 10-06 진짜: −64 % · 처벌 DAN 이면 처벌 구획 −65 % · 대조 +4 / −12 / +4 % · 재배선 MBON 침묵 |
 | `40-eval/after-fit-mbon.sh <진짜 새> <재배선 새> <진짜 앞> <재배선 앞>` | MBON 회로 학습 뒤 확인 한 번에 — fit-eval 둘 · mbon-probe 넷 · CS− 고르기 · 대조 다섯(진짜 · 재배선) | 위 각 결과 파일 | 10-06 kc-mbon-b: MBON 30/97 대 0/97 · 대조 CS+ −37 % · CS− −40 %(냄새 특이성 없음) |
 | `20-odor/plasticity-overlap.sh [진짜] [재배선] [CS−]` | 짝짓기에서 CS− 가 왜 같이 약해지나 — 보상 구획 KC 입력의 CS+ · CS− 겹침 분해(탐색) | `runs/plasticity-controls-<뇌>-*.json` rows[].split | 10-06 kc-mbon-b: CS− 입력의 79 % 가 CS+ KC(재배선 22 %) |
+| `20-odor/plasticity-overlap-history.sh [CS−]` | 같은 겹침 분해를 학습 전(`--cell-from none`) · kc-sparse-c · kc-mbon-a 진짜 · 재배선에 | 같음 | 10-06: 몫 0.47 → 0.64 → 0.80(진짜) · 재배선 0.11~0.22 |
 | `bin/run_m3.sh` · `bin/run_m4_pilot.sh` · `bin/run_m4_full.sh` | 그때 돈 순서 그대로(기록용) | — | 위 10 · 20 단계 스크립트로 같은 일을 한다 |
 
 ### 2.2 자료
