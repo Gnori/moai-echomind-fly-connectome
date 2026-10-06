@@ -402,7 +402,8 @@ def main_controls(args: argparse.Namespace) -> int:
             lif = LIFParams.from_config()
             from pathlib import Path
 
-            cell = CellParams.load(Path(args.cell_from) / "params.npz")
+            cell = (None if args.cell_from == "none"               # 회로 학습 전 뇌
+                    else CellParams.load(Path(args.cell_from) / "params.npz"))
             comp = compartments(g, cfg)
             types = g.columns["type"]
             mbon = np.flatnonzero(np.isin(g.columns["class"], cfg["targets"]["post_class"]))
@@ -513,7 +514,8 @@ def register(sub) -> None:
     p.set_defaults(func=main_probe)
     c = sub.add_parser("plasticity-controls",
                        help="가소성 대조 다섯(F-007 · I v2 §8.3 · 무거움 · 짧음)")
-    c.add_argument("--cell-from", required=True, help="회로 학습 폴더(params.npz · 같은 뇌)")
+    c.add_argument("--cell-from", required=True,
+                   help="회로 학습 폴더(params.npz · 같은 뇌) · none = 회로 학습 전")
     c.add_argument("--brain", default="real", help="real | rewired-s<씨앗>")
     c.add_argument("--seeds", default="0,1,2,3,4")
     c.add_argument("--device", default="cpu", choices=["cpu", "mps"])
