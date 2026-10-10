@@ -32,10 +32,10 @@ def stand_policy(vectors, truth, obs, d):
     return dict(STAND), {"source": "stand"}
 
 
-def make_world():
-    """config/npc.yaml world.kind — fake(가짜 세계) | box(상자 월드 클라이언트)."""
+def make_world(kind: str = ""):
+    """config/npc.yaml world.kind(kind 로 덮어씀) — fake(가짜 세계) | box(상자 월드)."""
     w = config.load("npc")["world"]
-    if w.get("kind") == "box":
+    if (kind or w.get("kind")) == "box":
         from .box_world import BoxWorld
 
         return BoxWorld(str(w["box_url"]), list(w["forbidden_ports"]),
@@ -126,6 +126,9 @@ def main(args: argparse.Namespace) -> int:
     (out / "request.json").write_text(json.dumps(
         {"stage": args.stage, "seeds": seeds, "configs": configs,
          "npc": config.load("npc")["version"], "task": task_cfg["version"],
+         "world": args.world or config.load("npc")["world"]["kind"],
+         "bins": args.bins or config.load("npc").get("bins"),
+         "reflex_hold_ms": args.reflex_hold_ms or config.load("npc")["motor"].get("reflex_hold_ms"),
          "started": time.strftime("%Y-%m-%d %H:%M:%S")}, ensure_ascii=False), encoding="utf-8")
     results: dict[str, list[dict]] = {}
     try:
@@ -139,6 +142,12 @@ def main(args: argparse.Namespace) -> int:
                 brain = c if c.startswith("rewired") else "real"
                 gg = g if brain == "real" else graph_mod.rewire(g, int(brain.rsplit("-s", 1)[1]))
                 loop = Loop({brain: gg}, brain, body=False)
+                nb = args.bins or config.load("npc").get("bins")
+                if nb:                    # NPC 실험만의 결정 구간 수(투영기 입력은 그대로)
+                    import dataclasses
+
+                    loop.table = dataclasses.replace(loop.table, bins=int(nb))
+                    loop.bin_ms = loop.table.window_ms / loop.table.bins
                 ov = config.load("npc").get("encoder_override") or {}
                 if ov:                    # NPC 실험만의 시야 인코더(task.yaml 은 그대로)
                     import copy
@@ -162,8 +171,12 @@ def main(args: argparse.Namespace) -> int:
                     ncfg = config.load("npc")
                     if args.pursue:                         # 시연 — 위험이 걷는 NPC 를 따라옴
                         ncfg = {**ncfg, "s1": {**ncfg.get("s1", {}), "hazard_pursue": True}}
+                    if args.reflex_hold_ms:                 # 작은 시험 — 도망 프로그램 길이
+                        ncfg = {**ncfg, "motor": {**ncfg["motor"],
+                                                  "reflex_hold_ms": args.reflex_hold_ms}}
                     loop.body = NpcBody(ncfg, reflex_enabled=(c != "no_brain"),
-                                        world=make_world(), persistent=args.persistent)
+                                        world=make_world(args.world),
+                                        persistent=args.persistent)
                     shared_body = loop.body
                 eps = []
                 with (out / f"{c}.decisions.jsonl").open("w", encoding="utf-8") as dec:
@@ -216,4 +229,10 @@ def register(sub) -> None:
     p.add_argument("--pursue", action="store_true", help="시연 — 위험이 NPC 를 따라옴(판정용 아님)")
     p.add_argument("--persistent", action="store_true",
                    help="보기용 — NPC 한 몸 그대로 · 위험만 새로(판정용 아님)")
+    p.add_argument("--world", default="", choices=["", "fake", "box"],
+                   help="비우면 config/npc.yaml world.kind · 작은 시험은 fake")
+    p.add_argument("--bins", type=int, default=0,
+                   help="결정 하나(300 ms)를 나눌 구간 수 — 0 = 설정(npc bins · 없으면 채널 표 3)")
+    p.add_argument("--reflex-hold-ms", type=float, default=0.0,
+                   help="도망 뉴런이 켜지면 비켜서기를 이어 가는 시간 — 0 = 설정(없으면 그 구간만)")
     p.set_defaults(func=main)

@@ -49,12 +49,14 @@ class NpcBody:
                     self.world.remove(HAZARD)
             self.world.hit = False
             self.task, self.t_ms, self.prev_size, self.hazard_spawned = task, 0.0, None, False
+            self.reflex_left_ms = 0.0
             return self._obs(0.0)
         if self.world is None or isinstance(self.world, FakeWorld):
             self.world = FakeWorld()
         else:
             self.world.reset(seed)                     # 상자 월드 — 같은 씨앗 같은 시작
         self.task, self.t_ms, self.prev_size, self.hazard_spawned = task, 0.0, None, False
+        self.reflex_left_ms = 0.0
         h0 = math.degrees(float(task.get("heading0", 0.0)))
         self.world.add(Thing(ME, "resident", 0.0, 0.0, heading_deg=h0))
         gx, gy = task["odor_xy"]
@@ -129,7 +131,11 @@ class NpcBody:
         m = self.cfg["motor"]
         heading, speed_mm = me["heading_deg"], 0.0
         threat = next((o for o in self.world.neighbors(ME, 1e9) if o["ref"] == HAZARD), None)
-        if reflex and self.reflex_enabled and threat is not None:
+        if reflex and self.reflex_enabled:    # 도망 프로그램 — hold 동안 이어 감(0 = 그 구간만)
+            self.reflex_left_ms = max(float(m.get("reflex_hold_ms") or 0.0), bin_ms)
+        active = self.reflex_left_ms > 0.0
+        self.reflex_left_ms = max(0.0, self.reflex_left_ms - bin_ms)
+        if active and self.reflex_enabled and threat is not None:
             away = math.degrees(math.atan2(me["y"] - threat["y"], me["x"] - threat["x"]))
             mode = self.cfg.get("reflex", {}).get("mode", "retreat")
             if mode == "sidestep":
