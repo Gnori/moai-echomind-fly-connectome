@@ -18,6 +18,7 @@ import json
 import math
 import time
 from dataclasses import replace
+from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
@@ -38,6 +39,40 @@ def bounds_log(cell: cp.CellParams, bounds: dict[str, list[float]]
 
     parts = [rep("tau_ms", t), rep("v_th_above_rest_mV", t), rep("alpha", p)]
     return np.concatenate([a for a, _ in parts]), np.concatenate([b for _, b in parts])
+
+
+def pin_fixed(cell: cp.CellParams, lo: np.ndarray, hi: np.ndarray,
+              fixed: dict[str, float] | None) -> tuple[np.ndarray, np.ndarray]:
+    """고정 묶음(범위 `fixed_alpha` · 이름 → 값)의 θ 경계를 위아래 같게 — 학습이 못 바꾼다."""
+    if not fixed:
+        return lo, hi
+    lo, hi = lo.copy(), hi.copy()
+    names = list(cell.meta.get("groups") or [])
+    base = 2 * len(cell.types) + len(cell.alpha) - len(names)
+    for name, v in fixed.items():
+        k = base + names.index(name)
+        lo[k] = hi[k] = math.log(float(v))
+    return lo, hi
+
+
+def apply_scope_init(cell: cp.CellParams, sc: dict[str, Any], brain: str) -> cp.CellParams:
+    """범위 `init_from`(뇌 → params 폴더)의 τ · 문턱 · 같은 이름 묶음 α 로 시작 · 고정 값 넣기."""
+    src = (sc.get("init_from") or {}).get(brain)
+    names = list(cell.meta.get("groups") or [])
+    base = len(cell.alpha) - len(names)
+    if src:
+        b = cp.CellParams.load(Path(src) / "params.npz")
+        if list(b.types) != list(cell.types):
+            raise ValueError(f"init_from 종류가 다르다: {list(b.types)} ≠ {list(cell.types)}")
+        cell.tau_ms[:], cell.v_th_mV[:] = b.tau_ms, b.v_th_mV
+        for i, name in enumerate(b.meta.get("groups") or []):
+            if name in names:
+                cell.alpha[base + names.index(name)] = b.alpha[len(b.alpha) - len(
+                    b.meta["groups"]) + i]
+        cell.meta["init_from"] = src
+    for name, v in (sc.get("fixed_alpha") or {}).items():
+        cell.alpha[base + names.index(name)] = float(v)
+    return cell
 
 
 def to_theta(cell: cp.CellParams, v0_mV: float) -> np.ndarray:
@@ -177,14 +212,20 @@ def measure_escape(graph: Graph, lif, cell: cp.CellParams | None, trials: int, s
 def make_objective(graph: Graph, null_graph: Graph, lif, template: cp.CellParams, scope: str,
                    rule: dict[str, Any], pair_dst: list[str] | None,
                    measure: Callable = measure_escape,
-                   groups: list[dict[str, Any]] | None = None) -> Callable:
-    """θ → (손실, 기록). `measure` 는 시험에서 바꿔 끼운다."""
+                   groups: list[dict[str, Any]] | None = None,
+                   fixed: dict[str, float] | None = None,
+                   targets_scope: str | None = None) -> Callable:
+    """θ → (손실, 기록). `measure` 는 시험에서 바꿔 끼운다.
+
+    fixed: 고정 묶음(경계를 묶음 · pin_fixed) · targets_scope: physiology 항목을 고를 범위 이름.
+    """
     phys = config.load("physiology")
-    lo, hi = bounds_log(template, config.load("fit")["bounds"])
+    lo, hi = pin_fixed(template, *bounds_log(template, config.load("fit")["bounds"]), fixed)
+    tscope = targets_scope or scope
     theta0 = to_theta(template, lif.v0_mV)
     # 섞은 배선 측정은 손실에 그것을 쓰는 항목(null_*)이 있을 때만 — 없으면 같은 절차를 재배선 뇌에
     # 따로 돌려 나란히 둔다(I v2 §7.4 · KC 범위는 평가 시간이 절반)
-    needs_null = any(scope in it["scope"] and ".null_" in str(it["measure"])
+    needs_null = any(tscope in it["scope"] and ".null_" in str(it["measure"])
                      for it in phys["items"])
 
     def objective(theta: np.ndarray) -> tuple[float, dict[str, Any]]:
@@ -194,7 +235,7 @@ def make_objective(graph: Graph, null_graph: Graph, lif, template: cp.CellParams
             null = measure(null_graph, lif, transfer(cell, null_graph, pair_dst, groups),
                            rule["trials"], rule["seed"], rule["device"])
             m.update({f"null_{k}": v for k, v in null.items()})  # 대조 항(escape.null_gf_hit)
-        phys_l, parts = physiology_loss(m, scope, phys, float(rule["nan_tolerances"]))
+        phys_l, parts = physiology_loss(m, tscope, phys, float(rule["nan_tolerances"]))
         reg = float(rule["reg_lambda"]) * float(np.sum((np.clip(theta, lo, hi) - theta0) ** 2))
         return phys_l + reg, {"measures": m, "parts": parts, "reg": round(reg, 6)}
 
@@ -384,9 +425,12 @@ def main_fit(args: argparse.Namespace) -> int:
             g, null = _graphs(args.brain, rule)
             h0 = graph_hash(g)
             sc = fit_cfg["scopes"][args.scope]
-            cell = cp.init_scope(g, args.scope, lif.t_mbr_ms, lif.v_th_mV)
+            cell = apply_scope_init(cp.init_scope(g, args.scope, lif.t_mbr_ms, lif.v_th_mV),
+                                    sc, args.brain)
             obj = make_objective(g, null, lif, cell, args.scope, rule, sc.get("pair_dst"),
-                                 measure=measure_for(sc), groups=sc.get("groups"))
+                                 measure=measure_for(sc), groups=sc.get("groups"),
+                                 fixed=sc.get("fixed_alpha"),
+                                 targets_scope=sc.get("targets_scope"))
             dog = Watchdog("fit")
             why: list[str] = []
             log_f = (out / "loss.jsonl").open("w", encoding="utf-8")
@@ -406,10 +450,11 @@ def main_fit(args: argparse.Namespace) -> int:
             best, best_f, _ = run_cmaes(obj, to_theta(cell, lif.v0_mV), rule, on_gen=on_gen,
                                         stop=stop)
             log_f.close()
-            lo, hi = bounds_log(cell, fit_cfg["bounds"])
+            lo, hi = pin_fixed(cell, *bounds_log(cell, fit_cfg["bounds"]), sc.get("fixed_alpha"))
             fitted = from_theta(best, cell, lif.v0_mV, lo, hi)
             fitted.meta.update({"method": "cmaes", "brain": args.brain,
                                 "targets": config.load("physiology")["version"],
+                                "targets_scope": sc.get("targets_scope") or args.scope,
                                 "seed": rule["seed"]})
             fitted.check(g)
             fitted.save(out / "params.npz")

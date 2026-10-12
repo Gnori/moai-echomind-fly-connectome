@@ -140,3 +140,24 @@ def test_max_jaccard_and_measure_kc_odor_overlap():
     cfg.pop("odor_overlap")
     assert "kc_overlap_max_odor" not in mb_probe.measure_kc(g, LIFParams(w_scale=1.0), None, 1,
                                                             0, "cpu", cfg)
+
+
+def test_pin_fixed_and_apply_scope_init(tmp_path):
+    from moai_echomind_fly import cellparams as cp
+    from moai_echomind_fly import circuit_fit as cf
+
+    g = mb()
+    groups = [{"name": "A", "src": {"class": ["ALPN"]}, "dst": {"class": ["Kenyon_Cell"]}},
+              {"name": "B", "src": {"class": ["olfactory"]}, "dst": {"class": ["ALPN"]}}]
+    base = cp.init(g, ["KCg"], 20.0, -45.0, None, groups=groups[:1])
+    base.alpha[:] = [2.5]
+    base.tau_ms[:] = [33.0]
+    base.save(tmp_path / "params.npz")
+    cell = cp.init(g, ["KCg"], 20.0, -45.0, None, groups=groups)
+    sc = {"init_from": {"real": str(tmp_path)}, "fixed_alpha": {"B": 0.5}}
+    cell = cf.apply_scope_init(cell, sc, "real")
+    assert list(cell.alpha) == [2.5, 0.5] and cell.tau_ms[0] == 33.0
+    lo, hi = cf.bounds_log(cell, {"tau_ms": [5, 200], "v_th_above_rest_mV": [2, 15],
+                                  "alpha": [0.1, 10]})
+    lo2, hi2 = cf.pin_fixed(cell, lo, hi, sc["fixed_alpha"])
+    assert lo2[-1] == hi2[-1] == np.log(0.5) and lo2[-2] == lo[-2]
