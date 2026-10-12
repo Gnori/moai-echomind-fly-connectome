@@ -126,7 +126,7 @@ def _public(res: dict[str, Any]) -> dict[str, Any]:
 
 def run(name: str, rule: dict[str, Any] | None = None,
         transform: Callable[[str, dict[str, np.ndarray]], dict[str, np.ndarray]] | None = None,
-        ) -> dict[str, Any]:
+        intercept: bool = False) -> dict[str, Any]:
     """진짜 배선과 묶음에 든 **모든 재배선 뇌**를 같은 방법으로 재고, 칸마다 판정(stats).
 
     `transform(brain, feats)` 가 있으면 특징을 바꾼 뒤 잰다(F-004 압축 관문).
@@ -154,7 +154,8 @@ def run(name: str, rule: dict[str, Any] | None = None,
 
         def fields(a: np.ndarray, b: np.ndarray) -> dict[str, Any]:
             ps = ProbeSet(a, b)                 # 특징 집합마다 분해 한 번 · 칸마다 나눠 쓴다
-            return {f: ps.field([y[f] for y in ytr], [y[f] for y in yte]) for f in yte[0]}
+            return {f: ps.field([y[f] for y in ytr], [y[f] for y in yte], intercept=intercept)
+                    for f in yte[0]}
 
         xtr = np.concatenate([ftr[n] for n in names], axis=1).astype(np.float64)
         xte = np.concatenate([fte[n] for n in names], axis=1).astype(np.float64)

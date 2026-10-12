@@ -84,7 +84,8 @@ def load(dataset: str, brain: str, version: str | None = None) -> dict[str, dict
     return model
 
 
-def gate(dataset: str) -> dict[str, Any]:
+def gate(dataset: str, intercept: bool = False, write: bool = True) -> dict[str, Any]:
+    """intercept · write 는 사후 확인용(10-12) — 기본값이 결과 전 잠근 관문 그대로."""
     from .linear_probe import run
 
     cache: dict[str, dict] = {}
@@ -94,14 +95,15 @@ def gate(dataset: str) -> dict[str, Any]:
             cache[brain] = load(dataset, brain)
         return apply(cache[brain], feats)
 
-    res = run(dataset, transform=transform)
+    res = run(dataset, transform=transform, intercept=intercept)
     passed = sorted({k.split("|", 1)[0] for k, c in res["cells"].items() if c["pass"]})
     out = {"dataset": dataset, "rule": config.load("compress")["version"],
            "stats": res["stats"]["version"], "passed_channels": passed,
            "passed_cells": [k for k, c in res["cells"].items() if c["pass"]],
            "cells": res["cells"], "when": time.strftime("%Y-%m-%d %H:%M:%S")}
-    (out_dir(dataset) / "gate.json").write_text(json.dumps(out, ensure_ascii=False, indent=2),
-                                                encoding="utf-8")
+    if write:
+        (out_dir(dataset) / "gate.json").write_text(
+            json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     return out
 
 
