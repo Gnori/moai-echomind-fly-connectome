@@ -92,8 +92,13 @@ class ProbeSet:
                 best, best_acc = lam, acc
         return best
 
-    def field(self, ytr: list[str], yte: list[str]) -> dict[str, Any]:
-        """칸 하나 — 정확도 · 찍기 · 고른 λ · 평가 결정마다 맞혔나(`correct`)."""
+    def field(self, ytr: list[str], yte: list[str], intercept: bool = False) -> dict[str, Any]:
+        """칸 하나 — 정확도 · 찍기 · 고른 λ · 평가 결정마다 맞혔나(`correct`).
+
+        intercept: 목표(one-hot)를 학습 평균으로 중심화하고 예측에 되더한다(= 절편). 기본 False 는
+        지금까지 판정과 같은 길(stats-v2 · v3 · 결과 전 잠금). 10-12: 절편이 없으면 정보 없는
+        작은 특징에서 예측이 다수 답으로 못 돌아가 찍기보다 낮아질 수 있다(S0b 촉각).
+        """
         classes = sorted(set(ytr) | set(yte))
         top = Counter(ytr).most_common(1)[0][0]
         base = np.array([t == top for t in yte])
@@ -101,7 +106,9 @@ class ProbeSet:
             return {"accuracy": 1.0, "baseline": 1.0, "lambda": None, "classes": 1,
                     "correct": np.ones(len(yte), bool), "baseline_correct": base}
         lam = self._cv_lambda(ytr, classes)
-        pred = self.full.predict(_onehot(ytr, classes), lam).argmax(1)
+        y = _onehot(ytr, classes)
+        prior = y.mean(0) if intercept else np.zeros(len(classes))
+        pred = (self.full.predict(y - prior, lam) + prior).argmax(1)
         correct = np.array([classes[j] == t for j, t in zip(pred, yte)])
         return {"accuracy": float(correct.mean()), "baseline": float(base.mean()),
                 "lambda": lam, "classes": len(classes), "correct": correct,
