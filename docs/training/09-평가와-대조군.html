@@ -421,7 +421,36 @@
 <li>판정 밖 참고(전 채널 묶음): 다리 0.593 대 0.476 · 냄새 쪽 0.580 대 0.541(찍기 0.556 · 냄새 쪽은 판정에서 뺐다 — 04장 3.2).</li>
 </ul>
 <p>→ R-7469 F-001 의 성공 기준("재배선 앙상블 상위 5 % 이고 보정 후 p &lt; 0.05")을 <strong>신호 단계에서는</strong> 시각 · 다리 칸이 채운다. Qwen 을 거친 뒤에도 그런지는 F-005 에서.</p>
+<h3 id="33--절편--사후-재판정-2026-10-12--원판-판정은-그대로">3.3 ⚠️ 절편 — 사후 재판정 (2026-10-12 · <strong>원판 판정은 그대로</strong>)</h3>
+<p>위 표의 "전처리 중심화"는 <strong>특징</strong>을 학습 평균으로 빼는 것이다. 맞힐 <strong>목표</strong>(칸마다 답 표시)는 중심화하지 않았다 — 즉 능선 회귀에 <strong>절편이 없었다</strong>. 그 결과, 정보가 거의 없는 작고 조용한 채널에서는 예측이 다수 답으로 돌아가지 못하고 한 칸으로 쏠려 <strong>찍기보다 낮은 값</strong>이 나올 수 있다. 정보가 큰 채널(시각)에서는 차이가 작다(±0.04).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>사후 확인</th>
+<th>원판(절편 없음)</th>
+<th>절편 넣음</th>
+<th>원판 판정</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>NPC S0b 촉각</strong>(R-5138 · <code>runs/touch-anomaly-20261012-210118.json</code> · sha256 <code>ff15f4e321502fbb</code>)</td>
+<td>진짜 촉각이 찍기(0.578)보다 낮음(0.23~0.45) · 진짜 촉각 특징 최대 0.024 · 432 열 중 135 만 0 아님</td>
+<td>진짜 촉각 다섯 칸 모두 <strong>정확히 찍기 0.578</strong> → 이 정보가 없다(섞은 배선 0.59~0.71 은 시각 입력이 섞인 배선으로 번진 것) · 시각 다섯 칸도 다시 재면 통과는 <strong>가까움 하나</strong>(Holm 0.043 · 원판 0.049)</td>
+<td><strong>그대로</strong> — 가까움만 턱걸이</td>
+</tr>
+<tr>
+<td><strong>관문 F-004</strong>(fly-loop-v4 · compress-v3 · stats-v3 · <code>runs/gate-intercept-fly-loop-v4-20261012-210324.json</code> · <code>6cad190c93f735d8</code>)</td>
+<td>진짜가 찍기보다 2 점 넘게 낮던 칸 <strong>31/72</strong> · 통과 칸 6 · 통과 채널 [smell_ln · space · vision]</td>
+<td>31 칸 대부분 찍기 근처로(예 smell_ln → 물체 0.48 → 0.667 · value → 물체 쪽 0.45 → 0.66) · 통과 칸 11 = 원판 6 + <strong>구애 · 성(courtship) 물체 넷</strong>(0.717~0.785 대 섞은 배선 0.667~0.764 · Holm 0.006~0.015) + 공간 물체 움직임(0.758 대 0.680~0.705) · 통과 채널 [<strong>courtship</strong> · smell_ln · space · vision]</td>
+<td><strong>그대로</strong> — 1판(train-v6) 입력은 원판 셋</td>
+</tr>
+</tbody>
+</table></div>
+<p>읽는 법: 원판에서 "찍기보다 낮다"던 칸 31/72 는 <strong>검사 방법의 착시</strong>였다. 1판 투영기 입력에서 구애 채널이 빠진 것은 이 착시 탓일 수 있다(사후). 다만 구애 채널이 더한 정보는 <strong>다가오는 물체</strong>이지 먹이 냄새가 아니어서, 성적표의 먹이 도착(vector 0.46 ≈ 참값 0.47)을 올릴 여지는 작다.
+앞으로 선형 검사는 <strong>결과 전에 절편 있는 판으로 잠그기</strong>를 권한다 — 선택지 <code>ProbeSet.field(intercept=True)</code> · <code>linear_probe.run(intercept=)</code> · <code>compress.gate(intercept=)</code>(기본값은 지금 판 그대로). 같은 검사가 F-001(3.2) · retino · S0b 판정에 쓰였다. 정본 R-7469 core P "선형 검사 절편" · R-5138 체크리스트. 명령은 <a href="11-명령-모음과-용어.html">11장 46</a>.</p>
 <h2 id="4-압축-관문--fly-connectome-compress-fit--gate지금-판-compress-v3--v1--v2-는-결과를-본-뒤-고쳤다">4. 압축 관문 — <code>fly-connectome compress fit</code> · <code>gate</code>(지금 판 <code>compress-v3</code> · v1 · v2 는 결과를 본 뒤 고쳤다)</h2>
+<p>⚠️ 관문도 같은 선형 검사(절편 없음)를 쓴다 — 10-12 사후 재판정은 3.3.</p>
 <p>3.2만 차원을 통째로 넣으면 선형 검사도 찍기 수준이 된다 · 채널별로 <strong>64 차원까지 줄여도 진짜 배선이 앞선다</strong>(연구 노트 12 §1.1 ① — 시각 → 물체 쪽 0.705/0.571 · 몸 → 다리 0.600/0.448) → 차원 ≫ 표본의 표준 처방(채널별 압축).</p>
 <pre><code class="language-bash">uv run fly-connectome compress fit  --dataset fly-loop-v2     # 뇌마다 · 채널마다 PCA(학습 나눔으로만) → runs/compress-fly-loop-v2-compress-v1/&lt;뇌&gt;.npz · meta.json
 uv run fly-connectome compress gate --dataset fly-loop-v2     # 압축 특징으로 2절 판정 → gate.json(통과 채널 · 칸)
@@ -672,7 +701,7 @@ train-v4 진짜 배선은 손실을 칸 값 토큰에 두고 배웠다(틀 글�
 </tbody>
 </table></div>
 <p>결과는 <code>runs/projector-&lt;뇌&gt;-&lt;판&gt;/eval-caption-&lt;저장본&gt;.json</code>(정확도 · 기준선 · 예시 8 개).
-<code>--version</code> 으로 어느 판의 투영기를 잴지 고른다(기본 = 지금 규칙 판 <strong>train-v5</strong> · v4 결과는 <code>--version train-v4</code> · v1 자료 결과는 <code>--version train-v2</code>). 채점 · 성적표도 같다.</p>
+<code>--version</code> 으로 어느 판의 투영기를 잴지 고른다(기본 = 지금 코드의 규칙 판 <strong>train-v7</strong> · 1판 정본은 <code>--version train-v6</code> · 옛 결과는 <code>--version train-v5</code> · <code>train-v4</code> · v1 자료 결과는 <code>--version train-v2</code>). 채점 · 성적표도 같다.</p>
 <p><strong>읽는 법</strong>(채점 · 생성 모두): 기준선보다 확실히 높아야 "읽었다". 그리고 <strong>진짜 배선이 재배선들보다 높아야</strong>(2절 규칙 · 재배선 투영기 ≥ 3) "초파리 배선 덕에 읽었다".</p>
 <h2 id="6-성적표--fly-connectome-scorecard판-scorecard-v2">6. 성적표 — <code>fly-connectome scorecard</code>(판 <code>scorecard-v2</code>)</h2>
 <pre><code class="language-bash">uv run fly-connectome scorecard --seeds 2000-2009                                              # v2 결과 구성(재배선 하나)
@@ -828,7 +857,7 @@ uv run fly-connectome scorecard --seeds 2000-2039 --configs vector,text,no_circu
 캡션 채점(eval-v2)이 찍기 수준?  ── 예 ──► 2부 전달(투영기 · 손실 · 자료 양 · 입력 크기)을 고친다   ◄── v1 자료 · train-v2 는 여기서 막혔다 · v5 는 통과(물체 있음 · 다리 — 10장 2.4) · v6 도 통과(물체 있음 · 냄새 쪽 — 10장 2.6)
         │ 아니오
         ▼
-성적표에서 vector 가 재배선 앙상블을 앞서나(scorecard-v2)?  ── 아니오 ──► 문구 규칙 발동 · 원인을 가른다   ◄── v5 는 여기서 막혔다(0.075 = 재배선 · p 0.42 · 냄새 좌우 없음 — 10장 2.5) · **v6 는 지금 여기**(0.350 · 재배선 s1 0.375 · p 0.29 — 10장 2.7)
+성적표에서 vector 가 재배선 앙상블을 앞서나(scorecard-v2)?  ── 아니오 ──► 문구 규칙 발동 · 원인을 가른다   ◄── v5 는 여기서 막혔다(0.075 = 재배선 · p 0.42 · 냄새 좌우 없음 — 10장 2.5) · v6 씨앗 40 도 여기(0.350 · 재배선 s1 0.375 · p 0.29 — 10장 2.7) · v7 씨앗 100 도 여기(p 0.056 — 10장 2.9) · **v6 씨앗 100 만 아래로 통과**(0.46 · p 0.0048 · 단서 셋 — 10장 2.10)
         │ 예
         ▼
 &quot;초파리 배선 벡터가 섞은 배선보다 나았다&quot; — 보고 가능

@@ -343,7 +343,10 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 | 40 | <code>scripts/30-train/fit-eval.sh &lt;진짜 fit 폴더&gt; [재배선 fit 폴더]</code> | 03 §6.3 | 학습 전 · 뒤 — 일반화(안 쓴 냄새 5) · 도망 재채점 · 발톱 일치 · KC 겹침 · 수 분 | 여유 40 % |
 | 41 | <code>scripts/20-odor/plasticity-probe.sh [냄새 ORN 종류들] [η 후보] [회로 학습 폴더]</code>(<code>--cell-from</code> · <code>20d0b32</code>) | 03 §6.3 | 가소성 다시 재기(학습 매개변수로) — 짧음 | 여유 40 % |
 | 42 | <code>uv run fly-connectome reflex-probe [--modes lr_sigmoid,retinotopic,retinotopic2] [--gains 3,10] [--seeds 2]</code>(씨앗 수) · <code>scripts/20-odor/reflex-probe.sh</code> | 연구 노트 11 §8.12 | 정면 다가옴에 GF 가 켜지나(뇌만 · 짧음) | 여유 40 % |
-| 43 | <code>uv run fly-connectome npc-run --stage s0\|s1 [--configs real,rewired-s0,rewired-s1,rewired-s2,no_brain] [--seeds … \| --seed-start 4000 --n 40]</code>(기본값) · <code>scripts/40-eval/npc-run.sh [단계] [씨앗 수] [구성]</code> → <code>runs/npc-&lt;단계&gt;-&lt;시각&gt;/</code> | 04 §1 · 연구 노트 11 §8.12 | NPC 하나를 초파리 뇌로(R-5138) · 세계는 <code>config/npc.yaml</code> world.kind(fake · box) · 라이브 9212 금지 · S1 실행 중 | 여유 40 % |</p>
+| 43 | <code>uv run fly-connectome npc-run --stage s0\|s1 [--configs real,rewired-s0,rewired-s1,rewired-s2,no_brain] [--seeds … \| --seed-start 4000 --n 40]</code>(기본값) · <code>scripts/40-eval/npc-run.sh [단계] [씨앗 수] [구성]</code> → <code>runs/npc-&lt;단계&gt;-&lt;시각&gt;/</code> | 04 §1 · 연구 노트 11 §8.12 | NPC 하나를 초파리 뇌로(R-5138) · 세계는 <code>config/npc.yaml</code> world.kind(fake · box) · 라이브 9212 금지 · 작은 시험 선택지(<code>de01586</code> · 기본값은 설정 그대로): <code>--world fake\|box</code> · <code>--bins N</code>(결정 300 ms 를 나눌 구간 수 · 0 = 설정) · <code>--reflex-hold-ms MS</code>(도망 뉴런이 켜지면 비켜서기를 이어 갈 시간 · 0 = 그 구간만) · 보기용 <code>--policy walk</code> · <code>--pursue</code> · <code>--persistent</code>(판정용 아님) · <strong>10-12 S1 에서 보류</strong> | 여유 40 % |
+| 44 | <code>uv run --no-sync --with matplotlib python scripts/50-analysis/npc_paths.py &lt;npc 결과 폴더&gt; [씨앗 수]</code> | 연구 노트 11 §8.12 | NPC 길 · 위험물 길 · 부딪힘 판정 원을 위에서 본 그림(결정 기록으로) · 짧음 | — |
+| 45 | <code>scripts/50-analysis/npc-s1box-margin.sh [상자 월드 world_exp.jsonl]</code> → <code>runs/npc-s1box-margin-*.json</code> · <code>scripts/40-eval/npc-bins-probe.sh [씨앗 수]</code>(구간 100 대 50 ms) · <code>scripts/40-eval/npc-hold-probe.sh [씨앗 수]</code>(+ 도망 프로그램 300 ms) → <code>runs/npc-{bins3,bins6,hold300-bins3,hold300-bins6}-fake-*</code> | 연구 노트 11 §8.12 | 상자 본 실행 전 <strong>가능성 먼저</strong>(10-10) — 어림은 기록만 읽음 · 작은 시험은 가짜 세계 · 진짜 배선 · 씨앗 6 · 각 약 8~10 분 · 판정 아님 | 잠금 없음(<code>no_lock</code>) |
+| 46 | <code>scripts/50-analysis/touch-anomaly.sh [npc-perceive 폴더]</code> → <code>runs/touch-anomaly-*.json</code> · <code>scripts/50-analysis/gate-intercept.sh [자료]</code> → <code>runs/gate-intercept-&lt;자료&gt;-*.json</code> | 09 §3.3 · 연구 노트 11 §8.9 · §8.12 | 선형 검사에 <strong>절편</strong>을 넣고 사후로 다시 재기(10-12 · 판정 바꾸지 않음 · 원판 gate.json 안 덮음) — 촉각 수십 초 · 관문 몇 분 | — |</p>
 <p>위 1~29 를 한 줄씩 돌리는 대신 <strong><code>scripts/</code></strong> 를 쓰면 잠금 · 메모리 대기 · 끝 코드 확인(실패면 멈춤)을 스크립트가 한다(<code>scripts/common.sh</code>). 순서와 확인값은 <a href="12-재현-절차와-다음-작업.html">12장 §2</a>.</p>
 <p><strong><code>--dataset</code> 기본값 = <code>config/datasets.yaml</code> 의 <code>current</code></strong>(지금 <code>fly-loop-v4</code> · 2026-09-29 <code>bf48c2d</code> 에서 통일 — 그전에는 명령마다 fly-loop-v1 · v2 를 박아 두었다 · <a href="12-재현-절차와-다음-작업.html">12장 §3</a>). 옛 자료 · 옛 결과는 <code>--dataset</code> 을 직접 준다.</p>
 <p>v1 자료 · v2 판을 다시 돌릴 때(지금 있는 결과): <code>--dataset fly-loop-v1 --brain rewired</code> · 평가 · 성적표에 <strong><code>--version train-v2</code></strong> — 기본은 지금 규칙 판(train-v4)이다.
@@ -387,7 +390,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 <tr>
 <td>판정 규칙</td>
-<td><strong>자료 판으로 자동</strong>(<code>stats.rule_for_dataset</code> — task-v4 이상 자료 = <strong>stats-v3</strong> · 냄새 쪽 칸 + 찍기 대비 p &lt; 0.05 · 옛 자료 = stats-v2)</td>
+<td><strong>자료 판으로 자동</strong>(<code>stats.rule_for_dataset</code> — task-v4 이상 자료 = <strong>stats-v3</strong> · 냄새 쪽 칸 + 찍기 대비 p &lt; 0.05 · 옛 자료 = stats-v2) · 선형 검사 <strong>절편</strong>은 선택지(<code>ProbeSet.field(intercept=)</code> · <code>linear_probe.run(intercept=)</code> · <code>compress.gate(intercept=)</code> · 기본값 = 절편 없음 = 지금 판정 그대로 · 10-12 사후 확인용 — <a href="09-평가와-대조군.html">09장 3.3</a>)</td>
 <td>09 판정 다시(자료는 그대로)</td>
 </tr>
 <tr>
@@ -431,13 +434,18 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 <td>대시보드 서버 다시 띄우기</td>
 </tr>
 <tr>
+<td>NPC(R-5138 · 10-12 보류)</td>
+<td><code>config/npc.yaml</code> <strong>npc-v4</strong>(v3 + S0b 물체 인식 · v3 비켜서기 4.5 m/s · v2 상자 월드 9412 · 원점 (−76, 260))</td>
+<td><code>npc-run</code> 다시(진짜 · 섞은 배선 · 뇌 없음 같은 씨앗)</td>
+</tr>
+<tr>
 <td>Qwen 가중치</td>
 <td><code>config/llm.yaml</code> llm-v1</td>
 <td>08 → 09</td>
 </tr>
 </tbody>
 </table></div>
-<p><strong>옛 판은 <code>config/archive/&lt;판&gt;.yaml</code></strong> 에 남긴다(sim-v1 · task-v1 · task-v2 · task-v2.1 · channels-v1 · channels-v2 · retino-v1 · compress-v1 · compress-v2) — <code>config.load(name, version="sim-v1")</code> 로 옛 자료를 다시 돌릴 수 있다.</p>
+<p><strong>옛 판은 <code>config/archive/&lt;판&gt;.yaml</code></strong> 에 남긴다(sim-v1 · task-v1 · task-v2 · task-v2.1 · channels-v1 · channels-v2 · retino-v1 · compress-v1 · compress-v2 · npc-v1 · npc-v2 · npc-v3) — <code>config.load(name, version="sim-v1")</code> 로 옛 자료를 다시 돌릴 수 있다.</p>
 <h2 id="4-문서-고치기">4. 문서 고치기</h2>
 <pre><code class="language-bash">uv run --no-project --with markdown python docs/training/build.py                 # 이 안내서 HTML — &quot;깨진 링크 없음&quot;
 uv run --no-project --with markdown python docs/research/fly-connectome/build.py  # 연구 노트 HTML

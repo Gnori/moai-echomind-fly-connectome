@@ -106,7 +106,7 @@
 <p>2부 Qwen 연결 · 둘째 장. 코드: <code>src/moai_echomind_fly/loop/{qwen,fly_prompt,projector,compress}.py</code> · 설정 <code>config/llm.yaml</code> · <code>config/compress.yaml</code>.
 배경: <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">연구 노트 11 §2 · §3</a> · <a href="../research/fly-connectome/12-다음-학습-조사.html">12 §2 ~ §4</a>.</p>
 <p>▶ <strong>투영기 판</strong> — <code>train-v2</code>(v1 자료 결과 · 2층 MLP 3,187만) · <code>train-v4</code>(압축 벡터 → 선형 · 133만 · 진짜 배선만 끝냄 · 뇌 사이 비교는 하지 않는다) ·
-<strong><code>train-v5</code></strong>(지금 · 2026-09-24 12:43 시작 · v4 + <strong>크기를 맞춘 압축 compress-v3</strong>). 이 장은 v2 와 v4/v5 를 나란히 적는다(v4 와 v5 는 투영기 모양이 같고 입력 크기만 다르다).</p>
+<code>train-v5</code>(2026-09-24 · v4 + <strong>크기를 맞춘 압축 compress-v3</strong>) · <strong><code>train-v6</code></strong>(v5 규칙 · 자료 fly-loop-v4 · 입력 시각 · smell_ln · 공간 · 매개변수 91.6 만 — <strong>1판 정본</strong> · <a href="../model-v1.md">1판 정리</a>) · <code>train-v7</code>(v6 + 캡션 되새김 0.5 · 지금 코드의 규칙 판 · 성적표 p 0.056 못 넘음). 이 장은 v2 와 v4~v7 을 나란히 적는다(v4~v7 은 투영기 모양이 같고 입력 크기 · 자료 · 되새김만 다르다).</p>
 </blockquote>
 <p><img alt="세 부품과 학습 여부" src="../research/fly-connectome/diagrams/06-fly-projector-qwen.svg" /></p>
 <h2 id="1-구도--이미지-자리에-초파리-신호">1. 구도 — 이미지 자리에 초파리 신호</h2>
@@ -237,7 +237,7 @@
 나머지 토큰은 Qwen 의 원래 임베딩 그대로다 — "일반 텍스트도 들어가고 초파리 신호도 들어가는" 모양(요구자).</p>
 <h2 id="4-투영기--loopprojectorpy">4. 투영기 — <code>loop/projector.py</code></h2>
 <p>채널마다 따로인 작은 신경망이다. 출력 토큰은 RMS 를 Qwen 토큰 임베딩의 평균 RMS(<strong>0.01517</strong> · 토큰 1000~2999 에서 잰다)에 맞춘다 — 소프트 토큰이 글 토큰과 같은 크기로 들어가게.</p>
-<h3 id="41-train-v2--지금-있는-결과">4.1 train-v2 — 지금 있는 결과</h3>
+<h3 id="41-train-v2--v1-자료-결과옛-판">4.1 train-v2 — v1 자료 결과(옛 판)</h3>
 <pre><code>채널 벡터 (d 차원) ──► Linear(d → 256) ──► GELU ──► Linear(256 → 2 × 5,120) ──► 토큰 2 개 [2, 5,120]
 9 채널을 순서대로 이어 붙여 [18, 5,120]
 </code></pre>
