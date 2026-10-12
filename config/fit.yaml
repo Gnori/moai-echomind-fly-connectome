@@ -134,3 +134,21 @@ kc_probe:                       # M0(연구 노트 16 §6) — 학습 없이 지
     seed: 1                     # M0 · 학습의 무작위 세트(씨앗 0)와 다른 세트
     range: [0.03, 0.15]
     escape_trials: 20           # 도망 반사 재채점(bench fit-v1 과 같은 시행 수)
+al_fix:                         # 2026-10-12 · 결과 전 잠금(짝짓기 대조 전) — 촉각엽 번짐 고치기 정식 시험 al-fix-a(R-7469 core · 노트 16 §11)
+  version: al-fix-a
+  # 왜: 흥분성(콜린성) LN → PN 화학 흥분이 PN 을 넓게 켜 KC 겹침 → 짝짓기가 짝 안 지은 냄새로 번짐(10-06~07).
+  #     실제 eLN → PN 은 주로 전기 시냅스 · 냄새당 강하게(≥ 30 Hz) 켜진 PN 약 23 %(Seki 2017 · 노트 16 §11).
+  #     요구자 10-12 "응 진행해"(결과 전 잠금 → 대조 다섯 진짜 · 재배선).
+  base:                         # 뇌마다 그 뇌로 맞춘 kc-mbon-b 매개변수 위에 얹는다
+    real: runs/fit-kc-mbon-b-sim-v3-real-20261006-071233
+    rewired-s0: runs/fit-kc-mbon-b-sim-v3-rewired-s0-20261006-105313
+  eln_pn: 0.5                   # 흥분성 LN(종류 안 모든 뉴런 부호 +1 인 ALLN 종류) → ALPN 묶음 배율 — **PN 단계 목표로만 고름**
+                                #   (al-probe 10-12: ×0.5 에서 식초 등 다섯 냄새 강한 uPN 평균 21 % ≤ 25 % · ×1 은 60 %)
+  pn_kc_grid: [1.0, 1.25, 1.5, 1.75, 2.0]   # ALPN-KC 묶음 배율에 곱함(base 값 × 이것 · 상한 bounds.alpha)
+  select:                       # PN → KC 고르기 — 짝짓기 결과는 보지 않는다
+    scope: kc-mbon-b            # physiology 의 이 범위 항목(KC 희소성 · 음성 · 엽 · MBON · 학습 냄새 여럿) 손실이 가장 작은 값
+    trials: 3                   # measure_kc 양성 씨앗 수(회로 학습과 같음)
+    seed: 0
+  # 판정: config/plasticity.yaml probe_controls 그대로(대조 다섯 · 씨앗 0~4 · pass 기준 · CS− 는 cs_minus_screen 규칙으로 다시 고름)
+  # ⚠️ 결과 전 적는 것: 탐색(10-12 · 씨앗 0~2)에서 ×0.5 · PN→KC ×1.5 가 CS+ −63 % · CS− −5 % 였으나 처벌 구획도 −36 % —
+  #    이번 정식 시험이 그 값을 다시 고른다는 보장은 없다. 재배선은 MBON 이 침묵이면 잴 수 없다(그대로 적는다).
