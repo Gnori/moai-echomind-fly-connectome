@@ -168,7 +168,7 @@
 </tr>
 <tr>
 <td><strong>NPC 몸</strong>(R-5138 · 2026-10-03)</td>
-<td>같은 몸 자리에 <strong>사람 NPC</strong> 를 끼울 수 있다(<code>npc/body.py</code> <code>NpcBody</code> · <code>config/npc.yaml</code>) — 입력: 위험 좌표 → 다가옴 방위 · 크기 · 확대 속도 · 목표 → 냄새 센서 좌우 · 막힘 → 앞다리 접촉 · 출력: 구동 → 속도 · 회전 · 반사 → 옆으로 비켜서기 · 시야는 NPC 만 좌우 · 상한 10 · 축척 0.15 m/mm · <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">연구 노트 11 §8.12</a></td>
+<td>같은 몸 자리에 <strong>사람 NPC</strong> 를 끼울 수 있다(<code>npc/body.py</code> <code>NpcBody</code> · <code>config/npc.yaml</code>) — 입력: 위험 좌표 → 다가옴 방위 · 크기 · 확대 속도 · 목표 → 냄새 센서 좌우 · 막힘 → 앞다리 접촉 · 출력: 구동 → 속도 · 회전 · 반사 → 옆으로 비켜서기 · 시야는 NPC 만 좌우 · 상한 10 · 축척 0.15 m/mm · <a href="../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.html">연구 노트 11 §8.12</a>. <strong>결과</strong>: 가짜 세계 S1 통과(부딪힘 0.60 대 섞은 배선 1.00 × 3) · 상자 월드는 반사가 진짜만 켜지나(40/40 대 0/120) 부딪힘은 모두 1.00 · 물체 인식(S0b)은 가까움만 턱걸이 → <strong>2026-10-12 S1 에서 보류</strong>(배선 특이적인 것은 반사 촉발뿐 · <a href="../model-v1.md">1판 정리 6 절</a>)</td>
 </tr>
 </tbody>
 </table></div>
@@ -536,7 +536,8 @@
 </tbody>
 </table></div>
 <p>좌우는 <code>somaSide</code> → 없으면 <code>rootSide</code>(감각 뉴런은 세포체가 밖이라 신경 뿌리 쪽) → 없으면 <code>instance</code> 끝의 <code>_L/_R</code> 로 정한다.
-공간 채널 수는 2026-09-23 뉴런 표에서 센 값(우리가 켜는 뉴런이 없어 5.3 의 제외와 무관하다). 판정에서 뺀 채널(운동)은 09장.</p>
+공간 채널 수는 2026-09-23 뉴런 표에서 센 값(우리가 켜는 뉴런이 없어 5.3 의 제외와 무관하다). 판정에서 뺀 채널(운동)은 09장.
+<code>value</code>(MBON)는 닫힌 고리 · NPC 에서 <strong>회로 학습 전 뇌</strong>로 읽는다 — 냄새에 거의 침묵. 회로 학습 뒤 MBON 이 냄새에 반응하는 것(진짜 30/97 대 재배선 0/97)은 <a href="03-뇌-맞추기와-검산.html">03장 6.4</a> 의 따로 잰 결과이고 신호 벡터 · 투영기에는 아직 안 들어갔다.</p>
 <h3 id="52-전기-신호--발화율--문턱-아래-막전위">5.2 "전기 신호" = 발화율 + 문턱 아래 막전위</h3>
 <p>결정 창 300 ms 를 100 ms 세 구간으로 나눠, <strong>단위마다</strong> 두 값을 잰다.</p>
 <pre><code>특징 = [ log1p(발화율 Hz) / log1p(20)   (구간 3 × 단위 수)

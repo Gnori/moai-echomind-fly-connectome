@@ -523,6 +523,103 @@ MaleCNS 는 Shiu 가 맞춘 FlyWire 와 시냅스를 세는 방식이 달라서,
 <strong>"회로 학습으로 초파리다운 희소성을 얻었다"는 쓰지 않는다.</strong></p>
 <p><strong>M3 가소성 다시 재기</strong>(<code>scripts/20-odor/plasticity-probe.sh</code> · 식초 6 · 진짜 학습 매개변수 · <code>runs/plasticity-probe-20261003-210402.json</code>): KC 발화 <strong>4.3 %</strong>(전 0.2 %) · MBON 발화 합 8 · <strong>보상 구획 MBON 0 → 0</strong> · m 평균 0.98~1.00 → <strong>여전히 잴 수 없다</strong> — KC 는 켜지나 MBON 이 침묵한다. 다음 막힌 곳은 <strong>KC → MBON</strong>.</p>
 <p>정본 R-7469 core P Task 5 · 6(<code>863ecfe</code>).</p>
+<h3 id="64-버섯체--mbon-살리기--가소성--냄새-특이성-접음-2026-10-05--10-07">6.4 버섯체 — MBON 살리기 · 가소성 · 냄새 특이성 접음 (2026-10-05 → 10-07)</h3>
+<p>6.3 뒤의 순서다. 회로 학습 한 판마다 손실 · 저장본은 <a href="10-학습-기록과-다음.html">10장 1.4</a> 대장에 있고, 여기는 <strong>무엇을 왜 했고 어디서 멈췄나</strong>만 적는다. 숫자는 모두 진짜 대 재배선 s0.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>순서</th>
+<th>무엇</th>
+<th>결과(진짜 대 재배선)</th>
+<th>다음으로 넘긴 것</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① MBON 침묵 진단(10-05 · <code>mbon-probe</code>)</td>
+<td>KC → MBON 이 약한가</td>
+<td>약하지 않다 — 회로 학습이 KC 를 몇 종류에만 켜고(MBON 67/97 에 KC 발화 0) · αβ MBON 은 APL 억제에 막힘</td>
+<td>KC 를 엽마다 켜기</td>
+</tr>
+<tr>
+<td>② kc-sparse-c(엽마다 2~20 %)</td>
+<td>KC 를 고루 켜기</td>
+<td>엽 조건은 <strong>둘 다</strong> 맞춤 · KC 입력 0 인 MBON 67 → 7 · 그러나 MBON 발화 3/97 그대로</td>
+<td>MBON 을 학습 범위 · 목표에</td>
+</tr>
+<tr>
+<td>③ kc-mbon-a(KC→MBON 배율 + MBON 냄새 반응 목표)</td>
+<td>MBON 이 냄새에 반응하나</td>
+<td>식초에 발화한 MBON <strong>32/97 대 0/97</strong> — 까닭은 KC→MBON 수렴(MBON 하나가 받는 KC 시냅스 중앙 2,502 대 71 · 배선 성질)</td>
+<td>가소성 다시 재기</td>
+</tr>
+<tr>
+<td>④ 가소성 대조 다섯(η 0.001 · 결과 전 기준)</td>
+<td>도파민 짝짓기가 MBON 을 바꾸나</td>
+<td>보상 DAN → 보상 구획 −64 % · <strong>처벌 DAN → 처벌 구획만 −65 %(뒤집힘)</strong> · 어긋난 보상 · 표 섞기 · 끔 ≤ 25 % ✅ · 재배선은 MBON 침묵이라 잴 수 없음</td>
+<td>짝 안 지은 냄새(CS−)</td>
+</tr>
+<tr>
+<td>⑤ 짝 안 지은 냄새 다시 고르기</td>
+<td>냄새 특이성</td>
+<td>규칙 통과 후보 0/20 · 탐색에서 CS− 도 −84 %</td>
+<td>냄새 여럿으로 학습</td>
+</tr>
+<tr>
+<td>⑥ kc-mbon-b(학습 냄새 식초 + 무작위 3)</td>
+<td>같음</td>
+<td>MBON 반응 좋아짐(학습 냄새 넷 ≥ 20.6 % · 일반화 5/5 · 재배선 0/97) · 그러나 <strong>짝짓기 CS+ −37 % · CS− −40 %</strong> → 냄새 특이성 없음</td>
+<td>왜 같이 약해지나</td>
+</tr>
+<tr>
+<td>⑦ 겹침 분해(탐색)</td>
+<td>CS− 가 왜 같이 깎이나</td>
+<td>CS− 의 보상 구획 입력 <strong>79 %</strong> 가 CS+ 에도 켜지는 KC(재배선 22 %) · 학습 단계마다 커짐(0.47 → 0.64 → 0.80 → 0.79)</td>
+<td>겹침 상한을 손실에</td>
+</tr>
+<tr>
+<td>⑧ kc-mbon-c(겹침 Jaccard ≤ 0.12)</td>
+<td>KC 를 켠 채 겹침 낮추기</td>
+<td>❌ <strong>20/50 세대에서 중단</strong> — 벌점이 KC 를 끈 해를 이기게 한 설계 결함(KC 0.1~1.7 %)</td>
+<td>띄우기 전에 가능성부터</td>
+</tr>
+<tr>
+<td>⑨ 가능성 격자(17 점 · 무거운 학습 없이)</td>
+<td>그런 해가 있나</td>
+<td>KC ≥ 3 % 이면서 겹침 ≤ 0.12 인 점 <strong>0/17</strong> → 회로 학습 다시 안 함</td>
+<td>KC 보다 앞을 보기</td>
+</tr>
+<tr>
+<td>⑩ PN 겹침(10-07 · 1 분)</td>
+<td>겹침은 어디서 생기나</td>
+<td>해부 PN 겹침 <strong>0.043</strong> · 발화한 PN 겹침 <strong>0.831</strong>(냄새마다 PN 300~325/686 · 약 44 %)</td>
+<td><strong>접음</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>결론 — 냄새 특이성은 여기서 접는다.</strong> 냄새끼리의 겹침은 KC 보다 앞, <strong>촉각엽에서 활동이 PN 의 약 44 % 로 번지는 것</strong>에서 온다(해부로는 0.04 겹치는 냄새가 발화로는 0.83). 회로 학습 범위(KC · APL · MBON · PN→KC 배율)로는 고칠 수 없고, ORN → PN · 촉각엽 국소 뉴런은 범위 밖이다. 재배선은 ORN → PN 이 섞여 냄새가 PN 을 거의 안 켜서(발화 PN 0~4) 이 비교의 대조가 되지 못한다. 다시 열려면 촉각엽 맞추기(새 R · 큼).
+근거 <code>runs/plasticity-controls-real-20261006-161341.json</code> · <code>-194342.json</code>(<code>ab67e447436bdd46</code>) · <code>runs/kc-overlap-grid-20261006-231812.json</code>(<code>a36fd444f70cb731</code>) · <code>runs/pn-overlap-20261007-071556.json</code>(<code>ebc035e37859fde9</code>).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>쓸 수 있다</th>
+<th>쓸 수 없다</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"회로 학습 뒤 MBON 냄새 반응은 진짜 배선에서만 나왔다(재배선 0/97)"</td>
+<td>"초파리처럼 냄새를 배운다"</td>
+</tr>
+<tr>
+<td>"도파민 짝짓기는 구획 특이적으로 MBON 반응을 약하게 한다" — ⚠️ 구획 특이성의 상당 부분은 규칙이 그래프의 DAN→MBON 표를 쓰게 한 설계에서 온다</td>
+<td>"냄새-보상 연합을 배운다"</td>
+</tr>
+</tbody>
+</table></div>
+<p>⚠️ ⑧ 의 교훈: 손실 항을 더할 때는 <strong>출발 해 · 이미 맞춘 해 · 끈 해의 벌점을 먼저 계산해 적고</strong> 띄운다(요구자 10-06 <em>"가능성이 낮은걸 왜 하냐고"</em>).
+⚠️ 닫힌 고리 · NPC 는 지금도 <strong>회로 학습 전 뇌</strong>로 돈다 — 이 절의 결과는 투영기 신호(04장 <code>value</code> 채널)에 아직 들어가지 않았다.
+정본 R-7469 core P Task 5 · 6 · <a href="../model-v1.md">1판 정리</a> 2 · 3 · 4 절.</p>
 <h2 id="7-확인-체크리스트">7. 확인 체크리스트</h2>
 <ul>
 <li>[ ] 규칙(<code>FIT_RULE</code>)을 바꿨다면 <code>version</code> 을 올렸다</li>
