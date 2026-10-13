@@ -159,3 +159,18 @@ def test_run_condition_detail_adds_split():
     r = pl.run_condition(g, LIFParams(w_scale=1.0), cfg, None, "paired", 0, "cpu", sets,
                          detail=True)
     assert {"jaccard_all", "jaccard_reward", "cs_plus", "cs_minus"} <= set(r["split"])
+
+
+def test_rewire_subset_keeps_other_edges_and_degrees():
+    from moai_echomind_fly import graph as gm
+
+    g = mb_graph()
+    r = gm.rewire_subset(g, 3, {"class": ["Kenyon_Cell"]}, {"class": ["MBON"]}, "kcmbon")
+    src = g.src()
+    m = np.isin(g.columns["class"][src], ["Kenyon_Cell"]) & np.isin(g.columns["class"][g.dst],
+                                                                    ["MBON"])
+    assert np.array_equal(r.dst[~m], g.dst[~m])                     # 갈래 밖은 그대로
+    assert sorted(r.dst[m].tolist()) == sorted(g.dst[m].tolist())   # 도착 연결 수 그대로
+    assert np.isin(r.dst[m], [4, 5]).all()                          # 갈래 안에서만
+    assert gm.brain_graph(g, "real") is g
+    assert gm.brain_graph(g, "kcmbon-s3").meta["rewire_edges"] == int(m.sum())

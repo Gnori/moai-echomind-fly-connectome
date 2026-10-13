@@ -214,6 +214,50 @@ def rewire(graph: Graph, seed: int) -> Graph:
                  dst.astype(np.int32), graph.count, meta)
 
 
+def rewire_subset(graph: Graph, seed: int, src_sel: dict, dst_sel: dict, label: str) -> Graph:
+    """부분 섞기: 출발이 src_sel · 도착이 dst_sel 인 연결끼리만 도착을 섞는다(나머지 뇌는 그대로).
+
+    고르기 = {class: [...]} 또는 {type: [...]}. 그 갈래 안에서 뉴런마다 나가는 · 들어오는 연결 수와
+    출발 쪽 시냅스 수 · 부호는 그대로(전체 섞기 rewire 와 같은 규칙을 갈래 안에서만).
+    2026-10-13: 전체 섞기는 KC → MBON 수렴을 흩어 MBON 이 침묵 → 가소성 대조가 안 됨(R-7469 core).
+    """
+    def pick(idx: np.ndarray, sel: dict) -> np.ndarray:
+        ok = np.ones(len(idx), bool)
+        for key, vals in sel.items():
+            ok &= np.isin(graph.columns[key][idx], list(vals))
+        return ok
+
+    src = graph.src()
+    m = np.flatnonzero(pick(src, src_sel) & pick(graph.dst, dst_sel))
+    rng = np.random.default_rng(seed)
+    dst = graph.dst.copy()
+    dst[m] = rng.permutation(dst[m])
+    meta = dict(graph.meta)
+    meta.update({"name": f"{graph.name}.{label}-s{seed}", "rewired_from": graph.name,
+                 "rewire_seed": seed, "rewire_subset": {"src": src_sel, "dst": dst_sel},
+                 "rewire_edges": int(len(m)),
+                 "rewire_rule": "permute dst within the edge subset only"})
+    return Graph(meta["name"], graph.columns, graph.body_ids, graph.sign, graph.row_ptr,
+                 dst.astype(np.int32), graph.count, meta)
+
+
+PARTIAL = {   # 부분 섞기 이름 → (출발, 도착) — 뇌 이름 '<이름>-s<씨앗>'(예: pnkc-s0)
+    "pnkc": ({"class": ["ALPN"]}, {"class": ["Kenyon_Cell"]}),
+    "kcmbon": ({"class": ["Kenyon_Cell"]}, {"class": ["MBON"]}),
+}
+
+
+def brain_graph(base: Graph, brain: str) -> Graph:
+    """뇌 이름 → 그래프: real · rewired-s<K>(전체 섞기) · <부분>-s<K>(PARTIAL)."""
+    if brain == "real":
+        return base
+    name, seed = brain.rsplit("-s", 1)
+    if name == "rewired":
+        return rewire(base, int(seed))
+    src_sel, dst_sel = PARTIAL[name]
+    return rewire_subset(base, int(seed), src_sel, dst_sel, name)
+
+
 def save(graph: Graph, out: Path | None = None) -> None:
     out = out or paths.graph_dir()
     out.mkdir(parents=True, exist_ok=True)

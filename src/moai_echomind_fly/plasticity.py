@@ -415,8 +415,7 @@ def main_controls(args: argparse.Namespace) -> int:
         with heavy("plasticity-controls") as guard:
             print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
             g = graph_mod.load()
-            if args.brain != "real":
-                g = graph_mod.rewire(g, int(args.brain.rsplit("-s", 1)[1]))
+            g = graph_mod.brain_graph(g, args.brain)    # real · rewired-s<K> · pnkc/kcmbon-s<K>
             lif = LIFParams.from_config()
             from pathlib import Path
 
@@ -526,8 +525,7 @@ def main_probe(args: argparse.Namespace) -> int:
         with heavy("plasticity-probe") as guard:
             print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
             g = graph_mod.load()
-            if args.brain != "real":                       # 대조 — 섞은 배선
-                g = graph_mod.rewire(g, int(args.brain.rsplit("-s", 1)[1]))
+            g = graph_mod.brain_graph(g, args.brain)    # 대조 — 섞은 배선(전체 · 부분)
             lif = LIFParams.from_config()
             cell = None
             if args.cell_from:
