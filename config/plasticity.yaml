@@ -100,3 +100,25 @@ partial_rewire_test:             # 2026-10-13 · 결과 전 잠금 — 부분 �
     min_cs_plus_spikes: 50       # 섞은 뇌의 CS+ 보상 구획 씨앗 합(짝짓기 전)이 이보다 작으면 "잴 수 없음"
   wording: "통과한 갈래만 — 진짜 {갈래} 배선이 섞은 배선보다 냄새 특이적 연합 약화를 낸다(같은 매개변수)"
   # 결과 전 예상: pnkc 는 통과할 수 있음 · kcmbon 은 진짜와 같아 통과 못 함(그래도 그대로 적음)
+valence_readout:                 # 2026-10-14 · 결과 전 잠금 — 몸 없이 가치 읽기 A1(연구 노트 13 §7 · research ba6b4cb · 요구자 "가볍고 작은 것부터")
+  # 왜: MBON → 하강 뉴런 회로 길은 3 단계 실효 연결 10⁻⁶~10⁻⁴(노트 13 §7) · 문헌 모형 6 개 모두 가치 숫자 하나로 읽는다.
+  # 읽기: V(냄새) = Σ_i s_i · r_i — r_i = 시험 창(300 ms) MBON 뉴런 i 발화 수 · s_i 는 신경전달물질로 고정(학습 안 함):
+  #       glutamate −1(피함) · acetylcholine · gaba +1(다가감) — Aso 2014b("highly correlated") · 그 밖은 0.
+  version: vr-a
+  mbon_types: [MBON01, MBON02, MBON03, MBON04, MBON05, MBON06, MBON07, MBON09, MBON10, MBON11, MBON12, MBON13, MBON14, MBON15, MBON16, MBON17, MBON18, MBON19]
+  sign_by_nt: {glutamate: -1, acetylcholine: 1, gaba: 1}   # 그래프 nt 칸 · 55 뉴런(글루탐산 16 · GABA 15 · ACh 24)
+  metric: "ΔV = V(CS+) − V(CS−) · 바뀜 = ΔV(짝짓기 뒤) − ΔV(짝짓기 전) · 씨앗마다"
+  cell_from: runs/fit-kc-mbon-al-sim-v3-real-20261013-071105
+  eta: 0.002
+  cs_minus: [ORN_DA1, ORN_DC1, ORN_DP1l, ORN_VA1v, ORN_VC5, ORN_VM6l]
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  random_signs: {n: 20, seed: 0, level: type}   # 종류 단위로 s 를 섞음(− 7 종 · + 11 종 개수 유지)
+  pass:                          # 진짜 배선 · 몸 없음
+    reward_up: {sign_flip_p: 0.05}            # 짝짓기(보상): 바뀜 > 0 · 정확 부호 뒤집기 양쪽 p < 0.05
+    punish_down: {sign_flip_p: 0.05}          # 처벌 DAN 짝짓기: 바뀜 < 0 · p < 0.05
+    controls_small: 0.25                      # 어긋난 · 표 섞기 · 끔: |씨앗 평균 바뀜| ≤ 짝짓기 씨앗 평균 바뀜 × 0.25
+    random_rank: 0.95                         # 짝짓기 바뀜(씨앗 평균)이 무작위 부호 20 벌의 95 % 이상보다 큼(19/20)
+  arms: {pnkc: [pnkc-s0, pnkc-s1, pnkc-s2], kcmbon: [kcmbon-s0, kcmbon-s1, kcmbon-s2]}   # 보조: 짝짓기 바뀜 진짜 > 섞은 셋 모두 · 부호 뒤집기 p < 0.05
+  wording: "회로가 만든 가치를 손으로 정한 읽기가 (몸 없이) 짝지은 냄새 쪽으로 옮긴다"
+  # ↑ '버섯체 출력이 행동을 정했다'는 몸(A2)에서 무작위 부호 · 섞은 배선을 둘 다 넘을 때만 쓴다
+  # 결과 전 예상: 보상 짝짓기는 글루탐산 MBON(피함) 약화가 커서 바뀜 > 0 · 처벌 DAN 은 PPL1 구획(γ1pedc 등 GABA · 다가감) 약화로 < 0.

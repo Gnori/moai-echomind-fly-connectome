@@ -252,7 +252,8 @@ def run_condition(graph: Graph, lif, cfg: dict[str, Any], cell, cond: str, seed:
         return {"reward": int(cnt[sets["reward_mbon"]].sum()),
                 "punish": int(cnt[sets["punish_mbon"]].sum()),
                 "all": int(cnt[sets["mbon"]].sum()),
-                "kc_on": np.flatnonzero(cnt[tf.kc] > 0), "kc_cnt": cnt[tf.kc]}
+                "kc_on": np.flatnonzero(cnt[tf.kc] > 0), "kc_cnt": cnt[tf.kc],
+                "mbon_cnt": cnt[sets["mbon"]]}
 
     before = {"cs_plus": test(sets["cs_plus"]), "cs_minus": test(sets["cs_minus"])}
     eng.reset()
@@ -283,6 +284,9 @@ def run_condition(graph: Graph, lif, cfg: dict[str, Any], cell, cond: str, seed:
             out[f"{k}.{g}"] = [before[k][g], after[k][g]]
     a, b = set(before["cs_plus"]["kc_on"].tolist()), set(before["cs_minus"]["kc_on"].tolist())
     out["kc_overlap_cs"] = round(len(a & b) / max(len(a | b), 1), 4)
+    if detail:                                # MBON 뉴런마다 발화(가치 읽기 · valence_readout)
+        out["mbon_counts"] = {k: [before[k]["mbon_cnt"].tolist(), after[k]["mbon_cnt"].tolist()]
+                              for k in ("cs_plus", "cs_minus")}
     if detail and tf.w0 is not None:
         out["split"] = drive_split(tf, graph, sets["reward_mbon"], before["cs_plus"]["kc_cnt"],
                                    before["cs_minus"]["kc_cnt"], kc_paired)
@@ -459,6 +463,8 @@ def main_controls(args: argparse.Namespace) -> int:
               f"{v['cs_plus.punish']} · CS− 보상 {v['cs_minus.reward']}", flush=True)
     print(f"[plasticity-controls] 판정 {passed}", flush=True)
     out.write_text(json.dumps({"rule": cfg["version"], "controls": pc, "cs_minus": cs_minus,
+                               "mbon_types": g.columns["type"][sets["mbon"]].astype(str).tolist(),
+                               "mbon_nt": g.columns["nt"][sets["mbon"]].astype(str).tolist(),
                                "brain": args.brain, "cell_from": args.cell_from,
                                "summary": summary, "pass": passed, "rows": rows},
                               ensure_ascii=False, indent=2, default=str), encoding="utf-8")
