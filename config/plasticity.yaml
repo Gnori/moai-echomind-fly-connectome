@@ -71,3 +71,13 @@ probe_controls:                  # 2026-10-06 · 결과 전 선언 — 가소성
     paired_drop: [0.5, 0.9]      # 짝지은 냄새 · 보상 구획 MBON 감소(Hige 2015 약 80 % · eta.target_cs_plus_drop 과 같음)
     control_change_max: 0.25     # 짝 안 지은 냄새 · 어긋난 보상 · 표 섞기 · 가소성 끔 — 보상 구획 변화(감소) 상한(eta.target_unpaired_change_max 와 같음)
     punish_drop_min: 0.5         # 처벌 DAN 짝짓기 — 처벌 구획 MBON 은 이만큼 줄고 보상 구획은 control_change_max 이하
+eta_calibration:                 # 2026-10-13 · 결과 전 잠금 — 새 뇌(kc-mbon-al)로 η 다시 보정(eta.how calibrate · 값이 아니라 목표로)
+  # 왜: η 0.001 은 kc-mbon-a(10-06)에서 고른 값 · kc-mbon-al 대조에서 CS+ −45 %(목표 50~90 % 미달 · R-7469 core 10-13).
+  # 규칙: 짝짓기 조건만 · **CS+ 보상 구획만** 본다(CS− 자리에 CS+ 를 넣어 짝 안 지은 냄새는 계산조차 안 함) ·
+  #       씨앗은 판정(0~4)과 다른 10~14 · 고름 = 씨앗 합 CS+ 감소가 target_drop 에 가장 가까운 η.
+  # 고른 값은 plasticity-controls --eta 로만 쓰고 판정 기준(pass)은 그대로. 요구자 "재시동했어 진행해 남은거 돌릴게"(10-13).
+  version: calib-a
+  grid: [0.001, 0.0015, 0.002, 0.003, 0.004, 0.006]
+  seeds: [10, 11, 12, 13, 14]
+  target_drop: 0.7               # 목표 범위 pass.paired_drop [0.5, 0.9] 의 가운데
+

@@ -209,6 +209,22 @@ def drive_split(tf: ThreeFactor, graph: Graph, reward_mbon: np.ndarray, kc_plus:
     return out
 
 
+def controls_sets(g: Graph, cfg: dict[str, Any], cs_plus: list[str], cs_minus: list[str]
+                  ) -> dict[str, Any]:
+    """대조에 쓰는 뉴런 묶음 — 구획 표 · 보상 · 처벌 구획 MBON · DAN · CS+ · CS− ORN."""
+    comp = compartments(g, cfg)
+    types = g.columns["type"]
+    mbon = np.flatnonzero(np.isin(g.columns["class"], cfg["targets"]["post_class"]))
+    rew, pun = (cfg["teaching"][k]["dan_types"] for k in ("reward", "punishment"))
+    return {"table": comp["table"], "mbon": mbon,
+            "reward_mbon": mbon[np.isin(types[mbon], [m for m, d in comp["table"].items()
+                                                      if d in rew])],
+            "punish_mbon": mbon[np.isin(types[mbon], [m for m, d in comp["table"].items()
+                                                      if d in pun])],
+            "reward_dan": g.select(type=rew), "punish_dan": g.select(type=pun),
+            "cs_plus": g.select(type=cs_plus), "cs_minus": g.select(type=cs_minus)}
+
+
 def run_condition(graph: Graph, lif, cfg: dict[str, Any], cell, cond: str, seed: int,
                   device: str, sets: dict[str, Any], detail: bool = False) -> dict[str, Any]:
     """조건 하나(paired · cs_minus 는 paired 안에서 · unpaired · punish · shuffled · off).
@@ -391,6 +407,8 @@ def main_controls(args: argparse.Namespace) -> int:
     from .sim import LIFParams
 
     cfg = config.load("plasticity")
+    if args.eta:                               # 보정한 η(결과 전 잠근 값 · eta_calibration)
+        cfg = {**cfg, "probe_controls": {**cfg["probe_controls"], "eta": float(args.eta)}}
     pc = cfg["probe_controls"]
     rows: list[dict[str, Any]] = []
     try:
@@ -404,20 +422,10 @@ def main_controls(args: argparse.Namespace) -> int:
 
             cell = (None if args.cell_from == "none"               # 회로 학습 전 뇌
                     else CellParams.load(Path(args.cell_from) / "params.npz"))
-            comp = compartments(g, cfg)
-            types = g.columns["type"]
-            mbon = np.flatnonzero(np.isin(g.columns["class"], cfg["targets"]["post_class"]))
-            rew, pun = (cfg["teaching"][k]["dan_types"] for k in ("reward", "punishment"))
             cs_plus = list(pc["cs_plus"])
             cs_minus = (args.cs_minus.split(",") if args.cs_minus else
                         cs_minus_types(g, cs_plus, int(pc["cs_minus_n"]), int(pc["cs_minus_seed"])))
-            sets = {"table": comp["table"], "mbon": mbon,
-                    "reward_mbon": mbon[np.isin(types[mbon], [m for m, d in comp["table"].items()
-                                                              if d in rew])],
-                    "punish_mbon": mbon[np.isin(types[mbon], [m for m, d in comp["table"].items()
-                                                              if d in pun])],
-                    "reward_dan": g.select(type=rew), "punish_dan": g.select(type=pun),
-                    "cs_plus": g.select(type=cs_plus), "cs_minus": g.select(type=cs_minus)}
+            sets = controls_sets(g, cfg, cs_plus, cs_minus)
             conds = args.conditions.split(",") if args.conditions else list(pc["conditions"])
             for seed in [int(x) for x in args.seeds.split(",")]:
                 for cond in conds:
@@ -456,6 +464,54 @@ def main_controls(args: argparse.Namespace) -> int:
                                "summary": summary, "pass": passed, "rows": rows},
                               ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     print(f"[plasticity-controls] {out}")
+    return 0
+
+
+def calibrate_eta(g: Graph, lif, cfg: dict[str, Any], cell, device: str) -> dict[str, Any]:
+    """η 다시 보정(config eta_calibration) — 짝짓기 조건 · CS+ 보상 구획만 본다.
+
+    CS− 자리에도 CS+ 를 넣어 짝 안 지은 냄새 정보가 계산되지 않게 한다. 씨앗은 판정과 다른 것.
+    고름 = 씨앗 합 CS+ 보상 구획 감소가 target 에 가장 가까운 η.
+    """
+    ec = cfg["eta_calibration"]
+    cs_plus = list(cfg["probe_controls"]["cs_plus"])
+    sets = controls_sets(g, cfg, cs_plus, cs_plus)
+    rows = []
+    for eta in ec["grid"]:
+        c2 = {**cfg, "probe_controls": {**cfg["probe_controls"], "eta": float(eta)}}
+        rs = [run_condition(g, lif, c2, cell, "paired", int(sd), device, sets)
+              for sd in ec["seeds"]]
+        ch = change(rs, "cs_plus.reward")
+        rows.append({"eta": float(eta), "cs_plus_reward": ch})
+        print(f"[eta-calibrate] η {eta:g} · CS+ 보상 구획 {ch['before']} → {ch['after']} · "
+              f"감소 {(-ch['change']) if ch['change'] is not None else None}", flush=True)
+    ok = [r for r in rows if r["cs_plus_reward"]["change"] is not None]
+    pick = min(ok, key=lambda r: abs(-r["cs_plus_reward"]["change"] - float(ec["target_drop"])))
+    return {"rule": ec, "rows": rows, "pick": pick["eta"]}
+
+
+def main_calibrate(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from . import graph as graph_mod
+    from .cellparams import CellParams
+    from .guard import GuardRefused, heavy
+    from .sim import LIFParams
+
+    cfg = config.load("plasticity")
+    try:
+        with heavy("plasticity-eta-calibrate") as guard:
+            print(f"[guard] 메모리 여유 {guard.free_percent}%", flush=True)
+            g = graph_mod.load()
+            res = calibrate_eta(g, LIFParams.from_config(), cfg,
+                                CellParams.load(Path(args.cell_from) / "params.npz"), args.device)
+    except GuardRefused as err:
+        print(f"[guard] 막음 — {err}")
+        return 2
+    out = paths.runs_dir() / f"plasticity-eta-calibrate-{time.strftime('%Y%m%d-%H%M%S')}.json"
+    out.write_text(json.dumps({"cell_from": args.cell_from, **res}, ensure_ascii=False,
+                              indent=2, default=str), encoding="utf-8")
+    print(f"[eta-calibrate] 고름 η {res['pick']:g} · {out}", flush=True)
     return 0
 
 
@@ -521,9 +577,16 @@ def register(sub) -> None:
     c.add_argument("--device", default="cpu", choices=["cpu", "mps"])
     c.add_argument("--cs-minus", default="", help="CS− ORN 종류(쉼표) · 비우면 설정")
     c.add_argument("--conditions", default="", help="조건 일부만(쉼표) — 비우면 전부")
+    c.add_argument("--eta", type=float, default=0.0,
+                   help="η 덮어쓰기(0 = probe_controls.eta) — eta_calibration 으로 고른 값만")
     c.add_argument("--detail", action="store_true",
                    help="보상 구획 KC 입력의 CS+ · CS− 겹침 분해도 적는다(탐색)")
     c.set_defaults(func=main_controls)
+    e = sub.add_parser("plasticity-eta-calibrate",
+                       help="η 다시 보정 — 짝짓기 CS+ 만 · 판정과 다른 씨앗(eta_calibration)")
+    e.add_argument("--cell-from", required=True)
+    e.add_argument("--device", default="cpu", choices=["cpu", "mps"])
+    e.set_defaults(func=main_calibrate)
     s = sub.add_parser("plasticity-cs-screen",
                        help="짝 안 지은 냄새 고르기 — 짝짓기 전 반응만(무거움 · 짧음)")
     s.add_argument("--cell-from", required=True)
