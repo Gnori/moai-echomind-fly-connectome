@@ -132,3 +132,20 @@ def test_stats_v3_needs_p_against_baseline_not_just_higher_value():
     finalize(v2, STATS_RULE)
     finalize(v3, STATS_RULE_V3)
     assert v2["a"]["pass"] is True and v3["a"]["pass"] is False
+
+
+def test_stats_v4_adds_intercept_and_starts_at_task_v6(tmp_path, monkeypatch):
+    import json
+
+    from moai_echomind_fly import datasets
+    from moai_echomind_fly.loop import stats
+
+    assert stats.STATS_RULE_V4["intercept"] is True
+    assert stats.STATS_RULE_V4["require_vs_baseline"] is True       # v3 그대로 물려받음
+    monkeypatch.setattr(datasets, "store_dir", lambda: tmp_path)
+    for name, task in (("a", "task-v3"), ("b", "task-v5"), ("c", "task-v6")):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "meta.json").write_text(json.dumps({"versions": {"task": task}}))
+    assert stats.rule_for_dataset("a")["version"] == "stats-v2"
+    assert stats.rule_for_dataset("b")["version"] == "stats-v3"      # 지금까지 자료는 그대로
+    assert stats.rule_for_dataset("c")["version"] == "stats-v4"

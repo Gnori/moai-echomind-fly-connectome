@@ -52,6 +52,18 @@ STATS_RULE_V3: dict[str, Any] = {
 }
 V3_FROM_TASK = 4                                # task-v<N> 에서 N ≥ 이 값이면 stats-v3
 
+# stats-v4(2026-10-14 · 결과 보기 전에 정함): v3 + 선형 검사에 **절편**.
+# 왜: 절편이 없으면 조용한 채널에서 예측이 한 칸으로 쏠려 찍기보다 낮게 나온다
+#     (S0b 촉각 · 관문 칸 31/72 · runs/touch-anomaly-20261012-210118.json ·
+#     runs/gate-intercept-fly-loop-v4-20261012-210324.json).
+# 지금까지의 자료(task-v5 까지)는 결과가 나온 뒤라 v2 · v3 그대로 · 다음 과제 판(task-v6)부터 v4.
+STATS_RULE_V4: dict[str, Any] = {
+    **STATS_RULE_V3,
+    "version": "stats-v4",
+    "intercept": True,                          # linear_probe.run · ProbeSet.field(intercept=)
+}
+V4_FROM_TASK = 6                                # task-v<N> 에서 N ≥ 이 값이면 stats-v4
+
 
 def rule_for_dataset(name: str) -> dict[str, Any]:
     """자료 묶음의 과제 판으로 판정 규칙을 고른다 — 옛 자료는 stats-v2 그대로."""
@@ -62,7 +74,10 @@ def rule_for_dataset(name: str) -> dict[str, Any]:
 
     meta = json.loads((datasets.store_dir() / name / "meta.json").read_text(encoding="utf-8"))
     m = re.match(r"task-v(\d+)", str(meta.get("versions", {}).get("task", "")))
-    return STATS_RULE_V3 if m and int(m.group(1)) >= V3_FROM_TASK else STATS_RULE
+    v = int(m.group(1)) if m else 0
+    if v >= V4_FROM_TASK:
+        return STATS_RULE_V4
+    return STATS_RULE_V3 if v >= V3_FROM_TASK else STATS_RULE
 
 
 def episode_sums(values: np.ndarray, episodes: np.ndarray) -> np.ndarray:

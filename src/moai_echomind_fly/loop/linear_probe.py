@@ -135,7 +135,8 @@ def run(name: str, rule: dict[str, Any] | None = None,
     from .stats import finalize, judge_cell, rule_for_dataset
     from .train_cli import _sub, caption_fields
 
-    rule = rule or rule_for_dataset(name)      # 자료 판에 맞는 규칙(stats-v2 · v3)
+    rule = rule or rule_for_dataset(name)      # 자료 판에 맞는 규칙(stats-v2 · v3 · v4)
+    intercept = intercept or bool(rule.get("intercept"))   # stats-v4 부터 절편
     brains = ["real", *datasets.rewired_brains(name)]
     out: dict[str, Any] = {"dataset": name, "when": time.strftime("%Y-%m-%d %H:%M:%S"),
                            "method": f"선형(능선 회귀) · 규제 {FOLDS}겹 교차검증",
