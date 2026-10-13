@@ -105,6 +105,10 @@ scopes:
     init_from:
       real: runs/fit-kc-mbon-b-sim-v3-real-20261006-071233
       rewired-s0: runs/fit-kc-mbon-b-sim-v3-rewired-s0-20261006-105313
+      # 10-14 · 같은 절차 판(부분 섞기 뇌마다 다시 맞춤) — 부분 섞기 뇌에는 맞춘 b 가 없어 진짜와 같은 시작(진짜 b)
+      pnkc-s0: runs/fit-kc-mbon-b-sim-v3-real-20261006-071233
+      pnkc-s1: runs/fit-kc-mbon-b-sim-v3-real-20261006-071233
+      pnkc-s2: runs/fit-kc-mbon-b-sim-v3-real-20261006-071233
     targets_scope: kc-mbon-b    # physiology 항목은 kc-mbon-b 것 그대로(판 안 바꿈)
     measure: mb
     kc_probe:

@@ -285,9 +285,7 @@ def measure_for(sc: dict[str, Any]) -> Callable:
 def _graphs(brain: str, rule: dict[str, Any]) -> tuple[Graph, Graph]:
     from . import graph as graph_mod
 
-    g = graph_mod.load()
-    if brain != "real":
-        g = graph_mod.rewire(g, int(brain.rsplit("-s", 1)[1]))
+    g = graph_mod.brain_graph(graph_mod.load(), brain)   # real · rewired-s<K> · pnkc/kcmbon-s<K>
     return g, graph_mod.rewire(g, int(rule["null_seed"]))
 
 
