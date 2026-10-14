@@ -3,12 +3,17 @@
 수컷 초파리 중추신경계 연결 지도(**MaleCNS v1.0**)를 맥에서 돌리고, 그 신경 신호를 **LLM(Qwen3.8-27B)의 입력 임베딩에 직접** 넣는 실험 저장소.
 요구사항 R-3340(C 단계 결과) · **R-7469(다음 학습 · 진행 중)** · 인터페이스 계약(I) · 인수인계는 이 저장소의 `docs/requirements/` 에 있다(2026-09-23 moai-echomind 에서 옮겨 왔다).
 
-> **지금(2026-10-02)**: train-v6(자료 fly-loop-v4 · 냄새 맡기 구간 과제 task-v4 · 입력 시각 · 후각 국소 뉴런 smell_ln · 공간)과 train-v7(v6 + 캡션 되새김 0.5)까지 돌았다.
+> **지금(2026-10-14)** — 닫힌 고리(1판)는 10-02 그대로이고, 그 뒤는 대부분 **뇌만**(닫힌 고리와 따로) 쟀다.
+>
+> **닫힌 고리(10-02)**: train-v6(자료 fly-loop-v4 · 냄새 맡기 구간 과제 task-v4 · 입력 시각 · 후각 국소 뉴런 smell_ln · 공간)과 train-v7(v6 + 캡션 되새김 0.5)까지 돌았다.
 > **캡션**: 물체 있음과 함께 **냄새 쪽이 처음 통과**했다(v6 0.530 · v7 0.566 · 섞은 배선 0.46~0.52 · 찍기 0.461).
 > **성적표(행동)**: v6 투영기를 씨앗 100 으로 다시 재자 **처음으로 섞은 배선 대조를 통과**했다 — 먹이 도착 vector 0.46 · 섞은 배선 0.19/0.33/0.42 · p 0.0048 → "초파리 배선 벡터가 섞은 배선보다 나았다".
 > ⚠️ 단서 셋과 함께만 읽는다: ① 같은 자료 · 입력의 train-v7 은 씨앗 100 에서 p 0.056 으로 못 넘었다 ② vector 0.46 은 참값 글(회로 없음) 0.47 과 같은 수준 — 회로 신호가 참값만큼 쓰였다는 뜻이지 그보다 낫다는 뜻이 아니다 ③ 섞은 배선은 셋뿐 · s2 0.42 는 구간이 겹친다.
+> **두 층 제어(R-1027 · 10-03)**: Qwen 은 사건 때만 부른다 — 호출 −82 % · 벽시계 −51 % · 도착 유지 이상. 그러나 같은 호출률 무작위와 구별되지 않았다(p 0.51) → "호출을 줄였다"까지만.
+> **뇌만 · 버섯체(10-03 → 10-14)**: KC 희소성 1.0 → 4.8 %(섞은 배선도 4.7 % — 배선 특이적 아님) · MBON 냄새 반응은 진짜만(30/97 대 0/97) · 촉각엽 흥분 연결 ×0.5(모형 수정) 뒤 도파민 짝짓기가 냄새 · 구획 특이적 약화를 냈다(진짜 대조 여섯 통과 · 짝지은 냄새 −71 % 대 안 지은 냄새 −19 %). 뇌 전체 섞기는 MBON 이 침묵해 비교할 수 없어 **한 갈래만 섞은 부분 섞기**(같은 매개변수)와 견줬다 — 특이성 SI 진짜 0.513 대 PN → KC 섞기 0.35 · 0.41 · 0.49(통과) · KC → MBON 섞기 0.46 · 0.48 · 0.47(통과 · 차 작음). **가치 읽기 A1**(몸 없이): MBON 발화를 신경전달물질 부호로 더한 가치가 보상 짝짓기 뒤 +114(10/10) · 처벌 −124 · 무작위 부호 20 벌 모두 아래.
+> 쓸 수 있는 말: "진짜 PN → KC 배선이 (그 갈래만) 섞은 배선보다 냄새 특이적 연합 약화를 낸다(같은 매개변수)" · "회로가 만든 가치를 손으로 정한 읽기가 (몸 없이) 짝지은 냄새 쪽으로 옮긴다". 쓰지 않는 말: "초파리 뇌가 배운다" · "버섯체 출력이 행동을 정했다"(몸 A2 전). ⚠️ 단서: 같은 매개변수 대조다(섞은 뇌마다 다시 맞추는 작은 시험은 기준을 못 넘어 본 학습 안 함) · A1 은 KC → MBON 섞기(122~162 · 날 값)보다 작다 · 몸 · 행동으로는 아직 잇지 않았다 — [학습 안내서 03장 6.4 · 6.5](docs/training/03-뇌-맞추기와-검산.md) · [연구 노트 11 §8.13](docs/research/fly-connectome/11-구현-초파리-신호를-Qwen-에.md).
 > **1판 정리(2026-10-07)**: 되는 것 · 안 되는 것 · 쓸 수 있는 말 · 비용 · 에코마인드 적용 전에 정할 것 — [docs/model-v1.md](docs/model-v1.md).
-> 문구 규칙(R 2.0-6)은 train-v2 · v5 · v6(씨앗 40) · v7 에서 발동했다 — [학습 안내서 10장](docs/training/10-학습-기록과-다음.md).
+> 문구 규칙(R 2.0-6)은 train-v2 · v5 · v6(씨앗 40) · v7 에서 발동했고 v6 씨앗 100 에서 처음 통과했다 — [학습 안내서 10장](docs/training/10-학습-기록과-다음.md).
 
 **학습 안내서** — 초파리 뇌를 만들고 · 맞추고 · 검산하는 법(1부)과 Qwen 에 잇는 투영기 학습(2부)을 하는 순서대로:
 [docs/training/](docs/training/README.md)(읽기는 `index.html` · 고친 뒤 `uv run --no-project --with markdown==3.11.0 python docs/training/build.py`).
@@ -39,20 +44,27 @@
 | smell_ln | 안테나엽 국소 뉴런 4 종(26 뉴런 · 48 차원) — 약한 냄새 좌우 차(5~10 %)를 1 s 이상 두면 가른다. 후각 투사 뉴런은 거의 다 잃는다(연구 노트 14) |
 | 냄새 맡기 구간(task-v4) | 에피소드 처음 4 결정(1.2 s) 몸을 세워 두는 구간 — 좌우 차가 일정하게 유지돼 국소 뉴런이 가를 수 있게. 먹이 4~7 mm · 옆 방위 45~90° 와 함께 |
 | 냄새 센서(task-v2.1) | FlyGym 1.x 센서 2 · 3 = 왼 · 오른 더듬이. 그 전의 0 · 1 은 작은턱수염이었다(자료 fly-loop-v2 · v5 결과는 그 기준) |
-| 시야 자리(retino-v1) | 시각 투사 뉴런마다 연결 지도로 계산한 **고도** — 입력 기둥 뉴런 좌표의 시냅스 가중 평균. 방위(앞뒤 축)는 미확정 |
-| 투영기(projector) | 채널 벡터 → Qwen 은닉 5,120 차원 소프트 토큰. 학습되는 것은 이것뿐(train-v2 2층 MLP 3,187만 · train-v4 압축 벡터 → 선형 수십만) |
-| 압축기 · 관문(compress-v1) | 채널마다 PCA 로 16~64 차원(학습 나눔으로만 맞춤 · 기울기 없음) · 줄인 벡터로 판정을 통과한 채널만 투영기에 넣는다 |
-| 판정(stats-v2) | 진짜 배선이 "앞선다" = 재배선 앙상블 상위 5 % · 에피소드 부호 뒤집기 순열 Holm p < 0.05 · 찍기보다 높음. 운동 채널 · 냄새 쪽 칸은 판정 밖 |
+| 시야 자리(retino-v1 · v2) | 시각 투사 뉴런마다 연결 지도로 계산한 **고도**(v1) · **방위**(v2 · 선형 근사 · 과제 task-v5 `retinotopic2`) — 입력 기둥 뉴런 좌표의 시냅스 가중 평균. 방위 대응표를 섞은 대조는 못 넘었다(10-03 · p 0.064) |
+| 투영기(projector) | 채널 벡터 → Qwen 은닉 5,120 차원 소프트 토큰. 학습되는 것은 이것뿐(train-v2 2층 MLP 3,187만 · train-v4 압축 벡터 → 선형 수십만 · 1판 train-v6 선형 91.6 만) |
+| 압축기 · 관문(compress-v1 → v3) | 채널마다 PCA 로 줄임(v3 = 64 고정 + 채널마다 평균 크기 1 · 학습 나눔으로만 맞춤 · 기울기 없음) · 줄인 벡터로 판정을 통과한 채널만 투영기에 넣는다 |
+| 판정(stats-v2 → v3 → v4) | 진짜 배선이 "앞선다" = 재배선 앙상블 상위 5 % · 에피소드 부호 뒤집기 순열 Holm p < 0.05 · 찍기보다 높음. 자료의 과제 판으로 자동(`stats.rule_for_dataset`): 옛 자료 stats-v2(운동 · 냄새 쪽 칸 판정 밖) · task-v4 이상 **stats-v3**(+ 냄새 쪽 칸 · 찍기 대비 p < 0.05) · task-v6 부터 **stats-v4**(+ 선형 검사 절편 · 10-14 잠금 · 지금까지 판정은 그대로) |
 | 정직 목록 | 결과마다 "배선이 낸 것 / 코드가 더한 것"을 나눈 기록 |
 | 같은 쪽 방출(ipsi_release) | `sim-v2` — 후각 수용 뉴런의 같은 쪽 연결만 세기 × 1.4(Gaudry 2013). 연결 수는 그대로 |
 | sim-v3 · CellParams | 회로 학습 자리(2026-10-01 · `cellparams.py`) — 범위 안 **세포 종류마다** 막 시간 상수 · 문턱 + **종류 쌍마다** 연결 배율 α ≥ 0. 연결 수 · 부호는 그대로 · `cell` 이 없으면 sim-v2 와 같은 길 · 처음 값이면 발화 완전 일치(시험) |
-| scope(범위) | 무엇을 배우나를 이름으로 잠근 것(`config/fit.yaml`) — `escape-small` = 다가옴 LC/LPLC 13 종 + DNp01 · 02 · 04 · 11 · 출력 쌍 10 · 매개변수 44. 회로 학습 1 단계는 CMA-ES(아직 실행 안 함) |
+| scope(범위) | 무엇을 배우나를 이름으로 잠근 것(`config/fit.yaml`) — `escape-small` = 다가옴 LC/LPLC 13 종 + DNp01 · 02 · 04 · 11 · 출력 쌍 10 · 매개변수 44 · 버섯체 `kc-sparse-a · b · c` → `kc-mbon-a · b · c` → `kc-mbon-al`(촉각엽 고침 고정). 회로 학습 1 단계는 CMA-ES(기울기 없음 · 10-03 부터 실행 · 작은 시험 `fit-small` 먼저) |
+| KC · MBON · DAN | 버섯체(냄새 기억 자리) — KC(케니언 세포 약 4,000)가 냄새를 드물게 부호화 · MBON(출력 97) · DAN(도파민 뉴런 · 상 · 벌 신호) |
+| 가소성(도파민 짝짓기) | KC 와 도파민이 같이 켜지면 그 KC → MBON 연결이 약해지는 규칙(문헌에서 가져온 가정 · `config/plasticity.yaml`) · CS+ = 짝지은 냄새 · CS− = 짝 안 지은 냄새 · η = 배우는 빠르기(이 뇌에서 보정 · 0.002) |
+| 촉각엽 고침(al-fix) | 흥분성(콜린성) 국소 뉴런 → 투사 뉴런 화학 연결 ×0.5 — 냄새마다 PN 이 넓게 켜지던 번짐을 줄인 **모형 수정**(실제는 주로 전기 시냅스 · 연구 노트 16 §11) |
+| 부분 섞기(`pnkc-s<K>` · `kcmbon-s<K>`) | 한 갈래(PN → KC 또는 KC → MBON)만 섞고 나머지는 진짜 그대로 둔 뇌(`graph.brain_graph`) — 전체 섞기는 MBON 이 침묵해 가소성을 비교할 수 없어서. 종류가 그대로라 진짜로 맞춘 매개변수를 얹는다(**같은 매개변수** 대조) · 섞은 뇌마다 다시 맞추면 **같은 절차** |
+| 특이성 SI | (CS+ 보상 구획 감소) − (CS− 보상 구획 감소) — 짝지은 냄새만 골라 약해졌나 |
+| 가치 읽기(vr-a) | MBON 발화에 신경전달물질로 정한 부호(글루탐산 −1 · 아세틸콜린 · GABA +1)를 곱해 더한 가치 V — 몸 없이 잰 것이 A1 · 몸에 잇는 A2 는 대기 |
+| 결과 전 잠금 | 실행 전에 판정 기준 · 고르는 규칙을 설정 파일에 적고 커밋한 것 — 결과를 본 뒤 바꾸지 않는다(바꾸면 새 판 이름) |
 | NPC 몸 | `npc/body.py` `NpcBody` — `Loop` 의 몸(FlyGym) 자리에 끼우는 같은 모양(`reset` · `step` · `close`). 감각은 FlyGym 과 같은 식으로 NPC 위치에서 계산 · 구동 → 속도 · 회전 · 반사 → 옆으로 비켜서기 |
 | 가짜 세계 · 상자 월드 | 가짜 세계 = 시험용 2D(점 · 원 · 직선 이동 · `npc/fake_world.py`) · 상자 월드 = 에코마인드 월드 서버의 시험용 사본(다른 포트 · 라이브 DB 안 씀). **라이브 월드(9212)에는 붙지 않는다**(`forbidden_ports`) |
 | lockstep | 세계를 결정 하나(0.3 s)씩만 진행 — 뇌가 실시간보다 느려서(약 16 배) 세계가 기다린다 |
 | 축척 0.15 m/mm | 초파리 1 mm = NPC 0.15 m(선언 · 초파리 몸 약 3 mm ↔ 사람 어깨 폭 약 0.45 m) · 구동 1.0 = 12 mm/s = 1.8 m/s |
 | 층 구조(R-1027) | 1 반사 → 2 빠른 정책(초파리 신호 선형 읽기) → 3 Qwen 은 **사건 때만**(목표 · 간격 · 충돌 · 애매함 · 놀람). 문턱 `config/control.yaml` control-v2 · 대조 = 같은 호출률 무작위 · 주기 |
-| 판 번호 | 설정 · 규칙을 잠그는 이름(`sim-v2` · `task-v4` · `channels-v3` · `retino-v2` · `stats-v2` · `compress-v3` · `train-v5` · `scorecard-v3`). 옛 설정 판은 `config/archive/<판>.yaml` |
+| 판 번호 | 설정 · 규칙을 잠그는 이름(지금 `sim-v2` · `task-v5` · `channels-v3` · `retino-v2` · `stats-v3` · `compress-v3` · `train-v6` · `scorecard-v3` · `control-v2` · `npc-v4` · 회로 학습 `sim-v3` · 가소성 잠금 `calib-a` · `pr-a` · `vr-a`). 옛 설정 판은 `config/archive/<판>.yaml` · 무엇을 바꾸면 무엇을 다시 하나는 [학습 안내서 11장 §3](docs/training/11-명령-모음과-용어.md) |
 | 학습 안내서 | [docs/training/](docs/training/README.md) · 다음 학습 정의 [R-7469](docs/requirements/20260923-104151-7469_fly-learning-next_req.md) |
 
 ## 쓰는 법
@@ -62,7 +74,7 @@ uv sync --group dev                 # 파이썬 3.14
 uv run fly-connectome download      # 공식 파일 3개(1.1 GB) · 공식 MD5 대조
 uv run fly-connectome graph         # data/graph/traced-v1 (+ --rewired-seed 0 · 여럿은 --rewired-seeds 0-4)
 uv run fly-connectome bench escape  # 도망 반사 채점 — 무거움(가드: 메모리 40 % · 한 번에 하나)
-uv run pytest                       # 시험(56)
+uv run pytest                       # 시험(200 · 가벼운 것만은 -m "not heavy" 197)
 uv run fly-connectome retinotopy build                              # 시각 투사 뉴런의 시야 고도(retino-v1 · CPU 1 s)
 uv run fly-connectome inspect laterality --types ORN_DM1,ORN_VA2    # 감각 입구의 좌우 비율(CPU)
 uv run fly-connectome collect-probe --seeds 0-1 --rewired-seeds 0-4 # 자료 모으기 작은 측정(저장 없음)
@@ -78,7 +90,10 @@ bin/run_full_v4.sh                                                  # v4 전체:
 bin/run_full.sh                                                     # (v2 순서) 학습 둘 → 캡션 평가 → 성적표
 uv run fly-connectome reflex-probe                                  # 반사 진단(정면 다가옴에 GF 가 켜지나 · 시야 모드 × 상한) · scripts/20-odor/reflex-probe.sh
 uv run fly-connectome npc-run --stage s1                            # NPC 하나를 초파리 뇌로(R-5138) · scripts/40-eval/npc-run.sh s1 40
-uv run fly-connectome backup                                        # git 밖 결과를 두 곳에 복사 · 대조
+uv run fly-connectome fit --scope kc-mbon-al --method cmaes --brain real   # 회로 학습(sim-v3 · CMA-ES · 무거움) · 작은 시험 먼저 scripts/30-train/fit-small.sh
+uv run fly-connectome plasticity-controls --cell-from <회로 학습 폴더> --brain real   # 가소성 대조(뇌만) · --brain pnkc-s0 · kcmbon-s0 = 부분 섞기
+scripts/20-odor/valence-a1.sh                                       # 가치 읽기 A1(몸 없이) · 스크립트 전체는 학습 안내서 11장 §2
+uv run fly-connectome backup                                        # git 밖 결과(data/datasets · runs)를 ~/Backups/moai-echomind-fly-connectome 한 곳에 복사 · 대조
 ```
 
 **대시보드**(R-7928 · R-5777 · 읽기 전용 · 127.0.0.1 만 · 표준 라이브러리만) — `uv run fly-connectome dashboard --serve 8770 --every 30` → http://127.0.0.1:8770/ .
