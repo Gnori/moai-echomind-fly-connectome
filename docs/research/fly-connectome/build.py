@@ -6,8 +6,11 @@
 (README.md → index.html). 왼쪽 고정 메뉴에 문서·그림을 연결하고, 문서 사이 링크(.md)를 .html 로 바꾼다.
 
 사용법:
-    pip install markdown           # 한 번만 (python-markdown)
-    python3 docs/research/fly-connectome/build.py
+    uv run --no-project --with markdown==3.11.0 python docs/research/fly-connectome/build.py
+
+python-markdown 판은 3.11.0 으로 고정한다. 3.11.1 부터 굵게(**)를 CommonMark 식 규칙으로 읽어,
+닫는 ** 앞이 괄호·낫표이고 뒤에 한글이 붙은 곳(예: **발달 계보(hemilineage)**로)을 풀지 못한다
+(2026-10-14 실측: 노트 04 · 05 · 06 · 07 · 10 에서 9 곳). 다른 판이면 HTML 을 만들지 않고 멈춘다.
 
 문서를 더하려면 아래 ORDER 와 SHORT 에 파일 이름과 메뉴 표시명을 넣는다.
 """
@@ -19,10 +22,15 @@ import sys
 import unicodedata
 from pathlib import Path
 
+MARKDOWN_VERSION = "3.11.0"  # 이 판의 출력이 커밋된 HTML 이다(위 독스트링 — 3.11.1 은 한글 앞 굵게가 깨짐)
+RUN = f"uv run --no-project --with markdown=={MARKDOWN_VERSION} python docs/research/fly-connectome/build.py"
+
 try:
     import markdown
 except ImportError:  # 안내만 하고 끝낸다
-    sys.exit("python-markdown 이 없습니다. 먼저 `pip install markdown` 을 실행하십시오.")
+    sys.exit(f"python-markdown 이 없습니다. `{RUN}` 로 실행하십시오.")
+if markdown.__version_info__[:3] != tuple(map(int, MARKDOWN_VERSION.split("."))):  # 조용히 깨진 HTML 을 만들지 않는다
+    sys.exit(f"python-markdown {markdown.__version__} 입니다 — 이 빌드는 {MARKDOWN_VERSION} 고정입니다. `{RUN}` 로 실행하십시오.")
 
 ROOT = Path(__file__).resolve().parent
 

@@ -83,4 +83,4 @@
 이 안내서는 위 문서들을 **"하는 순서"** 로 다시 엮은 것이다. 숫자가 어긋나면 실행 기록(`runs/`)과 코드 · 설정이 정본이다.
 
 **읽기용 HTML**: [index.html](index.html) — 고칠 때는 이 마크다운을 고치고
-`uv run --no-project --with markdown python docs/training/build.py` 로 다시 만든다.
+`uv run --no-project --with markdown==3.11.0 python docs/training/build.py` 로 다시 만든다.

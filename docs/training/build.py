@@ -9,7 +9,10 @@
 모양(CSS)은 연구 노트 build.py 와 같다.
 
 사용법:
-    uv run --no-project --with markdown python docs/training/build.py
+    uv run --no-project --with markdown==3.11.0 python docs/training/build.py
+
+python-markdown 판은 3.11.0 으로 고정한다 — 연구 노트 build.py 와 같은 까닭(3.11.1 부터 닫는 ** 앞이
+괄호·낫표이고 뒤에 한글이 붙은 굵게를 풀지 못함). 다른 판이면 HTML 을 만들지 않고 멈춘다.
 
 문서를 더하려면 아래 GROUPS 에 (파일 이름, 메뉴 표시명) 을 넣는다.
 """
@@ -21,10 +24,15 @@ import sys
 import unicodedata
 from pathlib import Path
 
+MARKDOWN_VERSION = "3.11.0"  # 연구 노트 build.py 와 같은 판(위 독스트링)
+RUN = f"uv run --no-project --with markdown=={MARKDOWN_VERSION} python docs/training/build.py"
+
 try:
     import markdown
 except ImportError:  # 안내만 하고 끝낸다
-    sys.exit("python-markdown 이 없습니다. `uv run --no-project --with markdown python docs/training/build.py` 로 실행하십시오.")
+    sys.exit(f"python-markdown 이 없습니다. `{RUN}` 로 실행하십시오.")
+if markdown.__version_info__[:3] != tuple(map(int, MARKDOWN_VERSION.split("."))):  # 조용히 깨진 HTML 을 만들지 않는다
+    sys.exit(f"python-markdown {markdown.__version__} 입니다 — 이 빌드는 {MARKDOWN_VERSION} 고정입니다. `{RUN}` 로 실행하십시오.")
 
 ROOT = Path(__file__).resolve().parent
 

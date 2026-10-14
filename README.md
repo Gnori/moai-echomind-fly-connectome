@@ -11,11 +11,11 @@
 > 문구 규칙(R 2.0-6)은 train-v2 · v5 · v6(씨앗 40) · v7 에서 발동했다 — [학습 안내서 10장](docs/training/10-학습-기록과-다음.md).
 
 **학습 안내서** — 초파리 뇌를 만들고 · 맞추고 · 검산하는 법(1부)과 Qwen 에 잇는 투영기 학습(2부)을 하는 순서대로:
-[docs/training/](docs/training/README.md)(읽기는 `index.html` · 고친 뒤 `uv run --no-project --with markdown python docs/training/build.py`).
+[docs/training/](docs/training/README.md)(읽기는 `index.html` · 고친 뒤 `uv run --no-project --with markdown==3.11.0 python docs/training/build.py`).
 
 **연구 노트 11편은 이 저장소 안에 있다** — [docs/research/fly-connectome/](docs/research/fly-connectome/README.md)
 (읽기는 `index.html` · 2026-09-23 에 moai-echomind 에서 옮겨 왔다).
-고친 뒤에는 `uv run --no-project --with markdown python docs/research/fly-connectome/build.py` 로 HTML 을 다시 만든다.
+고친 뒤에는 `uv run --no-project --with markdown==3.11.0 python docs/research/fly-connectome/build.py` 로 HTML 을 다시 만든다.
 
 > 구도: **초파리 회로 = 인코더(앞) · LLM = 생성기(뒤)** — 이미지 생성(글 인코더 → 디퓨전)의 반대.
 
