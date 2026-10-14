@@ -76,8 +76,8 @@
 ## 다른 문서와의 관계
 
 - **설계와 배경**(왜 이렇게 만들었나)은 [연구 노트](../research/fly-connectome/README.md) — 특히 [06 설계](../research/fly-connectome/06-설계-초파리-회로에-Qwen-뇌.md) · [09 LIF](../research/fly-connectome/09-LIF-모델.md) · [11 구현](../research/fly-connectome/11-구현-초파리-신호를-Qwen-에.md) · [12 다음 학습 조사](../research/fly-connectome/12-다음-학습-조사.md).
-- **정의**(무엇을 왜 · 대조군 · 성공 기준)는 [R-7469](../requirements/20260923-104151-7469_fly-learning-next_req.md) · 계약은 [I-7469](../requirements/20260923-104151-7469_fly-learning-next_interface-design.md).
-- **증거**(로그 원문)는 요구사항 산출물 — [W core](../requirements/20260921-233859-3340_fly-connectome-closed-loop-core_walkthrough.md) · [W loop](../requirements/20260921-233859-3340_fly-connectome-closed-loop-loop_walkthrough.md).
+- **정의**(무엇을 왜 · 대조군 · 성공 기준)는 [R-7469](../requirements/archive/2026/09/W4/20260923-104151-7469_fly-learning-next_req.md) · 계약은 [I-7469](../requirements/archive/2026/09/W4/20260923-104151-7469_fly-learning-next_interface-design.md).
+- **증거**(로그 원문)는 요구사항 산출물 — [W core](../requirements/archive/2026/09/W3/20260921-233859-3340_fly-connectome-closed-loop-core_walkthrough.md) · [W loop](../requirements/archive/2026/09/W3/20260921-233859-3340_fly-connectome-closed-loop-loop_walkthrough.md).
 - **학습 자료 형식**은 [docs/datasets.md](../datasets.md).
 - **진행 상황**은 [인수인계](../requirements/echomind-fly-connectome-handoff.md).
 

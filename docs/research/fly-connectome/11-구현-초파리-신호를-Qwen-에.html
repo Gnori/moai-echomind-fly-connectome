@@ -1300,7 +1300,7 @@
 <p>읽는 법: 애매할 때 부른 7 번은 Qwen 이 빠른 정책보다 확실히 나았다. 그러나 가장 많은 <strong>시간 상한 호출(49 번)은 오히려 빠른 정책보다 나빴다</strong> — 시간이 지났다는 것만으로는 깊은 판단이 필요한 때가 아니다. 놀람 계기는 한 번도 켜지지 않았다.
 파일: <code>runs/scorecard-20261002-212213/scorecard.json</code>(sha256 <code>b5692ca234a53eb6</code>) · <strong>판정 정본은 같은 폴더 <code>scorecard.rejudged.json</code></strong>(sha256 <code>6f9d63610c4e25db</code> — 바탕 판정이 섞은 배선 층 구성까지 섞던 오류를 고친 뒤 다시 판정 · 원본 파일은 그대로 · <code>9df30d1</code>). 정본 R-1027 P Task 5 T4. 대장은 <a href="../../training/10-학습-기록과-다음.html">학습 안내서 10장 2.11</a> · 조사는 <a href="15-깊은-판단-호출-조사.html">연구 노트 15 §8</a>.</p>
 <h3 id="검증-보고-w-loop--2026-10-14--조건부-통과">검증 보고 (W loop · 2026-10-14 · 조건부 통과)</h3>
-<p>정본 <a href="../../requirements/20261001-070937-1027_fly-tiered-control-loop_walkthrough.md">W loop</a> 3.3 · 3.4 · 3.5. 위 표에 없던 것:</p>
+<p>정본 <a href="../../requirements/archive/2026/10/W1/20261001-070937-1027_fly-tiered-control-loop_walkthrough.md">W loop</a> 3.3 · 3.4 · 3.5. 위 표에 없던 것:</p>
 <ul>
 <li><strong>회피</strong>(부딪히지 않은 비율): 늘 부름 0.682 · 빠른 정책만 0.727 · 사건 때만 <strong>0.682</strong> · 무작위 0.682 · 주기 0.636 · 섞은 배선 사건 때만 0.41 · 0.68 · 0.59 · 빠른 정책만 0.73 · 0.55 · 0.59. 사건 때만의 먹이 도착 95 % 구간은 0.425~0.725.</li>
 <li><strong>1층 반사 규칙은 잠근 설정에서 꺼져 있었다</strong>(<code>reflex_threat_min: null</code>) — 결정 기록에 반사(<code>tier = reflex</code>)로 처리된 결정은 <strong>0</strong>(사건 때만 532 · 섞은 배선 580~612 결정 중) → 틀린 반사 비율은 <strong>잴 수 없다</strong>. 도망 반사는 원래대로 회로 · 디코더가 맡았다(그 구간이 있는 결정은 늘 부름 1 · 층 구성 0).</li>

@@ -66,7 +66,7 @@
 | 축척 0.15 m/mm | 초파리 1 mm = NPC 0.15 m(선언 · 초파리 몸 약 3 mm ↔ 사람 어깨 폭 약 0.45 m) · 구동 1.0 = 12 mm/s = 1.8 m/s |
 | 층 구조(R-1027) | 1 반사 → 2 빠른 정책(초파리 신호 선형 읽기) → 3 Qwen 은 **사건 때만**(목표 · 간격 · 충돌 · 애매함 · 놀람). 문턱 `config/control.yaml` control-v2 · 대조 = 같은 호출률 무작위 · 주기 |
 | 판 번호 | 설정 · 규칙을 잠그는 이름(지금 `sim-v2` · `task-v5` · `channels-v3` · `retino-v2` · `stats-v3` · `compress-v3` · `train-v6` · `scorecard-v3` · `control-v2` · `npc-v4` · 회로 학습 `sim-v3` · 가소성 잠금 `calib-a` · `pr-a` · `vr-a`). 옛 설정 판은 `config/archive/<판>.yaml` · 무엇을 바꾸면 무엇을 다시 하나는 [학습 안내서 11장 §3](docs/training/11-명령-모음과-용어.md) |
-| 학습 안내서 | [docs/training/](docs/training/README.md) · 다음 학습 정의 [R-7469](docs/requirements/20260923-104151-7469_fly-learning-next_req.md) |
+| 학습 안내서 | [docs/training/](docs/training/README.md) · 다음 학습 정의 [R-7469](docs/requirements/archive/2026/09/W4/20260923-104151-7469_fly-learning-next_req.md) |
 
 ## 쓰는 법
 

@@ -1,7 +1,7 @@
 # 02. 뇌 엔진 — LIF 방정식
 
 > 1부 초파리 뇌 · 둘째 장. 코드: `src/moai_echomind_fly/sim.py` · 설정 `config/sim.yaml`.
-> 증거: [W core 2 · 3.3](../requirements/20260921-233859-3340_fly-connectome-closed-loop-core_walkthrough.md) · 배경: [연구 노트 09 LIF 모델](../research/fly-connectome/09-LIF-모델.md).
+> 증거: [W core 2 · 3.3](../requirements/archive/2026/09/W3/20260921-233859-3340_fly-connectome-closed-loop-core_walkthrough.md) · 배경: [연구 노트 09 LIF 모델](../research/fly-connectome/09-LIF-모델.md).
 
 ## 1. 왜 방정식이 따로 필요한가
 

@@ -10,14 +10,14 @@
 > 안에 있다. moai-echomind 의 `/dev` 규약 검사와 대시보드(`active_development.md`)는 이 요구사항을 더 이상 보지 않는다 —
 > 산출물 규약은 사람이 지킨다(같은 프리픽스 · 상태 enum · W 없이 검증완료 금지).
 
-- **상태**: 검증완료
+- **상태**: 아카이브
   <!-- 조건부다 — C 는 돌았고 성적표가 나왔으나 `vector` 가 대조군 `rewired` 를 못 이겼다(W loop 5장 잔여 이슈 5건). -->
   <!-- 허용값(enum, 자유 서술 금지): 접수 | 작성 | 상세화 | 확정 | 구현중 | 구현완료(검증대기) | 검증완료 | 아카이브 | 보류 -->
 - **우선순위**: 중간
 - **규모**: complex (복잡) — 신규 저장소·신규 모듈
 - **유형**: 신규기능 (feature)
 - **예상 소요 기간**: 단계 관문으로 잰다 — A 실측 뒤 B·C 를 다시 산정
-- **관련**: 연구 노트 = 형제 저장소 `moai-echomind-fly-connectome/docs/research/fly-connectome/` (01~11 · 2026-09-23 요구자 지시로 옮김) · 인수인계 [echomind-fly-connectome-handoff.md](./echomind-fly-connectome-handoff.md)
+- **관련**: 연구 노트 = 형제 저장소 `moai-echomind-fly-connectome/docs/research/fly-connectome/` (01~11 · 2026-09-23 요구자 지시로 옮김) · 인수인계 [echomind-fly-connectome-handoff.md](../../../../echomind-fly-connectome-handoff.md)
 - **관련 산출물** (같은 디렉토리·동일 프리픽스 — `/dev artifact <i|p|w>`):
   - I (인터페이스 계약): [승인 v2](./20260921-233859-3340_fly-connectome-closed-loop_interface-design.md)
   - P (구현 플랜, 단계당 1건): [A core](./20260921-233859-3340_fly-connectome-closed-loop-core_dev-plan.md) · [B tool](./20260921-233859-3340_fly-connectome-closed-loop-tool_dev-plan.md) · [C loop](./20260921-233859-3340_fly-connectome-closed-loop-loop_dev-plan.md)
@@ -628,4 +628,4 @@ C  FlyGym ─감각→ 인코더 → LIF 엔진(300 ms) → 읽기 → 텍스트
 - [ ] 모든 P의 W 작성·통과 + 통합 E2E 기록 (6장, G4)
 - [ ] 아키텍처 문서 동기화 + 역링크 (G5)
 - [ ] 롤백 계획 검토 완료 (7장)
-- [ ] 요구자/이해관계자 확인 → 상태=아카이브, archive/ 이동
+- [x] 요구자/이해관계자 확인 → 상태=아카이브, archive/ 이동(요구자 2026-10-14 *"응 진행해"*)

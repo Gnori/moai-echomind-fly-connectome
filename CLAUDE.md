@@ -48,7 +48,7 @@ NPC 하나를 초파리 뇌로(R-5138)는 10-12 보류(배선 특이적인 것�
 ⚠️ 쓰지 않는 말: "초파리 뇌가 배운다" · "버섯체 출력이 행동을 정했다"(몸 A2 전) · "섞은 배선(뇌 전체)보다 낫다"
 (전체 섞기는 MBON 침묵이라 비교 불가). R-7469 는 10-14 **검증완료** — 성공 가능성이 낮은 것(몸 행동 A2 · 같은 절차 대조 · 대리 기울기 · 공간 목표 · 촉각엽 1판)은 **하지 않음**(요구자 *"성공 가능성이 낮은건 하지마"*).
 자세한 내용과 다음 일은 **[인수인계](docs/requirements/echomind-fly-connectome-handoff.md)** 와
-**[R-7469](docs/requirements/20260923-104151-7469_fly-learning-next_req.md)** · **[R-1027](docs/requirements/20261001-070937-1027_fly-tiered-control_req.md)**.
+**[R-7469](docs/requirements/archive/2026/09/W4/20260923-104151-7469_fly-learning-next_req.md)** · **[R-1027](docs/requirements/archive/2026/10/W1/20261001-070937-1027_fly-tiered-control_req.md)**.
 
 ---
 

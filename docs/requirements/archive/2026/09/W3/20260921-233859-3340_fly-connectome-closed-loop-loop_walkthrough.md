@@ -136,7 +136,7 @@ $ uv run pytest -q tests/test_train_layerwise.py
 |---|---|
 | 연구 노트 11장 — 형제 저장소 `moai-echomind-fly-connectome/docs/research/fly-connectome/` `11-구현-초파리-신호를-Qwen-에.md`(2026-09-23 옮김) | 8장에 멈춤·고침·재개, 결과 장(8.5) 추가(요구자용 설명 · HTML 같이 빌드) |
 | R-3340 §1.3-10 · 1.3-11 | 학습 메모리(0.32 GB/토큰 → 층별 역전파 32 GB) · train-v2 |
-| [echomind-fly-connectome-handoff.md](./echomind-fly-connectome-handoff.md) | 결과·원인 가르기·다음 판단거리 |
+| [echomind-fly-connectome-handoff.md](../../../../echomind-fly-connectome-handoff.md) | 결과·원인 가르기·다음 판단거리 |
 
 ---
 
