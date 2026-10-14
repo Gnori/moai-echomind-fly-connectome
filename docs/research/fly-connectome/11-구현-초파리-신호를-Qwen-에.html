@@ -1685,8 +1685,58 @@
 </table></div>
 <p>주 기준 넷이 모두 통과했다. 쓸 수 있는 말(잠근 대로): <em>"회로가 만든 가치를 손으로 정한 읽기가 (몸 없이) 짝지은 냄새 쪽으로 옮긴다"</em> · 처벌이면 반대로. 부호를 무작위로 섞으면 20 벌 모두 진짜보다 작았다. <strong>"버섯체 출력이 행동을 정했다"는 쓰지 않는다</strong>(몸 A2 전).
 단서: ① <strong>KC → MBON 섞은 뇌보다는 작다</strong>(122~162 대 114) — 섞은 뇌는 MBON 반응 자체가 커서(짝짓기 전 CS+ 4,700~5,000 대 진짜 3,000) 날 발화 수 차이가 커진다. 읽기를 <strong>정규화하지 않은 날 값</strong>이다 ② 읽기 부호는 손으로 정했다(신경전달물질 → 가치는 "highly correlated" 수준) ③ 같은 매개변수 대조 · η · CS− 는 진짜 배선에서 정했다 ④ 몸 · 행동이 아니다.
-근거 <code>runs/valence-judge-20261014-075726.json</code>(sha256 <code>76c6212923c149ce</code>) · 진짜 <code>runs/plasticity-controls-real-20261014-074304.json</code>(<code>1b6a0d2efcd9cebc</code>) · 섞은 갈래 <code>runs/plasticity-controls-{pnkc,kcmbon}-s0~s2-20261014-07*.json</code> · 실행 <code>scripts/20-odor/valence-a1.sh</code> · 판정 <code>scripts/50-analysis/valence_judge.py</code> · 설정 <code>config/plasticity.yaml</code> <code>valence_readout</code>.
-다음(요구자 결정 · 대기): A2 — 이 가치를 닫힌 고리의 몸에 잇기(크고 무거움).</p>
+근거 <code>runs/valence-judge-20261014-075726.json</code>(sha256 <code>76c6212923c149ce</code>) · 진짜 <code>runs/plasticity-controls-real-20261014-074304.json</code>(<code>1b6a0d2efcd9cebc</code>) · 섞은 갈래 <code>runs/plasticity-controls-{pnkc,kcmbon}-s0~s2-20261014-07*.json</code> · 실행 <code>scripts/20-odor/valence-a1.sh</code> · 판정 <code>scripts/50-analysis/valence_judge.py</code> · 설정 <code>config/plasticity.yaml</code> <code>valence_readout</code>.</p>
+<p><strong>정규화 읽기 탐색(10-14 21시 · 결과 뒤라 판정 아님 — vr-a 판정은 그대로)</strong>: KC → MBON 섞은 뇌보다 작게 나온 것이 MBON 반응 크기 탓인지, 저장된 MBON 발화로 읽는 법만 바꿔 다시 계산했다(N0~N2 는 계산 전에 스크립트 머리에 정함 · N3 는 N0~N2 를 본 뒤 몸 단계 읽기 후보라서 더함 · 모두 적음). 짝짓기 전 CS+ 읽기 뉴런(55) 발화 합은 진짜 712 · PN → KC 섞기 720~740 · <strong>KC → MBON 섞기 986~1,001(1.4 배)</strong>.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>읽는 법</th>
+<th>진짜 짝짓기</th>
+<th>PN → KC 섞기 s0 · s1 · s2</th>
+<th>진짜가 셋 위?</th>
+<th>KC → MBON 섞기 s0 · s1 · s2</th>
+<th>진짜가 셋 위?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>N0 날 값(판정 그대로)</td>
+<td>+114.1</td>
+<td>70.2 · 67.0 · 83.5</td>
+<td>✅(p 0.002)</td>
+<td>122.3 · 148.5 · 161.8</td>
+<td>❌ 아래</td>
+</tr>
+<tr>
+<td>N1 뇌 크기로 나눔</td>
+<td>+160.1</td>
+<td>97.3 · 90.7 · 115.9</td>
+<td>✅(p 0.002)</td>
+<td>124.3 · 149.8 · 162.0</td>
+<td>❌ 구별 안 됨(p 0.057)</td>
+</tr>
+<tr>
+<td>N2 뉴런마다 나눔</td>
+<td>+8.34</td>
+<td>5.60 · 5.31 · <strong>9.09</strong></td>
+<td>❌(s2 가 위)</td>
+<td>8.34 · 9.01 · 10.67</td>
+<td>❌ 아래</td>
+</tr>
+<tr>
+<td>N3 가치 비율(N0~N2 를 본 뒤 더함)</td>
+<td>+0.210</td>
+<td>0.163 · 0.175 · 0.208</td>
+<td>✅(p 0.006 · s2 와 거의 같음)</td>
+<td>0.148 · 0.177 · 0.185</td>
+<td>✅(p 0.002)</td>
+</tr>
+</tbody>
+</table></div>
+<p>N1 = 바뀜 ÷ 짝짓기 전 CS+ 읽기 뉴런 발화 합 × 1000 · N2 = 뉴런마다 자기 짝짓기 전 반응(½(CS+ + CS−) + 1)으로 나눔 · N3 = Σ s_i r_i ÷ Σ |s_i| r_i(Sakagiannis 2026 형). 날 바뀜을 부호 무리로 나누면 진짜는 피함(글루탐산) MBON 쪽 +113.9 · 다가감 쪽 +0.2 로 거의 전부 피함 MBON 약화이고, PN → KC 섞기는 다가감 MBON 도 같이 약해져(−31~−47) V 를 깎는다(pr-a 의 "섞으면 처벌 구획도 약해짐"과 같은 것).
+읽기: ① KC → MBON 섞기보다 작았던 것은 <strong>대부분 크기 탓</strong> — 뇌 크기로 나누면 구별되지 않는다(진짜가 낫다는 뜻도 아니다). ② 진짜 대 섞은 배선의 순서가 <strong>읽는 법마다 뒤집힌다</strong>(KC → MBON: N0 아래 · N1 같음 · N2 아래 · N3 위 / PN → KC: N0 · N1 · N3 위 · N2 아래) — 가치 단계의 "배선 덕"은 <strong>읽기에 기대는 작은 차이</strong>로 적는다.
+근거 <code>runs/valence-norm-20261014-212340.json</code>(sha256 <code>b7a4a1edc95f41fb</code> · 입력은 판정 파일이 읽은 것 그대로) · <code>scripts/50-analysis/valence-norm.sh</code>(몇 초) · 정본 R-7469 core 계획서 A1 아래.
+다음: A2(이 가치를 닫힌 고리의 몸에 잇기)는 <strong>하지 않음</strong>(10-14 · 요구자 <em>"성공 가능성이 낮은건 하지마"</em>) — 방향 · 이득을 손으로 정하는 구조라 몸 결과의 순서는 위 읽기 순서를 거의 따르고, 그 순서가 읽는 법마다 뒤집혀 "섞은 배선을 넘음"에 닿을 가능성이 낮다(R-7469 core 계획서 A2 설계).</p>
 <h3 id="같은-절차-판-작은-시험-2026-10-14">같은 절차 판 작은 시험 (2026-10-14)</h3>
 <p>부분 섞기 단서 ①(진짜로 맞춘 매개변수를 섞은 뇌에 그대로 얹음)을 풀려면 섞은 뇌마다 회로 학습을 다시 해야 한다. 본 학습 전에 작은 시험으로 먼저 봤다 — PN → KC 섞은 뇌 <strong>pnkc-s0</strong> 를 진짜와 같은 시작(진짜 kc-mbon-b) · 같은 목표 · 같은 기준(kc-mbon-al 과 같음 · 결과 전 <code>a7302b6</code> · <strong>5 세대 뒤 최선 손실 ≤ 3</strong>)으로 5 세대 맞췄다.</p>
 <div class="tbl"><table>
@@ -1711,7 +1761,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>→ <strong>기준(≤ 3)을 못 넘어 본 학습은 하지 않았다</strong>(진짜는 같은 5 세대에 1.67). 그래서 부분 섞기는 여전히 <strong>같은 매개변수 대조</strong>다.
+<p>→ <strong>기준(≤ 3)을 못 넘어 본 학습은 하지 않았다</strong>(진짜는 같은 5 세대에 1.67). 그래서 부분 섞기는 여전히 <strong>같은 매개변수 대조</strong>다. 같은 절차 대조는 10-14 R-7469 검증완료 때 <strong>하지 않음</strong>으로 닫았다(성공 가능성 낮음).
 근거 <code>runs/fit-kc-mbon-al-sim-v3-pnkc-s0-20261014-075845/</code>(params sha256 <code>303359cb39778303</code>) · 코드 <code>f8869a3</code>(회로 학습이 부분 섞기 뇌를 받음).</p>
 <p>순서 · 근거 파일은 <a href="../../training/03-뇌-맞추기와-검산.html#65-촉각엽-고치기--냄새-특이성-다시-엶-2026-10-12--10-13">학습 안내서 03장 6.5</a> · 정본 R-7469 core 계획서 Task 6 맨 아래 · <a href="../../model-v1.md">1판 정리</a> 3 · 4 절.</p>
 <h2 id="9-정직하게-적어-둘-한계">9. 정직하게 적어 둘 한계</h2>

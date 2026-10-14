@@ -891,8 +891,60 @@ MaleCNS 는 Shiu 가 맞춘 FlyWire 와 시냅스를 세는 방식이 달라서,
 </tr>
 </tbody>
 </table></div>
-<p>⚠️ 단서: ① <strong>KC → MBON 섞은 뇌보다는 작다</strong>(122~162 대 114) — 섞은 뇌는 MBON 반응 자체가 커서(짝짓기 전 CS+ 4,700~5,000 대 진짜 3,000) 날 발화 수 차이가 커진다. 이 읽기는 <strong>정규화하지 않은 날 값</strong>이다 ② 읽기 부호는 손으로 정했다(신경전달물질 → 가치는 "highly correlated" 수준) ③ 같은 매개변수 대조 · η · CS− 는 진짜 배선에서 정했다 ④ 몸 · 행동이 아니다 — 몸에 잇는 A2 는 크고 무거워 대기(요구자 결정).
+<p>⚠️ 단서: ① <strong>KC → MBON 섞은 뇌보다는 작다</strong>(122~162 대 114) — 섞은 뇌는 MBON 반응 자체가 커서(짝짓기 전 CS+ 4,700~5,000 대 진짜 3,000) 날 발화 수 차이가 커진다. 이 읽기는 <strong>정규화하지 않은 날 값</strong>이다 ② 읽기 부호는 손으로 정했다(신경전달물질 → 가치는 "highly correlated" 수준) ③ 같은 매개변수 대조 · η · CS− 는 진짜 배선에서 정했다 ④ 몸 · 행동이 아니다 — 몸에 잇는 A2 는 <strong>하지 않음</strong>(10-14 · 요구자 <em>"성공 가능성이 낮은건 하지마"</em> · 방향 · 이득을 손으로 정해 몸 결과 순서가 아래 읽기 순서를 따르고, 그 순서가 읽는 법마다 뒤집힘).
 근거 <code>runs/valence-judge-20261014-075726.json</code>(<code>76c6212923c149ce</code>) · 진짜 <code>runs/plasticity-controls-real-20261014-074304.json</code>(<code>1b6a0d2efcd9cebc</code>) · 실행 <code>scripts/20-odor/valence-a1.sh</code>(약 30 분) · 판정 <code>scripts/50-analysis/valence_judge.py</code> · 설정 <code>config/plasticity.yaml</code> <code>valence_readout</code>.</p>
+<p><strong>정규화 읽기 탐색(10-14 21시 · 결과 뒤라 판정 아님)</strong>: KC → MBON 섞은 뇌보다 작았던 것이 크기 탓인지, 저장된 발화로 읽는 법만 바꿔 다시 계산했다. 섞은 뇌는 읽기 뉴런 반응이 <strong>1.4 배</strong> 크다(짝짓기 전 CS+ 발화 합 986~1,001 대 진짜 712).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>읽는 법</th>
+<th>진짜 짝짓기</th>
+<th>PN → KC 섞기 s0 · s1 · s2</th>
+<th>진짜가 셋 위?</th>
+<th>KC → MBON 섞기 s0 · s1 · s2</th>
+<th>진짜가 셋 위?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>N0 날 값(판정 그대로)</td>
+<td>+114.1</td>
+<td>70.2 · 67.0 · 83.5</td>
+<td>✅(p 0.002)</td>
+<td>122.3 · 148.5 · 161.8</td>
+<td>❌ 아래</td>
+</tr>
+<tr>
+<td>N1 뇌 크기로 나눔</td>
+<td>+160.1</td>
+<td>97.3 · 90.7 · 115.9</td>
+<td>✅(p 0.002)</td>
+<td>124.3 · 149.8 · 162.0</td>
+<td>❌ 구별 안 됨(p 0.057)</td>
+</tr>
+<tr>
+<td>N2 뉴런마다 나눔</td>
+<td>+8.34</td>
+<td>5.60 · 5.31 · <strong>9.09</strong></td>
+<td>❌(s2 가 위)</td>
+<td>8.34 · 9.01 · 10.67</td>
+<td>❌ 아래</td>
+</tr>
+<tr>
+<td>N3 가치 비율(N0~N2 를 본 뒤 더함)</td>
+<td>+0.210</td>
+<td>0.163 · 0.175 · 0.208</td>
+<td>✅(p 0.006 · s2 와 거의 같음)</td>
+<td>0.148 · 0.177 · 0.185</td>
+<td>✅(p 0.002)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>뇌 크기로 나누면(N1) 진짜와 KC → MBON 섞기가 <strong>구별되지 않는다</strong>(p 0.057) — 작았던 것은 대부분 크기 탓이고, 진짜가 낫다는 뜻도 아니다.</li>
+<li>읽는 법마다 진짜 대 섞은 배선 순서가 <strong>뒤집힌다</strong> → 가치 단계의 "배선 덕"은 읽기에 기대는 작은 차이다. N3 는 N0~N2 를 본 뒤 더한 것이다.
+근거 <code>runs/valence-norm-20261014-212340.json</code>(<code>b7a4a1edc95f41fb</code>) · <code>scripts/50-analysis/valence-norm.sh</code>(몇 초 · 판정 vr-a 는 그대로).</li>
+</ul>
 <h4 id="같은-절차-판-작은-시험-10-14">같은 절차 판 작은 시험 (10-14)</h4>
 <p>부분 섞기 단서 ①(같은 매개변수 대조)을 풀려면 섞은 뇌마다 회로 학습을 다시 해야 한다(뇌당 약 4~5 h). 그 전에 작은 시험 — PN → KC 섞은 뇌 <strong>pnkc-s0</strong> 를 진짜와 같은 시작(kc-mbon-b) · 같은 목표 · 같은 기준(⑤ 와 같음 · <strong>5 세대 뒤 최선 손실 ≤ 3</strong>)으로 5 세대.</p>
 <div class="tbl"><table>
@@ -917,7 +969,7 @@ MaleCNS 는 Shiu 가 맞춘 FlyWire 와 시냅스를 세는 방식이 달라서,
 </tr>
 </tbody>
 </table></div>
-<p>→ <strong>기준을 못 넘어 본 학습은 하지 않았다</strong>(진짜는 ⑤ 에서 같은 5 세대에 1.67). 부분 섞기는 여전히 같은 매개변수 대조다.
+<p>→ <strong>기준을 못 넘어 본 학습은 하지 않았다</strong>(진짜는 ⑤ 에서 같은 5 세대에 1.67). 부분 섞기는 여전히 같은 매개변수 대조다. 같은 절차 대조는 10-14 R-7469 검증완료 때 <strong>하지 않음</strong>으로 닫았다.
 근거 <code>runs/fit-kc-mbon-al-sim-v3-pnkc-s0-20261014-075845/</code>(params <code>303359cb39778303</code>) · 코드 <code>f8869a3</code>(<code>config/fit.yaml</code> kc-mbon-al <code>init_from</code> 에 pnkc-s0~2).</p>
 <p>정본 R-7469 core P Task 6 맨 아래 · <a href="../model-v1.md">1판 정리</a> 3 · 4 절 · 회로 학습 손실 · 저장본은 <a href="10-학습-기록과-다음.html">10장</a> 대장.</p>
 <h2 id="7-확인-체크리스트">7. 확인 체크리스트</h2>
