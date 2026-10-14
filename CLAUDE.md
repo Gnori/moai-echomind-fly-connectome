@@ -114,8 +114,8 @@ NPC 하나를 초파리 뇌로(R-5138)는 10-12 보류(배선 특이적인 것�
 | 학습 자료 묶는 법(`datasets.py`) | `docs/datasets.md` |
 
 ⚠️ **연구 노트를 고치면 같은 커밋에서 HTML 을 다시 만든다**:
-`uv run --no-project --with markdown python docs/research/fly-connectome/build.py` (깨진 링크 0 확인)
-학습 안내서도 같다: `uv run --no-project --with markdown python docs/training/build.py`
+`uv run --no-project --with markdown==3.11.0 python docs/research/fly-connectome/build.py` (깨진 링크 0 확인)
+학습 안내서도 같다: `uv run --no-project --with markdown==3.11.0 python docs/training/build.py` · 판은 3.11.0 고정(3.11.1 은 한글 앞 굵게를 못 풂 · 다른 판이면 빌드가 멈춤)
 
 ---
 
