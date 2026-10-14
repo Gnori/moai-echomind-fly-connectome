@@ -262,6 +262,44 @@ def test_old_unfinished_projector_is_shown_as_stopped_not_running(tmp_path, monk
     assert "멈춘 기록" in row[1] and row[5] == "—"
 
 
+def test_eval_files_are_not_reread_while_their_fingerprint_is_the_same(tmp_path, monkeypatch):
+    """평가 파일은 지문(크기 · 수정 시각)이 같으면 다시 읽지 않는다 · 바뀌면 새 값 · 지우면 버림."""
+    import os
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    _fake_runs(runs)
+    g = _cfg()["globs"]
+    reads: list[str] = []
+    orig = dashboard._load_json
+
+    def counting(path: Path):
+        if path.name.startswith("eval-"):
+            reads.append(path.name)
+        return orig(path)
+
+    monkeypatch.setattr(dashboard, "_load_json", counting)
+    monkeypatch.setattr(dashboard, "_EVALS", {})
+    first = dashboard.read_projectors(runs, g["projector"], g["eval_caption"])
+    assert len(reads) == 2                                   # 처음엔 둘 다 읽는다
+    second = dashboard.read_projectors(runs, g["projector"], g["eval_caption"])
+    assert len(reads) == 2 and second[0]["evals"] == first[0]["evals"]
+
+    ev = runs / "projector-rewired-s0-train-v4" / "eval-scored-final.json"
+    data = json.loads(ev.read_text(encoding="utf-8"))
+    data["accuracy"]["legs"] = 0.77
+    ev.write_text(json.dumps(data), encoding="utf-8")
+    later = ev.stat().st_mtime + 5
+    os.utime(ev, (later, later))
+    third = dashboard.read_projectors(runs, g["projector"], g["eval_caption"])
+    assert reads[2:] == ["eval-scored-final.json"]          # 바뀐 것만 다시
+    scored = next(e for e in third[0]["evals"] if e["file"] == ev.name)
+    assert scored["accuracy"]["legs"] == 0.77
+
+    ev.unlink()
+    dashboard.read_projectors(runs, g["projector"], g["eval_caption"])
+    assert ev not in dashboard._EVALS
+
+
 def test_judge_table_marks_pass_that_is_not_distinct_from_baseline():
     cell = {"real": 0.57, "baseline": 0.50, "rewired": {"values": [0.47, 0.34, 0.54]},
             "episodes": 23, "decisions": 103, "p_holm": 0.026, "pass": True}

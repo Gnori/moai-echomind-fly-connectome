@@ -296,9 +296,39 @@ def from_status(st: dict[str, Any]) -> dict[str, Any]:
             "state": st.get("state"), "reason": st.get("reason"), "source": "status"}
 
 
+_EVALS: dict[Path, tuple[tuple[int, int], dict[str, Any]]] = {}   # 평가 파일 → (지문 · 요약)
+
+
+def _eval_summary(ev: Path) -> dict[str, Any]:
+    """평가 파일 한 개의 요약(저장본 · 칸 정확도 · 찍기) — 지문이 같으면 다시 읽지 않는다.
+
+    지문 = 크기 · 수정 시각(2단계 쪽과 같은 장치). 왜: 평가 파일은 표본마다 기록(per_sample)이
+    있어 1 MB 안팎인데, 30 초마다 40 개(18 MB)를 통째로 다시 읽던 일시 할당이 서버 RSS 를
+    42 → 53 MB 로 키웠다(2026-10-14 측정). 요약은 읽기만 하는 곳(그리기 · state.json)에서 쓰므로
+    같은 덩어리를 돌려준다.
+    """
+    try:
+        st = ev.stat()
+    except OSError:                          # glob 뒤에 사라짐 — 담아 두지 않는다
+        return {"file": ev.name, "checkpoint": None, "accuracy": {}, "baseline": {}}
+    sig = (st.st_size, st.st_mtime_ns)
+    hit = _EVALS.get(ev)
+    if hit and hit[0] == sig:
+        return hit[1]
+    try:
+        e = _load_json(ev)
+        summary = {"file": ev.name, "checkpoint": e.get("checkpoint"),
+                   "accuracy": e.get("accuracy", {}), "baseline": e.get("majority_baseline", {})}
+    except (ValueError, OSError):            # 쓰는 중 · 깨진 파일 — 지문이 바뀌면 다시 읽는다
+        summary = {"file": ev.name, "checkpoint": None, "accuracy": {}, "baseline": {}}
+    _EVALS[ev] = (sig, summary)
+    return summary
+
+
 def read_projectors(runs: Path, pattern: str, eval_pattern: str,
                     stale_s: float = 3600.0) -> list[dict[str, Any]]:
     out = []
+    seen: set[Path] = set()
     for d in sorted(p for p in runs.glob(pattern) if p.is_dir()):
         rec: dict[str, Any] = {"dir": d.name, "log": None, "meta": None,
                                "final": (d / "final.safetensors").exists(), "evals": [],
@@ -323,15 +353,11 @@ def read_projectors(runs: Path, pattern: str, eval_pattern: str,
             except (ValueError, OSError):
                 rec["meta"] = {"unchanged": None, "version": None}
         for ev in sorted(d.glob(eval_pattern)):
-            try:
-                e = _load_json(ev)
-                rec["evals"].append({"file": ev.name, "checkpoint": e.get("checkpoint"),
-                                     "accuracy": e.get("accuracy", {}),
-                                     "baseline": e.get("majority_baseline", {})})
-            except (ValueError, OSError):
-                rec["evals"].append({"file": ev.name, "checkpoint": None, "accuracy": {},
-                                     "baseline": {}})
+            seen.add(ev)
+            rec["evals"].append(_eval_summary(ev))
         out.append(rec)
+    for gone in _EVALS.keys() - seen:        # 사라진 파일의 요약은 버린다
+        del _EVALS[gone]
     # 끝나지 않았는데 오래 갱신이 없으면 = 멈춘 기록(도는 중 아님)
     for rec in out:
         rec["stale"] = (not rec["final"] and rec["log"] is not None
