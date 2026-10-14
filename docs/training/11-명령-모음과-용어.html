@@ -390,7 +390,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 <tr>
 <td>과제 · 인코더 · 디코더</td>
-<td><code>config/task.yaml</code> <strong>task-v4</strong>(v2.1 더듬이 센서 · v4 냄새 맡기 구간 · 먹이 4~7 mm · 옆 방위 · 옛 task-v2 · task-v1 · <strong>task-v3 는 F-007 예약</strong>)</td>
+<td><code>config/task.yaml</code> <strong>task-v5</strong>(10-03 · v4 + 시야 조율에 방위 — <code>vision.mode: retinotopic2</code> · <code>azimuth_sigma_deg</code> 25 · retino-v2 · 시야 대응표 대조 C 의 자료 <code>fly-loop-v5-ret-*</code> 용 · 못 넘어 학습은 안 함) · 1판 자료 fly-loop-v4 는 <strong>task-v4</strong>(v2.1 더듬이 센서 · v4 냄새 맡기 구간 · 먹이 4~7 mm · 옆 방위) · 옛 task-v4 · v2.1 · v2 · v1 · task-v3(냄새 둘 · F-007 예약)은 <strong>하지 않음</strong>(10-14)</td>
 <td>06 → 08 → 09</td>
 </tr>
 <tr>
@@ -405,7 +405,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 <tr>
 <td>판정 규칙</td>
-<td><strong>자료 판으로 자동</strong>(<code>stats.rule_for_dataset</code> — task-v4 이상 자료 = <strong>stats-v3</strong> · 냄새 쪽 칸 + 찍기 대비 p &lt; 0.05 · 옛 자료 = stats-v2) · 선형 검사 <strong>절편</strong>은 선택지(<code>ProbeSet.field(intercept=)</code> · <code>linear_probe.run(intercept=)</code> · <code>compress.gate(intercept=)</code> · 기본값 = 절편 없음 = 지금 판정 그대로 · 10-12 사후 확인용 — <a href="09-평가와-대조군.html">09장 3.3</a>)</td>
+<td><strong>자료 판으로 자동</strong>(<code>stats.rule_for_dataset</code> — task-v6 이상 자료 = <strong>stats-v4</strong>(v3 + 선형 검사 <strong>절편</strong> · 10-14 결과 전 잠금 <code>e8ef9de</code> · 아직 그 자료 없음) · task-v4 · v5 자료 = <strong>stats-v3</strong>(냄새 쪽 칸 + 찍기 대비 p &lt; 0.05) · 옛 자료 = stats-v2 · 지금까지 판정은 그대로) · 절편은 규칙을 따르고(<code>linear_probe.run</code> 은 stats-v4 면 절편) 손으로도 켤 수 있다(<code>ProbeSet.field(intercept=)</code> · <code>linear_probe.run(intercept=)</code> · <code>compress.gate(intercept=)</code> · 10-12 사후 확인용 — <a href="09-평가와-대조군.html">09장 3.3</a>)</td>
 <td>09 판정 다시(자료는 그대로)</td>
 </tr>
 <tr>
@@ -470,7 +470,7 @@ cat runs/.heavy.lock                        # 한 번에 하나 — 비어 있�
 </tr>
 </tbody>
 </table></div>
-<p><strong>옛 판은 <code>config/archive/&lt;판&gt;.yaml</code></strong> 에 남긴다(sim-v1 · task-v1 · task-v2 · task-v2.1 · channels-v1 · channels-v2 · retino-v1 · compress-v1 · compress-v2 · npc-v1 · npc-v2 · npc-v3) — <code>config.load(name, version="sim-v1")</code> 로 옛 자료를 다시 돌릴 수 있다.</p>
+<p><strong>옛 판은 <code>config/archive/&lt;판&gt;.yaml</code></strong> 에 남긴다(sim-v1 · task-v1 · task-v2 · task-v2.1 · task-v4 · channels-v1 · channels-v2 · retino-v1 · compress-v1 · compress-v2 · npc-v1 · npc-v2 · npc-v3 · physiology-v1 ~ v6 — 지금 physiology-v7) — <code>config.load(name, version="sim-v1")</code> 로 옛 자료를 다시 돌릴 수 있다.</p>
 <h2 id="4-문서-고치기">4. 문서 고치기</h2>
 <pre><code class="language-bash">uv run --no-project --with markdown==3.11.0 python docs/training/build.py                 # 이 안내서 HTML — &quot;깨진 링크 없음&quot;
 uv run --no-project --with markdown==3.11.0 python docs/research/fly-connectome/build.py  # 연구 노트 HTML
