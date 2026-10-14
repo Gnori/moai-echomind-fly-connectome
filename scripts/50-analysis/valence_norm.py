@@ -6,6 +6,7 @@
   N0 날 값 — vr-a 그대로(재현 확인)
   N1 뇌 크기로 나눔 — 바뀜 / 읽기 뉴런(55) 짝짓기 전 CS+ 발화 합 × 1000(씨앗마다)
   N2 뉴런마다 자기 크기로 나눔 — r̃_i = r_i / (½(r_i^{CS+,전} + r_i^{CS−,전}) + 1) 로 V 를 다시 냄
+  N3 가치 비율 — V̂ = Σ s_i r_i ÷ Σ |s_i| r_i(냄새 · 전후마다 · Sakagiannis 2026 MB_out 형) · ⚠️ N0~N2 결과를 본 뒤 더함(A2 읽기 후보라서)
 덧붙여 날 바뀜을 부호 무리(− 글루탐산 · + ACh · GABA)로 나눠 어디서 커지는지 본다.
 입력: 판정 파일(runs/valence-judge-*.json)이 읽은 파일 — 진짜는 기록된 경로 · 섞은 뇌는 판정 시각 이전 마지막 파일.
 사용: python scripts/50-analysis/valence_norm.py [runs/valence-judge-….json] → runs/valence-norm-<시각>.json
@@ -51,6 +52,10 @@ def change(mc: dict, s: np.ndarray, how: str) -> float:
     if how == "N2":
         scale = 0.5 * (cp[0] + cm[0]) + 1.0
         cp, cm = cp / scale, cm / scale
+    if how == "N3":
+        a = np.abs(s)
+        dv = [float(s @ cp[k] / max(a @ cp[k], 1.0) - s @ cm[k] / max(a @ cm[k], 1.0)) for k in (0, 1)]
+        return dv[1] - dv[0]
     dv = [float(s @ cp[k] - s @ cm[k]) for k in (0, 1)]
     out = dv[1] - dv[0]
     if how == "N1":
@@ -86,7 +91,7 @@ def main() -> None:
         res["pre_cs_plus_total"][b] = float(np.mean([(s != 0) @ mc[sd]["cs_plus"][0] for sd in seeds]))
         g = [by_group(mc[sd], s) for sd in seeds]
         res["groups"][b] = {k: float(np.mean([x[k] for x in g])) for k in g[0]}
-        ch[b] = {h: np.array([change(mc[sd], s, h) for sd in seeds]) for h in ("N0", "N1", "N2")}
+        ch[b] = {h: np.array([change(mc[sd], s, h) for sd in seeds]) for h in ("N0", "N1", "N2", "N3")}
     print("[norm] 짝짓기 전 CS+ 읽기 뉴런 발화 합(씨앗 평균): "
           + " · ".join(f"{b} {v:,.0f}" for b, v in res["pre_cs_plus_total"].items()), flush=True)
     print("[norm] 날 바뀜 부호 무리(피함 글루탐산 / 다가감 ACh·GABA): "
@@ -94,7 +99,7 @@ def main() -> None:
                        for b, g in res["groups"].items()), flush=True)
     rs = brains["real"]
     s_real = signs(rs, vr)
-    for h in ("N0", "N1", "N2"):
+    for h in ("N0", "N1", "N2", "N3"):
         rc = ch["real"][h]
         real_conds = {}
         for cond in ("paired", "punish", "unpaired", "shuffled", "off"):
@@ -110,10 +115,10 @@ def main() -> None:
         res["reads"][h] = {"real": real_conds, "arms": arms}
         pm = real_conds["paired"]["mean"]
         ctl = max(abs(real_conds[c]["mean"]) for c in ("unpaired", "shuffled", "off")) / abs(pm)
-        print(f"[norm] {h}: 진짜 짝짓기 {pm:+.2f}(p {real_conds['paired']['p']:.4f}) · 처벌 "
+        print(f"[norm] {h}: 진짜 짝짓기 {pm:+.3f}(p {real_conds['paired']['p']:.4f}) · 처벌 "
               f"{real_conds['punish']['mean']:+.2f} · 대조 최대 / 짝짓기 {ctl:.2f}", flush=True)
         for arm, a in arms.items():
-            print(f"[norm] {h}: {arm} 섞은 셋 {[round(v, 2) for v in a['means'].values()]} · "
+            print(f"[norm] {h}: {arm} 섞은 셋 {[round(v, 3) for v in a['means'].values()]} · "
                   f"진짜가 모두 위 {a['above_all']} · p {a['p']:.4f}", flush=True)
     dst = paths.runs_dir() / f"valence-norm-{time.strftime('%Y%m%d-%H%M%S')}.json"
     dst.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
