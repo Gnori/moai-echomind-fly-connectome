@@ -53,7 +53,7 @@ runs/dashboard/episodes.html  200   26,615 B
 | F-001 · 메모리 50 MB 이하 | ✅ 37 MB · 가짜 결정 5,600 개 최악 40.3 MB(처음 64.6 → 흘려 쓰기로 고침) |
 | F-002 · 결정 기록 칸 | ✅ 시험 `test_scorecard_decision_row_has_the_fields_the_dashboard_reads` · 형식 변경(`loom_mm` 뺌)은 R 3.3 에 적음 |
 | F-002 · 요약 파일 하위 호환 | ✅ `<구성>.jsonl` 형식 그대로 — v5 성적표를 episodes.html 이 그대로 읽음 |
-| F-002 · 파일 크기 | ⏳ 추정만(결정당 약 1 KB × 약 5,600 결정 ≈ 5.6 MB) — 다음 성적표에서 실측 |
+| F-002 · 파일 크기 | ✅ 추정(결정당 약 1 KB × 약 5,600 결정 ≈ 5.6 MB) → **실측 10-14**: scorecard-v3 `runs/scorecard-20260928-124155` 결정 4,976 · 6.01 MB · 결정당 1.27 KB(`scorecard-20261001-162209` 1.27 KB) · 층 구조 v4(z 포함) 2.69 KB |
 | F-003 · v5 40 × 7 표 · 도착 수 = scorecard.json | ✅ 도착 3 · 3 · 38 · 3 · 1 · 3 · 0 일치 · 결정 파일 없음 → "결정 기록 전(scorecard-v2)" 표시 |
 | F-003 · 결정 표 · 좌우 불일치 표시 | ✅ 가짜 파일 시험 · 브라우저 확인(Qwen 원문 속 `</script>` 는 글자로만) |
 
