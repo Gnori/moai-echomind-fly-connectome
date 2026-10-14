@@ -105,6 +105,7 @@
 <blockquote>
 <p>부록. 요구자 2026-09-29 <em>"지금 했던 작업 · 앞으로 할 작업 모두 문서화 · 그것 보고 그대로 다시 하거나 개선할 수 있게 · 아주 상세하게"</em>.
 2026-09-26 ~ 09-29 에 한 일(냄새 좌우 M0~M4 · train-v6)을 <strong>그대로 다시 하는 순서</strong>와, 걸렸던 <strong>함정</strong>, <strong>앞으로 할 작업의 설계안</strong>을 한곳에 모았다.
+10-01 ~ 10-03 의 두 층 제어(R-1027 · 빠른 정책 → 문턱 잠금 → 층 성적표)는 <a href="#29-두-층-제어r-1027--빠른-정책--문턱-잠금--층-성적표">2.9</a>.
 처음부터 끝까지의 명령 전체 · 판 번호 표는 <a href="11-명령-모음과-용어.html">11장</a>, 결과 대장은 <a href="10-학습-기록과-다음.html">10장</a>, 냄새 좌우 조사는 <a href="../research/fly-connectome/14-냄새-좌우-조사.html">연구 노트 14</a>.</p>
 </blockquote>
 <p><strong>이 장의 규칙</strong></p>
@@ -295,6 +296,12 @@
 <td><code>scripts/40-eval/eval-judge.sh &lt;판&gt; &lt;묶음&gt; [뇌…]</code> · <code>scripts/40-eval/scorecard.sh &lt;판&gt; [씨앗]</code></td>
 <td>무거움(Qwen)</td>
 <td>2.7</td>
+</tr>
+<tr>
+<td>40 두 층 성적표(R-1027)</td>
+<td><code>scripts/40-eval/scorecard-tiered.sh &lt;판&gt; [씨앗] [--measure]</code></td>
+<td>무거움(Qwen · 씨앗 40 약 10 h)</td>
+<td>2.9</td>
 </tr>
 <tr>
 <td>50 분석(파일만)</td>
@@ -578,6 +585,55 @@ bin/run_full_v6.sh --skip-compress --train-only=rewired-s1,rewired-s2   # 그 �
 <pre><code class="language-bash">uv run fly-connectome backup      # git 밖 결과를 ~/Backups/moai-echomind-fly-connectome 에 · 대조
 </code></pre>
 <p>그 뒤 문서: 학습 안내서 <a href="10-학습-기록과-다음.html">10장</a> 대장에 한 줄(손실 · 저장본 sha256 · 재배선과 나란히) → R 인수 기준 → 인수인계 → 결과가 바뀐 곳(연구 노트 11 · 안내서 README · 뿌리 README). 연구 노트 · 안내서를 고치면 같은 커밋에서 HTML 을 다시 만든다(깨진 링크 0).</p>
+<h3 id="29-두-층-제어r-1027--빠른-정책--문턱-잠금--층-성적표">2.9 두 층 제어(R-1027) — 빠른 정책 → 문턱 잠금 → 층 성적표</h3>
+<p>수치 정본은 <a href="../requirements/20261001-070937-1027_fly-tiered-control-loop_walkthrough.md">W loop</a> 3.1 · 3.3 · 3.4 · 연구 노트 11 §8.11. 자료는 fly-loop-v4 · 투영기는 train-v6.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>순서</th>
+<th>명령</th>
+<th>결과 파일</th>
+<th>확인값(10-01 ~ 10-03 실측)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① 빠른 정책 맞춤</td>
+<td><code>uv run fly-connectome fast-policy fit --dataset fly-loop-v4 [--brains …]</code></td>
+<td><code>runs/fast-policy-fly-loop-v4-&lt;뇌&gt;-fast-v2/</code></td>
+<td>돌기 정확도 진짜 <strong>0.666</strong> · 섞은 배선 0.569~0.577 · 찍기 0.434</td>
+</tr>
+<tr>
+<td>② 문턱 제안</td>
+<td><code>uv run fly-connectome fast-policy calibrate --dataset fly-loop-v4</code></td>
+<td><code>…-real-fast-v2/calibration-control-v2.json</code></td>
+<td>호출률 0.298(예산 0.30) · 교사 일치 0.858</td>
+</tr>
+<tr>
+<td>③ 문턱 잠금</td>
+<td><code>config/control.yaml</code> <strong>control-v2</strong> 에 적고 커밋(<strong>결과 전</strong> · <code>8756f86</code>)</td>
+<td>—</td>
+<td>간격 상한 5 · 최소 간격 2 · 놀람 0.99 · 애매함 0.05 · 충돌 0.99 · 반사 <code>reflex_threat_min: null</code>(끔)</td>
+</tr>
+<tr>
+<td>④ 작게 재기</td>
+<td><code>scripts/40-eval/scorecard-tiered.sh train-v6 2000-2039 --measure</code>(씨앗 2 개로)</td>
+<td><code>runs/scorecard-&lt;시각&gt;/</code></td>
+<td>구성마다 에피소드 시간 · 호출률</td>
+</tr>
+<tr>
+<td>⑤ 층 성적표</td>
+<td><code>scripts/40-eval/scorecard-tiered.sh train-v6</code>(씨앗 2000~2039 · 11 구성 · 여유 63 % 를 기다림 · 끝나면 <code>useful_calls.py</code>)</td>
+<td><code>runs/scorecard-&lt;시각&gt;/scorecard.json</code> · 구성마다 <code>*.decisions.jsonl</code>(층 · 계기)</td>
+<td>10-02 21:22 → 10-03 07:11 · 늘 부름 0.350 · 빠른 정책만 0.475 · <strong>사건 때만 0.575 · 호출 0.182</strong> · 무작위 0.550 · 주기 0.550 · 섞은 배선 사건 때만 0.500 · 0.450 · 0.475 · 반사 결정 0</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>⚠️ 구성 순서가 중요하다 — <code>vector-gated</code> 가 같은 성적표 안에서 <code>-random-matched</code> · <code>-periodic-matched</code> 보다 먼저 돌아야 호출률을 거기서 맞춘다(스크립트가 그 순서로 부름).</li>
+<li>⚠️ 10-02 실행은 판정 코드를 고치기 전이라(바탕 판정에 섞은 배선 층 구성까지 섞임) <strong>판정 정본은 같은 폴더 <code>scorecard.rejudged.json</code></strong>(sha256 <code>6f9d63610c4e25db</code> · 원본 <code>scorecard.json</code> <code>b5692ca234a53eb6</code> 은 그대로 · <code>9df30d1</code>). 지금 코드로 다시 돌리면 <code>scorecard.json</code> 의 판정이 곧 정본이다.</li>
+<li>끝나면 2.8 과 같다(10장 대장 2.11 · 연구 노트 11 §8.11 · 대시보드 에피소드 쪽이 층 · 계기 칸을 보여 줌).</li>
+</ul>
 <hr />
 <h2 id="3-함정--증상--원인--대처">3. 함정 — 증상 → 원인 → 대처</h2>
 <div class="tbl"><table>
@@ -661,6 +717,9 @@ bin/run_full_v6.sh --skip-compress --train-only=rewired-s1,rewired-s2   # 그 �
 <hr />
 <h2 id="4-앞으로-할-작업---설계안확정-아님">4. 앞으로 할 작업 — ⚠️ 설계안(확정 아님)</h2>
 <p>아래는 조율 세션이 정리한 후보다. <strong>요구자 확인 전에는 착수하지 않는다</strong> · 명령은 초안이다(없는 옵션 · 스크립트는 "만들 것"으로 적었다).</p>
+<blockquote>
+<p>⚠️ <strong>10-14 상태</strong>: 4.1 은 train-v7 로 해 봤다(성적표 p 0.056 · 못 넘음 · <a href="10-학습-기록과-다음.html">10장</a> 2.8 · 2.9) · 4.2 는 시야 대응표 대조를 못 넘어(물체 쪽 0.794 대 0.797 · 0.775 · p 0.064) 학습까지는 안 했다 · 4.3 은 버섯체 범위로 1 단계(CMA-ES)만 했고 대리 기울기 2 단계는 <strong>하지 않음</strong> — R-7469 검증완료(요구자 <em>"성공 가능성이 낮은건 하지마"</em>). 아래 표는 그때 적은 설계안 그대로 둔다.</p>
+</blockquote>
 <h3 id="41-행동-단계가-캡션을-깎는-문제">4.1 행동 단계가 캡션을 깎는 문제</h3>
 <div class="tbl"><table>
 <thead>
