@@ -161,6 +161,10 @@
 <td>가장 작은 시험</td>
 <td><strong>V0</strong> — 렌더 없이 분석식 광류(회전 · 다가옴 · 같은 양의 평행 이동)를 T4/T5 기둥마다 넣고, <strong>진짜 기둥 대응표 대 아형 × 눈 안에서 자리만 섞은 대응표 5 벌</strong> · 재배선 셋과 나란히 LPLC2 · DNa02 를 본다. 주 판정 = 다가옴의 LPLC2 가 섞은 대응표 5/5 보다 크다(8 절)</td>
 </tr>
+<tr>
+<td>V0b 재료(10 절 · 두 번째 일감)</td>
+<td>V0 시간 재기에서 다가옴 LPLC2 0~2 [측정]. 다가옴 길의 다른 입력 11 종류 중 <strong>반응을 잰 기록이 있는 것은 넷(T2 · Tm2 · Tm3 · Tm4 — 모두 LC4 쪽)</strong> · Tm20 은 색만 · Tm5Y · Y3 · TmY5a · Tm37 · Li28 · TmY3 는 <strong>없음</strong> · 여섯 어느 것도 <strong>다가옴 반응 · 끄고 LC4/LPLC2 를 본 연구 없음</strong>. Li28(GABA) · TmY5a · Tm37(글루탐산)은 억제라 켤 대상이 아니다. <strong>판단: LC4 를 주 판정으로 한 V0b(T5 + 측정된 OFF · ON-OFF 순간 세포) = 중간 · LPLC2 = 낮음(측정 없는 Tm5Y 몫) · GF = 낮음~중간</strong></td>
+</tr>
 </tbody>
 </table></div>
 <blockquote>
@@ -949,6 +953,9 @@
 <li>MaleCNS 에서도 LPLC2 입력의 T4/T5 몫이 약 38 % 인지(위 값은 별도 공개 자료 optic-lobe v1.1 오른 시각엽).</li>
 <li>재배선 s0~s2 가 어떤 섞기인지(5.2 절 — 섞는 방식이 결과를 정한다)를 판정 문구에 적는다.</li>
 </ol>
+<blockquote>
+<p>→ 조율 세션 확인(<code>87cd9b3</code> 커밋 본문 · 2026-10-16): ① T4/T5 자리 13,580 중 13,577 · ② <strong>VS 입력의 약 17 % 가 T4a · T5a</strong>(1.3 절 VS 224 의 길) · ③ <strong>HS → DNa02 직접 137 시냅스</strong> · ④ LPLC2 의 T4/T5 몫 32.1 % · LC4 2.0 %(optic-lobe 페이지 38.5 · 2.5 % 보다 낮음 — 분모 차이로 보이나 확인 못 함).</p>
+</blockquote>
 <hr />
 <h2 id="9-확인하지-못한-것--정직-목록">9. 확인하지 못한 것 · 정직 목록</h2>
 <ul>
@@ -962,6 +969,325 @@
 <li>수컷 시각엽 페이지 비율에 중추 뇌 시냅스가 포함되는지 · T5a–d 수(에이전트가 읽음 · 이 세션은 다시 열지 않음).</li>
 <li>취미 저장소들의 숫자는 동료 심사가 없고, 검색 요약과 README 가 다른 경우가 있었다(FlyBrain-Worldle: 요약 92/97 % · README 96/95 %) — 판단 근거로 쓰지 않고 참고만.</li>
 <li>8 절의 배수 · 문턱 · 크기(1.5 배 · 20 · 90 °/s · 10° → 60° · v_ref 100 °/s)는 <strong>우리 제안</strong>이다(문헌 값 아님).</li>
+<li>(10 절) Ache 2019 · von Reyn 2017 · Klapoetke 2022 · Kim 2023 · Shinomiya 2022 본문은 출판사 차단으로 이 세션이 열지 못했다 — 초록만 직접 확인 [A] · 본문 수치는 에이전트가 읽은 것 [P*]. LC4 의 수용장 · 선호 방향 · 밝은 다가옴 반응(Klapoetke 2022 보충 자료)은 못 읽음.</li>
+<li>(10 절) T2 수용장의 도수 · Tm5Y · Y3 · TmY5a · Tm37 · Li28 · TmY3 의 어떤 반응 기록 · 여섯 종류를 끄고 LC4 · LPLC2 · GF 를 본 실험 — 못 찾음. Arenz 2017(Tm3 · Tm4 12°)은 2 차 인용으로만.</li>
+<li>(10 절) optic-lobe 페이지 비율과 MaleCNS 비율이 약 1.2 배 다른 까닭(분모에 중추 뇌 · LPLC2 끼리 연결이 들어가는지).</li>
+</ul>
+<hr />
+<hr />
+<h2 id="10-v0b-재료--다가옴-길의-다른-입력-2026-10-16--조율-세션-두-번째-일감">10. V0b 재료 — 다가옴 길의 다른 입력 (2026-10-16 · 조율 세션 두 번째 일감)</h2>
+<blockquote>
+<p>출발점 [측정 · 조율 세션]: V0 를 8 절 그대로 결과 전 잠금(<code>87cd9b3</code> · 다가옴 대조만 평행 이동 → <strong>접선</strong>: 같은 자리 · 같은 아형별 총량 · 바깥 대신 돌기). 시간 재기(씨앗 0 · 판정 아님): 회전 → DNa02 부호 뒤집힘(시계 → 오른 19 / 왼 0 · 반시계 → 왼 17 / 오른 0) · <strong>다가옴 LPLC2 0~2</strong> → 8.3 의 "입력 부족" 가능성이 크다.
+이 절도 <strong>문헌 · 원문만</strong>이다. 확인 수준 기호는 머리말과 같다.</p>
+</blockquote>
+<h3 id="101-다가옴-길-입력-구성-측정--runsloom-inputs-20261016-205710json--sha256-앞-16-d3d86f2acba69b53">10.1 다가옴 길 입력 구성 [측정 · <code>runs/loom-inputs-20261016-205710.json</code> · sha256 앞 16 <code>d3d86f2acba69b53</code>]</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>대상</th>
+<th>입력(MaleCNS · 대상 입력 시냅스 중 %)</th>
+<th>기둥 좌표</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LPLC2</td>
+<td>LPLC2 끼리 13.1 · <strong>T4/T5 합 약 32</strong> · Tm5Y 7.7 · Tm20 3.8 · Y3 2.8 · PVLP011(중추 뇌 2 개) 2.8 · TmY5a 2.6 · Tm37 2.55 · Tm4 2.2</td>
+<td>입력 가중 평균으로 88~100 %</td>
+</tr>
+<tr>
+<td>LC4</td>
+<td><strong>T2 15.1 · TmY3 13.4 · Tm4 10.2 · Tm2 6.7</strong> · LC4 끼리 6.0 · Tm3 5.6 · Li28 2.4 · MeLo8 2.0 · LC9 2.0</td>
+<td>같음</td>
+</tr>
+<tr>
+<td>GF(DNp01)</td>
+<td><strong>LC4 17.3 · LPLC2 13.2</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>공개 수컷 시각엽 페이지(optic-lobe v1.1 · 오른 시각엽)의 비율은 약 1.2 배 크다 — LPLC2 의 Tm5Y 9.5 % · LC4 의 Li28 2.9 % [V20][P]. 순서는 같다.</p>
+<h3 id="102-①-종류마다--반응-성질-원문-수치--없으면-없음">10.2 ① 종류마다 — 반응 성질 (원문 수치 · 없으면 "없음")</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>종류(대상 · %)</th>
+<th>이름 주의</th>
+<th>밝아짐/어두워짐</th>
+<th>시간</th>
+<th>수용장</th>
+<th>방향 선택</th>
+<th>다가옴 · 물체</th>
+<th>신경전달물질 → 우리 부호</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>T2</strong>(LC4 15.1)</td>
+<td>—</td>
+<td><strong>ON-OFF</strong> — <em>"excitation to both the OFF and ON phases of the flash sequence"</em> · 작은 밝은 물체에 가장 셈 [V37][P]</td>
+<td>빠른 적응(정성) [V38][P]</td>
+<td>도수 없음 · <em>"RF sizes of T2 and T3 matched their peak object size, implying that they employ strong center-surround antagonism"</em> [V38][P] · 넓은 격자 반응이 가장 좋은 작은 물체보다 <strong>−88 %</strong> [V37][P]</td>
+<td><strong>없음</strong> — <em>"neither LC11, T2, nor T3 were found to be direction selective"</em> [V38][P]</td>
+<td>다가옴 기록 없음 · 작은 물체 &gt; 막대 &gt; 격자(거의 0) [V37][P]</td>
+<td>콜린성 [V31][P] → <strong>+1</strong></td>
+</tr>
+<tr>
+<td>T2a(LC4 0.4 · 참고)</td>
+<td>—</td>
+<td>ON 쪽 선호 · 느린 속도(18 °/s)에서만 [V40][P]</td>
+<td>—</td>
+<td>작음(도수 없음) [V40][P]</td>
+<td>전방향 [V40][P]</td>
+<td>없음</td>
+<td>ACh(예측) → +1</td>
+</tr>
+<tr>
+<td><strong>TmY3</strong>(LC4 13.4)</td>
+<td>Y3 와 다른 세포</td>
+<td><strong>잰 기록 없음</strong></td>
+<td>없음</td>
+<td>없음</td>
+<td>flyvis 예측만 — 방향 선택 12 종류 중 하나 · <em>"a prediction that has yet to be experimentally tested"</em> [V4][P*]</td>
+<td>없음</td>
+<td>ACh(예측) [V20][P*] → +1</td>
+</tr>
+<tr>
+<td><strong>Tm4</strong>(LC4 10.2 · LPLC2 2.2)</td>
+<td>—</td>
+<td><strong>OFF</strong> — <em>"Tm4 did not respond to ON flashes"</em> [V39][P]</td>
+<td>전체 OFF 깜빡임에 <strong>순간</strong> 반응(Tm9 는 지속) [V39][P] · 대역 통과 [V36][P]</td>
+<td>FWHM <strong>11.3°</strong> · 중심-주변 구조 못 찾음 [V36][P]</td>
+<td>없음(OFF 경로 첫 방향 선택은 T5) [A]</td>
+<td>없음</td>
+<td>콜린성 [V44][P*] → +1 · flyvis 는 Tm4 를 틀리게 예측 [V4][P*]</td>
+</tr>
+<tr>
+<td><strong>Tm2</strong>(LC4 6.7)</td>
+<td>—</td>
+<td><strong>OFF</strong> — <em>"Tm1 and Tm2 hyperpolarized at light onset, and depolarized strongly at light offset"</em> [V35][P]</td>
+<td>필터 정점 <strong>43 ms</strong>(SEM 2.7) [V35][P] · 대역 통과 [V36][P]</td>
+<td>FWHM <strong>8.2°</strong> [V36][P]</td>
+<td><strong>없음</strong> — <em>"Mi1, Tm3, Tm1 and Tm2 are not direction selective under these conditions"</em> [V35][P]</td>
+<td>없음</td>
+<td>콜린성 → +1</td>
+</tr>
+<tr>
+<td><strong>Tm3</strong>(LC4 5.6)</td>
+<td>—</td>
+<td><strong>ON</strong> — 밝아짐에 선택 [V35][P]</td>
+<td>필터 정점 <strong>53 ms</strong>(SEM 5.2) [V35][P]</td>
+<td>약 12°(Arenz 2017 의 2 차 인용) [S]</td>
+<td>없음 [V35][P]</td>
+<td>없음 · 어두운 다가옴엔 거의 안 켜질 것 [추론]</td>
+<td>콜린성 → +1</td>
+</tr>
+<tr>
+<td><strong>Li28</strong>(LC4 2.4)</td>
+<td>수컷 Li28 = FlyWire <strong>Li22</strong>("Li2") · FlyWire 의 "Li28" 은 다른 세포(수컷 Li16) [V43][P*]</td>
+<td>잰 기록 없음 · 입력 Tm3 41.4 + Tm2 40.8 % → ON-OFF 추정 [V20][P · 추정은 추론]</td>
+<td>없음</td>
+<td>넓은 장(191 기둥 · 해부) [V20][P*]</td>
+<td>없음</td>
+<td>출력의 <strong>33.4 % 가 LC4</strong> [V20][P]</td>
+<td><strong>GABA</strong>(EASI-FISH) [V27][P*] → <strong>−1 억제</strong></td>
+</tr>
+<tr>
+<td><strong>Tm5Y</strong>(LPLC2 7.7)</td>
+<td>= Matsliah 의 <strong>Tm5f</strong> [V43][P*]</td>
+<td><strong>잰 기록 없음</strong> · flyvis 예측 약한 OFF(그림에서 읽음) [V4][P*]</td>
+<td>없음</td>
+<td>해부 퍼짐 수질 6 · 소엽 7 기둥(수용장 아님) [V20][P*]</td>
+<td>flyvis 예측 아님 [V4][P*]</td>
+<td>기록 없음 · 가설 <em>"Tm5Y might play an important role in loom detection"</em>(배선만) [V31][P] · 입력 Tm20 13.5 · Li19(GABA) 8.3 · Y3 7.4 % · 출력 LPLC2 6.4 · LPLC1 6.1 % [V20][P]</td>
+<td>ACh(예측) → +1</td>
+</tr>
+<tr>
+<td><strong>Tm20</strong>(LPLC2 3.8)</td>
+<td>—</td>
+<td>색만 잼 — 전체 시야 색 빛에 칼슘 · 파랑에 켜짐 · ON/OFF · 시간 · 수용장은 안 잼 [V42][P*]</td>
+<td>없음</td>
+<td>없음(해부 3 기둥)</td>
+<td>없음</td>
+<td>없음 · 입력 L3 14.8 · Mi4(GABA) 9.1 % [V20][P]</td>
+<td>콜린성(RNA) [V44][P*] → +1</td>
+</tr>
+<tr>
+<td><strong>Y3</strong>(LPLC2 2.8)</td>
+<td>TmY3 와 다른 세포</td>
+<td><em>"Recordings of T2a and Y3 visual responses have not been reported"</em> · <em>"predicted to be ON–OFF"</em>(입력 Mi1 + Tm1) [V41][P]</td>
+<td>없음</td>
+<td>없음</td>
+<td>없음</td>
+<td>없음 · 입력 Mi1 14.2 · Tm1 12.7 % [V20][P]</td>
+<td>ACh(예측) → +1</td>
+</tr>
+<tr>
+<td><strong>TmY5a</strong>(LPLC2 2.6)</td>
+<td>—</td>
+<td>잰 기록 없음 · flyvis 모호 [V4][P*]</td>
+<td>없음</td>
+<td>없음</td>
+<td>flyvis 예측 방향 선택(ON 움직임 쪽) [V4][P*]</td>
+<td>없음 · 입력 Tm4 10.9 · Tm3 9.9 % [V20][P]</td>
+<td><strong>글루탐산</strong>(RNA) [V44][P*] → <strong>−1</strong></td>
+</tr>
+<tr>
+<td><strong>Tm37</strong>(LPLC2 2.55)</td>
+<td>수컷 Tm37 = FlyWire <strong>Tm5e</strong> · FlyWire 의 "Tm37" 은 수컷 Tm33 [V43][P*]</td>
+<td>잰 기록 없음</td>
+<td>없음</td>
+<td>없음</td>
+<td>없음</td>
+<td>없음 · 입력 Tm5c 15.2 %(색 경로) [V20][P]</td>
+<td><strong>글루탐산</strong>(EASI-FISH) [V27][P*] → <strong>−1</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>읽은 것 [추론]:
+- <strong>측정이 있는 것은 넷(T2 · Tm2 · Tm3 · Tm4)이고 모두 LC4 쪽</strong>이다 — LC4 입력의 약 37.6 %(15.1 + 10.2 + 6.7 + 5.6). 어두운 다가옴의 가장자리에서 켜질 것은 <strong>OFF · ON-OFF</strong>(Tm2 · Tm4 · T2). 넷 다 <strong>방향 선택이 없고 국소(8~12°) · 순간 · 대역 통과</strong>다.
+- <strong>LPLC2 쪽의 T4/T5 밖 입력(Tm5Y · Tm20 · Y3 · TmY5a · Tm37)은 다가옴에 대한 측정이 하나도 없다</strong> — 이들에게 규칙을 주면 전부 우리 가정이다.
+- <strong>억제 셋</strong>(Li28 GABA · TmY5a · Tm37 글루탐산)은 침묵 LIF 에서 켜면 대상을 누르기만 한다 — 앞단이 "켤" 대상이 아니다.
+- 여섯 종류(T2 · T2a · Tm2 · Tm3 · Tm4 · TmY3) 어느 것도 <strong>끄고 LC4 · LPLC2 · GF 를 본 연구가 없다</strong>.</p>
+<h3 id="103-②-lc4--lplc2--gf-의-다가옴-계산--문헌">10.3 ② LC4 · LPLC2 · GF 의 다가옴 계산 — 문헌</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>무엇</th>
+<th>문헌</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GF = 속도 + 크기</td>
+<td>Ache 2019: LPLC2 가 <em>"provide the entire GF size component"</em> · <em>"A model summing a linear function of angular velocity (provided by LC4) and a Gaussian function of angular size (provided by LPLC2) replicates GF looming response dynamics"</em> [V29] · von Reyn 2017: <em>"it encodes angular expansion velocity, whereas other input cell type(s) encode angular size"</em> [V28]</td>
+<td>초록 [A] — 이 세션 확인</td>
+</tr>
+<tr>
+<td>크기 문턱 · 가중치</td>
+<td>크기 성분 정점 약 42° · GF 이륙 문턱 39° 근처 · 합의 최적 가중치 LPLC2 1.1 · LC4 1.5(R² 0.93) · 시각엽에서 GF 로 가는 직접 시냅스의 99.4 % 가 LPLC2 + LC4 · LPLC2 → LC4 시냅스 &gt; 175</td>
+<td>[V28][V29][P*]</td>
+</tr>
+<tr>
+<td>LPLC2</td>
+<td>어두운 다가옴에 강함 · 밝은 다가옴 약간 · <strong>멀어짐 · 움직임 없는 어두워짐 · 넓은 장 움직임에는 반응 없음</strong> · 펼침 5° 안에 반응 · 수용장 ≤ 60° · <strong>한 팔만은 작고, 두 팔은 각각의 합보다 큼</strong> · 안쪽 움직임이 누름 · <em>"T5 cells are likely the major excitatory input"</em></td>
+<td>[V18][P]</td>
+</tr>
+<tr>
+<td>T4/T5 를 끈 LPLC2</td>
+<td>Kim 2023: 앞 단계 움직임 뉴런을 끄고 LPLC2 를 쟀다 — LPLC2 의 성질은 <em>"integrating multiple visual features across two early visual structures: the lobula and the lobula plate"</em> · 본문: 반응 크게 줄되 남음 · 남은 것은 소엽 입력 몫일 수 · 소엽 수상돌기 입력은 주로 Tm5Y</td>
+<td>초록 [A] 이 세션 · 본문 [P*]</td>
+</tr>
+<tr>
+<td>반경 대립 억제</td>
+<td>LPi3-4 · LPi4-3 는 글루탐산성 · 반경 대립 가설 확인</td>
+<td>[V33][P*]</td>
+</tr>
+<tr>
+<td>LC4</td>
+<td>시각엽당 60~70 · 소엽 2 · 4 층 + 1 층 · 갑자기 나타난 원판의 GF 순간 탈분극이 LC4 를 끄면 거의 사라짐 [V28][P*] · 어두운 물체 선호 · <em>"fast looming detector"</em> · 잰 10 종류 중 <strong>유일하게 방향 선택</strong> · 조율이 입력에서 바로 물려받은 것은 아닐 것 [V32][P*] · 주 입력 T2 [V31][P]</td>
+<td>[P*] · [P]</td>
+</tr>
+<tr>
+<td>행동</td>
+<td>LC4 · LPLC2 를 켜면 점프 [V34][P*] · Wu 2016 은 LC4 · LPLC2 를 <strong>직접 재지 않았다</strong>(LC6 · LC16 · LC11 만) [V34][P*]</td>
+<td>[P*]</td>
+</tr>
+<tr>
+<td>LIF 사례</td>
+<td>Chen &amp; Xi 2025: LC4 · LPLC2 에 직접 포아송 150 Hz · 입력의 30 % 만 켜도 GF &gt; 150 Hz — 실제 GF 는 스파이크 하나라 생리 값이 아니다</td>
+<td>[V13][P*]</td>
+</tr>
+</tbody>
+</table></div>
+<p>앞단이 줘야 할 것 [추론 · 위 문헌의 합성]:
+- <strong>LC4</strong>: 다가오는 어두운 가장자리에서 <strong>OFF · ON-OFF 국소 순간 신호</strong>(Tm2 · Tm4 · T2) — 가장자리가 빠를수록 큼 · 원판이 처음 나타날 때도 순간 신호. T4/T5 만으로는 LC4 를 기대하지 않는다(2 %).
+- <strong>LPLC2</strong>: 수용장 하나(≤ 60°) 안에서 <strong>두 팔 이상 동시에 바깥쪽</strong>(T5 위주 · 어두운 가장자리이므로 T4 는 거의 0) · 안쪽 · 주변 움직임 없음. 나머지는 측정이 없는 Tm5Y 몫.
+- <strong>GF</strong>: LC4 와 LPLC2 가 함께 · 원판 약 40° 근처.</p>
+<h3 id="104-③-판단--가장-작은-시험-v0b">10.4 ③ 판단 · 가장 작은 시험 V0b</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>길</th>
+<th>성공 가능성 [추론]</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LC4</strong> ← T5 + 측정된 OFF · ON-OFF 순간 세포(Tm2 · Tm4 · T2)</td>
+<td><strong>중간</strong></td>
+<td>입력의 약 38 % 가 성질이 측정된 세포 · 1.3 절에서 Tm2 만 켜도 LC4 15/126 [측정] · 단 TmY3(13.4 %)는 측정 없음 · LC4 조율은 입력에서 바로 안 나온다는 문헌 [V32]</td>
+</tr>
+<tr>
+<td>LPLC2 ← T5(+T4)만</td>
+<td><strong>낮음</strong></td>
+<td>V0 시간 재기 0~2 [측정] · T4/T5 를 꺼도 반응이 남는다는 문헌(소엽 몫) [V30]</td>
+</tr>
+<tr>
+<td>LPLC2 ← T5 + Tm5Y 등(규칙은 가정)</td>
+<td>낮음~중간 · <strong>판정 근거 약함</strong></td>
+<td>Tm5Y 등은 다가옴 측정이 없어 규칙이 우리 가정 · LPLC2 끼리 13 % 는 일단 켜지면 도움</td>
+</tr>
+<tr>
+<td>GF ← 위 둘</td>
+<td>낮음~중간</td>
+<td>문헌상 LC4 와 LPLC2 둘 다 필요 · 실제 GF 는 스파이크 하나라 기준 수치가 없다</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>권고</strong>: V0b 는 <strong>LC4 를 주 판정</strong>으로 한다 — 측정된 입력만으로 앞단을 짤 수 있는 유일한 대상이다. LPLC2 · GF 는 보고만 하고, 측정 없는 종류를 넣는 팔은 <strong>탐색</strong>(판정 안 함)으로 둔다.</p>
+<p><strong>V0b 설계(제안 · 잠글 때 바꿀 수 있음 · 바꾸면 결과 전에)</strong></p>
+<ul>
+<li>자극(300 ms · V0 과 같은 기하): ① <strong>어두운 원판 다가옴</strong> — 앞-왼 · 앞-오 30° 중심 · 10° → 60° ② <strong>움직임 없는 어두워짐</strong> — 같은 자리 · 60° 원을 처음부터 덮고 밝기만 1 → 0 으로 같은 시간 동안(Klapoetke 2017 의 대조 [V18] · LPLC2 는 반응 없음이 문헌 · LC4 는 미지) ③ V0 의 <strong>접선</strong> 대조 유지.</li>
+<li>앞단(기둥 c · 밝기 L_c(t) = 배경 1 · 원판 0 · 원판이 덮은 비율로 0~1):</li>
+<li><strong>T5a–d</strong>: V0 의 국소 바깥 움직임 규칙 그대로. <strong>T4 = 0</strong>(어두운 가장자리는 OFF — V0 와 다른 점).</li>
+<li><strong>Tm2 · Tm4(OFF)</strong>: r = r_max · clip(−dL̃_c/dt ÷ d_ref, 0, 1) · L̃ = 공간 가우시안(FWHM Tm2 <strong>8.2°</strong> · Tm4 <strong>11.3°</strong> [V36]) 뒤 시간 저역(τ 약 40 ms — Tm2 필터 정점 43 ms [V35] 를 근거로 <strong>선언</strong>).</li>
+<li><strong>T2(ON-OFF)</strong>: r = r_max · clip(|dL̃_c/dt| ÷ d_ref, 0, 1) · 크기 억제는 수치가 없어 넣지 않는다 → <strong>T2 를 넣는 팔과 빼는 팔 둘</strong>(T2 가 LC4 입력 1 위라 빼면 입력 부족이 쉬움).</li>
+<li>Tm3(ON): 어두운 다가옴에는 0 — 넣지 않는다.</li>
+<li>TmY3 · Tm5Y · Tm20 · Y3: 측정 없음 → 주 팔에 넣지 않는다 · <strong>탐색 팔</strong> 하나(같은 OFF 규칙)만.</li>
+<li>억제 셋(Li28 · TmY5a · Tm37): 넣지 않는다(배선이 켜면 켜진다).</li>
+<li>r_max 150 Hz(V0 과 같음) · d_ref 선언.</li>
+<li>팔: 진짜(주) · <strong>자리 섞기 5 벌</strong>(넣은 종류마다 종류 × 눈 안에서) · 재배선 s0~s2 · 주 팔 − T2 · 탐색 팔(+ TmY3 · Tm5Y · Tm20 · Y3).</li>
+<li>판정(결과 전):</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>기준</th>
+<th>무엇을 말해 주나</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>E1 LC4 자리(주)</strong></td>
+<td>다가옴의 LC4 발화 합 — 진짜 대응표 &gt; 자리 섞기 5/5 · 그 중앙값의 ≥ 1.5 배 · 진짜가 씨앗 평균 <strong>&lt; 20</strong> 이면 "입력 부족"(통과 아님)</td>
+<td>우리 배선이 OFF · ON-OFF 기둥 세포의 <strong>자리</strong>를 LC4 까지 쓴다</td>
+</tr>
+<tr>
+<td>E2 LC4 배선</td>
+<td>다가옴의 LC4 발화 합 — 재배선 셋 모두 &lt; 진짜</td>
+<td>배선 특이성</td>
+</tr>
+<tr>
+<td>E3 좌우</td>
+<td>앞-왼 다가옴 → 왼 LC4 &gt; 오른 LC4(씨앗 ≥ 9/10) · 앞-오는 반대</td>
+<td>좌우(눈 단위)</td>
+</tr>
+<tr>
+<td>보고만</td>
+<td>LC4 다가옴 대 어두워짐 · LPLC2 · GF · DNp02/DNp11 · T2 뺀 팔 · 탐색 팔</td>
+<td>문헌과 맞는지(LPLC2 는 어두워짐에 반응 없음이 문헌)</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>실행 수 [계산]: 다가옴 · 어두워짐 각 좌우(4) × (진짜 + 자리 섞기 5 + T2 뺀 팔 + 탐색 팔 = 8) × 씨앗 10 = 320 · 재배선 3 × 4 × 10 = 120 · 접선 2 × 6 × 10 = 120 → <strong>약 560 × 300 ms</strong> · 씨앗 5 면 약 280.</li>
+<li>문구: E1 + E2 통과 → "측정된 OFF · ON-OFF 기둥 세포와 T5 를 계산해 넣으면 우리 배선이 다가옴 쪽 LC4 를 자리 특이적으로 켠다(앞단은 계산)". LPLC2 · GF 는 보고만. "본다"는 여전히 V1(그림 → 검출기) 뒤.</li>
+<li>V0b 전에 조율 세션이 볼 그래프 사항(조회만): ① Li28 · TmY5a · Tm37 의 MaleCNS 신경전달물질 → 부호(문헌은 GABA · 글루탐산 · 글루탐산) ② Tm2 · Tm4 · T2 의 기둥 좌표 비율(이미 88~100 %) ③ LPLC2 끼리 13 % 가 시각엽 안인지 중추 뇌(사구체)인지 ④ 페이지 비율과 MaleCNS 비율의 분모 차이.</li>
 </ul>
 <hr />
 <h2 id="참고-문헌">참고 문헌</h2>
@@ -993,6 +1319,25 @@
 <li>[V25] Zavatone-Veth, Badwan &amp; Clark 2020, J Vis 20(2):2 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7343402/fullTextXML [P*]</li>
 <li>[V26] Gruntman et al. 2018, Nat Neurosci 21:250 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5967973/fullTextXML [P]</li>
 <li>[V27] Nern et al. 2025, Nature 641:1225 (수컷 시각엽) — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12119369/fullTextXML [P]</li>
+<li>[V28] von Reyn et al. 2017, <em>"Feature Integration Drives Probabilistic Behavior in the Drosophila Escape Response"</em>, Neuron 94:1190–1204 — doi 10.1016/j.neuron.2017.05.036 · 초록 [A] · Europe PMC · 이 세션 · 본문 https://www.cell.com/neuron/fulltext/S0896-6273(17)30474-9 [P*]</li>
+<li>[V29] Ache et al. 2019, <em>"Neural Basis for Looming Size and Velocity Encoding in the Drosophila Giant Fiber Escape Pathway"</em>, Curr Biol 29:1073–1081 — doi 10.1016/j.cub.2019.01.079 · 초록 [A] · 이 세션 · 본문 [P*]</li>
+<li>[V30] Kim, Park, Lee &amp; Kim 2023, <em>"A visuomotor circuit for evasive flight turns in Drosophila"</em>, Curr Biol 33:321–335 — doi 10.1016/j.cub.2022.12.014 · 초록 [A] · 이 세션 · 본문 [P*]</li>
+<li>[V31] Tanaka &amp; Clark 2022, eNeuro (소엽 시각 투사 뉴런 입력) — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC9034759/fullTextXML [P]</li>
+<li>[V32] Klapoetke et al. 2022, <em>"A functionally ordered visual feature map in the Drosophila brain"</em>, Neuron 110:1700–1711 — doi 10.1016/j.neuron.2022.02.013 · 초록 [A] · 이 세션 · 본문 [P*] · 보충 자료 [X]</li>
+<li>[V33] Shinomiya et al. 2022, Curr Biol (소엽판 LPi · LPLC2) — https://www.cell.com/current-biology/fulltext/S0960-9822(22)01023-5 [P*]</li>
+<li>[V34] Wu et al. 2016, eLife 5:e21022 — PMC5293491 [P*]</li>
+<li>[V35] Behnia et al. 2014, Nature 512:427 — https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&amp;id=4243710 [P]</li>
+<li>[V36] Kohn et al. 2021, Curr Biol — PMC8725177(NCBI efetch) [P]</li>
+<li>[V37] Keleş et al. 2020, Cell Rep — PMC7210872(NCBI efetch) [P]</li>
+<li>[V38] Tanaka &amp; Clark 2020, Curr Biol — PMC8716191(NCBI efetch) [P]</li>
+<li>[V39] Ramos-Traslosheros &amp; Silies 2021, Nat Commun — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8371135/fullTextXML [P]</li>
+<li>[V40] Frighetto &amp; Frye 2023, eLife — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10115446/fullTextXML [P]</li>
+<li>[V41] Seung 2024, Nature — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11446822/fullTextXML [P]</li>
+<li>[V42] Christenson et al. 2024, Nat Neurosci — PMC11537989 [P*]</li>
+<li>[V43] Matsliah et al. 2024, Nature — PMC11446827 [P*] · Nern et al. 2025 보충 표 7(수컷 ↔ FlyWire 이름 맞춤) [P*]</li>
+<li>[V44] Davis et al. 2020, eLife 9:e50901 — PMC7034979 [P*]</li>
+<li>[V45] Schilling &amp; Borst 2015, Biol Open 4:1105 — PMC4582123 [P*] · 그 밖에 초록만: Serbe 2016 · Arenz 2017 · Strother 2017 · Ammer 2015 · Meier 2014 · Mu 2014 · von Reyn 2014 [A]</li>
+<li>[V20] 보충 — 수컷 시각엽 세포 종류 페이지 <code>Li28_R</code> · <code>Tm5Y_R</code> · <code>Y3_R</code> · <code>TmY5a_R</code> · <code>Tm37_R</code> · <code>Tm20_R</code> 의 입력 · 출력 표 [P] · 이 세션 합산</li>
 <li>그 밖에 참고만: Maisak et al. 2013, Nature — https://doi.org/10.1038/nature12320 [A] · Rayshubskiy et al. 2025, eLife — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12279373/fullTextXML [P*] · Cho · Kang · Kim, arXiv 2610.10014(비시각 · MaleCNS 차수 보존 섞기 20 벌) [P*]</li>
 </ul>
 <div class="pager"><a href="16-KC-희소성-범위-조사.html">← 16 · KC 희소성 범위 — 조사</a><span></span></div>
