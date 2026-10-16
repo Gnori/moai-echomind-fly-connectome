@@ -1,0 +1,24 @@
+# 첫 경기장(R-1177 V1 · 요구자 10-16 승인: 잔디 땅 · 바위 · 벤치 · 나무 · CC0 · 사람 MakeHuman)
+# 에셋 경로는 에코월드 3D 저장소 assets/ 기준(읽기 전용 · git 밖). 허가는 원본 기록(record)에서 확인한 값.
+version: scene-arena-a-v1
+assets:
+  tree_small_02:    {path: village/foliage/tree_small_02/lod2.glb,  record: village/foliage/tree_small_02/meta.json,  license: CC0, source: polyhaven}
+  island_tree_02:   {path: village/foliage/island_tree_02/lod2.glb, record: village/foliage/island_tree_02/meta.json, license: CC0, source: polyhaven}
+  rock_moss_set_02: {path: village/foliage/rock_moss_set_02/lod1.glb, record: village/foliage/rock_moss_set_02/meta.json, license: CC0, source: polyhaven}
+  ph_boulder_01:    {path: village/village/ph_boulder_01.glb, record: village/village/ph_boulder_01.meta.json, license: CC0, source: "polyhaven(가져온 도구 import_polyhaven · Poly Haven 은 CC0 만 배포 · 기록에 허가 칸 없음)"}
+  garden_bench_teak: {path: village/furniture/garden_bench_teak/lod1.glb, record: village/furniture/garden_bench_teak/source.json, license: 우리 것, source: "에코월드 자체 제작(요구자 소유)"}
+ground: {size_m: 60.0, color: [0.30, 0.45, 0.20]}     # 잔디색 평면(텍스처는 렌더러에서 CC0 확인 뒤)
+sky: {color: [0.62, 0.75, 0.92]}
+light: {sun_dir: [-0.4, -1.0, -0.3], ambient: 0.55}
+entities:
+  - {id: fly, kind: agent, pos: [0, 0, 0], yaw: 0.0, body: default}
+  - {id: tree1, kind: prop, asset: tree_small_02,  pos: [-6, 0, 9],   radius: 0.15, height: 4.6}
+  - {id: tree2, kind: prop, asset: island_tree_02, pos: [7, 0, 11],   radius: 0.40, height: 3.4}
+  - {id: tree3, kind: prop, asset: tree_small_02,  pos: [12, 0, -5],  radius: 0.15, height: 4.6}
+  - {id: tree4, kind: prop, asset: island_tree_02, pos: [-11, 0, -8], radius: 0.40, height: 3.4}
+  - {id: tree5, kind: prop, asset: tree_small_02,  pos: [-3, 0, -13], radius: 0.15, height: 4.6}
+  - {id: rock1, kind: prop, asset: rock_moss_set_02, pos: [4, 0, 4],  radius: 1.10, height: 1.3, col_offset: [2.626, -1.123]}
+  - {id: rock2, kind: prop, asset: ph_boulder_01,  pos: [-5, 0, 3],   radius: 0.95, height: 1.0}
+  - {id: rock3, kind: prop, asset: ph_boulder_01,  pos: [2, 0, -7],   radius: 0.95, height: 1.0, yaw: 1.2}
+  - {id: bench1, kind: prop, asset: garden_bench_teak, pos: [-4, 0, 7], radius: 0.80, height: 0.85, yaw: 0.6}
+  - {id: bench2, kind: prop, asset: garden_bench_teak, pos: [8, 0, 2],  radius: 0.80, height: 0.85, yaw: -1.4}

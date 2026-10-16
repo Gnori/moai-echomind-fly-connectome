@@ -7,6 +7,18 @@ safety:                   # 설계 문서 2.9
   echomind_lock_fresh_s: 900       # 에코월드 headless_guard 와 같은 규칙: 첫 낱말 pid 가 살아 있고 이 초 안에 갱신된 잠금
   readonly_roots: [../moai-echomind/moai-echomind-world-3d]   # 우리는 읽기만 — 실행 전후 표본 수정 시각 비교
 
+world:                    # V1 세계 서버(설계 문서 2.7)
+  version: eyeworld-v1
+  body:                    # 에코월드 상자 실험 몸 규약과 같은 값(echomind-world 10-03 · 10-04)
+    radius_m: 0.35
+    height_m: 1.6
+    eye_frac: 0.936        # 눈높이 = 키 × 이 값(에코월드 eyeShot 와 같음)
+    eye_sep_m: 0.07        # 두 눈 사이(선언)
+    walk_max_m_s: 1.3
+    run_max_m_s: 4.5       # 상자 --run-speed-mps 4.5(요구자 10-04)
+    turn_max_deg_s: 180.0
+  allowed_licenses: [CC0, 우리 것, mixamo-로컬연구]   # 요구자 10-16 승인(Mixamo 는 로컬 연구용 · 배포 없음)
+
 render:                   # V1 렌더러(설계 문서 2.1 · 2.6) — 127.0.0.1 만
   http_port: 8790          # 정적 파일(GET 만)
   ws_port: 8791            # 렌더러 통로
