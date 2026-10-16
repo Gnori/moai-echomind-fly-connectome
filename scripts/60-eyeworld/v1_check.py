@@ -8,7 +8,7 @@
    재배선 s0~s2 · 씨앗 10.
 ④ 판정: R1(돎 → DNa02 부호) · A1~A3(다가옴 → LC4 자리 · 배선 · 같은 쪽).
 사용: python scripts/60-eyeworld/v1_check.py [--frames <폴더>] [--seeds 0] [--maps 1]
-     [--brains real]
+     [--brains real] [--render-only]
 """
 
 from __future__ import annotations
@@ -227,6 +227,7 @@ def main() -> None:
     ap.add_argument("--maps", type=int, default=None)
     ap.add_argument("--brains", default=None)
     ap.add_argument("--no-judge", action="store_true")
+    ap.add_argument("--render-only", action="store_true", help="그림만 저장(뇌 · 앞단 없이)")
     a = ap.parse_args()
     v1 = config.load("eyeworld")["v1"]
     seeds = [int(x) for x in a.seeds.split(",")] if a.seeds else [int(x) for x in v1["seeds"]]
@@ -241,6 +242,15 @@ def main() -> None:
         t0 = time.time()
         frames = load_frames(Path(a.frames)) if a.frames else render_all(v1, out)
         render_s = time.time() - t0
+        if a.render_only:
+            sha = {c: hashlib.sha256(frames[c].tobytes()).hexdigest()[:16] for c in CONDS}
+            meta = {"rule": v1["rule"], "render_only": True, "scene": v1["scene"],
+                    "frames_sha16": sha, "render_s": round(render_s, 1)}
+            (out / "meta.json").write_text(
+                json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            print(f"[v1] 그림만 · {sha} · {render_s:.1f} s · {out}")
+            return
         base = graph_mod.load()
         lif = LIFParams.from_config()
         sched, fe = {}, None

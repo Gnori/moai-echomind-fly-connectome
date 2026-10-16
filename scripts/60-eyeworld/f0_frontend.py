@@ -5,10 +5,15 @@ F0-1 대비 곡선(계산 줄무늬) · F0-2 경기장 가로 대비(보고만) 
 · F0-4 좌우 대응(V1-b 사람 다가옴 그림 · 계산 원판). 같은 자극의 v2 값을 나란히 적는다.
 그림은 새로 그리지 않는다(V1-b frames.npz · 해시를 그 meta.json 과 대조).
 사용: python scripts/60-eyeworld/f0_frontend.py → runs/f0-frontend-<시각>/f0.json
+     python scripts/60-eyeworld/f0_frontend.py --fit-c50 → runs/f0-fit-<시각>/fit.json
+       (F0-1 의 한 번 다시 고르기 · 설정 f0.fit_c50 격자에서 Drews T4 곡선과 최대 차가 가장 작은
+        c50_contrast — 앞단만 · 뇌 · 렌더 그림과 무관. 고른 값은 사람이 설정에 적어 잠근다)
 """
 
 from __future__ import annotations
 
+import argparse
+import copy
 import hashlib
 import json
 import time
@@ -206,8 +211,40 @@ def f0_4(fes: dict, frames: dict, cfg: dict, n: int) -> dict:
     return out
 
 
+def fit_c50(ecfg: dict) -> None:
+    """F0-1 다시 고르기 — 격자의 c50_contrast 마다 F0-1 곡선(v3 만) · 최대 |차| 가장 작은 값."""
+    cfg, fit = ecfg["f0"], ecfg["f0"]["fit_c50"]
+    n, dt = int(cfg["face_px"]), float(cfg["frame_ms"])
+    out_dir = paths.runs_dir() / f"f0-fit-{time.strftime('%Y%m%d-%H%M%S')}"
+    out_dir.mkdir(parents=True)
+    rows = []
+    with heavy("f0-fit", extra_gb=3.0):
+        g = graph_mod.load()
+        for c in fit["grid"]:
+            v3 = copy.deepcopy(ecfg["frontend_v3"])
+            v3["divnorm"]["c50_contrast"] = float(c)
+            fe = FrontendV3(g, n, dt, v3=v3)
+            r = f0_1({"v3": fe}, cfg["f0_1"], n, dt)
+            worst = max(abs(x) for x in r["diff"].values())
+            rows.append({"c50_contrast": float(c), "c50": fe.c50, "max_abs_diff": worst,
+                         "ratio": {k: v["ratio"] for k, v in r["curve"]["v3"].items()},
+                         "diff": r["diff"], "dsi": r["dsi"]["v3"], "pass": r["pass"]})
+            print(f"[fit] c50_contrast {c} · 최대 차 {worst:.3f} · 통과 {r['pass']}", flush=True)
+    best = min(rows, key=lambda x: (round(x["max_abs_diff"], 6), -x["c50_contrast"]))
+    res = {"rule": fit["rule"], "grid": rows, "best": best["c50_contrast"]}
+    text = json.dumps(res, ensure_ascii=False, indent=2)
+    (out_dir / "fit.json").write_text(text, encoding="utf-8")
+    print(f"[fit] 고른 값 {best['c50_contrast']} · 최대 차 {best['max_abs_diff']:.3f} · {out_dir}")
+
+
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fit-c50", action="store_true")
+    a = ap.parse_args()
     ecfg = config.load("eyeworld")
+    if a.fit_c50:
+        fit_c50(ecfg)
+        return
     cfg = ecfg["f0"]
     n, dt = int(cfg["face_px"]), float(cfg["frame_ms"])
     src = paths.root() / cfg["frames_from"]

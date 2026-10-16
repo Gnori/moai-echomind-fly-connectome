@@ -392,9 +392,9 @@ class FrontendV3(FrontendV2):
     소엽 세포 기준은 v2 와 같은 수(이제 웨버 대비 1 가장자리).
     """
 
-    def __init__(self, g: Graph, face_px: int, dt_ms: float) -> None:
+    def __init__(self, g: Graph, face_px: int, dt_ms: float, v3: dict | None = None) -> None:
         ecfg = config.load("eyeworld")
-        self.v3 = ecfg["frontend_v3"]
+        self.v3 = v3 if v3 is not None else ecfg["frontend_v3"]
         super().__init__(g, face_px, dt_ms, cfg=ecfg[self.v3["base"]])
         fw, floor = float(self.v3["weber"]["fwhm_deg"]), float(self.v3["weber"]["floor"])
         self.lob_weber = {
