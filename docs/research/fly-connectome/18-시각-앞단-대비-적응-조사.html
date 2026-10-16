@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시각 앞단의 대비 적응 — V1 입력 부족 조사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li>
+<li><a href="12-다음-학습-조사.html">12 · 다음 학습 — 조사</a></li>
+<li><a href="13-회로-학습-설계-조사.html">13 · 회로 학습 설계 — 조사</a></li>
+<li><a href="14-냄새-좌우-조사.html">14 · 냄새 좌우 — 조사</a></li>
+<li><a href="15-깊은-판단-호출-조사.html">15 · 깊은 판단 호출 — 조사</a></li>
+<li><a href="16-KC-희소성-범위-조사.html">16 · KC 희소성 범위 — 조사</a></li>
+<li><a href="17-초파리가-보게-하는-길-조사.html">17 · 초파리가 보게 하는 길 — 조사</a></li>
+<li><a href="18-시각-앞단-대비-적응-조사.html" class="cur">18 · 시각 앞단 대비 적응 — 조사</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="18-시각-앞단-대비-적응-조사.md">18-시각-앞단-대비-적응-조사.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="18-시각-앞단의-대비-적응--v1-입력-부족-조사">18. 시각 앞단의 대비 적응 — V1 입력 부족 조사</h1>
+<blockquote>
+<p>2026-10-17 · 세션 <code>echomind-fly-research</code> · 조율 세션 일감(10-16 밤 · V1 막힘). <a href="17-초파리가-보게-하는-길-조사.html">노트 17</a> 의 V0 · V0b 다음 단계다.
+이 노트는 <strong>문헌 · 원문만</strong> 읽었다. 시뮬레이션 · 렌더 · 코드 고침은 하지 않았다. [측정] 은 조율 세션이 잰 기록을 <strong>읽기만</strong> 한 것이다.
+확인 수준: <strong>[P]</strong> 원문 · 원문 사본을 이 세션이 직접 열어 문구 확인 · <strong>[P*]</strong> 조사 에이전트가 원문에서 읽음(이 세션은 다시 열지 않음) · <strong>[A]</strong> 초록만 · <strong>[S]</strong> 2 차 · <strong>[측정]</strong> 조율 세션 기록 · <strong>[계산]</strong> 우리 셈 · <strong>[그림]</strong> 논문 그림에서 눈으로 읽은 값(몇 % 틀릴 수 있음) · <strong>[추론]</strong> 우리 해석.</p>
+</blockquote>
+<hr />
+<h2 id="0-한눈에">0. 한눈에</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>물음</th>
+<th>답</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>무엇이 막혔나</td>
+<td>V1(렌더 → 앞단 v2 → 뇌)에서 제자리 90 °/s 돎에 <strong>T4/T5 평균 0.14 Hz</strong>(10 Hz 넘는 뉴런 0.3 %) → HS 0 · DNa02 0 [측정]. 앞단 v2 는 두 신호를 곱하는 상관 검출기라 출력이 <strong>대비의 제곱</strong>이고, 기준(ref)이 대비 1 줄무늬다 → 대비 0.2 면 기준의 <strong>0.04</strong> [계산]</td>
+</tr>
+<tr>
+<td>① 실제 초파리는</td>
+<td><strong>대비에 훨씬 덜 민감하다.</strong> 대비 0.2 에서 T4 약 <strong>0.81</strong> · T5 약 0.37(Drews 2020 표 S1 맞춤식에서 계산) · HS 약 0.47(Schnell 2010 [그림]) · VS 는 대비 약 <strong>24 %</strong> 에서 반최대(Joesch 2008) · 날기 회전 반응은 대비 0.09~0.98 에서 <strong>차이 없음</strong>(p 0.375 · Duistermars 2012) · 꽃등에 HS 는 4 % 부터 반응 · 약 20 % 에서 포화(Harris 2000)</td>
+</tr>
+<tr>
+<td>기전</td>
+<td>상관 <strong>앞</strong>에서 일어난다. ① 수질 순간 세포(Mi1 · Tm3 · Tm1 · Tm2 · Tm4)의 <strong>나눗셈 대비 정규화</strong> — 둘레 약 35° 까지 · 50 ms 안 · <strong>움직이는 배경만</strong>(정지 배경은 누르지 않음) · Tm2 를 막으면 거의 사라짐(Drews 2020) ② Mi1 의 <strong>시간 대비 적응</strong> — 이득 약 4 배 · 100~200 ms(Matulis 2020) ③ 국소 밝기 이득 조절 — Tm1 · Tm9 · 10~15° 에서 가장 큼(Gür 2024)</td>
+</tr>
+<tr>
+<td>② 넣을 식</td>
+<td>두 단계. (가) 밝기 → <strong>국소 웨버 대비</strong> c = (I_blur − Ī) / Ī · Ī = 가우시안 FWHM 25°(Matulis 2020 · Chen 2019 은 약 30° 에서 가장 이득) (나) 정류 뒤 · 곱하기 앞 <strong>나눗셈 정규화</strong> r = x^p / (c50^p + x^p + (w_pool · P)^p) · P = 정류한 고역 신호의 가우시안 풀(FWHM 30°) · p 1.1~1.3 · w_pool 1.5~3(Drews 가 손으로 정한 값) · <strong>c50 은 우리 단위로 다시 정한다</strong></td>
+</tr>
+<tr>
+<td>③ 자연 장면에서</td>
+<td>초파리는 회전하는 자연 파노라마를 잘 따라간다 — 걷기 돌기가 장면 속도와 개체별 r &gt; 0.8(Leonhardt 2016 [P*]) · HS 는 장면 차이가 작다(Drews 2020 [P*]) · 꽃등에 HS 는 대비가 3 배 달라도 비슷(Straw 2008 [P*]). 자연 장면 실효 RMS 대비 봉우리 <strong>0.09</strong>(대역 통과) · <strong>0.23</strong>(저역)(Dyakova 2015). <strong>제자리 돎에는 가로 방향 대비만 쓰인다</strong> — 하늘/땅 경계는 쓰이지 않는다</td>
+</tr>
+<tr>
+<td>④ 판단</td>
+<td>앞단에 (가)+(나)를 넣으면 <strong>제자리 돎 → DNa02 부호 = 중간~높음</strong> · <strong>사람 다가옴 → 같은 쪽 LC4 = 중간</strong>. 단 V1-b 에서 <strong>오른쪽 다가옴이 왼쪽 LC4 를 켰다</strong>(8/0 [측정]) — 대비가 아니라 좌우 대응 문제일 수 있어 <strong>먼저 확인</strong>. 경기장이 너무 성긴지는 <strong>가로 대비</strong>를 재야 안다(지금 잰 "기둥 밝기 표준편차 0.2"는 하늘/땅이 섞인 값)</td>
+</tr>
+<tr>
+<td>가장 작은 시험</td>
+<td><strong>F0 — 앞단만(뇌 없음)</strong>: ① 줄무늬 대비 곡선이 Drews T4 곡선 근처인가 ② 경기장의 가로 국소 대비 분포 ③ 렌더 제자리 돎에서 T4/T5 발화율과 방향 ④ 오른쪽 원판 → 오른눈만 바뀌나. 넘으면 <strong>V1-c</strong>(뇌 · 작은 시험 먼저 · 7 절)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="1-출발점--이미-잰-것-측정--다시-재지-않음">1. 출발점 — 이미 잰 것 [측정 · 다시 재지 않음]</h2>
+<ul>
+<li><strong>V0b 통과</strong>(<code>runs/v0b-disk-20261016-214745</code>): 다가옴 LC4 진짜 210.5 대 자리 섞기 0~0.2 · 재배선 0 · 같은 쪽 10/10. 단 <strong>움직임 없는 어두워짐도 200</strong> → LC4 의 다가옴 선택성은 없다(<a href="17-초파리가-보게-하는-길-조사.html">노트 17 §10</a>).</li>
+<li><strong>V1-a</strong>(<code>runs/v1-check-20261016-230912</code> · 잠금 <code>d7d406c</code>): 모든 읽기 0 — 사람이 안 그려짐 · 무늬 없는 땅(고침 <code>3c2c4ad</code>).</li>
+<li><strong>V1-b 작은 시험</strong>(<code>runs/v1-check-20261016-233448</code> · 장면 v2 = 잔디 사진 텍스처 + 나무 · 바위 · 씨앗 0 · 진짜만 · 판정 아님): 몸 돎 HS 0 · DNa02 0 · 다가옴 LC4 <strong>7/0(왼쪽 다가옴)</strong> · <strong>8/0(오른쪽 다가옴 — 반대쪽)</strong>. 앞단: 기둥 밝기 표준편차 0.2 · T4/T5 평균 0.14 Hz · V0 분석식(오른눈 a 대부분 약 100 Hz)과 큰 차.</li>
+<li><strong>앞단 v2</strong>(<code>src/moai_echomind_fly/eye/frontend.py</code> · <code>config/eyeworld.yaml</code> · 읽기만): 기둥 밝기(낱눈 σ 2.12° · FWHM 약 5°) → 1 차 고역(τ 250 ms) → ON/OFF 정류 → 바로 옆 기둥끼리 상관(지연 저역 τ 30 ms) → r_max · clip(출력 ÷ ref, 0, 1) · ref = 대비 1 사인 줄무늬(λ 30°)를 100 °/s 로 흘린 출력. 소엽 기둥 세포(Tm2 · Tm4 · T2 · Tm3)는 흐린 밝기의 dL/dt ÷ (대비 1 가장자리 기준) — <strong>대비에 1 차 비례</strong>.</li>
+<li><strong>대비 제곱의 셈</strong> [계산]: 상관 출력 ∝ c² → 기준 대비 1 로 자르면 c = 0.05 · 0.1 · 0.2 · 0.3 · 0.5 에서 <strong>0.003 · 0.010 · 0.040 · 0.090 · 0.25</strong>.</li>
+</ul>
+<hr />
+<h2 id="2-①-실제-초파리의-대비-의존--수치">2. ① 실제 초파리의 대비 의존 — 수치</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>세포 · 행동</th>
+<th>자극</th>
+<th>수치</th>
+<th>출처 · 수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>T4</strong>(초파리 · GCaMP6f)</td>
+<td>30° 사인 줄무늬 · 30 °/s · 25° 창 · Michelson 대비 · 배경 대비 따로</td>
+<td>표 S1 맞춤(배경 0 %): <strong>c50 0.11 · p 2.47</strong> · 풀 0.49 · q 0.74 · 정규화 지수 4.45. 최대 대비 몫 [계산]: c 0.05 → <strong>0.12</strong> · 0.1 → <strong>0.44</strong> · 0.2 → <strong>0.81</strong> · 0.3 → 0.92 · 0.5 → 0.98</td>
+<td>Drews 2020 표 S1 [G1][P]</td>
+</tr>
+<tr>
+<td><strong>T5</strong></td>
+<td>같음</td>
+<td>c50 <strong>0.26</strong> · p 1.97 · 풀 1.17 · 지수 4.55 → c 0.1 → 0.13 · 0.2 → <strong>0.37</strong> · 0.5 → 0.78 [계산] · 본문 <em>"full-field gratings elicited comparatively weak responses in T5 units whereas T4 cells were driven effectively"</em></td>
+<td>[G1][P] 표 · 문구 [P*]</td>
+</tr>
+<tr>
+<td>수질 입력</td>
+<td>같음</td>
+<td>c50 Mi1 <strong>0.06</strong> · Tm3 0.16 · Tm1 0.18 · Tm2 0.20 · Tm4 0.40 · 정규화 지수 4.33 · 3.39 · 4.75 · 5.76 · 3.61 · L1~L5 는 지수 0.42 · 1.58 · 0.00 · 0.61 · 1.36(약함)</td>
+<td>[G1][P]</td>
+</tr>
+<tr>
+<td><strong>HS</strong>(초파리 · 전세포 기록)</td>
+<td>네모 줄무늬 λ 34° · 34 °/s(1 Hz) · 대비 3.3~100 %</td>
+<td><em>"Response amplitudes increase with contrast, but exhibit saturation"</em> [P] · 정규화 반응 6.7 % → 약 0.16 · <strong>20 % → 약 0.47</strong> · 33 % → 약 0.60 · 100 % → 약 0.95 · 반최대 약 22 % [그림]</td>
+<td>Schnell 2010 [G2]</td>
+</tr>
+<tr>
+<td><strong>VS</strong>(초파리)</td>
+<td>1 Hz 줄무늬 · 대비 10 · 40 · 75 · 100 %</td>
+<td><em>"the half-maximum response was reached at about 24% luminance contrast"</em> · 제곱 의존은 <em>"for small contrasts only (contrast &lt; 10%); for higher contrast levels, the response strongly saturates"</em></td>
+<td>Joesch 2008 [G3][P]</td>
+</tr>
+<tr>
+<td>걷기 돌기(초파리)</td>
+<td>20° 폭 무늬 두 개 · ±90° · 50 °/s</td>
+<td>배경 0 %: 6.3 % → 최대의 약 0.42 · <strong>12.5 % → 약 0.84</strong> · 25 % 이상 거의 최대 · 배경 100 % 면 12.5 % → 약 0 [그림] · <em>"Turning was fully suppressed at maximum background contrast"</em> [P*]</td>
+<td>Drews 2020 그림 2D [G1]</td>
+</tr>
+<tr>
+<td><strong>날기 회전 반응</strong>(초파리)</td>
+<td>줄무늬 λ 30° · 112.5 °/s · 대비 0.09~0.98</td>
+<td>대비에 따른 차 <em>"not significant"</em>(날개 p = 0.375 · 머리 p = 0.822 · N = 34) · 단 <em>"Within a narrow range of stimulus parameters that generates large contrast insensitive optomotor responses"</em></td>
+<td>Duistermars, Care &amp; Frye 2012 [G4][P]</td>
+</tr>
+<tr>
+<td>날기 회전 · 펼침(초파리)</td>
+<td>λ 30° · 232 °/s · 대비 0.008~0.93</td>
+<td><em>"expansion responses saturated at 0.3, whereas rotation responses … saturated at near 0.93 contrast"</em></td>
+<td>Duistermars 2007 [G5][P]</td>
+</tr>
+<tr>
+<td>HS(꽃등에 <em>Eristalis</em>)</td>
+<td>사인 줄무늬 5 Hz</td>
+<td><em>"responds to contrasts as low as 4% and saturates at around 20%"</em> · 움직임 적응 뒤 같은 반응에 22 % 필요(<em>"4.4-fold"</em>) · 적응 줄무늬가 대비 이득을 <em>"3.5-fold"</em> 줄임(방향 무관)</td>
+<td>Harris 2000 [G6][P]</td>
+</tr>
+</tbody>
+</table></div>
+<p>읽은 것 [추론]: 실제 T4 · HS · 행동은 대비 0.2 에서 최대의 약 0.5~0.8 이다. 지금 앞단은 0.04 다 — <strong>약 10~20 배 모자란다</strong>. 제곱 의존은 대비 10 % 아래에서만 맞는다(Joesch).</p>
+<hr />
+<h2 id="3-기전--어디서--얼마나-넓게--얼마나-빨리">3. 기전 — 어디서 · 얼마나 넓게 · 얼마나 빨리</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>기전</th>
+<th>자리</th>
+<th>공간 · 시간</th>
+<th>출처 · 수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>나눗셈 대비 정규화</strong>(둘레 대비로 나눔)</td>
+<td>상관 <strong>앞</strong> · 수질 순간 세포 Mi1 · Tm3 · Tm1 · Tm2 · Tm4 · T4/T5 가 물려받음. Tm2 출력을 막으면 <em>"almost complete loss of background suppression"</em></td>
+<td>행동: 억제가 <em>"dropped to baseline at approximately 35°"</em> · <em>"full width at half maximum of 43.8°"</em> · 시간: 대비 변화를 3 Hz 넘게 따라감 · 억제의 시간 주파수 조율은 <em>"band-pass filters with a peak at 2 Hz"</em> · <em>"static backgrounds did not have a suppressive effect"</em> · 신경 반응 50 ms 안 · 행동 지연 약 70 ms [P*]</td>
+<td>Drews 2020 [G1][P]</td>
+</tr>
+<tr>
+<td><strong>시간 대비 적응</strong></td>
+<td>Mi1(그리고 L5 · Mi4) · L1/L3/L5 에서 물려받지 않음</td>
+<td>이득 변화 <em>"approximately a factor of 4"</em>(대비 0.2 ↔ 0.9) · 낮음 → 높음 <em>"from ~4 to ~1 on the scale of 100–200 ms"</em> · 높음 → 낮음 <em>"300–400 ms"</em></td>
+<td>Matulis 2020 [G7][P]</td>
+</tr>
+<tr>
+<td><strong>국소 밝기 이득 조절</strong>(배경 밝기 대비)</td>
+<td>Tm1 · Tm9(T5 앞) · Dm12 · GluClα</td>
+<td><em>"maximum modulation occurring around 10–15° of visual space"</em> · Dm12 수용장 FWHM <em>"~17°"</em></td>
+<td>Gür 2024 [G8][P]</td>
+</tr>
+<tr>
+<td>L3 지속 밝기 통로 · LMC 밝기 의존 대비 이득</td>
+<td>L2 = 대비 · L3 = 밝기</td>
+<td>어두운 빛 · 갑작스런 밝기 변화에서 주로 중요</td>
+<td>Ketkar 2020 · 2022 [G9][P*]</td>
+</tr>
+<tr>
+<td>LMC 대비 곡선 = 자연 대비 분포의 누적</td>
+<td>LMC</td>
+<td>정보 최대화</td>
+<td>Laughlin 1981 [A]</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-②-앞단에-넣을-식--원문-그대로">4. ② 앞단에 넣을 식 — 원문 그대로</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>출처</th>
+<th>식</th>
+<th>값</th>
+<th>자리 · 범위</th>
+<th>보고된 효과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>Drews 2020 · STAR Methods "data-driven detector model" [G1][P]</td>
+<td>f(x_i) = x_i^p / (c50^p + x_i^p + (w_pool · P_i)^p) · <em>"we calculated local input Pi from the normalization field by pooling across rectified signals xi with a Gaussian kernel (FWHM = 30°)"</em></td>
+<td>대역 통과 단위 c50 0.012 · p 1.3 · w_pool 1.5 · 저역 단위 c50 0.12 · p 1.1 · w_pool 3.0 — 손으로 정함 [P*] · <strong>c50 은 그 모형 신호 단위</strong>(밝기 0~1 · 평균 0.5)</td>
+<td>공간 DoG(중심 FWHM 6° · 주변 20°) → 시간 필터(대역: 저역 50 ms 뒤 고역 150 ms · 저역: 80 ms) → 반파 정류 → <strong>이 단계</strong> → 이웃 대역 × 저역 곱 [P*]</td>
+<td>자연 장면에서 장면 간 변동 <em>"moderate reduction"</em> [P*]</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Drews 2020 · 학습한 망 [G1]</td>
+<td>정적 f = tanh(x/c) · 동적 f = tanh(x / (c + P_i)) · P_i = 11 × 11 공간 필터 × |x|</td>
+<td>수용기 간격 4° · 배운 풀은 <em>"approximately 30° in azimuth and invariably excluded … the center"</em> [P*]</td>
+<td>곱하기 앞</td>
+<td>동적이 정적보다 <em>"error reduction 22.0%–29.2%"</em> [P]</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Drews 2020 · 표 S1 맞춤 [G1][P]</td>
+<td>R(c_fg, c_bg) = (L_fg · c_fg^p + L_bg · c_bg^p) / (c50^p + c_fg^p + S^p) · S = w_pool · c_bg^q</td>
+<td>2 절 표</td>
+<td>정상 상태 대비 곡선</td>
+<td>—</td>
+</tr>
+<tr>
+<td>M1</td>
+<td>Matulis 2020 · 자연 영상 전처리 [G7][P]</td>
+<td>c(x, y) = (I_blur − I_mean) / I_mean · I_mean = I_blur ⊗ f_cont</td>
+<td>흐림 FWHM <strong>5.7°</strong> · f_cont FWHM <strong>25°</strong> · "완전 적응" 비교는 영상마다 분산으로 나눔 s′ = s / σ</td>
+<td>밝기 → 대비 · 상관 앞</td>
+<td>속도로 설명되는 분산: 적응 없음 약 20 % → 한 팔 <em>"over 50%"</em> → 두 팔 <em>"more than 80%"</em> [P]</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Matulis 2020 · LNL 모형 [G7][P]</td>
+<td>r(t) = tanh((s ∗ L1)/γ) ∗ L2 · L1 = (1 − t/τ1) e^(−t/τ1) · L2 = (t/τ2) e^(−t/τ2)</td>
+<td>τ1 30 ms · τ2 50 ms · γ 0.01 · <em>"chosen by eye"</em></td>
+<td>기둥마다 · 상관 앞</td>
+<td>Mi1 적응 현상을 흉내 냄</td>
+</tr>
+<tr>
+<td>C1</td>
+<td>Chen et al. 2019 eLife [G10][P]</td>
+<td>M1 과 같은 웨버 꼴</td>
+<td>공간 FWHM 25°(10~75° 훑음)</td>
+<td>밝기 → 대비</td>
+<td>이득이 <em>"peaked at around 30°, and then decreased to negative values after 40°"</em> · 시간 평균은 <em>"timescales less than 100 ms"</em> 에서만 이득</td>
+</tr>
+<tr>
+<td>W1</td>
+<td>Wiederman, Shoemaker &amp; O'Carroll 2008 [G11][P]</td>
+<td>Lipetz x^u / (x^u + x0^u) · x0 = x 의 1 차 저역</td>
+<td>u <strong>0.7</strong> · x0 의 τ <strong>750 ms</strong></td>
+<td>화소마다 · 고역 앞</td>
+<td>밝기 적응(작은 표적 검출 모형 · 속도 아님)</td>
+</tr>
+<tr>
+<td>B1</td>
+<td>Brinkworth &amp; O'Carroll 2009 [G12]</td>
+<td>y = tanh(G x) · y = sign(x) · |x|^p</td>
+<td>p 0.5(곱 뒤 · 제곱을 일부 되돌림) · G 수치 없음 [P*]</td>
+<td>곱 <strong>뒤</strong></td>
+<td>상관 출력의 장면 간 변동을 줄임 · 저자들은 이 단계가 대비 정규화가 아니라고 함 [P*]</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5-③-자연-장면--장면-통계--눈-광학">5. ③ 자연 장면 · 장면 통계 · 눈 광학</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>무엇</th>
+<th>수치</th>
+<th>출처 · 수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>초파리 걷기 · 회전 자연 파노라마</td>
+<td>60 장면 · 닫힌 고리에 80 °/s 더함 · <em>"individual flies reached correlation coefficients above 0.8"</em> · 대비를 원래의 6~100 % 로 낮추면 상관 · 이득 모두 크게 줆 · T4 · T5 를 끄면 사라짐</td>
+<td>Leonhardt 2016 [G13][P*]</td>
+</tr>
+<tr>
+<td>초파리 HS · 자연 파노라마</td>
+<td>6 영상 · 2.5~640 °/s · <em>"little image-dependent variation"</em> · 같은 자극의 표준 상관 검출기 배열은 <em>"remarkably unreliable"</em></td>
+<td>Drews 2020(학위 논문 판) [G1][P*]</td>
+</tr>
+<tr>
+<td>꽃등에 HS · 9 파노라마</td>
+<td><em>"encode the velocity of natural images largely independently of the particular image used despite a threefold range of contrast"</em> · 대비를 0.25 배로 줄이면 약해지되 영상끼리는 비슷</td>
+<td>Straw, Rainsford &amp; O'Carroll 2008 [G14][P*]</td>
+</tr>
+<tr>
+<td>자연 장면 실효 RMS 대비</td>
+<td>109 장면 · 대역 통과 <strong>봉우리 0.09</strong> · 저역 <strong>봉우리 0.23</strong></td>
+<td>Dyakova et al. 2015 [G15][P]</td>
+</tr>
+<tr>
+<td>파노라마 대비 범위</td>
+<td>표준편차 ÷ 평균 0.40~1.24(9 파노라마)</td>
+<td>Straw 2008 [P*]</td>
+</tr>
+<tr>
+<td>순수 상관 검출기의 장면 변동</td>
+<td>기본 모형 · 50 °/s: 영상 안 변동계수 <em>"66.3±27.1%"</em> · 14 영상 평균끼리 46.6 % · 전체 모형은 중앙 변동계수 <em>"6.91%"</em></td>
+<td>Brinkworth &amp; O'Carroll 2009 [G12][P]</td>
+</tr>
+<tr>
+<td>상관 출력은 대비 제곱 · 보정 필요</td>
+<td>출력이 C² 로 변해 <em>"the visual system needs to compensate for these contrast variations"</em> · tanh 포화로 영상끼리 모임</td>
+<td>Dror, O'Carroll &amp; Laughlin 2001 [G16][P*]</td>
+</tr>
+<tr>
+<td>낱눈 간격 · 받아들이는 각</td>
+<td>간격 Δφ 약 <strong>4.5°</strong> · 받아들이는 각(단일 광수용체 기록) 밝음 적응 <strong>7.70 ± 1.27°</strong> · 어둠 적응 9.47 ± 1.57°</td>
+<td>Juusola et al. 2017 [G17][P]</td>
+</tr>
+<tr>
+<td>모형들이 쓴 흐림 FWHM</td>
+<td>4°(Drews) · 5°(Leonhardt) · 5.3°(Chen) · 5.7°(Matulis · Fitzgerald &amp; Clark)</td>
+<td>각 논문 [P*] · Matulis 5.7° 는 [P]</td>
+</tr>
+</tbody>
+</table></div>
+<p>읽은 것 [추론]:
+- 우리 낱눈 σ 2.12°(FWHM 약 5°)는 모형들이 쓴 값의 범위 안이다 — 흐림이 원인의 전부는 아니다.
+- <strong>제자리 돎(yaw)의 흐름은 가로 방향</strong>이라 가로로 놓인 하늘/땅 경계는 움직임 신호를 거의 내지 않는다. 지금의 "기둥 밝기 표준편차 0.2"는 하늘/땅 차이가 대부분이라 <strong>yaw 에 쓰이는 대비가 아니다</strong>. 비교할 숫자는 "행 방향 국소 웨버 대비(5° 흐림 뒤)"이고, 자연 장면의 0.09~0.23 과 견준다.
+- 그래서 원인은 <strong>둘 다</strong>일 가능성이 크다 — 이득 조절 없음(가장 큼 · 10~20 배) + 가로 경계가 적은 장면.</p>
+<hr />
+<h2 id="6-④-판단">6. ④ 판단</h2>
+<h3 id="61-원인-나눔-추론">6.1 원인 나눔 [추론]</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>원인</th>
+<th>무게</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>상관 출력이 대비 제곱 · 기준이 대비 1</td>
+<td><strong>가장 큼</strong></td>
+<td>실제 T4 0.81 대 앞단 0.04(대비 0.2) — 2 절</td>
+</tr>
+<tr>
+<td>가로 경계가 적은 장면 · 먼 나무줄기가 5° 흐림에 지워짐</td>
+<td>중간</td>
+<td>조율 진단 [측정] · yaw 에는 가로 대비만 쓰임</td>
+</tr>
+<tr>
+<td>밝기 정규화 없음(하늘 밝음 · 땅 어두움이 한 척도)</td>
+<td>중간</td>
+<td>웨버 대비가 아니면 어두운 땅의 무늬가 작게 잡힌다 — M1 · C1</td>
+</tr>
+<tr>
+<td>좌우 대응</td>
+<td><strong>LC4 쪽만 · 확인 필요</strong></td>
+<td>V1-b 오른쪽 다가옴 → 왼쪽 LC4 8/0 · V0b 분석식은 같은 쪽 10/10 → 뇌가 아니라 렌더 · 표본 쪽일 수 있다</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="62-앞단-v3-제안-자리--식--값--선언">6.2 앞단 v3 제안 (자리 · 식 · 값 · 선언)</h3>
+<ol>
+<li><strong>밝기 → 국소 웨버 대비</strong>(고역 앞): c_i = (I_i − Ī_i) / Ī_i · Ī = 기둥 밝기의 가우시안 FWHM <strong>25°</strong> 평균(M1 · C1). 소엽 기둥 세포(Tm2 · Tm4 · T2 · Tm3)의 dL/dt 도 이 c 로.</li>
+<li><strong>나눗셈 정규화</strong>(정류 뒤 · 곱하기 앞): r_i = x_i^p / (c50^p + x_i^p + (w_pool · P_i)^p) · P_i = 정류한 고역 신호 |x| 의 가우시안 FWHM <strong>30°</strong> 합(정지 배경은 고역에서 사라지므로 문헌의 "움직이는 배경만"과 맞음) · p <strong>1.2</strong>(D1 의 1.1~1.3 사이 · 선언) · w_pool <strong>2</strong>(1.5~3 사이 · 선언) · <strong>c50 = 대비 0.08 줄무늬가 이 단계에 주는 x</strong>(Mi1 0.06 과 T4 0.11 사이 · 선언 · 우리 단위로 다시 잼).</li>
+<li>기준(ref)은 그대로 "대비 1 줄무늬 · 100 °/s" 출력으로 다시 잰다 — 정규화가 들어가면 대비 0.2 의 출력이 기준에 가까워진다.</li>
+<li>다른 것(옆쌍 상관 · τ 30 ms · 고역 250 ms · 방향 축)은 v2 그대로.</li>
+</ol>
+<blockquote>
+<p>⚠️ 이 값들은 <strong>손으로 고른 앞단</strong>이다(Drews 도 <em>"manually tuned"</em>). 결과 전에 잠그고, 문구에 "앞단이 문헌의 대비 정규화를 계산으로 흉내 냄"을 적는다. 정규화는 약한 대비를 키우는 것이지 없는 경계를 만들지 않는다.</p>
+</blockquote>
+<h3 id="63-성공-가능성-추론">6.3 성공 가능성 [추론]</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>V1 칸</th>
+<th>앞단 v3 를 넣으면</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1 제자리 돎 → DNa02 부호</td>
+<td><strong>중간~높음</strong></td>
+<td>문헌상 정규화된 T4 는 대비 0.2 에서 0.8 · V0 분석식에서 진짜 배선이 DNa02 부호를 나름 [측정] · 남은 위험은 가로 경계가 아주 적은 장면</td>
+</tr>
+<tr>
+<td>A1~A3 사람 다가옴 → 같은 쪽 LC4 · 자리 · 배선</td>
+<td><strong>중간</strong></td>
+<td>V0b 통과(분석식) · 소엽 세포는 대비에 1 차 비례라 웨버 대비만으로도 커짐 · <strong>좌우 대응 확인이 먼저</strong>(오른쪽 → 왼쪽 8/0) · LC4 는 어두워짐에도 켜져 "다가옴"이라 부르지 않음(노트 17 §10)</td>
+</tr>
+<tr>
+<td>대비 정규화만으로 장면이 충분한가</td>
+<td>모름 → F0-2 로 잰다</td>
+<td>자연 장면 0.09~0.23 대 우리 경기장(가로 대비 미측정)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="7-가장-작은-시험--f0앞단만--뇌-없음--v1-c">7. 가장 작은 시험 — F0(앞단만 · 뇌 없음) → V1-c</h2>
+<blockquote>
+<p>실행 · 잠금은 조율 세션 몫. 숫자는 <strong>제안</strong>이고 잠글 때 바꿀 수 있다(바꾸면 결과 전에).</p>
+</blockquote>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>무엇</th>
+<th>기준(결과 전)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>F0-1 대비 곡선</strong></td>
+<td>사인 줄무늬 λ 30° · 30 °/s(Drews 자극과 같음) · Michelson 0.05 · 0.1 · 0.2 · 0.5 · 1 → 앞단 v3 의 T4 선호 방향 출력 ÷ 대비 1 출력</td>
+<td>Drews T4 맞춤식 c^2.47 / (0.11^2.47 + c^2.47) = 0.12 · 0.44 · 0.81 · 0.98 · 1.00 과 <strong>각 점 차 ≤ 0.2</strong> · 그리고 대비 0.2 에서 <strong>≥ 0.47</strong>(HS 값) · 방향 선택 지수 ≥ 0.5(30 · 90 °/s · v2 와 같은 기준)</td>
+</tr>
+<tr>
+<td>F0-2 경기장 가로 대비(보고만)</td>
+<td>렌더 경기장에서 기둥 밝기(5° 흐림)의 <strong>행 방향</strong> 국소 웨버 대비 |c| 분포 · 눈높이 ± 20° 띠</td>
+<td>판정 아님 — 중앙값 · c50(대비 0.08) 넘는 기둥 비율을 자연 장면 0.09~0.23 과 나란히 적음</td>
+</tr>
+<tr>
+<td><strong>F0-3 렌더 제자리 돎</strong></td>
+<td>렌더 · 90 °/s 시계 · 반시계 · 앞단 v3 출력만</td>
+<td>앞→뒤 흐름이 생기는 눈의 T4a+T5a 평균 발화율 <strong>≥ 20 Hz</strong> 이고 같은 눈 b 아형의 <strong>≥ 2 배</strong> · 다른 눈은 반대 · 방향을 바꾸면 뒤집힘(V0 분석식은 약 100 Hz)</td>
+</tr>
+<tr>
+<td><strong>F0-4 좌우 대응</strong></td>
+<td>렌더에서 몸 기준 오른쪽 30° · 왼쪽 30° 에 어두운 원판</td>
+<td>오른쪽 원판 → <strong>오른눈 기둥만</strong> 밝기 변화(왼눈 변화 0) · 왼쪽은 반대. 못 넘으면 V1 전에 고침</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>F0 는 뇌를 돌리지 않는다 — 렌더 몇 초와 앞단 계산뿐 [추론].</li>
+<li><strong>F0-1 · F0-3 · F0-4 통과 → V1-c</strong>: V1 의 판정(R1 제자리 돎 → DNa02 부호 · A1~A3 사람 다가옴 → LC4 자리 · 배선 · 같은 쪽)을 그대로 두고 앞단만 v3 로 바꿔 다시 잠금 → <strong>작은 시험(씨앗 0 · 진짜만) 먼저</strong> → 가능성이 보이면 본 실행(메모리 규약 "가능성 먼저").</li>
+<li>F0-1 을 못 넘으면: 매개변수를 결과 전에 한 번만 다시 고르고(F0 안에서), 그래도 못 넘으면 정규화 대신 Matulis 의 "영상마다 분산으로 나눔"(완전 적응 · 상한)을 비교용으로만 재고 멈춘다.</li>
+<li>F0-2 에서 가로 대비가 자연 장면보다 훨씬 낮으면(중앙값 &lt; 0.05 [제안]): 앞단과 별개로 <strong>눈높이에 세로 경계가 촘촘한 장면</strong>이 필요하다.</li>
+<li>문구: V1-c 통과 → "렌더한 3 차원 공간을, 문헌의 대비 정규화를 흉내 낸 계산 앞단으로 T4/T5 · 소엽 기둥 세포에 넣으면 우리 배선이 제자리 돎 방향과 다가오는 쪽을 하강 뉴런까지 나른다". <strong>"초파리가 본다"는 여전히 쓰지 않는다</strong>(앞단이 계산 · 대비 정규화 매개변수는 손으로 정함).</li>
+</ul>
+<hr />
+<h2 id="8-확인하지-못한-것--정직-목록">8. 확인하지 못한 것 · 정직 목록</h2>
+<ul>
+<li><strong>Drews 2020 의 c50 단위</strong> — 표 S1 은 줄무늬 Michelson 대비로 보이나(자극 정의에서 추론) 확인 못 함. D1 의 c50(0.012 · 0.12)은 그 모형 신호 단위라 <strong>그대로 옮기지 않는다</strong>.</li>
+<li>Drews 2020 의 자연 장면 HS 최적 속도 · 속도별 변동계수(그림에만) · 출판본과 학위 논문 판의 차이.</li>
+<li>Schnell 2010 HS 곡선 · Drews 그림 2D 행동 값은 <strong>그림에서 읽음</strong>(몇 % 틀릴 수 있음).</li>
+<li>T4/T5 의 <strong>전압</strong> 대비 곡선(칼슘만 찾음) · Götz 의 행동 대비 문턱(2 차 인용만).</li>
+<li>Brinkworth 2009 의 광수용체 · LMC 매개변수(원 논문 Mah 2008 이 유료) · van Hateren &amp; Snippe 2001 · Shoemaker 2005 · Dror 2001 의 식(초록만 또는 에이전트 읽음).</li>
+<li>초파리 optomotor 의 <strong>최소 무늬 밀도</strong>(세로 경계가 몇 개면 되나) — 못 찾음.</li>
+<li>Leonhardt 2016 의 대비 · 장면 종류별 수치(그림에만).</li>
+<li>Straw 2008 · Harris 2000 은 꽃등에(다른 종).</li>
+</ul>
+<hr />
+<h2 id="참고-문헌">참고 문헌</h2>
+<ul>
+<li>[G1] Drews et al. 2020, <em>"Dynamic Signal Compression for Robust Motion Vision in Flies"</em>, Curr Biol 30:209 — https://www.cell.com/current-biology/fulltext/S0960-9822(19)31375-2 (CC BY) · 원문 사본 · 표 S1 · 본문 문구 [P] · STAR Methods 일부 · 학위 논문 판 https://web.archive.org/web/20230923075711id_/https://edoc.ub.uni-muenchen.de/26217/1/Drews_Michael.pdf [P*] · 자료 https://github.com/borstlab/normalization_paper</li>
+<li>[G2] Schnell et al. 2010, J Neurophysiol 103:1646 — https://journals.physiology.org/doi/full/10.1152/jn.00950.2009 · 원문 사본 [P] · 곡선 값 [그림]</li>
+<li>[G3] Joesch et al. 2008, Curr Biol — https://www.cell.com/current-biology/fulltext/S0960-9822(08)00167-X · 원문 사본 [P]</li>
+<li>[G4] Duistermars, Care &amp; Frye 2012 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3284692/fullTextXML [P]</li>
+<li>[G5] Duistermars et al. 2007, J Exp Biol 210:3218 — https://journals.biologists.com/jeb/article/210/18/3218/17032/ · 원문 사본 [P]</li>
+<li>[G6] Harris, O'Carroll &amp; Laughlin 2000, Neuron — https://www.cell.com/neuron/fulltext/S0896-6273(00)00136-7 · 원문 사본 [P]</li>
+<li>[G7] Matulis et al. 2020, Curr Biol 30:222 — https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&amp;id=7003801 [P]</li>
+<li>[G8] Gür et al. 2024 — https://pmc.ncbi.nlm.nih.gov/articles/PMC11450186/ · 원문 사본 [P]</li>
+<li>[G9] Ketkar et al. 2020, Curr Biol 30:657 — https://www.cell.com/current-biology/fulltext/S0960-9822(19)31671-9 [P*] · Ketkar et al. 2022 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8967382/fullTextXML [P*]</li>
+<li>[G10] Chen et al. 2019, eLife 8:e47579 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6884396/fullTextXML [P]</li>
+<li>[G11] Wiederman, Shoemaker &amp; O'Carroll 2008, PLoS ONE — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2464731/fullTextXML [P]</li>
+<li>[G12] Brinkworth &amp; O'Carroll 2009, PLoS Comput Biol — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2766641/fullTextXML [P] · 식 그림 [P*]</li>
+<li>[G13] Leonhardt et al. 2016, Nat Neurosci 19:706 — 학위 논문 안 재인쇄본 https://web.archive.org/web/20181101172908id_/https://edoc.ub.uni-muenchen.de/21524/1/Leonhardt_Aljoscha.pdf [P*]</li>
+<li>[G14] Straw, Rainsford &amp; O'Carroll 2008, J Vis 8(3):32 — https://authors.library.caltech.edu/records/qt1et-q3g35/files/STRAjov08.pdf [P*]</li>
+<li>[G15] Dyakova et al. 2015 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4600736/fullTextXML [P]</li>
+<li>[G16] Dror, O'Carroll &amp; Laughlin 2001, J Opt Soc Am A — https://cs.stanford.edu/people/rondror/papers/dror_josa_00.pdf [P*]</li>
+<li>[G17] Juusola et al. 2017, eLife — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5584993/fullTextXML [P]</li>
+<li>그 밖에 초록만: Laughlin 1981 · Barnett, Nordström &amp; O'Carroll 2010 · van Hateren &amp; Snippe 2001 · Shoemaker, O'Carroll &amp; Straw 2005 · Mah 2008 [A]</li>
+</ul>
+<div class="pager"><a href="17-초파리가-보게-하는-길-조사.html">← 17 · 초파리가 보게 하는 길 — 조사</a><span></span></div>
+<footer>이 HTML 은 <code>18-시각-앞단-대비-적응-조사.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>
