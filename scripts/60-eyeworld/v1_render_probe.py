@@ -129,6 +129,21 @@ def main() -> None:
                     f" · 표지 오차 {errs} · 크롬 {run['chrome_rss_gb']} GB",
                     flush=True,
                 )
+            # 이력 무관(10-17 F0-4 · 첫 면이 직전 호출 마지막 면 시점으로 그려지던 것):
+            # 다른 자세를 한 번 그린 뒤 같은 자세 → 같은 그림 · 두 눈(7 cm)의 같은 면은 거의 같다.
+            fly = world.ents["fly"]
+            img_a, _ = r.render(10, world.poses(), rig, 32)
+            fly.yaw += np.pi / 2
+            r.render(11, world.poses(), world.eye_rig("fly"), 32)
+            fly.yaw -= np.pi / 2
+            img_b, _ = r.render(12, world.poses(), rig, 32)
+            lr = np.abs(img_a[0].astype(int) - img_a[1].astype(int)).mean(axis=(1, 2))
+            names = [f["name"] for f in rig[0]["faces"]]
+            res["history"] = {
+                "same_after_other_pose": bool(np.array_equal(img_a, img_b)),
+                "LR_face_mean_abs": {k: round(float(v), 2) for k, v in zip(names, lr)},
+            }
+            print(f"[probe] 이력 무관 {res['history']}", flush=True)
         finally:
             changed = r.stop()
             res["readonly_changed"] = changed

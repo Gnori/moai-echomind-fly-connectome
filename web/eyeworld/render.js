@@ -35,7 +35,7 @@ function unpack(buf) {
   return [JSON.parse(dec.decode(new Uint8Array(buf, 4, n))), buf.slice(4 + n)];
 }
 
-let engine, scene, cam, rtt = null, ground = null, sun = null, hemi = null;
+let engine, scene, cam, mainCam, rtt = null, ground = null, sun = null, hemi = null;
 const nodes = {};          // 개체 id → TransformNode
 const containers = {};     // 에셋 키 → AssetContainer
 
@@ -60,7 +60,11 @@ async function init() {
   cam.fovMode = B.Camera.FOVMODE_VERTICAL_FIXED;
   cam.fov = Math.PI / 2;                 // 정사각 면 · 90° = 큐브맵 한 면
   cam.minZ = 0.05; cam.maxZ = 1000;
-  scene.activeCamera = cam;
+  // 장면 카메라는 눈 카메라와 따로(10-17 F0-4): 같은 카메라면 Babylon 이 면 그리기 전에 변환 행렬을
+  // 다시 넣지 않아 첫 면(왼눈 앞)이 직전 호출 마지막 면(오른눈 아래) 시점으로 그려졌다.
+  mainCam = new B.UniversalCamera('main', B.Vector3.Zero(), scene);
+  mainCam.minZ = 0.05; mainCam.maxZ = 1000;
+  scene.activeCamera = mainCam;
   hemi = new B.HemisphericLight('hemi', new B.Vector3(0, 1, 0), scene);
   sun = new B.DirectionalLight('sun', new B.Vector3(-0.4, -1, -0.3), scene);
 }
