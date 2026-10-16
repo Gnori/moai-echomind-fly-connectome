@@ -56,6 +56,52 @@ frontend:                 # vision-frontend-v2(설계 문서 I 3.3b · V1 · 202
     T2:   {polarity: "onoff", rf_sigma_deg: 4.14, tau_ms: 40.0}
     Tm3:  {polarity: "on",    rf_sigma_deg: 5.10, tau_ms: 40.0}
 
+frontend_v3:              # vision-frontend-v3(노트 18 §6.2 · research cb532a9 · 2026-10-17 F0 결과 전 잠금) — v2 위에 두 단계만 더함
+  version: vision-frontend-v3
+  base: frontend          # 나머지(낱눈 σ · 옆쌍 상관 τ · 고역 250 ms · 방향 축 · 소엽 종류 · r_max)는 v2 그대로
+  weber:                  # (가) 밝기 → 국소 웨버 대비(고역 앞) — Matulis 2020 M1 · Chen 2019 C1(FWHM 25° · 30° 근처에서 가장 이득)
+    fwhm_deg: 25.0
+    floor: 0.02           # Ī 아래 문턱(나눗셈 보호 · 선언 · 약 5/255)
+  divnorm:                # (나) 정류 뒤 · 곱하기 앞 나눗셈 정규화 — Drews 2020 D1(손으로 정한 값 p 1.1~1.3 · w_pool 1.5~3)
+    pool_fwhm_deg: 30.0   # P = 같은 극성 정류 x 의 가우시안 무게 평균(행 합 1 · 중심 포함 · 선언)
+    p: 1.2
+    w_pool: 2.0
+    c50_contrast: 0.08    # c50 = 이 대비 사인 줄무늬(λ · v_ref)가 1 차원 기둥 줄에서 이 단계에 주는 정류 x 의 정점(우리 단위 · Mi1 0.06 과 T4 0.11 사이)
+  # ref = 대비 1 줄무늬(λ 30° · v_ref 100 °/s)의 v3 출력(1 차원 줄 · 가운데 절반 기둥 · 뒤 절반 시간) — 앞단만으로 다시 잼
+  # 소엽 기둥 세포: dL/dt → 웨버 대비 dc/dt(Ī = 같은 눈 기둥 밝기의 FWHM 25° 평균) · 기준 수는 v2 그대로(= 웨버 대비 1 가장자리)
+  # 넣지 않은 것(노트 18 §3): Mi1 시간 대비 적응(100~200 ms) · 국소 밝기 이득(Tm1 · Tm9) — 제안 범위 밖
+
+f0:                       # F0 — 앞단 v3 만(뇌 없음 · 노트 18 §7 · 2026-10-17 결과 전 잠금)
+  rule: f0-a
+  face_px: 32
+  frame_ms: 10
+  frames_from: runs/v1-check-20261016-233448   # F0-2 · F0-3 · F0-4 = V1-b 에서 그린 그림 그대로(frames.npz · 해시는 그 meta.json) — 새로 그리지 않음
+  warmup_ms: 100          # 렌더 그림 평균에서 뺄 앞부분(고역 · 저역이 자리 잡기)
+  f0_1:                   # 대비 곡선 — 계산 줄무늬(몸 둘레 세로 · 두 눈 같은 그림 · 위에서 보아 시계)
+    lambda_deg: 30.0
+    speed_deg_s: 30.0     # Drews 2020 자극과 같음
+    contrasts: [0.05, 0.1, 0.2, 0.5, 1.0]
+    t_ms: 2000            # 뒤 절반 평균
+    readout: 오른눈 T4a · 왼눈 T4b(선호 방향 · 자르기 전 출력 ÷ ref) 평균 → 대비 1 로 나눈 몫
+    drews_t4: {c50: 0.11, p: 2.47}          # Drews 2020 표 S1(배경 0 %) c^p/(c50^p + c^p) — 대비 1 값으로 나눠 견줌
+    max_abs_diff: 0.2                       # 다섯 점 모두
+    min_ratio_at: {contrast: 0.2, ratio: 0.47}   # HS(Schnell 2010) 값
+    dsi: {speeds_deg_s: [30.0, 90.0], contrast: 1.0, min: 0.5}   # 두 눈 각각 (선호 − 반대)/(합) · v2 와 같은 기준
+  f0_2:                   # 보고만 — 경기장 가로 국소 대비(rot-left 첫 그림 · 기둥 밝기 · 눈높이 ± band)
+    band_el_deg: 20.0
+    measure: "가로 이웃(Δh ±2) 차 ÷ (2 Ī) · Ī = FWHM 25° 평균 — |값| 중앙값 · RMS · c 0.08 넘는 몫"
+    scene_needed_below: 0.05   # 중앙값이 이 아래면 앞단과 별개로 눈높이 세로 경계가 촘촘한 장면이 필요(다음 일 결정 · 판정 아님)
+  f0_3:                   # 렌더 제자리 돎(V1-b 그림 · 90 °/s · 500 ms) — rot-left(yaw 증가) = 오른눈 앞→뒤
+    min_hz: 20.0          # 앞→뒤 흐름 눈의 T4a+T5a 평균 발화율
+    min_ratio: 2.0        # 그 눈 a ÷ b
+    other_eye: b > a      # 다른 눈은 반대(뒤→앞) · rot-right 는 거울
+  f0_4:                   # 좌우 대응 — 기둥 밝기 변화 Σ|L(t) − L(0)| 에서 같은 쪽 눈 몫
+    min_ipsi_share: 0.9
+    sources: [render_approach, disk]        # V1-b 사람 다가옴 그림(app-left · app-right) · 계산 원판(몸 기준 ±30° · 반지름 15° · 회색 위 검정)
+    disk: {centers_deg: {left: [30.0, 0.0], right: [-30.0, 0.0]}, radius_deg: 15.0}
+  pass: [f0_1, f0_3, f0_4]    # 셋 다 → V1-c(판정 그대로 · 앞단만 v3 · 작은 시험 먼저) · 보고: v2 값을 나란히
+  on_fail_f0_1: "매개변수를 결과 전에 한 번만 다시 고름 → 그래도 못 넘으면 멈춤(노트 18 §7)"
+
 v0:                       # V0 — 분석식 광류 → T4/T5 → 뇌(연구 노트 17 §8 · 결과 전 잠금 2026-10-16)
   rule: v0-a
   window_ms: 300
