@@ -25,6 +25,10 @@
     button.on { border-color: var(--accent); color: var(--accent); }
     #eyecv { width: 100%; background: #000; border-radius: 4px; image-rendering: pixelated; }
     #status, #mode { color: var(--muted); font-size: 12px; }
+    #btab { border-collapse: collapse; font-size: 12px; margin: 6px 0; width: 100%; }
+    #btab td, #btab th { border-bottom: 1px solid #2b333c; padding: 2px 6px; text-align: right; }
+    #btab th:first-child, #btab td:first-child { text-align: left; color: var(--muted); }
+    #bcmd { color: var(--text); }
     kbd { background: #2b333c; border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; }
     @media (max-width: 800px) { #wrap { flex-direction: column; } #side { width: 100%; max-width: none; height: 45%; } }
   </style>
@@ -45,6 +49,20 @@
       <p><kbd>W A S D</kbd> 이동 · <kbd>Shift</kbd> 달리기 · 마우스 끌기 = 고개 돌리기 · 화면을 한 번 눌러야 키가 먹음</p>
       <button id="home">처음 자리로 <kbd>R</kbd></button><button id="col">부딪힘 켬 (C)</button>
       <button id="appL">다가옴 시험 재생(왼쪽)</button><button id="appR">다가옴 시험 재생(오른쪽)</button>
+      <h2>초파리 뇌 연결</h2>
+      <div id="brainbox" style="display:none">
+        <button id="bon">뇌 연결 켜기</button><button id="breset">초파리 처음 자리로</button>
+        <p>입력 다이얼 <input type="range" id="dial" min="1" max="16" step="0.5" value="1" style="width:160px;vertical-align:middle">
+          <b id="dialv">×1 (잰 그대로)</b></p>
+        <table id="btab"></table>
+        <p id="bcmd"></p>
+        <p id="bspeed"></p>
+        <p>앞으로 걷기 = 선언 <span id="bwalk"></span> m/s(<b>뇌 아님</b>) · 돌기 = 진짜 배선 뇌의 DNa02 오른 − 왼
+          (최근 100 ms · 오른쪽이 많으면 오른쪽으로) · 도망 = GF 발화 → 0.5 초 뒤로 · 섞은 배선 뇌는 같은 입력을 받고
+          값만 보여 줌(몸은 안 움직임) · 다이얼이 1 이 아니면 입력을 <b>손으로 올린 것</b> · 뇌가 돌기를 내려면
+          앞→뒤 입력이 50 Hz 넘게 필요(V0d).</p>
+      </div>
+      <p id="nobrain">뇌 서버가 꺼져 있음 — <kbd>scripts/60-eyeworld/view.sh --brain</kbd> 으로 띄우면 켤 수 있음</p>
       <h2>초파리 뇌 캐릭터의 두 눈이 지금 받는 그림(실시간)</h2>
       <canvas id="eyecv" width="432" height="168"></canvas>
       <p>낱눈 기둥 1,770(연결 지도 L1 기둥 좌표 · 5° 흐림) 하나하나의 밝기. 가로 = 그 캐릭터 몸 기준 방위

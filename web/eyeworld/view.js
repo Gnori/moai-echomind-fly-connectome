@@ -33,13 +33,51 @@ const me = { pos: [0, 0, 0], yaw: 0, pitch: 0 };
 const flyLook = { yaw: 0, pitch: 0 };
 const keys = new Set();
 const nodes = {};
-let meNode, meTag, flyNode, collide = true, drag = null, play = null, eyeBusy = false, lastEye = 0;
+let meNode, meTag, flyNode, ring, collide = true, drag = null, play = null, eyeBusy = false, lastEye = 0;
+const fly = { pos: [0, 0, 0], yaw: 0 };         // 초파리 뇌 캐릭터 자세(뇌 연결이 켜지면 뇌 명령으로 움직임)
+let brain = null, dial = 1, tick = 0;
 const notInEye = new Set();                     // 초파리 눈 그림에서 뺄 것(제 몸 · 이름표 · 고리)
 
 async function loadContainer(url) {
   if (B.LoadAssetContainerAsync) return await B.LoadAssetContainerAsync(url, scene);
   const i = url.lastIndexOf('/');
   return await B.SceneLoader.LoadAssetContainerAsync(url.slice(0, i + 1), url.slice(i + 1), scene);
+}
+
+const enc = new TextEncoder(), dec = new TextDecoder();
+function pack(head, body) {
+  const hb = enc.encode(JSON.stringify(head));
+  const n = body ? body.byteLength : 0;
+  const buf = new ArrayBuffer(4 + hb.length + n);
+  new DataView(buf).setUint32(0, hb.length, true);
+  new Uint8Array(buf, 4, hb.length).set(hb);
+  if (body) new Uint8Array(buf, 4 + hb.length).set(body);
+  return buf;
+}
+function unpack(buf) {
+  const n = new DataView(buf).getUint32(0, true);
+  return JSON.parse(dec.decode(new Uint8Array(buf, 4, n)));
+}
+
+function flyRig() {                             // 세계 서버 eye_rig 와 같은 식(앞 · 뒤 · 왼 · 오 · 위 · 아래 · 왼눈 = 머리 + 왼 × 간격/2)
+  const f = fwd(fly.yaw), l = lft(fly.yaw), U = [0, 1, 0], neg = (a) => a.map((x) => -x);
+  const head = [fly.pos[0], fly.pos[1] + h.body.eye_m, fly.pos[2]], k = h.body.eye_sep_m / 2;
+  const faces = [[f, U], [neg(f), U], [l, U], [neg(l), U], [U, neg(f)], [neg(U), f]]
+    .map(([forward, up]) => ({ forward, up }));
+  return [
+    { pos: [head[0] + l[0] * k, head[1], head[2] + l[2] * k], faces },
+    { pos: [head[0] - l[0] * k, head[1], head[2] - l[2] * k], faces },
+  ];
+}
+
+function pushOut(p, r, others) {                // 원기둥끼리 겹치면 p 만 밀려남(세계 서버와 같은 식)
+  for (const c of others) {
+    const dx = p[0] - c.x, dz = p[2] - c.z, d = Math.hypot(dx, dz), min = c.r + r;
+    if (d < min && d > 1e-6) { p[0] = c.x + (dx / d) * min; p[2] = c.z + (dz / d) * min; }
+  }
+  const lim = h.ground.size_m / 2 - 1;
+  p[0] = Math.max(-lim, Math.min(lim, p[0]));
+  p[2] = Math.max(-lim, Math.min(lim, p[2]));
 }
 
 function place(node, pos, yaw, s = 1) {
@@ -122,13 +160,8 @@ function stepMe(dt) {
     me.pos[0] += ((f[0] * mz + l[0] * mx) / n) * sp;
     me.pos[2] += ((f[2] * mz + l[2] * mx) / n) * sp;
   }
-  for (const c of collide ? h.colliders : []) {  // 물체 · 초파리 뇌 캐릭터와 겹치면 밀려남(세계 서버와 같은 원기둥 · C 로 끔)
-    const dx = me.pos[0] - c.x, dz = me.pos[2] - c.z, d = Math.hypot(dx, dz), min = c.r + h.body.radius_m;
-    if (d < min && d > 1e-6) { me.pos[0] = c.x + (dx / d) * min; me.pos[2] = c.z + (dz / d) * min; }
-  }
-  const lim = h.ground.size_m / 2 - 1;
-  me.pos[0] = Math.max(-lim, Math.min(lim, me.pos[0]));
-  me.pos[2] = Math.max(-lim, Math.min(lim, me.pos[2]));
+  // 물체 · 초파리 뇌 캐릭터와 겹치면 밀려남(세계 서버와 같은 원기둥 · C 로 물체 부딪힘 끔)
+  pushOut(me.pos, h.body.radius_m, [...(collide ? h.colliders : []), { x: fly.pos[0], z: fly.pos[2], r: h.fly_radius }]);
   place(meNode, me.pos, me.yaw);
 }
 
@@ -144,48 +177,116 @@ function stepCam() {
     cam.position.copyFrom(V([t[0] - 4 * d[0], t[1] - 4 * d[1] + 0.4, t[2] - 4 * d[2]]));
     cam.setTarget(V(t));
   } else if (mode === 4) {
-    const e = h.eye, d = look(h.fly_yaw + flyLook.yaw, flyLook.pitch);
+    const r = flyRig(), e = [(r[0].pos[0] + r[1].pos[0]) / 2, r[0].pos[1], (r[0].pos[2] + r[1].pos[2]) / 2];
+    const d = look(fly.yaw + flyLook.yaw, flyLook.pitch);
     cam.position.copyFrom(V(e));
     cam.setTarget(V([e[0] + d[0], e[1] + d[1], e[2] + d[2]]));
   }
 }
 
-async function updateEye() {                    // 초파리 뇌 캐릭터 두 눈 큐브맵(렌더러와 같은 면 · 같은 밝기 식) → 기둥 밝기
-  eyeBusy = true;
-  try {
-    const N = h.face_px, out = [new Float32Array(6 * N * N), new Float32Array(6 * N * N)];
-    rtt.renderList = scene.meshes.filter((m) => !notInEye.has(m));
-    for (let e = 0; e < 2; e++) {
-      const eye = h.rig[e], pos = V(eye.pos);
-      for (let f = 0; f < 6; f++) {
-        const fc = eye.faces[f];
-        eyeCam.position.copyFrom(pos);
-        eyeCam.upVector = V(fc.up);
-        eyeCam.setTarget(pos.add(V(fc.forward)));
-        eyeCam.getViewMatrix(true);
-        rtt.render();
-        const px = await rtt.readPixels();
-        for (let i = 0; i < N * N; i++) out[e][f * N * N + i] = 0.2 * px[4 * i] + 0.7 * px[4 * i + 1] + 0.1 * px[4 * i + 2];
-      }
+async function grabEyes() {                     // 초파리 뇌 캐릭터 두 눈 큐브맵(렌더러와 같은 면 · 같은 밝기 식) → u8 · 패널
+  const N = h.face_px, img = new Uint8Array(2 * 6 * N * N);
+  rtt.renderList = scene.meshes.filter((m) => !notInEye.has(m));
+  const rig = flyRig();
+  for (let e = 0; e < 2; e++) {
+    const pos = V(rig[e].pos);
+    for (let f = 0; f < 6; f++) {
+      const fc = rig[e].faces[f];
+      eyeCam.position.copyFrom(pos);
+      eyeCam.upVector = V(fc.up);
+      eyeCam.setTarget(pos.add(V(fc.forward)));
+      eyeCam.getViewMatrix(true);
+      rtt.render();
+      const px = await rtt.readPixels();
+      const o = (e * 6 + f) * N * N;
+      for (let i = 0; i < N * N; i++) img[o + i] = Math.round(0.2 * px[4 * i] + 0.7 * px[4 * i + 1] + 0.1 * px[4 * i + 2]);
     }
-    const cv = $('eyecv'), ctx = cv.getContext('2d');
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, cv.width, cv.height);
-    for (const [e, s] of [[0, 'L'], [1, 'R']]) {
-      const S = h.sampler[s], K = S.k;
-      for (let c = 0; c < S.az.length; c++) {
-        let v = 0;
-        for (let j = 0; j < K; j++) v += S.w[c * K + j] * out[e][S.idx[c * K + j]];
-        const g = Math.round(Math.min(255, v));
-        ctx.fillStyle = `rgb(${g},${g},${g})`;
-        ctx.beginPath();
-        ctx.arc(((180 - S.az[c]) / 360) * cv.width, ((70 - S.el[c]) / 140) * cv.height, 3.2, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-    }
-  } finally {
-    eyeBusy = false;
   }
+  const cv = $('eyecv'), ctx = cv.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  for (const [e, s] of [[0, 'L'], [1, 'R']]) {
+    const S = h.sampler[s], K = S.k, o = e * 6 * N * N;
+    for (let c = 0; c < S.az.length; c++) {
+      let v = 0;
+      for (let j = 0; j < K; j++) v += S.w[c * K + j] * img[o + S.idx[c * K + j]];
+      const g = Math.round(Math.min(255, v));
+      ctx.fillStyle = `rgb(${g},${g},${g})`;
+      ctx.beginPath();
+      ctx.arc(((180 - S.az[c]) / 360) * cv.width, ((70 - S.el[c]) / 140) * cv.height, 3.2, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+  return img;
+}
+
+async function updateEye() {
+  eyeBusy = true;
+  try { await grabEyes(); } finally { eyeBusy = false; }
+}
+
+function showBrain(out) {
+  const R = out.sums.real, C = out.sums[h.brain.brains[1]] ?? {};
+  const row = (name, a, b) => `<tr><td>${name}</td><td>${a}</td><td>${b}</td></tr>`;
+  const lr = (S, k) => (S[`${k}_L`] === undefined ? '—' : `${S[`${k}_L`]} / ${S[`${k}_R`]}`);
+  $('btab').innerHTML =
+    `<tr><th>최근 ${h.brain.window_ms} ms 발화(왼 / 오른)</th><th>진짜 배선</th><th>섞은 배선</th></tr>` +
+    row('입력 앞→뒤 a 평균 Hz', `${out.input_hz.L.toFixed(1)} / ${out.input_hz.R.toFixed(1)}`, '같음') +
+    ['DNa02', 'GF', 'LC4', 'LPLC2', 'HS', 'DNp02'].map((k) => row(k, lr(R, k), lr(C, k))).join('');
+  const c = out.cmd;
+  $('bcmd').textContent = `몸 명령(진짜 배선 뇌): 돌기 ${c.turn_deg_s.toFixed(0)} °/s · 속도 ${c.speed_m_s.toFixed(1)} m/s`
+    + (c.escape ? ' · GF 도망!' : '');
+  $('bspeed').textContent = `뇌 시간 ${(out.sim_ms / 1000).toFixed(1)} s · 실제의 ${(out.sim_ms / 1000 / Math.max(out.wall_s, 1e-3)).toFixed(2)} 배`
+    + ` · 한 걸음 ${out.step_ms.toFixed(0)} ms(눈 그림 ${out.eyes_ms.toFixed(0)} · 앞단 ${out.ms.frontend} · 뇌 ${out.ms.brains}`
+    + ` · ${Object.entries(out.ms.own).map(([k, v]) => `${k} ${v.ms} ms/${v.spikes}발`).join(' · ')})`;
+}
+
+async function brainLoop() {                    // 눈 그림 → 뇌 서버(앞단 · 뇌 둘) → 진짜 배선 뇌 명령으로 한 걸음(10 ms)
+  const dt = h.brain.dt_ms / 1000;
+  while (brain?.on) {
+    const t0 = performance.now();
+    const img = await grabEyes();
+    const t1 = performance.now();
+    brain.ws.send(pack({ type: 'step', tick: tick++, dial }, img));
+    const out = await new Promise((res) => { brain.wait = res; });
+    if (out) out.eyes_ms = t1 - t0;
+    if (out) out.step_ms = performance.now() - t0;
+    if (!out || out.type !== 'out') break;
+    const c = out.cmd;
+    fly.yaw += ((c.turn_deg_s * Math.PI) / 180) * dt;
+    const f = fwd(fly.yaw);
+    fly.pos[0] += f[0] * c.speed_m_s * dt;
+    fly.pos[2] += f[2] * c.speed_m_s * dt;
+    pushOut(fly.pos, h.fly_radius, [...h.colliders, { x: me.pos[0], z: me.pos[2], r: h.body.radius_m }]);
+    showBrain(out);
+  }
+}
+
+function flyHome() {
+  fly.pos = [...h.fly_pos]; fly.yaw = h.fly_yaw;
+  if (brain?.ws?.readyState === 1) brain.ws.send(pack({ type: 'reset' }));
+}
+
+function setupBrain() {
+  if (!h.brain) return;
+  $('nobrain').style.display = 'none';
+  $('brainbox').style.display = '';
+  $('bwalk').textContent = h.brain.walk_m_s;
+  const dl = $('dial');
+  dl.max = h.brain.dial.max; dl.value = h.brain.dial.default; dial = Number(dl.value);
+  const showDial = () => { $('dialv').textContent = dial === 1 ? '×1 (잰 그대로)' : `×${dial} (손으로 올림)`; };
+  showDial();
+  dl.oninput = () => { dial = Number(dl.value); showDial(); };
+  $('breset').onclick = flyHome;
+  $('bon').onclick = () => {
+    if (brain?.on) { brain.on = false; brain.ws.close(); brain = null; $('bon').textContent = '뇌 연결 켜기'; return; }
+    const ws = new WebSocket(`ws://127.0.0.1:${h.brain.port}`);
+    ws.binaryType = 'arraybuffer';
+    brain = { ws, on: false, wait: null };
+    ws.onmessage = (ev) => { const m = unpack(ev.data); if (m.type === 'reset.ok') return; brain?.wait?.(m); };
+    ws.onclose = () => { brain?.wait?.(null); };
+    ws.onopen = () => { brain.on = true; $('bon').textContent = '뇌 연결 끄기'; brainLoop(); };
+  };
 }
 
 async function main() {
@@ -245,9 +346,10 @@ async function main() {
   const body = containers[h.avatar_asset];
   // 초파리 뇌 캐릭터(노랑 · 서 있음) — 눈 그림에서 제 몸은 뺀다
   flyNode = avatar(body, 'flybrain', [0.95, 0.75, 0.25]);
-  place(flyNode, h.fly_pos, h.fly_yaw);
+  fly.pos = [...h.fly_pos]; fly.yaw = h.fly_yaw;
+  place(flyNode, fly.pos, fly.yaw);
   const tag = label('초파리 뇌', '#f2c14e', flyNode, 2.15);
-  const ring = B.MeshBuilder.CreateTorus('flyRing', { diameter: 2 * h.fly_radius, thickness: 0.04, tessellation: 48 }, scene);
+  ring = B.MeshBuilder.CreateTorus('flyRing', { diameter: 2 * h.fly_radius, thickness: 0.04, tessellation: 48 }, scene);
   ring.position.set(h.fly_pos[0], 0.03, h.fly_pos[2]);
   const rm = new B.StandardMaterial('ringMat', scene);
   rm.emissiveColor = new B.Color3(0.95, 0.76, 0.3); rm.disableLighting = true;
@@ -288,6 +390,7 @@ async function main() {
     t.pitch = Math.max(-1.2, Math.min(1.2, t.pitch - dy * 0.004));
   });
   setMode(2);
+  setupBrain();
   await scene.whenReadyAsync();
   $('status').textContent = `에셋 ${Object.keys(containers).length} 실림 · 빠짐 ${missing.length} · 재질 묶음 ${bound} · 물체 ${h.poses.length}`;
   engine.runRenderLoop(() => {
@@ -300,10 +403,12 @@ async function main() {
       place(nodes.person, p.pos, p.yaw);
       if (k >= tr.length + 100) { place(nodes.person, h.person_rest.pos, h.person_rest.yaw); play = null; }
     }
+    place(flyNode, fly.pos, fly.yaw);
+    ring.position.set(fly.pos[0], 0.03, fly.pos[2]);
     stepCam();
     scene.render();
     const now = performance.now();
-    if (!eyeBusy && now - lastEye > h.eye_every_ms) { lastEye = now; updateEye(); }
+    if (!brain?.on && !eyeBusy && now - lastEye > h.eye_every_ms) { lastEye = now; updateEye(); }
   });
   window.addEventListener('resize', () => engine.resize());
 }

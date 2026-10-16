@@ -14,8 +14,11 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
+import contextlib
 import json
 import subprocess
+import threading
 import time
 
 import numpy as np
@@ -64,8 +67,9 @@ def me_start(world, vcfg: dict, colliders: list[dict], body_r: float) -> dict:
     pos = fly.pos + float(vcfg["me_start_dist_m"]) * d
     pos[1] = 0.0
     to = fly.pos - pos
+    others = [*colliders, {"x": float(fly.pos[0]), "z": float(fly.pos[2]), "r": float(fly.radius)}]
     gap = min(float(np.hypot(pos[0] - c["x"], pos[2] - c["z"])) - c["r"] - body_r
-              for c in colliders)
+              for c in others)
     return {"pos": [float(x) for x in pos], "yaw": float(np.arctan2(to[0], to[2])),
             "clearance_m": round(gap, 2)}
 
@@ -74,6 +78,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scene", default="arena-b")
     ap.add_argument("--no-open", action="store_true", help="브라우저를 열지 않음(먼저 확인할 때)")
+    ap.add_argument("--brain", action="store_true", help="초파리 뇌 연결(뇌 둘 · 무거운 잠금)")
     a = ap.parse_args()
     ecfg = config.load("eyeworld")
     rcfg, vcfg = ecfg["render"], ecfg["view"]
@@ -106,11 +111,11 @@ def main() -> None:
             "az": np.round(c.az, 2).tolist(),
             "el": np.round(c.el, 2).tolist(),
         }
-    colliders = [
+    colliders = [  # 놓인 물체만(초파리 뇌 캐릭터 · 내 캐릭터는 페이지가 움직이며 서로 밀어냄)
         {"x": float(e.col_center()[0]), "z": float(e.col_center()[2]), "r": float(e.radius)}
         for e in world.ents.values()
         if e.kind == "prop" and e.solid
-    ] + [{"x": float(fly.pos[0]), "z": float(fly.pos[2]), "r": float(fly.radius)}]
+    ]
     b = ecfg["world"]["body"]
     head = {
         "scene": a.scene,
@@ -136,13 +141,36 @@ def main() -> None:
         "colliders": colliders,
         "me_start": me_start(world, vcfg, colliders, float(b["radius_m"])),
         "body": {"walk_m_s": float(b["walk_max_m_s"]), "run_m_s": float(b["run_max_m_s"]),
-                 "radius_m": float(b["radius_m"]),
+                 "radius_m": float(b["radius_m"]), "eye_sep_m": float(b["eye_sep_m"]),
+                 "turn_max_deg_s": float(b["turn_max_deg_s"]),
                  "eye_m": float(b["height_m"]) * float(b["eye_frac"])},
+        "brain": None,
     }
+    link = None
+    guard = contextlib.ExitStack()
+    if a.brain:  # 뇌 연결(탐색 · 판정 아님) — 뇌 둘을 프로세스로 · 무거운 잠금(한 번에 하나)
+        from moai_echomind_fly.eyeworld.brainlink import BrainLink
+        from moai_echomind_fly.guard import heavy
+
+        extra = float(ecfg["view_brain"]["extra_gb"])
+        rep = guard.enter_context(heavy("view-brain", extra_gb=extra))
+        print(f"[guard] 메모리 여유 {rep.free_percent}%", flush=True)
+
+        vb = ecfg["view_brain"]
+        link = BrainLink()
+        head["brain"] = {"port": int(vb["port"]), "dt_ms": float(vb["dt_ms"]),
+                         "walk_m_s": float(vb["walk_m_s"]), "dial": vb["dial"],
+                         "brains": list(vb["brains"]), "window_ms": float(vb["window_ms"])}
     (out / f"{a.scene}.json").write_text(json.dumps(head, ensure_ascii=False), encoding="utf-8")
     port = int(rcfg["view_port"])
     srv = StaticServer(port=port, table={**mounts(), "/view/": out})
     srv.start()
+    stop = None
+    if link is not None:
+        loop = asyncio.new_event_loop()
+        stop = asyncio.Event()
+        threading.Thread(target=loop.run_forever, daemon=True).start()
+        asyncio.run_coroutine_threadsafe(link.serve(head["brain"]["port"], stop), loop)
     url = f"http://127.0.0.1:{port}/web/view.html?scene={a.scene}"
     print(f"[view] {url} · 물체 {len(poses)} · 기둥 L {len(sampler['L']['az'])}"
           f" · R {len(sampler['R']['az'])} · 내 시작 틈 {head['me_start']['clearance_m']} m",
@@ -155,6 +183,9 @@ def main() -> None:
         pass
     finally:
         srv.stop()
+        if link is not None:
+            link.close()
+        guard.close()
         print("[view] 서버 닫음", flush=True)
 
 
