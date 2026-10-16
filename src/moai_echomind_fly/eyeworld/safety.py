@@ -41,6 +41,9 @@ def check_port(port: int, forbidden: list[int] | None = None) -> None:
     if int(port) in {int(x) for x in forbidden}:
         raise SafetyError(f"포트 {port} 는 금지(에코월드 라이브 · 눈 워커 · 상자 월드)")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        # 서버들과 같게 재사용 허용 — 닫힌 직후 정리 대기(TIME_WAIT)는 통과
+        # · 듣고 있는 소켓은 여전히 거부
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             s.bind(("127.0.0.1", int(port)))
         except OSError as e:
