@@ -33,7 +33,7 @@ const me = { pos: [0, 0, 0], yaw: 0, pitch: 0 };
 const flyLook = { yaw: 0, pitch: 0 };
 const keys = new Set();
 const nodes = {};
-let meNode, meTag, flyNode, drag = null, play = null, eyeBusy = false, lastEye = 0;
+let meNode, meTag, flyNode, collide = true, drag = null, play = null, eyeBusy = false, lastEye = 0;
 const notInEye = new Set();                     // 초파리 눈 그림에서 뺄 것(제 몸 · 이름표 · 고리)
 
 async function loadContainer(url) {
@@ -122,7 +122,7 @@ function stepMe(dt) {
     me.pos[0] += ((f[0] * mz + l[0] * mx) / n) * sp;
     me.pos[2] += ((f[2] * mz + l[2] * mx) / n) * sp;
   }
-  for (const c of h.colliders) {                // 물체 · 초파리 뇌 캐릭터와 겹치면 밀려남(세계 서버와 같은 원기둥)
+  for (const c of collide ? h.colliders : []) {  // 물체 · 초파리 뇌 캐릭터와 겹치면 밀려남(세계 서버와 같은 원기둥 · C 로 끔)
     const dx = me.pos[0] - c.x, dz = me.pos[2] - c.z, d = Math.hypot(dx, dz), min = c.r + h.body.radius_m;
     if (d < min && d > 1e-6) { me.pos[0] = c.x + (dx / d) * min; me.pos[2] = c.z + (dz / d) * min; }
   }
@@ -265,8 +265,14 @@ async function main() {
   $('mf').onclick = () => setMode(4);
   $('appL').onclick = () => { play = { traj: h.approach.left, t0: performance.now() }; };
   $('appR').onclick = () => { play = { traj: h.approach.right, t0: performance.now() }; };
+  const home = () => { me.pos = [...h.me_start.pos]; me.yaw = h.me_start.yaw; me.pitch = 0; place(meNode, me.pos, me.yaw); };
+  const toggleCollide = () => { collide = !collide; $('col').textContent = `부딪힘 ${collide ? '켬' : '끔'} (C)`; };
+  $('home').onclick = home;
+  $('col').onclick = toggleCollide;
   window.addEventListener('keydown', (e) => {
     if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) setMode(Number(e.code.slice(-1)));
+    if (e.code === 'KeyR') home();
+    if (e.code === 'KeyC') toggleCollide();
     keys.add(e.code);
   });
   window.addEventListener('keyup', (e) => keys.delete(e.code));

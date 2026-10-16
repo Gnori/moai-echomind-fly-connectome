@@ -57,6 +57,19 @@ def with_person(world, scene: dict, side: str | None) -> list[dict]:
     return traj
 
 
+def me_start(world, vcfg: dict, colliders: list[dict], body_r: float) -> dict:
+    """내 캐릭터 시작 — 초파리 뇌 캐릭터 몸 기준 (방위 · 거리) · 그쪽을 바라봄 · 물체와의 틈."""
+    fly = world.ents["fly"]
+    d = body_dir(fly.yaw, np.array(float(vcfg["me_start_bearing_deg"])), np.array(0.0)).reshape(3)
+    pos = fly.pos + float(vcfg["me_start_dist_m"]) * d
+    pos[1] = 0.0
+    to = fly.pos - pos
+    gap = min(float(np.hypot(pos[0] - c["x"], pos[2] - c["z"])) - c["r"] - body_r
+              for c in colliders)
+    return {"pos": [float(x) for x in pos], "yaw": float(np.arctan2(to[0], to[2])),
+            "clearance_m": round(gap, 2)}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scene", default="arena-b")
@@ -121,8 +134,7 @@ def main() -> None:
         "fly_yaw": float(fly.yaw),
         "fly_radius": float(fly.radius),
         "colliders": colliders,
-        "me_start": {"pos": list(map(float, vcfg["me_start_pos"])),
-                     "yaw": float(np.radians(float(vcfg["me_start_yaw_deg"])))},
+        "me_start": me_start(world, vcfg, colliders, float(b["radius_m"])),
         "body": {"walk_m_s": float(b["walk_max_m_s"]), "run_m_s": float(b["run_max_m_s"]),
                  "radius_m": float(b["radius_m"]),
                  "eye_m": float(b["height_m"]) * float(b["eye_frac"])},
@@ -133,7 +145,8 @@ def main() -> None:
     srv.start()
     url = f"http://127.0.0.1:{port}/web/view.html?scene={a.scene}"
     print(f"[view] {url} · 물체 {len(poses)} · 기둥 L {len(sampler['L']['az'])}"
-          f" · R {len(sampler['R']['az'])}", flush=True)
+          f" · R {len(sampler['R']['az'])} · 내 시작 틈 {head['me_start']['clearance_m']} m",
+          flush=True)
     if not a.no_open:
         subprocess.run(["open", url], check=False)
     try:
