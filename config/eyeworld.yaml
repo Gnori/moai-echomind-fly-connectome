@@ -63,14 +63,14 @@ v0b:                      # V0b — 어두운 원판 → [T5 + 측정된 소엽 
   lobula:                            # 측정된 것(노트 17 §10.1 · 원문): Tm2 OFF · FWHM 8.2° · Tm4 OFF · 순간 · 11.3° · T2 ON-OFF(수용장 수치 없음)
     # σ = FWHM / 2.355 · 시간 저역 τ 40 ms(선언 · Tm2 필터 정점 43 ms) · 기준 ref = 대비 × v_ref / (4 σ)[1/s]
     #   = v_ref 100 °/s 로 움직이는 가장자리가 그 수용장을 지날 때의 |dL/dt| 정점 → 그때 r_max(결과와 무관하게 정함)
-    Tm2:  {polarity: off,   mode: transient, rf_sigma_deg: 3.48, tau_ms: 40.0}
-    Tm4:  {polarity: off,   mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
-    T2:   {polarity: onoff, mode: transient, rf_sigma_deg: 4.14, tau_ms: 40.0}   # σ 는 Tm2 · Tm4 FWHM 평균(9.75°) — 선언 · 크기 억제 수치 없음 → T2 뺀 팔도
+    Tm2:  {polarity: "off",   mode: transient, rf_sigma_deg: 3.48, tau_ms: 40.0}
+    Tm4:  {polarity: "off",   mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
+    T2:   {polarity: "onoff", mode: transient, rf_sigma_deg: 4.14, tau_ms: 40.0}   # σ 는 Tm2 · Tm4 FWHM 평균(9.75°) — 선언 · 크기 억제 수치 없음 → T2 뺀 팔도
   explore:                           # 측정 없음 → 탐색 팔 하나(판정 안 함) · Tm4 와 같은 꼴로 선언
-    TmY3: {polarity: off, mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
-    Tm5Y: {polarity: off, mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
-    Tm20: {polarity: off, mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
-    Y3:   {polarity: off, mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
+    TmY3: {polarity: "off", mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
+    Tm5Y: {polarity: "off", mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
+    Tm20: {polarity: "off", mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
+    Y3:   {polarity: "off", mode: transient, rf_sigma_deg: 4.80, tau_ms: 40.0}
   excluded_inhibitory: [Li28, TmY5a, Tm37]   # 억제(우리 그래프 부호 −1: GABA · 글루탐산 · 10-16 확인) — 켜지 않음
   arms:
     main: [T5, Tm2, Tm4, T2]         # 주 판정 팔
