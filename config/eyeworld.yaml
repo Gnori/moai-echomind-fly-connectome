@@ -134,3 +134,37 @@ v0b:                      # V0b — 어두운 원판 → [T5 + 측정된 소엽 
   wording:
     pass: "측정된 OFF · ON-OFF 기둥 세포와 T5 를 계산해 넣으면 우리 배선이 다가옴 쪽 LC4 를 자리 특이적으로 켠다(앞단은 계산)"
     never_before_v1: "초파리가 본다 · 3 차원을 본다"
+
+v1:                       # V1 — 렌더러 그림 → 앞단 v2 → 뇌(R-1177 · 2026-10-17 결과 전 잠금 · 열린 고리)
+  rule: v1-a
+  scene: arena-a
+  face_px: 32
+  frame_ms: 10            # 세계 · 그림 · 앞단 · 뇌 한 걸음
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  rotation:               # R1 — 몸이 제자리에서 돎(장면은 그대로) · 몸 기준으로는 세계가 반대로 도는 흐름
+    turn_deg_s: 90.0
+    window_ms: 500
+    directions: [left, right]      # left = yaw 증가(위에서 보아 반시계)
+  approach:               # A1~A3 — 사람이 달려옴(그림에서 하늘을 배경으로 어두운 실루엣)
+    asset: mh_m_base_nogen_lod
+    asset_path: character/mh_m_base_nogen_lod.glb
+    license: 우리 것
+    source: "MakeHuman 바탕(CC0) + 에코월드 자체 손질(docs/character-system.md) · 요구자 소유"
+    start_m: 6.0
+    speed_m_s: 4.5        # 상자 실험 달리기와 같은 값
+    window_ms: 1000       # 6 m → 1.5 m(눈 높이에서 각 크기 약 17° → 62°)
+    bearings_deg: {left: 30.0, right: -30.0}   # 눈 사이 가운데 기준 몸 방위(+ 왼쪽)
+  arms:
+    shuffled_maps: {n: 5, seed0: 300}   # 입구 뉴런의 자리만 종류 · 아형 × 눈 안에서 섞음(발화율 순서를 섞음)
+    rewired: [rewired-s0, rewired-s1, rewired-s2]
+  pass:
+    r1_flip_min: 9
+    r1_rewired_max_ratio: 0.25
+    a1_shuffle_median_ratio: 1.5
+    a1_insufficient: 20   # 진짜 · 다가옴 LC4 합(자극 하나 · 씨앗 평균) < 이 값이면 입력 부족
+    a3_ipsi_min: 9
+    report_only: [LPLC2, GF, DNp02, HS, VS, cost]
+  wording:
+    r1: "에코월드 에셋으로 그린 3D 공간을 초파리 겹눈 해상도로 본 그림에서, 계산한 앞단을 거쳐 우리 배선이 몸이 도는 흐름을 좌우 조향 하강 뉴런으로 옮겼다"
+    a_all: "같은 그림에서, 다가오는 사람 쪽 LC4 를 우리 배선이 자리 특이적으로 켰다(앞단은 계산)"
+    never: "초파리가 본다(앞단이 계산이므로) · 사람을 알아본다"
