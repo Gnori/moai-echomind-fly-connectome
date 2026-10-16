@@ -31,3 +31,19 @@ def test_off_transient_fires_where_edge_passes_and_on_does_not():
         disk.lobula_rates(d, radii, contrasts, 0.01, "off", "sustained", 2.5, 0.5, 150.0)
     )
     assert sus[-1, 0] > 0 and sus[-1, 1] > 0 and sus[-1, 2] < 1e-2
+
+
+def test_onoff_lowpass_and_edge_ref():
+    d = np.array([15.0])
+    radii, contrasts = disk.disk_course("loom", 5, 30, 1.0, 30)
+    raw = np.array(
+        disk.lobula_rates(d, radii, contrasts, 0.01, "onoff", "transient", 3.5, 7.0, 150.0)
+    )
+    lp = np.array(
+        disk.lobula_rates(
+            d, radii, contrasts, 0.01, "onoff", "transient", 3.5, 7.0, 150.0, tau_ms=40.0
+        )
+    )
+    assert raw.max() > 0 and lp.max() > 0
+    assert lp.argmax() >= raw.argmax()  # 저역은 늦게 정점
+    assert np.isclose(disk.edge_ref(1.0, 100.0, 3.48), 100.0 / (4 * 3.48))

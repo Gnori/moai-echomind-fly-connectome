@@ -52,10 +52,15 @@ def lobula_rates(
     sigma_deg: float,
     ref: float,
     r_max_hz: float,
+    tau_ms: float = 0.0,
 ) -> list[np.ndarray]:
-    """한 종류 뉴런들(각거리 d)의 구간별 발화율."""
+    """한 종류 뉴런들(각거리 d)의 구간별 발화율.
+
+    polarity = on | off | onoff(|변화|) · tau_ms > 0 이면 반응에 1 차 시간 저역(선언).
+    """
     lum = [luminance(d, r, c, sigma_deg) for r, c in zip(radii, contrasts)]
-    out, prev = [], np.ones_like(d)
+    a = float(np.exp(-bin_s * 1000.0 / tau_ms)) if tau_ms > 0 else 0.0
+    out, prev, filt = [], np.ones_like(d), np.zeros_like(d)
     for cur in lum:
         if mode == "transient":
             x = (cur - prev) / bin_s
@@ -63,7 +68,23 @@ def lobula_rates(
             x = cur - 1.0
         else:
             raise ValueError(mode)
-        resp = np.maximum(x, 0.0) if polarity == "on" else np.maximum(-x, 0.0)
-        out.append(r_max_hz * np.clip(resp / ref, 0.0, 1.0))
+        if polarity == "on":
+            resp = np.maximum(x, 0.0)
+        elif polarity == "off":
+            resp = np.maximum(-x, 0.0)
+        elif polarity == "onoff":
+            resp = np.abs(x)
+        else:
+            raise ValueError(polarity)
+        filt = a * filt + (1.0 - a) * resp
+        out.append(r_max_hz * np.clip(filt / ref, 0.0, 1.0))
         prev = cur
     return out
+
+
+def edge_ref(contrast: float, v_ref_deg_s: float, sigma_deg: float) -> float:
+    """v_ref 로 움직이는 가장자리가 수용장(σ)을 지날 때 |dL/dt| 정점.
+
+    이때 r_max — 결과와 무관하게 정하는 기준.
+    """
+    return contrast * v_ref_deg_s / (4.0 * sigma_deg)
