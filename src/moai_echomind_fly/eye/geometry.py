@@ -59,6 +59,36 @@ def _linear(x: np.ndarray, lo_in: float, hi_in: float, lo_out: float, hi_out: fl
     return lo_out + (x - lo_in) / (hi_in - lo_in) * (hi_out - lo_out)
 
 
+def type_positions(g: Graph, types: list[str]) -> Positions:
+    """아무 기둥 종류나 — 공식 좌표가 있으면 그것, 없으면 입력 가중 평균(T4/T5 와 같은 식).
+
+    `kind` 칸에 종류 이름 · `sub` 칸은 "-".
+    """
+    rcfg = config.load("retino")
+    typ = g.columns["type"].astype(str)
+    side = side_of(g)
+    hexes = retino.column_hex(g)
+    cols = hexes[~np.isnan(hexes[:, 0])]
+    hs_all, vs_all = cols[:, 0] - cols[:, 1], cols.sum(1)
+    idx = np.flatnonzero(np.isin(typ, types) & np.isin(side, ["L", "R"]))
+    hx, w = retino.weighted_input_hex(g, idx, hexes)
+    off = ~np.isnan(hexes[idx, 0])
+    hx[off] = hexes[idx[off]]
+    ok = (off | (w >= float(rcfg["min_input_synapses"]))) & ~np.isnan(hx[:, 0])
+    idx, hx = idx[ok], hx[ok]
+    h, v = hx[:, 0] - hx[:, 1], hx.sum(1)
+    az = _linear(
+        h, float(hs_all.min()), float(hs_all.max()), *map(float, rcfg["azimuth_range_deg"])
+    )
+    s = side[idx].astype(str)
+    az = np.where(s == "L", -az, az)
+    el = _linear(
+        v, float(vs_all.min()), float(vs_all.max()), *map(float, rcfg["elevation_range_deg"])
+    )
+    return Positions(idx=idx, kind=typ[idx], sub=np.full(len(idx), "-"), side=s,
+                     h=h, v=v, az=az, el=el)
+
+
 def t4t5_positions(g: Graph, types: list[str] | None = None) -> Positions:
     """설정(eyeworld.yaml eye · retino.yaml)대로 T4/T5 자리를 계산한다.
 
