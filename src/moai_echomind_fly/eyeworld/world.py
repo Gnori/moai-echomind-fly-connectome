@@ -171,7 +171,14 @@ class World:
                 if not (ea.solid and eb.solid):
                     continue
                 u = d / n if n > 1e-9 else np.array([1.0, 0.0, 0.0])
-                if ea.body is not None and eb.body is None:  # 몸만 밀려남
+                mov_a, mov_b = ea.kind != "prop", eb.kind != "prop"
+                if not (mov_a or mov_b):  # 놓인 물체끼리는 밀지 않는다(10-17 F0-4 · 첫 걸음에 튐)
+                    continue
+                if mov_a and not mov_b:  # 움직이는 쪽만 밀려남
+                    ea.pos = ea.pos - u * gap
+                elif mov_b and not mov_a:
+                    eb.pos = eb.pos + u * gap
+                elif ea.body is not None and eb.body is None:  # 몸만 밀려남
                     ea.pos = ea.pos - u * gap
                 elif eb.body is not None and ea.body is None:
                     eb.pos = eb.pos + u * gap

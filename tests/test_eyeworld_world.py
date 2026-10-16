@@ -72,3 +72,13 @@ def test_scene_license_checks(tmp_path):
     nosrc = {"assets": {"a": {"path": "a.glb", "license": "CC0"}}}
     with pytest.raises(SafetyError):
         scene_mod.verify_assets(nosrc, tmp_path)
+
+
+def test_props_never_move_and_person_is_pushed_off_prop():
+    a = Entity(id="a", kind="prop", asset="x", pos=np.array([0.0, 0, 5.0]), radius=1.0)
+    b = Entity(id="b", kind="prop", asset="x", pos=np.array([0.5, 0, 5.0]), radius=1.0)
+    p = Entity(id="p", kind="person", asset="x", pos=np.array([0.0, 0, 6.2]), radius=0.3)
+    w = World([_agent(), a, b, p])
+    w.step(0.01, None)
+    assert w.ents["a"].pos.tolist() == [0.0, 0, 5.0] and w.ents["b"].pos.tolist() == [0.5, 0, 5.0]
+    assert np.linalg.norm(w.ents["p"].pos - w.ents["a"].pos) >= 1.3 - 1e-6  # 사람만 밀려남
