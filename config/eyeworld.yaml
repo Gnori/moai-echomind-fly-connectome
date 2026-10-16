@@ -1,0 +1,47 @@
+# 눈으로 보는 3D 세계(R-1177 · 설계 문서 I) — 값은 선언 · 결과 전 잠금. 바꾸면 판을 올린다.
+version: eyeworld-v0     # 2026-10-16 — V0(세계 없이 · 분석식 광류 → T4/T5) 만. 렌더러 · 세계 서버 칸은 V1 에서 더한다.
+
+safety:                   # 설계 문서 2.9 — V1 부터 쓰지만 금지 목록은 지금 잠근다
+  forbidden_ports: [9212, 9213, 8881, 9412]   # 에코월드 라이브 · 눈 워커 · 눈 정적 · 상자 월드
+  echomind_headless_lock: /tmp/echomind-world-headless.lock   # 살아 있으면 우리 크롬을 띄우지 않는다(읽기만)
+
+eye:                      # eye-v1 — 겹눈 기하(설계 문서 3.2)
+  version: eye-v1
+  retino: retino-v2       # 방위 · 고도 변환은 config/retino.yaml 규약 그대로(h 앞 + · v 위 + · 오른눈 [−170, +10] · 왼눈 거울 · 선형 근사)
+  t4t5_types: [T4a, T4b, T4c, T4d, T5a, T5b, T5c, T5d]
+  # 아형 선호 방향(눈 격자 축 · 연구 노트 17 §6.1 · 문헌): a = 뒤로(−h) · b = 앞으로(+h) · c = 위(+v) · d = 아래(−v)
+  preferred_axis: {a: [-1, 0], b: [1, 0], c: [0, 1], d: [0, -1]}
+
+v0:                       # V0 — 분석식 광류 → T4/T5 → 뇌(연구 노트 17 §8 · 결과 전 잠금 2026-10-16)
+  rule: v0-a
+  window_ms: 300
+  bin_ms: 10              # 발화율을 이 간격으로 바꿈(다가옴은 시간에 따라 변함)
+  r_max_hz: 150.0         # 노트 17 §8.1 · vision-path 와 같음
+  v_ref_deg_s: 100.0      # 선언 — 국소 속도 / v_ref 를 0~1 로 자름
+  same_rate_t4_t5: true   # V0 는 밝아짐 · 어두워짐을 나누지 않는다
+  stimuli:
+    rotation: {speed_deg_s: 90.0, directions: [cw, ccw]}      # 위에서 보아 세계가 시계 · 반시계로 · 전체 시야 · 방위 속도 × cos(고도)
+    loom:                                                      # 원판 지름 10° → 60° (반지름 5 → 30° 선형) · 가장자리 띠만 바깥으로
+      centers_deg: {left: [30.0, 0.0], right: [-30.0, 0.0]}    # [방위(+ 왼쪽), 고도]
+      radius_deg: [5.0, 30.0]
+      edge_sigma_deg: 2.5                                      # 가장자리 띠 가우시안 폭(선언 · 낱눈 간격 약 5° 의 반)
+    tangential:                                                # 다가옴의 대조 — 같은 자리 · 같은 아형별 총량(구간마다 배율로 맞춤) · 바깥 대신 접선(돌기)
+      same_as: loom                                            # ⚠️ 노트 17 의 '평행 이동'에서 바꿈(평행 이동은 한 방향만 켜져 아형별 총량을 못 맞춤) — 결과 전
+  arms:
+    real_map: 1
+    shuffled_maps: {n: 5, seed0: 100}     # 아형 × 눈 안에서 자리만 섞은 대응표(켜진 수 · 총 입력 같음)
+    rewired: [rewired-s0, rewired-s1, rewired-s2]   # 전체 섞기(graph.rewire · 뉴런마다 연결 수 · 시냅스 수 · 부호 유지 · 도착을 뇌 전체에서 섞음)
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  pass:                   # 노트 17 §8.3 그대로(평행 이동 → 접선만 바꿈)
+    c1_rotation_flip_min: 9          # DNa02(오 − 왼) 부호가 시계 · 반시계에서 반대 — 진짜 씨앗 10 중 이 수 이상
+    c1_rewired_max_ratio: 0.25       # 재배선 셋은 |평균 차| 0 이거나 진짜의 이 배 미만
+    c2_shuffle_all: true             # 다가옴 LPLC2 발화 합(왼 · 오 다가옴 합 · 씨앗 평균): 진짜 > 자리 섞기 5 벌 모두
+    c2_shuffle_median_ratio: 1.5     # 그리고 자리 섞기 중앙값의 이 배 이상
+    c2_vs_tangential_ratio: 1.5      # 다가옴 > 접선 이 배 이상
+    c2_ipsi: true                    # 왼쪽 다가옴이면 왼 LPLC2 > 오른 LPLC2 · 오른쪽도 거꾸로 — 둘 다
+    c3_rewired_below: true           # 다가옴 LPLC2 합: 재배선 셋 모두 < 진짜
+    insufficient_lplc2: 20           # 진짜 · 다가옴 LPLC2 합(자극 하나 · 씨앗 평균) < 이 값이면 C2 = "입력 부족"(통과 아님)
+  wording:
+    c1_only: "T4/T5 를 넣으면 우리 배선이 좌우 조향 하강 뉴런까지 나른다(앞단은 계산 · 좌우만)"
+    c1_c2_c3: "우리 배선이 T4/T5 의 기둥 자리 정보를 LPLC2 까지 나른다(앞단은 계산)"
+    never_before_v1: "초파리가 본다 · 3 차원을 본다"
