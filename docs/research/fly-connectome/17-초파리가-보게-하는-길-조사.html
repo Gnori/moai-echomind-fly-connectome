@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>초파리가 정말 보게 하는 길 — 성공 가능성 조사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gothic+A1:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:#F1F4F5; --panel:#FAFBFB; --side:#E9EEF0; --plate:#E7ECEE; --ink:#12171A; --ink-2:#414A4F; --ink-3:#6B757A;
+    --rule:#D3DADD; --rule-2:#B6C0C4; --a:#0E7C86; --a-soft:#DCEFF1; --b:#AB2A79; --b-soft:#F7E3EF;
+    --code-bg:#E9EEF0; --code-ink:#1B2225;
+    --f-display:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+    --f-body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --f-mono:"JetBrains Mono","Gothic A1",ui-monospace,Menlo,monospace;
+    --side-w: 272px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; } }
+  :root[data-theme="dark"] {
+    --ground:#0E1214; --panel:#161B1E; --side:#121719; --plate:#1C2327; --ink:#E6EBEC; --ink-2:#B2BCC0; --ink-3:#859096;
+    --rule:#263036; --rule-2:#3A464C; --a:#4ECDD6; --a-soft:#102E33; --b:#F07AC0; --b-soft:#33122A;
+    --code-bg:#171E21; --code-ink:#D7DEE1; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.8;
+       word-break:keep-all;overflow-wrap:break-word}
+  a{color:var(--a);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  /* 왼쪽 고정 메뉴 + 오른쪽 본문, 브라우저 전체 */
+  .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100%}
+  nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);border-right:1px solid var(--rule);
+           padding:28px 22px 32px;font-size:.9rem;line-height:1.5}
+  nav.side .brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.35;margin:0 0 4px}
+  nav.side .sub{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);margin:0 0 22px}
+  nav.side ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+  nav.side li a{display:block;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--ink-2)}
+  nav.side li a:hover{background:var(--plate);color:var(--ink)}
+  nav.side li a.cur{background:var(--b-soft);color:var(--b);font-weight:700}
+  nav.side .grp{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);margin:18px 0 6px 10px}
+  nav.side .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);line-height:1.6}
+  nav.side .foot a{color:var(--ink-2)}
+  main{min-width:0;padding:clamp(28px,4vw,56px) clamp(20px,5vw,72px) 96px}
+  .page{max-width:none}   /* 본문이 브라우저 전체 폭을 쓴다 */
+  @media (max-width:860px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px}
+    nav.side ol{display:flex;flex-wrap:wrap;gap:4px}
+    nav.side li a{padding:6px 10px;font-size:.82rem}
+    nav.side .grp{display:none}
+  }
+
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,1.2rem+2.4vw,2.6rem);line-height:1.25;margin:0 0 18px;text-wrap:balance}
+  h2{font-family:var(--f-display);font-weight:700;font-size:1.6rem;line-height:1.35;margin:52px 0 12px;text-wrap:balance}
+  h3{font-size:1.2rem;font-weight:700;margin:34px 0 10px;line-height:1.45}
+  h4{font-size:1.05rem;font-weight:700;margin:24px 0 8px}
+  p{margin:0 0 16px} ul,ol{margin:0 0 16px;padding-left:1.2em} li{margin:6px 0}
+  blockquote{border-left:3px solid var(--b);background:var(--b-soft);margin:22px 0;padding:14px 20px;font-size:.92rem;line-height:1.75}
+  blockquote p:last-child{margin-bottom:0}
+  hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .36em;border-radius:2px}
+  pre{margin:16px 0 20px;padding:14px 16px;overflow-x:auto;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;
+      font-family:var(--f-mono);font-size:.8rem;line-height:1.7;color:var(--code-ink)}
+  pre code{background:none;padding:0;font-size:inherit}
+  .tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.6;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:11px 16px;border-bottom:1px solid var(--rule)}
+  tr:last-child td{border-bottom:0}
+  th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.08em;color:var(--ink-3);white-space:nowrap;background:var(--plate)}
+  img{max-width:100%;height:auto;display:block;margin:22px 0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:.9rem}
+  .pager a{text-decoration:none}
+  footer{margin-top:24px;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" aria-label="문서 메뉴">
+  <p class="brand">초파리 커넥톰 연구 노트</p>
+  <p class="sub">MaleCNS v1.0 · 2026-09</p>
+  <div class="grp">문서</div>
+  <ol><li><a href="index.html">시작 — 목차와 요약</a></li>
+<li><a href="01-공개-데이터.html">01 · 공개 데이터</a></li>
+<li><a href="02-받아-쓰는-길.html">02 · 받아 쓰는 길</a></li>
+<li><a href="03-기대치와-사례.html">03 · 기대치와 사례</a></li>
+<li><a href="04-감각과-회로.html">04 · 감각과 회로</a></li>
+<li><a href="05-LLM-연동-방식.html">05 · LLM 연동 방식</a></li>
+<li><a href="06-설계-초파리-회로에-Qwen-뇌.html">06 · 설계 — Qwen 뇌 잇기</a></li>
+<li><a href="08-데이터-실측.html">08 · 데이터 실측</a></li>
+<li><a href="09-LIF-모델.html">09 · 발화 모델(LIF)</a></li>
+<li><a href="10-적용-사례-상세.html">10 · 적용 사례 상세</a></li>
+<li><a href="07-지능은-누구-것인가.html">07 · 지능은 누구 것인가</a></li>
+<li><a href="11-구현-초파리-신호를-Qwen-에.html">11 · 구현 — 무엇을 학습하나</a></li>
+<li><a href="12-다음-학습-조사.html">12 · 다음 학습 — 조사</a></li>
+<li><a href="13-회로-학습-설계-조사.html">13 · 회로 학습 설계 — 조사</a></li>
+<li><a href="14-냄새-좌우-조사.html">14 · 냄새 좌우 — 조사</a></li>
+<li><a href="15-깊은-판단-호출-조사.html">15 · 깊은 판단 호출 — 조사</a></li>
+<li><a href="16-KC-희소성-범위-조사.html">16 · KC 희소성 범위 — 조사</a></li>
+<li><a href="17-초파리가-보게-하는-길-조사.html" class="cur">17 · 초파리가 보게 하는 길 — 조사</a></li></ol>
+  <div class="grp">그림</div>
+  <ol><li><a href="diagrams/01-llm-three-configurations.svg">세 가지 연결 구성</a></li>
+<li><a href="diagrams/02-tool-call-pipeline-detail.svg">도구 호출 파이프라인 상세</a></li>
+<li><a href="diagrams/03-closed-loop-fly-body-qwen-brain.svg">닫힌 고리</a></li>
+<li><a href="diagrams/04-vision-encoding.svg">시각 인코딩</a></li>
+<li><a href="diagrams/05-three-clocks.svg">세 시계</a></li>
+<li><a href="diagrams/06-fly-projector-qwen.svg">세 부품과 학습 여부</a></li></ol>
+  <div class="foot">정본은 마크다운 — <a href="17-초파리가-보게-하는-길-조사.md">17-초파리가-보게-하는-길-조사.md</a><br>HTML 은 읽기용 사본</div>
+</nav>
+<main>
+<div class="page">
+<h1 id="17-초파리가-정말-보게-하는-길--성공-가능성-조사">17. 초파리가 정말 보게 하는 길 — 성공 가능성 조사</h1>
+<blockquote>
+<p>2026-10-16 · 세션 <code>echomind-fly-research</code> · 조율 세션 일감. 요구자 10-16 <em>"초파리가 정말 볼수 있게 에코월드가 되어 있어?"</em> · <em>"3차원 공간을 볼수 있어야지"</em> → <em>"니 권장대로"</em> = <strong>실제로 보게 하는 길이 될지부터 조사한다(만들지 않음)</strong>.
+이 노트는 <strong>문헌 · 원문 · 공개 저장소 파일만</strong> 읽었다. 시뮬레이션 · 설치 · 코드 복사는 하지 않았다. 숫자 중 [측정] 은 조율 세션이 잰 파일을 <strong>읽기만</strong> 한 것이다(다시 재지 않음).
+확인 수준: <strong>[P]</strong> 원문 · 저장소 파일을 이 세션이 직접 열어 문구 확인 · <strong>[P*]</strong> 조사 에이전트가 원문에서 읽음(이 세션은 다시 열지 않음) · <strong>[A]</strong> 초록만 · <strong>[S]</strong> 2 차(검색 발췌 · 인용 논문) · <strong>[측정]</strong> 조율 세션 실측 파일 · <strong>[계산]</strong> 우리 셈 · <strong>[추론]</strong> 우리 해석.</p>
+</blockquote>
+<hr />
+<h2 id="0-한눈에">0. 한눈에</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>물음</th>
+<th>답</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>지금 초파리는 보나</td>
+<td><strong>아니다.</strong> 광수용체를 켜면 뇌 전체 발화 0 [측정]. 지금 시야는 월드 좌표로 물체마다 방위 · 크기 · 커지는 속도를 계산해 LC/LPLC 에 바로 넣는다 — <strong>월드가 계산해 준 것을 받는 것</strong>이지 눈으로 본 것이 아니다</td>
+</tr>
+<tr>
+<td>왜 광수용체부터는 안 되나</td>
+<td>광수용체 → 라미나는 <strong>억제(히스타민)</strong> 이고, 우리 LIF 는 쉬는 상태가 침묵이라 <strong>억제가 아무것도 못 바꾼다</strong> — Shiu 2024 가 스스로 적은 한계 [V1][P]. 실제 눈의 ON 경로는 부호를 뒤집는 시냅스가 필요하다 [V2][P]</td>
+</tr>
+<tr>
+<td>① flyvis</td>
+<td><strong>MIT</strong>(파일 이름 <code>license</code> · 소문자 · 확장자 없음) [V3][P]. 세포 종류 65 마디(64 종류 · CT1 두 칸) · 입력 R1–R8 · 출력 34 종류(T1–T5 · Tm · TmY) — <strong>LC · LPLC · HS · VS 는 없다</strong> [V3][P]. 등급 전위 · 쉬는 상태가 침묵이 아님 · FIB-25 + FIB-19 로 만든 721 기둥 반복 배선 · 파이썬 3.13 미만 · 계산 비용 공개 수치 없음</td>
+</tr>
+<tr>
+<td>② Dhiman 2026</td>
+<td>노트 13 의 한 줄 요약("flyvis 구조 이점은 공정 초기화에서 사라짐")은 <strong>과장</strong>이었다. Lappalainen 을 다시 잰 것이 아니라 <strong>저자 자신의 앞선 관찰</strong>을, 장난감 과제에서 <strong>5 · 10 걸음</strong>만 학습해 다시 봤다. 같은 초기화 · 차수 보존 섞기에서 손실 0.5155 대 0.5172(동률) [V5][P]. 우리 기준으로는 flyvis 가 <strong>"통과 못 함이 입증"이 아니라 "통과가 보인 적 없음"</strong></td>
+</tr>
+<tr>
+<td>③ 다른 후보</td>
+<td>광수용체부터 LC/LPLC 까지 닿는 <strong>동료 심사 모형은 없다</strong>. 침묵 LIF 의 우회는 넷뿐 — 바탕 구동 · 라미나에 포아송(Liew 2026: 시냅스 세기 5.5 배 + 바탕 20 Hz 로도 <strong>T4/T5 거의 0</strong> [V8][P]) · 등급 시각엽 → 출력만 넘김(Eon: <em>"somewhat 'decorative'"</em> [V9][P]) · 눈을 건너뛰고 LC 에 직접(지금 우리)</td>
+</tr>
+<tr>
+<td>덧붙임 — T4/T5 길</td>
+<td>조율 세션 측정: <strong>T4a/T5a 를 켜면 진짜 배선에서만 HS · DNa02 · 하강 뉴런까지 가고(섞은 배선 0) · 왼눈만 켜면 왼쪽만</strong> [측정]. 문헌도 받쳐 준다 — HSE 입력의 <strong>86 %</strong> 가 T5a + T4a [V20][P] · LPLC2 입력의 <strong>38.5 %</strong> 가 T4/T5 [V20][P]. 그러나 <strong>LC4 는 2.5 %</strong> 뿐이라 T4/T5 만으로는 LC4 를 거의 못 켠다 [V20][P]</td>
+</tr>
+<tr>
+<td>④ 판단</td>
+<td><strong>길 2(계산 앞단 → T4a–d/T5a–d 기둥마다 → 우리 배선) = 중간 · 가장 높음.</strong> 조향(좌우)은 높음, <strong>기둥 자리가 쓰이는지는 미지</strong>(LC 대응표 대조에서 못 넘은 전례). flyvis 는 <strong>이 길에 필요 없다</strong> — 길 2 가 통과하고 LC4 · 물체 쪽이 T4/T5 만으로 안 될 때 다시 본다. 광수용체 그대로 · 라미나 세기 올리기 · 시각엽 전체 학습은 <strong>낮음</strong></td>
+</tr>
+<tr>
+<td>가장 작은 시험</td>
+<td><strong>V0</strong> — 렌더 없이 분석식 광류(회전 · 다가옴 · 같은 양의 평행 이동)를 T4/T5 기둥마다 넣고, <strong>진짜 기둥 대응표 대 아형 × 눈 안에서 자리만 섞은 대응표 5 벌</strong> · 재배선 셋과 나란히 LPLC2 · DNa02 를 본다. 주 판정 = 다가옴의 LPLC2 가 섞은 대응표 5/5 보다 크다(8 절)</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>3 차원에 대한 한 줄 [추론 · 근거 하나]: 초파리 두 눈이 겹치는 시야는 <strong>20° 미만</strong>이다 [V17][P]. 두 눈 시차로 깊이를 재기는 어렵고, 초파리에게 3 차원은 주로 <strong>움직임</strong>(자기 회전 · 전진의 광류 · 다가옴)과 위아래로 들어온다고 본다. 길 2 가 넣는 것이 바로 그 신호다. 정지한 물체의 모양 · 정체(Tm 계열 → LC)는 길 2 에 없다.</p>
+</blockquote>
+<hr />
+<h2 id="1-출발점--이미-잰-것-조율-세션--다시-재지-않음">1. 출발점 — 이미 잰 것 (조율 세션 · 다시 재지 않음)</h2>
+<h3 id="11-광수용체-자극--뇌-전체-0-측정">1.1 광수용체 자극 → 뇌 전체 0 [측정]</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>실행</th>
+<th>자극</th>
+<th>켠 뉴런</th>
+<th>자극 뉴런 발화</th>
+<th>나머지 뇌 발화</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runs/20261016-195508-run-bda6</code></td>
+<td>R1-R6 · 포아송 150 Hz · 500 ms</td>
+<td>1,394</td>
+<td>102,793</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td><code>runs/20261016-195511-run-8624</code></td>
+<td>R7y · R7p · R8y · R8p · R7d · R8d · 같은 조건</td>
+<td>1,782</td>
+<td>131,480</td>
+<td><strong>0</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>LIF <code>sim-v2</code>(쉬는 전위 −52 · 문턱 −45 mV · 시냅스 0.275 × 0.25 mV) · 부호 규칙 히스타민 = −1 (그래프 메타).</p>
+<h3 id="12-지금-npc-시야-측정--설정">1.2 지금 NPC 시야 [측정 · 설정]</h3>
+<p><code>config/npc.yaml</code> <code>encoder_override.vision</code> — 월드 좌표에서 물체마다 방위 · 크기 · 커지는 속도를 계산해 LC/LPLC 에 직접(<code>lr_sigmoid</code> · 고도 없음). 몸(FlyGym) 쪽 <code>retino-v2</code> 대조: 물체 쪽 선형 읽기 진짜 대응표 <strong>0.794</strong> 대 눈 안 방위 섞음 <strong>0.797</strong> → 눈 안 자리는 쓰이지 않고 좌우 눈으로만 실린다(<a href="13-회로-학습-설계-조사.html">노트 13 §4.6</a>).</p>
+<h3 id="13-시각-경로-자극--진짜-대-섞은-배선-측정--runsvision-path-20261016-200841json--sha256-앞-16-89e464e72c34eb60">1.3 시각 경로 자극 — 진짜 대 섞은 배선 [측정 · <code>runs/vision-path-20261016-200841.json</code> · sha256 앞 16 <code>89e464e72c34eb60</code>]</h3>
+<p>포아송 150 Hz · 300 ms · 진짜 배선 대 전체 섞기 s0~s2. HS · VS · DNa02 · GF 칸은 <strong>300 ms 동안의 발화 수 합</strong>(<code>scripts/50-analysis/vision_path.py</code> 의 정의), LC/LPLC 칸은 <strong>발화한 뉴런 수</strong>.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>자극</th>
+<th>진짜: LC/LPLC 뉴런</th>
+<th>진짜: HS L/R</th>
+<th>진짜: VS L/R</th>
+<th>진짜: DNa02 L/R</th>
+<th>진짜: 하강 뉴런</th>
+<th>섞은 배선 s0~s2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L2 (두 눈)</td>
+<td>0</td>
+<td>0/0</td>
+<td>0/0</td>
+<td>0/0</td>
+<td>0</td>
+<td>LC 126~141 · 하강 83~112 — <strong>아무 데나 번짐</strong></td>
+</tr>
+<tr>
+<td>L3 (두 눈)</td>
+<td>0</td>
+<td>0/0</td>
+<td>0/0</td>
+<td>0/0</td>
+<td>0</td>
+<td>LC 3~9</td>
+</tr>
+<tr>
+<td>Tm2 (두 눈)</td>
+<td>15(전부 LC4)</td>
+<td>0/0</td>
+<td>0/0</td>
+<td>0/0</td>
+<td>0</td>
+<td>LC 0~2</td>
+</tr>
+<tr>
+<td>T4a (두 눈)</td>
+<td>2(LPLC2)</td>
+<td><strong>201/203</strong></td>
+<td>225/207</td>
+<td>3/13</td>
+<td>17</td>
+<td><strong>HS 0 · DNa02 0 · 하강 0</strong></td>
+</tr>
+<tr>
+<td>T5a (두 눈)</td>
+<td>2(LPLC2)</td>
+<td><strong>209/211</strong></td>
+<td>240/215</td>
+<td>2/12</td>
+<td>17</td>
+<td>HS 0 · DNa02 0 · 하강 0~1</td>
+</tr>
+<tr>
+<td>T4a (왼눈만)</td>
+<td>1</td>
+<td><strong>202/0</strong></td>
+<td>224/0</td>
+<td><strong>7/0</strong></td>
+<td>8</td>
+<td>0</td>
+</tr>
+<tr>
+<td>T5a (왼눈만)</td>
+<td>1</td>
+<td><strong>209/0</strong></td>
+<td>240/0</td>
+<td><strong>5/0</strong></td>
+<td>10</td>
+<td>0</td>
+</tr>
+<tr>
+<td>T4b (왼눈만)</td>
+<td>0</td>
+<td>0/0</td>
+<td>91/0</td>
+<td>0/0</td>
+<td>6</td>
+<td>0</td>
+</tr>
+<tr>
+<td>T5b (왼눈만)</td>
+<td>5(LPLC2)</td>
+<td>0/0</td>
+<td>92/0</td>
+<td>0/0</td>
+<td>6</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p>읽은 것 [추론]:
+- <strong>T4/T5 부터는 진짜 배선 특이적으로 조향 하강 뉴런(DNa02)까지 간다</strong> · 한쪽 눈은 같은 쪽으로만. 광수용체 · 라미나 단계와 반대로 섞은 배선이 오히려 아무 데나 번진다.
+- HS 는 한쪽에 셋뿐(HSN · HSE · HSS)이라 약 200 발화 / 300 ms 는 세포 하나당 약 220 Hz — <strong>포화에 가깝다</strong> [계산].
+- 문헌과 엇갈리는 곳 둘 — 그래프 확인은 조율 세션 몫(8.4 절):
+  - <strong>VS 가 T4a 로도 켜진다</strong>(224). 문헌의 VS 입력은 T5d 28.0 % · T4d 27.8 %(아래쪽 움직임 층) [V20][P*].
+  - <strong>T4b(뒤 → 앞)는 HS 를 0 으로 둔다</strong> — 문헌대로라면 T4b/T5b 는 억제성 LPi21 을 거쳐 HS 를 <strong>누른다</strong>(HSE 입력의 7.6 %) [V20][P]. 침묵 LIF 에서 "눌림"과 "아무 일 없음"은 발화로 구별되지 않는다.
+- GF(DNp01)는 어느 자극에도 0 · LPLC2 는 1~5 뉴런뿐.</p>
+<hr />
+<h2 id="2-왜-광수용체부터는-안-되나--기전">2. 왜 광수용체부터는 안 되나 — 기전</h2>
+<ul>
+<li><strong>우리 모형의 한계(원저자 문구)</strong> — Shiu 2024: <em>"we assume a basal firing rate of 0 Hz. An important consequence of this assumption is that inhibitory connections to an inactive neuron have no effect"</em> · <em>"circuits in which there is extensive basal inhibition, not captured by the model because of the zero basal firing rate, may be poorly simulated"</em> [V1][P]. 같은 논문의 섞은 배선 대조: 설탕 → MN9 진짜 100 % · 섞은 가중치 100 번 중 1 번 [V1][P].</li>
+<li><strong>실제 눈</strong> — 빛은 L1 · L2 · L3 를 <strong>과분극</strong>시키고, ON 반응은 그 아래에서 부호를 뒤집어 만든다: <em>"ON selectivity requires a sign inversion between the L1 input and its postsynaptic partners Mi1 and Tm3"</em> · ON 경로 입력 L1 은 글루탐산성 [V2][P]. 부호 뒤집기는 아래 세포가 <strong>쉬는 상태에서 이미 일하고 있어야</strong> 한다 — 침묵 LIF 에서 억제성 글루탐산 시냅스는 ON 을 만들 수 없다 [추론].</li>
+<li><strong>flyvis 도 같은 부호다</strong> — 배선 파일에서 <code>R1 → L1</code> 의 <code>alpha</code> 가 −1(근거 <code>Hardie1989</code>) [V3][P]. 차이는 <strong>쉬는 상태</strong>: flyvis 는 뉴런마다 학습된 휴지 전위가 있고, 회색 화면 500 ms 뒤의 정상 상태에서 시작한다 [V4][P*]. 그래서 억제가 "덜 켜짐"으로 읽힌다.</li>
+<li><strong>세기를 올려 우회한 사례</strong> — Liew et al. 2026(arXiv 2609.01330): 광수용체 대신 <strong>L1–L3 에 포아송</strong>(<em>"as the connectomic dataset provides visual columnar mappings for L1-L3 but not for photoreceptors"</em>) · 바탕 발화 <strong>B = 20 Hz</strong> · 최대 200 Hz · 시냅스 세기 <strong>w_syn = 1.5 mV</strong>(<em>"free parameter"</em> · <em>"chosen to ensure sufficient firing activity across the medulla"</em>) — Shiu 0.275 mV 의 <strong>약 5.5 배</strong> [V8][P · 배수는 계산]. 그래도 <em>"most T4 and T5 neurons had firing rates close to zero"</em> [V8][P]. 방위 0~180° 를 0.4° 간격으로 한 번 도는 데 스레드 하나 약 72 시간 [V8][P].</li>
+<li>우리 측정(1.3 절)도 같다 — L2 · L3 를 직접 켜도 진짜 배선에서는 수질까지만 가고 LC 0.</li>
+</ul>
+<p>→ <strong>광수용체 · 라미나에서 시작하는 길은 우리 LIF 를 바꾸지 않는 한 구조상 막혀 있다.</strong> 바꾸면(전역 바탕 구동 · 세기 올림) 지금까지 sim-v2 로 맞춘 도망 · 냄새 · 버섯체 보정을 모두 다시 해야 한다 [추론].</p>
+<hr />
+<h2 id="3-①-flyvis--사실표">3. ① flyvis — 사실표</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>값</th>
+<th>수준 · 출처</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>라이선스</td>
+<td><strong>MIT</strong> · 저장소 뿌리의 파일 이름 <strong><code>license</code></strong>(소문자 · 확장자 없음) · <em>"Copyright (c) 2023 Janne K. Lappalainen, Fabian D. Tschopp, Mason McGill, Jakob H. Macke, Srinivas C. Turaga"</em> · GitHub API <code>spdx_id</code> MIT · <code>pyproject.toml</code> 은 분류자만</td>
+<td>[V3][P]</td>
+</tr>
+<tr>
+<td>학습된 가중치</td>
+<td>Google Drive 에서 CLI 로 받음 · <strong>가중치 · 자료의 별도 라이선스는 못 찾음</strong></td>
+<td>[V3][P*]</td>
+</tr>
+<tr>
+<td>파이썬</td>
+<td><code>requires-python = "&gt;=3.9,&lt;3.13"</code> — 우리 본체(3.14)에서 못 돈다 · 몸처럼 <strong>3.12 별도 프로세스</strong>여야 함</td>
+<td>[V3][P]</td>
+</tr>
+<tr>
+<td>세포 종류</td>
+<td>마디 65 = R1–R8 · L1–L5 · Lawf1/2 · Am · C2 · C3 · CT1(Lo1) · CT1(M10) · Mi1–4 · Mi9–15 · T1 · T2 · T2a · T3 · <strong>T4a–d · T5a–d</strong> · Tm1–5 · Tm5Y/a/b/c · Tm9 · Tm16 · Tm20 · Tm28 · Tm30 · TmY3/4/5a/9/10/13/14/15/18</td>
+<td>[V3][P]</td>
+</tr>
+<tr>
+<td>입력 · 출력</td>
+<td><code>input_units</code> R1–R8(8) · <code>output_units</code> 34(T1–T5 · Tm · TmY) · <strong>LC · LPLC · LPi · HS/VS · Li · Dm 없음</strong> — T4/T5 · Tm · TmY 가 가장 깊다</td>
+<td>[V3][P]</td>
+</tr>
+<tr>
+<td>크기</td>
+<td>뉴런 45,669 · 연결 1,513,231 · 기둥 721(가로 31) · 배선 파일의 종류 쌍 605(논문 604)</td>
+<td>[V4][P*] · 605 는 [V3][P]</td>
+</tr>
+<tr>
+<td>어느 연결 지도</td>
+<td><strong>FIB-25 + FIB-19</strong>(수질 7 기둥 + 시각엽) · 국소 배선을 기둥마다 주기적으로 반복 · MaleCNS 가 아니다</td>
+<td>[V4][P*]</td>
+</tr>
+<tr>
+<td>뉴런 모형</td>
+<td>발화 없는 문턱-선형 전압 · 학습 매개변수 734 = 시간 상수 65 + 휴지 전위 65 + 쌍 배율 604 · 부호 고정 · <strong>쉬는 상태가 침묵이 아님</strong>(회색 500 ms 정상 상태에서 시작)</td>
+<td>[V4][P*] · 734 는 [V5][P] 에도</td>
+</tr>
+<tr>
+<td>시간 간격</td>
+<td>학습 20 ms · 분석 5~10 ms</td>
+<td>[V4][P*]</td>
+</tr>
+<tr>
+<td>입력 영상</td>
+<td>회색조 0~1(회색 0.5) · 기둥마다 한 값을 R1–R8 모두에 같게 — <strong>색 채널 없음</strong> · Sintel 24 Hz → 50 Hz</td>
+<td>[V4][P*]</td>
+</tr>
+<tr>
+<td>학습 · 앙상블</td>
+<td>Sintel 광류 과제 · 같은 초기값으로 50 모형 · 과제 오차로 순위</td>
+<td>[V4][P*]</td>
+</tr>
+<tr>
+<td>검증</td>
+<td>26 연구와 비교 · ON/OFF 가 알려진 32 종류 모두 앙상블 중앙이 맞힘 · T4 = ON · T5 = OFF 움직임 · 방향 선택 예측 12 종류(T4a–d · T5a–d · TmY3/4/5a/18)</td>
+<td>[V4][P*]</td>
+</tr>
+<tr>
+<td>대조</td>
+<td><strong>섞은 배선 대조 없음</strong> — 무작위 매개변수(배선 그대로)는 대비 선호는 맞히나 방향 선택은 못 맞힘 · 종류 단위 배선만 주면 예측 나쁨 · 제약 없는 CNN 은 과제 오차의 하한</td>
+<td>[V4][P*]</td>
+</tr>
+<tr>
+<td>계산 비용</td>
+<td><strong>논문 · README · 문서에 실행 시간 · 메모리 수치 없음</strong> · 장치는 CUDA 아니면 CPU(MPS 경로 없음) · FlyGym 연결은 CPU 고정</td>
+<td>[V3][P*]</td>
+</tr>
+<tr>
+<td>몸 쪽 연결 선례</td>
+<td>NeuroMechFly v2: FlyGym 눈 721 칸 ↔ flyvis 기둥 1 : 1 · 500 Hz · 두 눈 따로 · 가장 좋은 모형 하나 · T1–T5 · Tm · TmY 34 종류를 읽어 다른 파리 따라가기(뇌 없이 보행 제어기) · 시간 수치 없음</td>
+<td>[V6][P*]</td>
+</tr>
+<tr>
+<td>우리 저장소</td>
+<td>몸 환경(파이썬 3.12)에 FlyGym 1.3.2 의 시각 예제 코드(<code>vision_network.py</code> 등)는 있으나 <strong>flyvis 는 설치돼 있지 않다</strong></td>
+<td>[P · 로컬 확인]</td>
+</tr>
+<tr>
+<td>시각엽 전체로 넓힌 판</td>
+<td>Turaga 연구실 후속(시각엽 전체 · LC 포함)은 못 찾음 · 배선 파일은 여전히 <code>fib25-fib19_v2.2.json</code></td>
+<td>[V3][P*] · 부재는 [S]</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-②-dhiman-2026--무엇을-비교했고-무엇을-말하나">4. ② Dhiman 2026 — 무엇을 비교했고 무엇을 말하나</h2>
+<p><strong>서지</strong> [V5][P]: Nalin Dhiman(단독) · <em>"Topological Sensitivity in Connectome-Constrained Neural Networks"</em> · arXiv 2604.04033 v1 · 2026-04-05 · q-bio.NC.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>다시 본 주장</td>
+<td><strong>저자 자신의 앞선 관찰</strong>(<em>"We begin from an empirical observation that appears strong"</em>) — 본문에서 Lappalainen 이름을 찾지 못했다 [V5][P · 문구 검색]</td>
+</tr>
+<tr>
+<td>과제</td>
+<td>flyvis "Stage 3" 의 <strong>MovingEdge 방향 읽기</strong>(광류 과제 · 신경 반응 예측 아님)</td>
+</tr>
+<tr>
+<td>학습 길이</td>
+<td><em>"Models are compared after exactly 5 and 10 optimization steps"</em></td>
+</tr>
+<tr>
+<td>팔</td>
+<td>진짜 배선 · 단순 무작위 그래프(전체 수만 맞춤) · <strong>차수 보존 섞기</strong>(간선 바꿈 250,000 번 = <strong>간선당 약 0.17 번</strong> · 5 벌) · 매개변수 734 학습 + 2,959 고정 — 모든 팔 같음</td>
+</tr>
+<tr>
+<td>"공정 초기화"</td>
+<td><em>"all graph conditions are initialized directly from the same topology-agnostic initialization procedure"</em> · 같은 씨앗 — 매개변수별 방식은 적지 않음</td>
+</tr>
+<tr>
+<td>결과</td>
+<td>약한 대조(진짜로 학습한 저장점에서 시작 + 단순 무작위)에서는 진짜가 손실 · 활동 · 시간 모두 좋아 보임 → 같은 초기화로 손실 차 사라짐 → 차수 보존 섞기로 활동 차 사라짐. 차수 보존 5 벌 × 씨앗 3: 손실 <strong>0.5155 ± 0.0067</strong>(진짜) 대 <strong>0.5172 ± 0.0061</strong> · 활동 0.5453 대 0.5346 · 시간 122.75 대 133.47 s</td>
+</tr>
+<tr>
+<td>저자 결론</td>
+<td><em>"The apparent connectome advantage does not persist under stricter controls"</em> · 남은 것은 실행 시간 약 8 % 뿐</td>
+</tr>
+<tr>
+<td>한계(저자)</td>
+<td>과제 하나 · 수렴까지 안 감 · 씨앗 3 · p 값 · 신뢰구간 없음 · 고차 구조(군집 · 모티프 · 공간) 맞추지 않음</td>
+</tr>
+</tbody>
+</table></div>
+<p>우리에게 주는 뜻 [추론]:
+- (a) <strong>과제 성능</strong> — 공정한 대조에서 진짜 &gt; 섞은이 <strong>보인 적 없다</strong>. 다만 증거가 약하다(5~10 걸음 · 간선당 0.17 번이라 섞은 배선의 대부분이 진짜와 같음).
+- (b) <strong>실제 신경 조율 예측</strong> — 차수 보존 섞기로 잰 연구를 <strong>못 찾았다</strong>.
+- (c) <strong>앞단 특징 추출기로 쓰기</strong> — 얼린 flyvis 특징이 광수용체 신호만보다 낮았다(0.857 대 0.891 · 용량 맞추지 않음) [V7][P*].
+- <strong>우리 판정 구도와의 관계</strong>: flyvis 를 얼려 진짜 · 섞은 <strong>두 팔에 똑같이</strong> 넣으면, 판정되는 것은 flyvis 가 아니라 <strong>그 뒤의 MaleCNS 배선</strong>이다. 그러면 길 2 와 같은 판정이다 — flyvis 를 쓴다고 "초파리 눈이 본다"는 말이 생기지는 않는다.</p>
+<p>같은 물음(진짜 대 섞은 배선)을 다룬 다른 연구 [P*]:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>연구</th>
+<th>대조</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Correig-Fraga · Guimerà · Sales-Pardo, arXiv 2610.10023 (FlyWire 전체 + 눈 모형 · flyvis 아님)</td>
+<td>출력 차수 보존 섞기 등 · 생성 그래프 하나씩</td>
+<td>모양 과제 진짜 64 % 대 섞기 70 % — 진짜가 이긴 것은 배선 비용을 맞춘 대조뿐 [V10]</td>
+</tr>
+<tr>
+<td>Kuklev, arXiv 2609.24565 (얼린 flyvis 를 특징 추출기로)</td>
+<td>섞기 없음 · 광수용체만과 비교</td>
+<td>0.857 대 0.891 · 저자 <em>"not an advantage of the biological wiring"</em> [V7]</td>
+</tr>
+<tr>
+<td>Jin et al., arXiv 2602.17997 v3 (FlyWire · 보행 · 16×16 시각)</td>
+<td>차수 보존 섞기 · 무작위 그래프</td>
+<td>각도 오차 4.96 대 7.84 대 12.11 · 매개변수 수 · 씨앗 수 확인 못 함 [V11]</td>
+</tr>
+<tr>
+<td>취미 저장소 FlyBrain-Worldle (얼린 flyvis + MaleCNS · 동료 심사 없음)</td>
+<td>섞은 · 무작위</td>
+<td>96 % 대 95 % 대 95 % · 씨앗 1 · 저자 <em>"So I can't say the real wiring helps."</em> [V12]</td>
+</tr>
+</tbody>
+</table></div>
+<p>노트 13 참고 문헌 24 의 설명은 이 절에 맞게 바로잡는다(같은 커밋).</p>
+<hr />
+<h2 id="5-③-다른-후보--쉬는-상태가-침묵이-아닌-모형--lclplc-까지-닿는-모형">5. ③ 다른 후보 — 쉬는 상태가 침묵이 아닌 모형 · LC/LPLC 까지 닿는 모형</h2>
+<h3 id="51-논문--사전-공개">5.1 논문 · 사전 공개</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>이름</th>
+<th>입력 → 출력</th>
+<th>뉴런 모형</th>
+<th>쉬는 상태</th>
+<th>LC/LPLC 까지</th>
+<th>섞은 배선 대조</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lappalainen 2024 (flyvis)</td>
+<td>광수용체 → T1–T5 · Tm · TmY</td>
+<td>등급</td>
+<td>침묵 아님</td>
+<td><strong>아니오</strong></td>
+<td>없음</td>
+<td>[V4][P*]</td>
+</tr>
+<tr>
+<td>NeuroMechFly v2 (2024)</td>
+<td>눈 721 칸 → flyvis → 34 종류 → 보행 제어기</td>
+<td>등급 + 제어기 · 중추 뇌 없음</td>
+<td>침묵 아님</td>
+<td>아니오</td>
+<td>없음</td>
+<td>[V6][P*]</td>
+</tr>
+<tr>
+<td>Shiu 2024</td>
+<td>맛 · 촉각(시각 없음)</td>
+<td>LIF</td>
+<td><strong>침묵</strong></td>
+<td>—</td>
+<td>있음(MN9 100 % 대 1/100)</td>
+<td>[V1][P]</td>
+</tr>
+<tr>
+<td>Eon Systems 블로그 2026-03-10 (동료 심사 아님)</td>
+<td>flyvis 활동을 <em>"pipe in"</em> → Shiu LIF</td>
+<td>LIF</td>
+<td>침묵</td>
+<td><em>"looming stimulus neurons in the LIF model activate descending neurons involved in escape"</em></td>
+<td>없음 · 코드 없음</td>
+<td>[V9][P]</td>
+</tr>
+<tr>
+<td>Liew et al. 2026</td>
+<td><strong>L1–L3</strong> 포아송 → 수질 방위 지도</td>
+<td>Shiu 식 LIF · w_syn 1.5 mV</td>
+<td>입력에 바탕 20 Hz</td>
+<td>분석 안 함 · T4/T5 거의 0</td>
+<td>선호 방위만 섞음</td>
+<td>[V8][P]</td>
+</tr>
+<tr>
+<td>Chen &amp; Xi, bioRxiv 2025</td>
+<td><strong>LC4 · LPLC2 에 직접</strong> 포아송(최대 150 Hz) → DNp01 <em>"&gt;150Hz"</em></td>
+<td>Shiu LIF · FlyWire</td>
+<td>침묵</td>
+<td>입력을 거기 둠</td>
+<td>없음</td>
+<td>[V13][P*]</td>
+</tr>
+<tr>
+<td>Pospisil 2024 (effectome)</td>
+<td>뇌 전체 선형 모형 · 소엽판 고유 회로(H2 · T4b/T5b)</td>
+<td>선형 + 정류</td>
+<td>백색 잡음 바탕</td>
+<td>아니오</td>
+<td>있음 — 섞으면 차원이 크게 늘어남(섞기 5 번)</td>
+<td>[V14][P*]</td>
+</tr>
+<tr>
+<td>Klapoetke 2017</td>
+<td>T4/T5 → LPLC2 → GF (개념 · 광학 현미경)</td>
+<td>시뮬레이션 없음</td>
+<td>—</td>
+<td>LPLC2(개념)</td>
+<td>—</td>
+<td>[V18][P]</td>
+</tr>
+<tr>
+<td>Zhou et al. 2022 eLife</td>
+<td>움직임 검출기 출력(T4/T5 대역) → 학습한 LPLC2 닮은 단위</td>
+<td>정류 · <strong>연결 지도 없음</strong></td>
+<td>—</td>
+<td>LPLC2 닮은 단위</td>
+<td>—</td>
+<td>[V21][P*]</td>
+</tr>
+<tr>
+<td>Borst 2018 등 T4 모형</td>
+<td>광수용체 배열 → Mi9 · Mi1 · Mi4 → T4</td>
+<td>전도도 기반 등급</td>
+<td>Borst: 휴지 = E_inh/2</td>
+<td>아니오</td>
+<td>—</td>
+<td>[V22][P*]</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="52-취미-저장소-동료-심사-없음--참고만--코드-쓰지-않음">5.2 취미 저장소 (동료 심사 없음 · <strong>참고만</strong> · 코드 쓰지 않음)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>이름</th>
+<th>방법</th>
+<th>숫자</th>
+<th>섞은 배선</th>
+<th>라이선스</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vib2810/fly-brain-zero-shot</td>
+<td>flyvis 출력 27 종류 → <em>"150 Hz × the cell's activity above background, scaled per type"</em> 포아송 → FlyWire 같은 종류 약 31,000 → Shiu LIF → DNa02 → 보행</td>
+<td>10 s 당 기둥 도달 진짜 <strong>2.96</strong>(n 48)</td>
+<td><em>"same neurons, same number of links"</em> 섞기 <strong>0.34</strong>(n 32 · 섞기 2 벌)</td>
+<td>MIT [V15][P]</td>
+</tr>
+<tr>
+<td>ZeroXClem/closed-loop-fly + AbijahKaj</td>
+<td>MaleCNS 위 등급 시각엽(6.58 만 뉴런) → HS · LC4 · LPLC2 의 (발화율 − 쉬는 값) → LIF 전류</td>
+<td>LC4 0 → 232 Hz 등 · <em>"raw flyvis parameters … give zero direction selectivity"</em> on MaleCNS</td>
+<td>없음</td>
+<td>MIT [V16][P*]</td>
+</tr>
+<tr>
+<td>connectocopter</td>
+<td>카메라 → 손으로 만든 움직임 특징 → LPLC2 · LC4 · HS 등(눈 건너뜀 · 우리와 같은 방식)</td>
+<td>도망 15/15</td>
+<td>짝 섞기 <strong>0/15</strong></td>
+<td>MIT [V16][P*]</td>
+</tr>
+<tr>
+<td>DOOMFLY</td>
+<td>광수용체에 빛 · 라미나에 바탕 구동 12 mV</td>
+<td><em>"Black input outperformed live vision"</em></td>
+<td>없음</td>
+<td>MIT [V16][P*]</td>
+</tr>
+</tbody>
+</table></div>
+<p>읽은 것 [추론]: 섞은 배선 결과는 <strong>섞는 방식이 정한다</strong> — 같은 종류 안 섞기는 차이를 못 내고(취미 저장소 fly-escape-circuit: 21.4 대 21.3 [P*]), 짝 섞기는 크게 낸다. 우리 재배선(s0~s2)이 어느 쪽인지는 판정 문구에 함께 적어야 한다.</p>
+<hr />
+<h2 id="6-덧붙임--t4t5-길의-문헌">6. 덧붙임 — T4/T5 길의 문헌</h2>
+<h3 id="61-아형--방향--층--받는-세포">6.1 아형 → 방향 → 층 → 받는 세포</h3>
+<p>Shinomiya 2019: <em>"The subtypes a–d detect front-to-back, back-to-front, upward, and downward motion, respectively"</em> · <em>"T4/5a, b, c, and d cell pairs project to the lobula plate, to strata Lop1, 2, 3 and 4, respectively"</em> [V19][P]. T4 = 밝아짐(ON) · T5 = 어두워짐(OFF) 경계 — Maisak 2013 초록 [A] · 참고 문헌 끝.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>아형</th>
+<th>선호 방향</th>
+<th>층</th>
+<th>주 대상(수컷 오른 시각엽 · 대상 입력 중 비율)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T4a/T5a</td>
+<td>앞 → 뒤</td>
+<td>Lop1</td>
+<td><strong>HSE: T5a 46.4 % + T4a 39.4 % · 억제성 LPi21 7.6 %</strong> [V20][P] · HSN · HSS 비슷 [V20][P*]</td>
+</tr>
+<tr>
+<td>T4b/T5b</td>
+<td>뒤 → 앞</td>
+<td>Lop2</td>
+<td>H2: T5b 45.3 + T4b 38.1 % · T5b 의 첫 출력은 억제성 LPi21 → HS [V20][P*]</td>
+</tr>
+<tr>
+<td>T4c/T5c</td>
+<td>위</td>
+<td>Lop3</td>
+<td>LPi34 · Tlp13/14 [V20][P*]</td>
+</tr>
+<tr>
+<td>T4d/T5d</td>
+<td>아래</td>
+<td>Lop4</td>
+<td>VS: T5d 28.0 + T4d 27.8 % [V20][P*]</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>HS: <em>"HS cells are sensitive to ipsilateral front-to-back motion"</em> [V23][P]. HS 뒤의 하강 뉴런: DNp15 는 HS 와 화학 · 전기 연결 · DNa02 는 HS–H2 망의 <strong>하류</strong>(<em>"including DNp15 … and DNa02, a steering-related DN"</em>) — <strong>HS → DNa02 직접 연결은 확인 못 함</strong> [V23][P].</li>
+<li>우리 그래프의 앞뒤 부호는 이미 T4 로 확인했다 — T4a −h · T4b +h(<a href="13-회로-학습-설계-조사.html">노트 13 §4.4</a>). Zhao 2025 도 <em>"The PD vectors of T4b and T4d neurons are aligned mainly with the + h and − v axes"</em> [V17][P] — 같은 규약.</li>
+</ul>
+<h3 id="62-국소-움직임-검출기--원문-수치">6.2 국소 움직임 검출기 — 원문 수치</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>모형</th>
+<th>구조</th>
+<th>시간 상수</th>
+<th>간격</th>
+<th>수준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>세 갈래(Haag 2016)</strong></td>
+<td>E(위치 −1) × D(0) ÷ S(+1) · L1 입력은 고역 통과(1 차 τ 250 ms) + 직류 10 % 더한 뒤 정류 · E · S 는 L1 의 저역 통과(1 차 τ <strong>250 ms</strong>) · D 는 L1 그대로 · 가중치 <strong>k_E 5 · k_D 5 · k_S 10</strong> · 각 신호에 직류 1.0</td>
+<td>250 ms</td>
+<td>이웃 기둥</td>
+<td>[V24][P]</td>
+</tr>
+<tr>
+<td>생물물리(Borst 2018)</td>
+<td>Mi9(억제) · Mi1(흥분) · Mi4(억제) 전도도 기반 · E_exc +50 · E_inh −20 mV</td>
+<td>저역 50 ms · 가운데 고역 250 ms</td>
+<td>광수용체당 4.5°</td>
+<td>[V22][P*]</td>
+</tr>
+<tr>
+<td>최소 시냅스(Zavatone-Veth 2020)</td>
+<td>세 입력 전도도 기반</td>
+<td>150 ms</td>
+<td>5°</td>
+<td>[V25][P*]</td>
+</tr>
+<tr>
+<td>흥분 + 어긋난 억제(Gruntman 2018)</td>
+<td>앞쪽 빠른 흥분 + 뒤쪽 느린 억제 · 두 봉우리 간격 <strong>약 6°</strong>(이웃 낱눈 간격)</td>
+<td>—</td>
+<td>수용장 약 20° = 3~4 기둥</td>
+<td>[V26][P]</td>
+</tr>
+<tr>
+<td>고전 두 갈래 → LPLC2(Zhou 2022)</td>
+<td>정류한 상관 검출기</td>
+<td>30 ms</td>
+<td>5°</td>
+<td>[V21][P*]</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>방향 조율: 1 Hz 격자에서 <em>"about 90° half-width"</em> [V24][P]. 시간 주파수 최적 약 1 Hz 는 2 차 인용으로만 [S].</li>
+<li>T4 수용장: 가운데 기둥 최대 · <em>"about 50% amplitude to the stimuli onto the six surrounding columns, and roughly 25% to the next outer ring"</em> [V24][P].</li>
+<li><strong>T4 는 발화하지 않는다</strong>: <em>"T4 cells are expected to signal using graded synapses"</em> · 1~2 mV 순간 변화는 <em>"could not be verified as spikes"</em> [V26][P]. → T4/T5 에 포아송 발화를 넣는 것은 <strong>우리 약속</strong>이다(문헌 값 아님).</li>
+<li>단순 검출기가 못 맞히는 것: 선호 방향 강화 · 빠른 시간 조율 · 대비 반전 불변(ON 경계 선택 못 함) · 3 점 상관 · 대비 적응 [V25][P*].</li>
+<li>계산 비용 [계산]: 기둥 약 900 × 아형 8 × 곱셈 몇 번 / 프레임 — 무시할 수준.</li>
+</ul>
+<h3 id="63-세포-수--기둥--시야-좌표">6.3 세포 수 · 기둥 · 시야 좌표</h3>
+<ul>
+<li>수컷 오른 시각엽: <em>"T4a, 849; T4b, 846; T4c, 883; T4d, 860; and Mi1, 887"</em> · <em>"892 hexagonal coordinates"</em> · 좌표는 <em>"correspond one-for-one to lenses on the compound eye (except for some lenses on the edge)"</em> [V27][P]. T5a–d 838 · 852 · 858 · 808 [V20][P*] → 한쪽 T4 + T5 약 6,800 · <strong>기둥마다 아형 하나씩</strong> [계산].</li>
+<li>우리 그래프: <code>assignedOlHex</code> 는 기둥 뉴런 23,720 개에 있으나 <strong>T4 에는 없다</strong>(0 · <a href="12-다음-학습-조사.html">노트 12 §9.2</a>). 그러나 T4 마다 입력 기둥(Mi9 · Mi4 · C3)의 시냅스 가중 무게중심은 이미 쟀다(<a href="13-회로-학습-설계-조사.html">노트 13 §4.4</a>) → <strong>같은 방법(Mi1 → T4 · Tm1/Tm2/Tm9 → T5 입력 기둥)으로 기둥 좌표를 얻을 수 있다</strong> [추론 · 그래프 확인은 조율].</li>
+<li>기둥 → 방위 · 고도: <strong>수컷 데이터용 공개 대응표는 없다.</strong> Zhao 2025 의 눈 지도는 <strong>암컷(FAFB)</strong> · 낱눈 간격이 <em>"smallest at the front near the equator and increases in size away from this region"</em> · 두 눈 겹침 <em>"less than 20°"</em> · 뒤쪽 사각 약 50° [V17][P] · 코드 GPL-3.0(복사 금지 · 수치만) [V17][P*]. → 우리 <code>retino-v2</code> 의 선언 방위 [−170, +10] 를 쓰되 <strong>선언 값</strong>임을 적는다.</li>
+<li>T4 선호 방향은 눈의 격자 축을 따라 휜다(전역 동서남북과 다름) [V17][P*] → 움직임은 <strong>기둥마다 국소 격자 축</strong>(h · v)으로 나눠 계산한다 [추론].</li>
+</ul>
+<h3 id="64-lplc2-다가옴이-t4t5-로-되나">6.4 LPLC2 다가옴이 T4/T5 로 되나</h3>
+<ul>
+<li>Klapoetke 2017: LPLC2 의 십자 수상돌기 팔이 층마다 <em>"extends along that layer's preferred motion direction"</em> · <em>"respond strongly to outward motion emanating from the center of the neuron's receptive field"</em> · 팔마다 안쪽 움직임에 대한 국소 억제(<em>"radial motion opponency"</em>) · LPLC2 <em>"~80"</em> 개 · 축삭이 GF 옆 [V18][P].</li>
+<li><strong>입력 중 T4/T5 몫</strong>(수컷 오른 시각엽 · 공개 세포 종류 페이지의 입력 표를 합산) [V20][P · 합은 계산]:</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>세포</th>
+<th>입력 1 위</th>
+<th>T4/T5 합</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LPLC2</td>
+<td>Tm5Y 9.5 % · T5d 6.6 · T5b 6.2 · T5c 5.8 · T4c 5.1 …</td>
+<td><strong>38.5 %</strong></td>
+</tr>
+<tr>
+<td>LC4</td>
+<td>T2 17.6 % · TmY3 15.3 · Tm4 11.8 · Tm2 7.9 · Tm3 6.5</td>
+<td><strong>2.5 %</strong></td>
+</tr>
+<tr>
+<td>LPLC1</td>
+<td>Tm5Y 7.4 · T2 7.3 · T2a 6.3 …</td>
+<td>약 17.4 % [V20][P*]</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ T4/T5 만 넣는 앞단은 <strong>LPLC2 는 일부, LC4 는 거의 못 켠다</strong> [추론]. 조율 측정에서 Tm2 만 켜도 LC4 15/126 이 켜진 것(1.3 절)과 맞는다 — LC4 는 Tm 계열 길이다.</p>
+<h3 id="65-이-길에-flyvis-가-꼭-필요한가">6.5 이 길에 flyvis 가 꼭 필요한가</h3>
+<p><strong>아니다</strong> [추론]. T4a–d/T5a–d 에 기둥마다 발화율을 주는 데 필요한 것은 (1) 기둥 좌표 (2) 기둥마다 국소 움직임 — 6.2 절의 검출기로 충분하고 계산도 가볍다. flyvis 가 더해 주는 것은 ON/OFF 분리 · 대비 적응 · 검증된 조율과 <strong>Tm/TmY/T2 출력</strong>(LC4 의 주 입력)이다. 그 대가는 파이썬 3.12 별도 프로세스 · FIB-25/19 의 721 기둥을 MaleCNS 892 좌표에 종류 × 기둥으로 맞추기 · 등급 → 발화율 변환(바탕 위만 넘기면 어두워짐 정보를 잃음 [추론]) · 계산 비용 미지다. 손으로 만든 움직임 신호를 전뇌 연결 지도 모형의 T4/T5 에 넣은 <strong>동료 심사 선례는 없다</strong> [V16][P*] — 길 2 는 새 일이다.</p>
+<hr />
+<h2 id="7-④-판단--길마다-성공-가능성">7. ④ 판단 — 길마다 성공 가능성</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>길</th>
+<th>무엇</th>
+<th>성공 가능성</th>
+<th>근거</th>
+<th>무게</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>지금: 월드 좌표 → 물체 방위 · 크기 · 커짐 → LC/LPLC</td>
+<td>(이미 돎) <strong>"본다"고 말할 수 없음</strong></td>
+<td>눈 안 자리 안 쓰임 0.794 대 0.797 · 계산은 월드가 함</td>
+<td>—</td>
+</tr>
+<tr>
+<td>1</td>
+<td>렌더 → 광수용체 그대로</td>
+<td><strong>낮음</strong>(구조상 0)</td>
+<td>측정 0 · Shiu 원문 · 히스타민 −1 · ON 은 부호 뒤집기 필요</td>
+<td>—</td>
+</tr>
+<tr>
+<td>1b</td>
+<td>광수용체 · 라미나에 바탕 구동 · 세기 올림</td>
+<td><strong>낮음</strong></td>
+<td>L2 · L3 직접 켜도 LC 0[측정] · Liew 는 5.5 배 + 바탕 20 Hz 로도 T4/T5 거의 0 · 전역 변경은 sim-v2 보정 전부 무효 · 취미 판 DOOMFLY <em>"Black input outperformed live vision"</em></td>
+<td>큼</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>계산 앞단(국소 움직임) → T4a–d/T5a–d 기둥마다 → 우리 배선</strong></td>
+<td><strong>중간 — 가장 높음.</strong> 조향(좌우)은 <strong>높음</strong> · 기둥 자리 쓰임은 <strong>미지</strong></td>
+<td>진짜 배선만 HS · DNa02 · 하강 17 · 섞은 0 · 한쪽 눈 → 같은 쪽[측정] · HSE 입력 86 % 가 T4a/T5a · LPLC2 38.5 % · 검출기 수치 공개 · 계산 가벼움. 위험: LC 대응표 대조에서 자리가 안 쓰인 전례 · LC4 2.5 % · T4 는 등급(발화율은 약속) · 반대 방향 억제가 발화로 안 보임 · HS 포화 · VS 이상 · GF 0</td>
+<td>앞단 코드 작음 · 시험은 LIF 300 ms 수십~수백 번</td>
+</tr>
+<tr>
+<td>3</td>
+<td>렌더 영상 → flyvis → T1–T5 · Tm · TmY → 우리 배선</td>
+<td><strong>중간~낮음</strong>(기술은 되나 길 2 보다 나을지 불확실 · 비용 큼)</td>
+<td>LC 없음 · 3.12 별도 프로세스 · 721 대 892 기둥 맞추기 · 비용 수치 없음 · Eon <em>"decorative"</em> · 구조 이점 미입증(Dhiman · Kuklev). 이점은 LC4 입력(Tm/TmY/T2)을 줄 수 있다는 것</td>
+<td>큼</td>
+</tr>
+<tr>
+<td>4</td>
+<td>수컷 시각엽 전체 등급 모형을 학습해 LC/LPLC 까지 → LIF</td>
+<td><strong>낮음</strong></td>
+<td>동료 심사 선례 없음 · 취미 판 하나(flyvis 매개변수는 MaleCNS 에서 방향 선택 0) · 대규모 학습</td>
+<td>무거움</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>권고</strong> [추론]:
+1. <strong>길 2 의 가장 작은 시험 V0 하나만</strong>(8 절). 렌더도 flyvis 도 없이, 우리 배선이 <strong>T4/T5 기둥 자리 정보를 쓰는지</strong>부터 본다 — 지난 LC 대응표 대조에서 못 넘은 바로 그 물음이다.
+2. V0 가 통과하면 V1: 같은 기준으로 앞단만 바꾼다 — 에코월드 렌더(또는 FlyGym 눈) → 기둥 밝기 → Haag 2016 세 갈래 검출기 → T4/T5. 이것이 "그림을 보고"에 가장 가까운 단계다.
+3. LC4 · 물체(Tm 계열)까지 필요해질 때만 길 3(flyvis)을 다시 따진다. <strong>지금은 flyvis 를 설치하지 않는다.</strong>
+4. V0 의 주 판정을 못 넘으면 → "T4/T5 를 통해 좌우 조향은 된다"까지만 쓰고 <strong>"3 차원을 본다"는 쓰지 않는다</strong>. 길 1 · 1b · 4 는 하지 않는다.</p>
+<hr />
+<h2 id="8-가장-작은-시험-하나--v0-결과-전-기준--제안">8. 가장 작은 시험 하나 — V0 (결과 전 기준 · 제안)</h2>
+<blockquote>
+<p>실행 · 잠금은 조율 세션 몫. 아래 숫자(배수 · 문턱 · 크기)는 <strong>이 노트의 제안</strong>이고, 조율 세션이 결과 전에 잠글 때 바꿀 수 있다 — 바꾸면 결과 보기 전에.</p>
+</blockquote>
+<h3 id="81-입력--렌더-없이-분석식-광류">8.1 입력 — 렌더 없이 분석식 광류</h3>
+<ul>
+<li>기둥 c 의 시야 자리: T4/T5 마다 입력 기둥 무게중심(8.4 ①) → <code>retino-v2</code> 규약(h = hex1 − hex2 앞 + · v = hex1 + hex2 등 +)의 방위 · 고도.</li>
+<li>기둥마다 국소 움직임 벡터 m_c(°/s)를 아래 자극에서 계산 → 아형 k 의 선호 방향 u_k(국소 격자 축: a = −h · b = +h · c = +v · d = −v) 에 투영.</li>
+<li>발화율 r = r_max · clip(m_c · u_k / v_ref, 0, 1) · <strong>r_max 150 Hz</strong>(1.3 절과 같음) · <strong>v_ref 100 °/s</strong>(선언) · T4 와 T5 에 같은 값(V0 는 ON/OFF 를 나누지 않는다).</li>
+<li>자극 셋(300 ms):</li>
+<li>(R) <strong>회전</strong> — 세계가 몸 둘레로 도는 것(위에서 보아 시계 · 반시계 두 방향), 전체 시야, 90 °/s(선언).</li>
+<li>(L) <strong>다가옴</strong> — 앞-왼 30° · 앞-오 30° 를 중심으로 원판의 각 크기 10° → 60°(LPLC2 수용장 상한 근처 [V18][P*]) · 바깥쪽 방사 움직임.</li>
+<li>(T) <strong>평행 이동</strong> — (L) 과 같은 자리 · 같은 아형별 총 발화량, 방사 대신 한 방향(다가옴의 대조).</li>
+</ul>
+<h3 id="82-팔">8.2 팔</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>팔</th>
+<th>뇌</th>
+<th>기둥 대응표</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>진짜</td>
+<td>진짜 배선</td>
+<td>진짜</td>
+</tr>
+<tr>
+<td><strong>자리 섞기</strong>(주 대조)</td>
+<td>진짜 배선</td>
+<td><strong>아형 × 눈 안에서 자리만 섞음 5 벌</strong> — 아형별 켜진 수 · 총 입력이 정확히 같다</td>
+</tr>
+<tr>
+<td>재배선</td>
+<td>s0 · s1 · s2</td>
+<td>진짜</td>
+</tr>
+<tr>
+<td>부호 뒤집기(양성 대조)</td>
+<td>진짜 배선</td>
+<td>진짜 · 회전 방향만 반대 — 자극 (R) 의 두 방향이 곧 이 대조(실행 수 추가 없음)</td>
+</tr>
+</tbody>
+</table></div>
+<p>포아송 씨앗 10. 실행 수 = 자극 6(R 2 · L 2 · T 2) × (진짜 1 + 자리 섞기 5) × 씨앗 10 + 재배선 3 × 6 × 10 = <strong>540 번 × 300 ms</strong> [계산] — 1.3 절 측정(36 번)의 약 15 배. 처음 몇 번의 시간을 재고 씨앗 수를 정한다(메모리 규약 "가능성 먼저").</p>
+<h3 id="83-판정-결과-전">8.3 판정 (결과 전)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>칸</th>
+<th>기준</th>
+<th>무엇을 말해 주나</th>
+<th>사전 가능성 [추론]</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1 회전 → 조향</td>
+<td>DNa02 (오 − 왼) 발화 차의 부호가 회전 방향을 따라 뒤집힌다 — 진짜 씨앗 ≥ 9/10 · 재배선 셋은 차 0 또는 진짜의 1/4 미만</td>
+<td><strong>좌우만</strong>(눈 단위) — 1.3 절 한쪽 눈 결과의 연장</td>
+<td>높음</td>
+</tr>
+<tr>
+<td><strong>C2 기둥 자리(주 판정)</strong></td>
+<td>다가옴(L)의 LPLC2 발화 합: <strong>진짜 대응표 &gt; 자리 섞기 5 벌 모두(5/5)</strong> 이고 그 중앙값의 ≥ 1.5 배 · <strong>다가옴 &gt; 평행 이동(T)</strong> ≥ 1.5 배 · 다가옴 쪽(왼/오) LPLC2 가 같은 쪽에서 더 큼</td>
+<td><strong>눈 안 자리를 우리 배선이 쓴다</strong> — LPLC2 수상돌기의 층별 바깥 방향 배치 [V18] 를 연결 지도가 담고 있는가</td>
+<td>중간~낮음</td>
+</tr>
+<tr>
+<td>C3 재배선</td>
+<td>다가옴의 LPLC2 발화 합: 재배선 셋 모두 &lt; 진짜</td>
+<td>배선 특이성</td>
+<td>높음(1.3 절에서 재배선은 T4/T5 를 거의 못 나름)</td>
+</tr>
+<tr>
+<td>판정 불가 규칙</td>
+<td>진짜 대응표 · 다가옴의 LPLC2 발화 합이 씨앗 평균 <strong>&lt; 20</strong> 이면 C2 는 <strong>"입력 부족 — T4/T5 만으로 LPLC2 를 못 켬"</strong> 으로 적고 통과로 세지 않는다</td>
+<td>LPLC2 입력의 61.5 % 가 T4/T5 밖(Tm5Y 등)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>보고만</td>
+<td>GF(DNp01) · LC4 · DNp15 · HS · VS 발화</td>
+<td>LC4 는 T4/T5 몫 2.5 % 라 0 이어도 정상</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>문구 규칙</strong>: C1 만 통과 → "T4/T5 를 넣으면 우리 배선이 좌우 조향 하강 뉴런까지 나른다(앞단은 계산 · 좌우만)". C1 + C2 + C3 통과 → "우리 배선이 T4/T5 의 <strong>기둥 자리 정보</strong>를 LPLC2 까지 나른다(앞단은 계산)". 어느 쪽이든 <strong>"초파리가 본다" · "3 차원을 본다"는 V1(그림 → 검출기)까지 통과한 뒤에만</strong>.</p>
+<h3 id="84-v0-전에-조율-세션이-볼-그래프-사항-조회만">8.4 V0 전에 조율 세션이 볼 그래프 사항 (조회만)</h3>
+<ol>
+<li>T4a–d · T5a–d 의 기둥 좌표 — <code>assignedOlHex</code> 유무(T4 는 노트 12 에서 0) · 없으면 입력 기둥 무게중심(T4 = Mi1 · Tm3 · T5 = Tm1 · Tm2 · Tm9)으로 · 좌표 얻는 비율.</li>
+<li><strong>T4a → VS</strong> 경로(1.3 절 VS 224) — 직접 시냅스인가 · HS 를 거치나. 문헌의 VS 입력은 T4d/T5d [V20][P*].</li>
+<li>HS → DNa02 직접 연결 유무(문헌은 HS–H2 망 하류까지만 [V23][P]) · 1.3 절의 DNa02 가 어느 길로 왔나.</li>
+<li>MaleCNS 에서도 LPLC2 입력의 T4/T5 몫이 약 38 % 인지(위 값은 별도 공개 자료 optic-lobe v1.1 오른 시각엽).</li>
+<li>재배선 s0~s2 가 어떤 섞기인지(5.2 절 — 섞는 방식이 결과를 정한다)를 판정 문구에 적는다.</li>
+</ol>
+<hr />
+<h2 id="9-확인하지-못한-것--정직-목록">9. 확인하지 못한 것 · 정직 목록</h2>
+<ul>
+<li>flyvis <strong>학습된 가중치의 라이선스</strong> · 학습된 시간 상수 · 휴지 전위 값 · <strong>계산 시간 · 메모리</strong>(어디에도 없음).</li>
+<li>Dhiman 2026 의 매개변수별 초기화 방식 · 섞은 그래프에 종류 매개변수를 붙인 방식 · 약속한 부트스트랩 신뢰구간(본문에 값 없음) · 저자 저장소 LICENSE 본문(사이드바 "MIT" 만 봄 [P*]).</li>
+<li>flyvis 신경 조율 예측을 <strong>차수 보존 섞기</strong>와 비교한 연구 — 못 찾음.</li>
+<li>Eon 이 flyvis 종류를 LIF 뉴런에 어떻게 대응 · 변환했는지(블로그에 없음 · 코드 없음).</li>
+<li>T4/T5 시간 주파수 최적(약 1 Hz)의 1 차 출처(Maisak 2013 은 유료 · 초록만 [A]) · T4/T5 반응 지연.</li>
+<li><strong>수컷 데이터의 기둥 → 방위 · 고도 대응표</strong>(없음) · Zhao 2025 의 낱눈 간격 수치 · 자료 라이선스.</li>
+<li>HS → DNa02 직접 시냅스 · DNp15 와 DNHS1 이 같은 세포인지.</li>
+<li>수컷 시각엽 페이지 비율에 중추 뇌 시냅스가 포함되는지 · T5a–d 수(에이전트가 읽음 · 이 세션은 다시 열지 않음).</li>
+<li>취미 저장소들의 숫자는 동료 심사가 없고, 검색 요약과 README 가 다른 경우가 있었다(FlyBrain-Worldle: 요약 92/97 % · README 96/95 %) — 판단 근거로 쓰지 않고 참고만.</li>
+<li>8 절의 배수 · 문턱 · 크기(1.5 배 · 20 · 90 °/s · 10° → 60° · v_ref 100 °/s)는 <strong>우리 제안</strong>이다(문헌 값 아님).</li>
+</ul>
+<hr />
+<h2 id="참고-문헌">참고 문헌</h2>
+<ul>
+<li>[V1] Shiu et al. 2024, Nature — 본문 https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11446845/fullTextXML [P] · 코드 https://github.com/philshiu/Drosophila_brain_model (MIT)</li>
+<li>[V2] Molina-Obando et al. 2019, eLife 8:e49373 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6845231/fullTextXML [P]</li>
+<li>[V3] flyvis 저장소 — https://github.com/TuragaLab/flyvis · <code>license</code> · <code>pyproject.toml</code> · <code>flyvis/connectome/fib25-fib19_v2.2.json</code> [P] · https://api.github.com/repos/TuragaLab/flyvis/license [P] · CHANGELOG · 문서 [P*]</li>
+<li>[V4] Lappalainen et al. 2024, Nature 634:1132 — https://www.nature.com/articles/s41586-024-07939-3 · 본문 https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11525180/fullTextXML [P*] · bioRxiv https://www.biorxiv.org/content/10.1101/2023.03.11.532232v1.full [P*]</li>
+<li>[V5] Dhiman 2026, arXiv 2604.04033 v1 — https://arxiv.org/abs/2604.04033 · https://arxiv.org/html/2604.04033v1 [P] · 코드 https://github.com/nalin-dhiman/Connectome-Constrained-Neural-Networks [P*]</li>
+<li>[V6] NeuroMechFly v2 (Wang-Chen et al. 2024, Nature Methods) — https://www.nature.com/articles/s41592-024-02497-y · bioRxiv v4 https://www.biorxiv.org/content/10.1101/2023.09.18.556649v4.full [P*] · FlyGym https://github.com/NeLy-EPFL/flygym (Apache-2.0) [P*]</li>
+<li>[V7] Kuklev, arXiv 2609.24565 — https://arxiv.org/html/2609.24565v1 [P*]</li>
+<li>[V8] Liew et al. 2026, <em>"Connectome-Based Modelling Reveals Orientation Maps in the Drosophila Optic Lobe"</em>, arXiv 2609.01330 — https://arxiv.org/abs/2609.01330 · https://arxiv.org/html/2609.01330v1 [P] · 코드 https://github.com/JNLiew/flylif_orientation_maps(라이선스 파일 없음 [P*] — 쓰지 않음)</li>
+<li>[V9] Eon Systems, <em>"How the Eon Team Produced a Virtual Embodied Fly"</em> (블로그 · 동료 심사 아님) — https://eon.systems/updates/embodied-brain-emulation [P]</li>
+<li>[V10] Correig-Fraga · Guimerà · Sales-Pardo, arXiv 2610.10023 — https://arxiv.org/html/2610.10023 [P*]</li>
+<li>[V11] Jin et al., arXiv 2602.17997 v3 — https://arxiv.org/html/2602.17997v3 [P*]</li>
+<li>[V12] GeorgeCanon/FlyBrain-Worldle (취미 · 동료 심사 없음) — https://github.com/GeorgeCanon/FlyBrain-Worldle [P*]</li>
+<li>[V13] Chen &amp; Xi 2025, bioRxiv 10.64898/2025.12.14.694122 — https://www.biorxiv.org/content/10.64898/2025.12.14.694122v1.full [P*]</li>
+<li>[V14] Pospisil et al. 2024, Nature 634:201 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11446844/fullTextXML [P*]</li>
+<li>[V15] vib2810/fly-brain-zero-shot (취미 · MIT) — https://github.com/vib2810/fly-brain-zero-shot · README [P] · 라이선스 API [P]</li>
+<li>[V16] 취미 저장소들(동료 심사 없음 · 참고만): https://github.com/ZeroXClem/closed-loop-fly · https://github.com/AbijahKaj/fruit-fly-brain-research · https://github.com/TheJustas228/connectocopter · https://github.com/nftechie/doomfly · https://github.com/kazemi-mahdi/fly-escape-circuit(라이선스 파일 없음) · https://github.com/erojasoficial-byte/fly-brain [P*]</li>
+<li>[V17] Zhao, Gruntman, Nern … Reiser 2025, Nature 646:135 (눈 지도 · FAFB 암컷) — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12488493/fullTextXML [P] · 코드 https://github.com/reiserlab/eyemap_T4 (GPL-3.0 [P*] — 수치만)</li>
+<li>[V18] Klapoetke et al. 2017, Nature 551:237 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7457385/fullTextXML [P]</li>
+<li>[V19] Shinomiya et al. 2019, eLife 8:e40025 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6338461/fullTextXML [P]</li>
+<li>[V20] 수컷 시각엽 연결 지도 세포 종류 페이지(optic-lobe v1.1 · 오른 시각엽) — https://reiserlab.github.io/male-drosophila-visual-system-connectome/ · <code>HSE_R</code> · <code>LPLC2_R</code> · <code>LC4_R</code> [P] · <code>T5a_R</code>~<code>T5d_R</code> · <code>H2_R</code> · <code>VS_R</code> · <code>LPLC1_R</code> [P*]</li>
+<li>[V21] Zhou, Li, Kim, Lafferty &amp; Clark 2022, eLife 11:e72067 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8849349/fullTextXML [P*]</li>
+<li>[V22] Borst 2018, PLoS Comput Biol 14:e1006240 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6016951/fullTextXML [P*]</li>
+<li>[V23] Erginkaya et al. 2025, Nat Neurosci 28:1241 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12148931/fullTextXML [P]</li>
+<li>[V24] Haag et al. 2016, eLife 5:e17421 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4978522/fullTextXML [P]</li>
+<li>[V25] Zavatone-Veth, Badwan &amp; Clark 2020, J Vis 20(2):2 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7343402/fullTextXML [P*]</li>
+<li>[V26] Gruntman et al. 2018, Nat Neurosci 21:250 — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5967973/fullTextXML [P]</li>
+<li>[V27] Nern et al. 2025, Nature 641:1225 (수컷 시각엽) — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12119369/fullTextXML [P]</li>
+<li>그 밖에 참고만: Maisak et al. 2013, Nature — https://doi.org/10.1038/nature12320 [A] · Rayshubskiy et al. 2025, eLife — https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12279373/fullTextXML [P*] · Cho · Kang · Kim, arXiv 2610.10014(비시각 · MaleCNS 차수 보존 섞기 20 벌) [P*]</li>
+</ul>
+<div class="pager"><a href="16-KC-희소성-범위-조사.html">← 16 · KC 희소성 범위 — 조사</a><span></span></div>
+<footer>이 HTML 은 <code>17-초파리가-보게-하는-길-조사.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
+</div>
+</main>
+</div>
+</body>
+</html>
