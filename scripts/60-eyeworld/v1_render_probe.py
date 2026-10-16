@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
-from moai_echomind_fly.eye.compound import brightest_dir, face_pixel_dirs
+from moai_echomind_fly.eye.compound import face_pixel_dirs
 from moai_echomind_fly.eyeworld import scene as scene_mod
 from moai_echomind_fly.eyeworld.render import Renderer
 from moai_echomind_fly.eyeworld.world import body_dir
@@ -96,10 +96,16 @@ def main() -> None:
                     img, head = r.render(k, world.poses(), rig, n)
                     times.append(round(time.time() - t0, 3))
                     hashes.append(hashlib.sha256(img.tobytes()).hexdigest()[:16])
-                errs = {}
+                errs, peak = {}, {}
                 for e, eye in enumerate(rig):
                     dirs = face_pixel_dirs(eye["faces"], n)
-                    errs[eye["side"]] = angle_deg(brightest_dir(img[e], dirs), expect[eye["side"]])
+                    want = expect[eye["side"]]
+                    near = (dirs.reshape(-1, 3) @ want) > np.cos(np.radians(45.0))  # 그 표지 둘레만
+                    flat = img[e].reshape(-1).astype(float)
+                    k = int(np.argmax(np.where(near, flat, -1.0)))
+                    errs[eye["side"]] = angle_deg(dirs.reshape(-1, 3)[k], want)
+                    peak[eye["side"]] = int(flat[k])
+                np.savez_compressed(r.run_dir / f"frames{n}.npz", img=img)
                 for e, eye in enumerate(rig):
                     for f, face in enumerate(eye["faces"]):
                         png(
@@ -113,6 +119,7 @@ def main() -> None:
                     "page_render_ms": head["render_ms"],
                     "page_read_ms": head["read_ms"],
                     "marker_err_deg": errs,
+                    "marker_peak": peak,
                     "chrome_rss_gb": round(group_rss_gb(r.chrome.pid), 2),
                 }
                 res["runs"].append(run)

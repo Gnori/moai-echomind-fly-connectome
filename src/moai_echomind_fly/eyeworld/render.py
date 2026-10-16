@@ -57,9 +57,15 @@ class Renderer:
 
     # --- 통로(이벤트 루프 실) ---
     async def _handler(self, ws) -> None:
+        from websockets.exceptions import ConnectionClosed
+
         self.conn = ws
-        async for msg in ws:
-            await self.inbox.put(msg if isinstance(msg, bytes) else msg.encode())
+        assert self.inbox is not None
+        try:
+            async for msg in ws:
+                await self.inbox.put(msg if isinstance(msg, bytes) else msg.encode())
+        except ConnectionClosed:  # 끝낼 때 크롬이 먼저 닫히면 — 정상
+            return
 
     async def _serve(self, port: int) -> None:
         from websockets.asyncio.server import serve
@@ -92,7 +98,8 @@ class Renderer:
         others = safety.other_headless_chromes()
         if others:
             raise safety.SafetyError(
-                f"다른 헤드리스 크롬이 떠 있다 {others[:3]} — 겹치지 않게 기다렸다 다시")
+                f"다른 헤드리스 크롬이 떠 있다 {others[:3]} — 겹치지 않게 기다렸다 다시"
+            )
         ws_port = int(self.cfg["ws_port"])
         safety.check_port(ws_port)
         self.before = safety.readonly_snapshot()

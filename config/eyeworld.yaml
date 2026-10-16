@@ -36,6 +36,26 @@ eye:                      # eye-v1 — 겹눈 기하(설계 문서 3.2)
   # 아형 선호 방향(눈 격자 축 · 연구 노트 17 §6.1 · 문헌): a = 뒤로(−h) · b = 앞으로(+h) · c = 위(+v) · d = 아래(−v)
   preferred_axis: {a: [-1, 0], b: [1, 0], c: [0, 1], d: [0, -1]}
 
+frontend:                 # vision-frontend-v2(설계 문서 I 3.3b · V1 · 2026-10-17 결과 전 잠금 — 값은 문헌 · 계산)
+  version: vision-frontend-v2
+  r_max_hz: 150.0
+  acceptance_sigma_deg: 2.12   # 낱눈 받아들이는 각 반높이 폭 약 5°(문헌 · 노트 17) → σ = 5 / 2.355
+  t4t5:                       # 옆쌍 상관 검출기(10-17 · 뇌 결과 전 · 앞단 시험으로 고름)
+    model: hrc-adjacent
+    tau_hp_ms: 250.0         # 입력 고역(Haag 2016 [P])
+    tau_lp_ms: 30.0          # 지연 저역(Zhou 2022 [P*] · 노트 17 §6.2)
+    v_ref_deg_s: 100.0       # 기준(V0 · V0b 와 같음)
+    lambda_deg: 30.0         # 기준 줄무늬 파장(선언) — ref = 이 줄무늬가 v_ref 로 흐를 때 출력 평균(앞단만 · 뇌와 무관)
+    # 고른 과정(10-17 · 계산 그림 · 몸 둘레 세로 줄무늬 λ 30° · 뇌 안 돌림): 기준 = 30 · 90 °/s 둘 다 DSI ≥ 0.5 · 위아래/가로 < 0.2 를 넘는 가장 단순한 판.
+    #   Haag 2016 세 갈래(k 5/5/10 · τ 250 ms · 직류 10 %): DSI 0.05~0.37(반대 빼기 · 출력 저역 25~200 ms 를 더해도) → 못 넘음.
+    #   앞 · 뒤 이웃을 바로 곱한 상관: 17.6° 떨어져 30° 줄무늬에서 방향이 뒤집힘(공간 겹침) → 못 씀.
+    #   옆쌍 상관 τ_lp 30 · 출력 저역 없음: 90 °/s DSI 0.94/0.93 · 30 °/s 0.99/0.99 · 위아래/가로 0.06 → 채택.
+  lobula:                     # V0b 와 같은 값 + Tm3(ON · FWHM 약 12° · 노트 17 §10.1)
+    Tm2:  {polarity: "off",   rf_sigma_deg: 3.48, tau_ms: 40.0}
+    Tm4:  {polarity: "off",   rf_sigma_deg: 4.80, tau_ms: 40.0}
+    T2:   {polarity: "onoff", rf_sigma_deg: 4.14, tau_ms: 40.0}
+    Tm3:  {polarity: "on",    rf_sigma_deg: 5.10, tau_ms: 40.0}
+
 v0:                       # V0 — 분석식 광류 → T4/T5 → 뇌(연구 노트 17 §8 · 결과 전 잠금 2026-10-16)
   rule: v0-a
   window_ms: 300
