@@ -7,7 +7,8 @@
 ③ 뇌: 진짜 대응표 · 자리 섞기 5 벌(입구 뉴런 자리만 종류 · 아형 × 눈 안에서 섞음) ·
    재배선 s0~s2 · 씨앗 10.
 ④ 판정: R1(돎 → DNa02 부호) · A1~A3(다가옴 → LC4 자리 · 배선 · 같은 쪽).
-사용: python scripts/60-eyeworld/v1_check.py [--frames <폴더>] [--seeds 0] [--maps 1] [--brains real]
+사용: python scripts/60-eyeworld/v1_check.py [--frames <폴더>] [--seeds 0] [--maps 1]
+     [--brains real]
 """
 
 from __future__ import annotations
