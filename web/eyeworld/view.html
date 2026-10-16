@@ -4,46 +4,55 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>초파리 눈 세계 보기</title>
-  <!-- R-1177 F-008 보기 창(최소판) — Babylon 9.25 는 에코월드 vendor 를 읽기 전용으로 · 바깥(CDN) 안 부름 -->
+  <!-- R-1177 F-008 보기 창 — Babylon 9.25 는 에코월드 vendor 를 읽기 전용으로 · 바깥(CDN) 안 부름 -->
   <script src="/babylon/babylon.js"></script>
   <script src="/babylon/babylonjs.loaders.min.js"></script>
   <style>
-    :root { --bg: #111418; --panel: #1b2026; --text: #e6e9ee; --muted: #9aa4af; --accent: #f2c14e; }
+    :root { --bg: #111418; --panel: #1b2026; --text: #e6e9ee; --muted: #9aa4af; --accent: #f2c14e; --me: #6fa0ff; }
     html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
       font: 14px/1.5 -apple-system, "Apple SD Gothic Neo", sans-serif; }
     #wrap { display: flex; height: 100%; }
-    #c { flex: 1; min-width: 0; height: 100%; display: block; outline: none; }
-    #side { width: 440px; max-width: 45vw; overflow-y: auto; background: var(--panel); padding: 14px 16px;
+    #c { flex: 1; min-width: 0; height: 100%; display: block; outline: none; touch-action: none; }
+    #side { width: 450px; max-width: 45vw; overflow-y: auto; background: var(--panel); padding: 14px 16px;
       box-sizing: border-box; }
     h1 { font-size: 16px; margin: 0 0 6px; }
     h2 { font-size: 14px; margin: 16px 0 6px; color: var(--accent); }
-    p, li { color: var(--muted); margin: 4px 0; }
+    p { color: var(--muted); margin: 4px 0; }
+    b.me { color: var(--me); } b.fly { color: var(--accent); }
     button { background: #2b333c; color: var(--text); border: 1px solid #3a444f; border-radius: 6px;
       padding: 6px 10px; margin: 2px 4px 2px 0; cursor: pointer; font: inherit; }
     button:hover { background: #36404b; }
-    img { width: 100%; image-rendering: pixelated; border-radius: 4px; background: #000; }
-    #status { color: var(--muted); font-size: 12px; }
+    button.on { border-color: var(--accent); color: var(--accent); }
+    #eyecv { width: 100%; background: #000; border-radius: 4px; image-rendering: pixelated; }
+    #status, #mode { color: var(--muted); font-size: 12px; }
+    kbd { background: #2b333c; border-radius: 4px; padding: 0 5px; font: 12px ui-monospace, monospace; }
     @media (max-width: 800px) { #wrap { flex-direction: column; } #side { width: 100%; max-width: none; height: 45%; } }
   </style>
 </head>
 <body>
   <div id="wrap">
-    <canvas id="c"></canvas>
+    <canvas id="c" tabindex="0"></canvas>
     <div id="side">
       <h1>초파리 눈 세계 — <span id="name"></span></h1>
       <p id="status">불러오는 중…</p>
-      <h2>둘러보기</h2>
-      <p>마우스 끌기 = 고개 돌리기 · W A S D(또는 화살표) = 걷기 · 사람 눈 해상도(초파리보다 훨씬 선명)</p>
-      <button id="eye">초파리 눈 자리</button><button id="top">위에서 보기</button>
-      <button id="appL">사람 다가옴(왼쪽)</button><button id="appR">사람 다가옴(오른쪽)</button>
-      <h2>초파리가 받는 그림</h2>
-      <p>두 눈 낱눈 기둥(연결 지도 L1 기둥 좌표 · 5° 흐림) 하나하나의 밝기. 가로 = 몸 기준 방위
-        (왼쪽 끝 +180° 왼쪽 뒤 → 가운데 0° 정면 → 오른쪽 끝 −180°) · 세로 = 고도. 검정 = 눈이 덮지 않는 곳.</p>
-      <p id="cap1"></p><img id="fly1" alt="초파리 눈 그림 1">
-      <p id="cap2"></p><img id="fly2" alt="초파리 눈 그림 2">
-      <h2>무엇이 아닌가</h2>
-      <p>그림 → 신경 입력은 계산한 앞단(문헌 흉내 · 손으로 정한 값)이다. 이 그림으로 뇌가 몸 돎을
-        조향 뉴런까지 나르는지는 아직 통과 못 함(F0-3 12.9 Hz · 기준 20) — "초파리가 본다"고 말하지 않는다.</p>
+      <h2>누가 누구인가</h2>
+      <p><b class="me">파란 사람 = 나</b>(내가 움직이는 캐릭터) · <b class="fly">노란 사람 = 초파리 뇌 캐릭터</b>
+        (머리 위 "초파리 뇌" · 발밑 노란 고리) · 회색 사람 = 다가옴 시험용 사람(버튼으로 재생)</p>
+      <h2>카메라</h2>
+      <button id="m1">1인칭 <kbd>1</kbd></button><button id="m2">3인칭 <kbd>2</kbd></button><button id="m3">자유 <kbd>3</kbd></button>
+      <button id="mf">초파리 눈으로 <kbd>4</kbd></button>
+      <p id="mode"></p>
+      <p><kbd>W A S D</kbd> 이동 · <kbd>Shift</kbd> 달리기 · 마우스 끌기 = 고개 돌리기 · 화면을 한 번 눌러야 키가 먹음</p>
+      <button id="appL">다가옴 시험 재생(왼쪽)</button><button id="appR">다가옴 시험 재생(오른쪽)</button>
+      <h2>초파리 뇌 캐릭터의 두 눈이 지금 받는 그림(실시간)</h2>
+      <canvas id="eyecv" width="432" height="168"></canvas>
+      <p>낱눈 기둥 1,770(연결 지도 L1 기둥 좌표 · 5° 흐림) 하나하나의 밝기. 가로 = 그 캐릭터 몸 기준 방위
+        (왼쪽 끝 +180° 왼쪽 뒤 → 가운데 정면 → 오른쪽 끝 −180°) · 세로 = 고도 · 검정 = 눈이 덮지 않는 곳.
+        내 캐릭터가 그 앞을 지나가면 여기에 보인다.</p>
+      <h2>지금 할 수 없는 것(정직)</h2>
+      <p>초파리 뇌 캐릭터는 <b>서 있기만</b> 한다. 이 그림을 계산한 앞단으로 뇌에 넣으면 조향 뉴런이 반응하려면
+        입력이 지금의 약 4 배 넘게 필요하다(V0d: 앞→뒤 입력 50 Hz 넘어야 · 이 장면 12.6 Hz) — 그래서 "보고 움직인다"를
+        만들지 않았다. "초파리가 본다"고 말하지 않는다.</p>
     </div>
   </div>
   <script type="module" src="/web/view.js"></script>

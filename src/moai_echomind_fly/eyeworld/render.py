@@ -32,6 +32,18 @@ def unpack(buf: bytes) -> tuple[dict, bytes]:
     return json.loads(buf[4 : 4 + n].decode("utf-8")), buf[4 + n :]
 
 
+def texture_index() -> dict | None:
+    """에코월드 재질 색인(설정 render.texture_index) → 페이지 주소 — 없으면 None(묶지 않음)."""
+    ti = config.load("eyeworld")["render"].get("texture_index")
+    if not ti:
+        return None
+    return {
+        "url": f"/assets/{ti['index']}",
+        "base": f"/assets/{ti['base']}",
+        "alpha_cut": float(ti["alpha_cut"]),
+    }
+
+
 class RenderError(RuntimeError):
     pass
 
@@ -184,6 +196,7 @@ class Renderer:
             "sky": scene.get("sky"),
             "light": scene.get("light"),
             "markers": markers or [],
+            "texture_index": texture_index(),
         }
         h, _ = self._call(head, timeout_s)
         if h.get("type") != "scene.ready":

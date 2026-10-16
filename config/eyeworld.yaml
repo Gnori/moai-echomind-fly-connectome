@@ -28,8 +28,17 @@ render:                   # V1 렌더러(설계 문서 2.1 · 2.6) — 127.0.0.1
   profile_root: runs/eyeworld-chrome   # 우리 프로필 폴더(실행마다 하위 폴더)
   world3d_root: ../moai-echomind/moai-echomind-world-3d   # 에코월드 3D 저장소(읽기 전용 마운트: vendor/babylon · assets)
   timeout_ms: 20000        # 렌더 한 번 시간 초과 → 한 번 다시 → 렌더러 다시 띄움 → 두 번 실패면 멈춤
+  texture_index:           # 10-17: 에코월드 식물 GLB 는 재질 이름만 · 텍스처는 이 색인으로 묶음(에코월드 bj/foliage.js 계약 · 읽기 전용)
+    index: village/foliage/foliage_index.json
+    base: village/foliage/   # 파일 = base + dir + /<재질>_<diff|nor|arm>.<ext>
+    alpha_cut: 0.5           # 잎 알파 컷(에코월드 메시 · 카드와 같은 값)
   view_port: 8792         # 보기 창(F-008 · 요구자 브라우저 탭) 정적 서버 — 렌더러 포트(8790 · 8791)와 따로 · 127.0.0.1 만
   view_serve_min: 60      # 보기 서버를 이 분 뒤 닫음(띄워 놓고 잊지 않게)
+
+view:                     # 보기 창(F-008 · 요구자 10-17 "내 캐릭 · 뇌 연결 캐릭 따로 · 1인칭 · 3인칭 · 자유카메라") — 판정 아님
+  me_start_pos: [2.5, 0.0, -3.0]   # 내 캐릭터 시작 자리(초파리 뇌 캐릭터 오른쪽 뒤 · 몸 기준 앞 = +z · 왼 = +x)
+  me_start_yaw_deg: -35.0          # 초파리 뇌 캐릭터 쪽을 대충 바라봄
+  eye_every_ms: 150                # 초파리 눈 그림(실시간 패널)을 이 간격으로 다시 그림 — 큐브맵 12 면 × 32 px
 
 eye:                      # eye-v1 — 겹눈 기하(설계 문서 3.2)
   version: eye-v1

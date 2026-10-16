@@ -1,5 +1,7 @@
 // R-1177 렌더러(설계 문서 I 2.6) — 상태 없음: 세계 서버가 보낸 자세대로 그리고, 눈마다 큐브맵 6 면 밝기를 돌려준다.
 // 통로 메시지 = [u32 머리 길이(little)][머리 JSON][본문]. 좌표: 오른손 · y 위(에코월드와 같음).
+import { loadIndex, bindContainer } from './bind.js';
+
 const B = window.BABYLON;
 const q = new URLSearchParams(location.search);
 const WS_URL = `ws://127.0.0.1:${q.get('ws')}`;
@@ -96,9 +98,17 @@ async function loadScene(h) {
     gm.diffuseColor = new B.Color3(1, 1, 1);
   }
   ground.material = gm;
-  const missing = [];
+  const missing = [], unbound = new Set();
+  let bound = 0;
+  // 에코월드 재질 묶기(10-17 · 식물 GLB 는 재질 이름만 · 텍스처는 색인으로) — 색인이 없으면 묶지 않음
+  const ti = h.texture_index ? await loadIndex(h.texture_index.url) : null;
   for (const [key, url] of Object.entries(h.assets)) {
-    try { containers[key] = await loadContainer(url); } catch (e) { missing.push(key); console.warn(e); }
+    try { containers[key] = await loadContainer(url); } catch (e) { missing.push(key); console.warn(e); continue; }
+    if (ti) {
+      const r = bindContainer(B, scene, containers[key], ti, h.texture_index.base, h.texture_index.alpha_cut ?? 0.5);
+      bound += r.bound.length;
+      for (const n of r.unknown) unbound.add(n);
+    }
   }
   for (const p of h.poses) {
     const c = containers[p.asset];
@@ -119,7 +129,8 @@ async function loadScene(h) {
   }
   applyPoses(h.poses);
   await scene.whenReadyAsync();
-  return { loaded: Object.keys(containers).length, missing, ms: Math.round(performance.now() - t0) };
+  return { loaded: Object.keys(containers).length, missing, bound, unbound: [...unbound],
+    ms: Math.round(performance.now() - t0) };
 }
 
 function applyPoses(poses) {
