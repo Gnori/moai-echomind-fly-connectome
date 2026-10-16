@@ -90,7 +90,7 @@ NPC 하나를 초파리 뇌로(R-5138)는 10-12 보류(배선 특이적인 것�
 
 ## 코딩 표준
 
-- **파이썬 3.14** · `uv`(이 저장소는 `uv sync --group dev --extra llm`) · 몸만 3.12 별도 환경
+- **파이썬 3.14** · `uv`(이 저장소는 `uv sync --group dev --extra llm --extra eyeworld`) · 몸만 3.12 별도 환경
 - **Ruff** 통과(`uv run ruff check src tests`) · 줄 길이 100 · 타입 힌트 · 한국어 독스트링(무엇을 왜)
 - **pytest** — 가벼운 시험은 `uv run pytest -m "not heavy"`. 무거운 표시(`heavy`)는 가드를 탄다
 - 상한·임계·개수는 **설정 파일**로(하드코딩 금지). 라이브러리 내부를 우회·후킹하지 않는다
