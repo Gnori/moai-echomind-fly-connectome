@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>초파리 눈 세계 보기</title>
+  <!-- R-1177 F-008 보기 창(최소판) — Babylon 9.25 는 에코월드 vendor 를 읽기 전용으로 · 바깥(CDN) 안 부름 -->
+  <script src="/babylon/babylon.js"></script>
+  <script src="/babylon/babylonjs.loaders.min.js"></script>
+  <style>
+    :root { --bg: #111418; --panel: #1b2026; --text: #e6e9ee; --muted: #9aa4af; --accent: #f2c14e; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+      font: 14px/1.5 -apple-system, "Apple SD Gothic Neo", sans-serif; }
+    #wrap { display: flex; height: 100%; }
+    #c { flex: 1; min-width: 0; height: 100%; display: block; outline: none; }
+    #side { width: 440px; max-width: 45vw; overflow-y: auto; background: var(--panel); padding: 14px 16px;
+      box-sizing: border-box; }
+    h1 { font-size: 16px; margin: 0 0 6px; }
+    h2 { font-size: 14px; margin: 16px 0 6px; color: var(--accent); }
+    p, li { color: var(--muted); margin: 4px 0; }
+    button { background: #2b333c; color: var(--text); border: 1px solid #3a444f; border-radius: 6px;
+      padding: 6px 10px; margin: 2px 4px 2px 0; cursor: pointer; font: inherit; }
+    button:hover { background: #36404b; }
+    img { width: 100%; image-rendering: pixelated; border-radius: 4px; background: #000; }
+    #status { color: var(--muted); font-size: 12px; }
+    @media (max-width: 800px) { #wrap { flex-direction: column; } #side { width: 100%; max-width: none; height: 45%; } }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="c"></canvas>
+    <div id="side">
+      <h1>초파리 눈 세계 — <span id="name"></span></h1>
+      <p id="status">불러오는 중…</p>
+      <h2>둘러보기</h2>
+      <p>마우스 끌기 = 고개 돌리기 · W A S D(또는 화살표) = 걷기 · 사람 눈 해상도(초파리보다 훨씬 선명)</p>
+      <button id="eye">초파리 눈 자리</button><button id="top">위에서 보기</button>
+      <button id="appL">사람 다가옴(왼쪽)</button><button id="appR">사람 다가옴(오른쪽)</button>
+      <h2>초파리가 받는 그림</h2>
+      <p>두 눈 낱눈 기둥(연결 지도 L1 기둥 좌표 · 5° 흐림) 하나하나의 밝기. 가로 = 몸 기준 방위
+        (왼쪽 끝 +180° 왼쪽 뒤 → 가운데 0° 정면 → 오른쪽 끝 −180°) · 세로 = 고도. 검정 = 눈이 덮지 않는 곳.</p>
+      <p id="cap1"></p><img id="fly1" alt="초파리 눈 그림 1">
+      <p id="cap2"></p><img id="fly2" alt="초파리 눈 그림 2">
+      <h2>무엇이 아닌가</h2>
+      <p>그림 → 신경 입력은 계산한 앞단(문헌 흉내 · 손으로 정한 값)이다. 이 그림으로 뇌가 몸 돎을
+        조향 뉴런까지 나르는지는 아직 통과 못 함(F0-3 12.9 Hz · 기준 20) — "초파리가 본다"고 말하지 않는다.</p>
+    </div>
+  </div>
+  <script type="module" src="/web/view.js"></script>
+</body>
+</html>

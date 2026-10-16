@@ -28,6 +28,8 @@ render:                   # V1 렌더러(설계 문서 2.1 · 2.6) — 127.0.0.1
   profile_root: runs/eyeworld-chrome   # 우리 프로필 폴더(실행마다 하위 폴더)
   world3d_root: ../moai-echomind/moai-echomind-world-3d   # 에코월드 3D 저장소(읽기 전용 마운트: vendor/babylon · assets)
   timeout_ms: 20000        # 렌더 한 번 시간 초과 → 한 번 다시 → 렌더러 다시 띄움 → 두 번 실패면 멈춤
+  view_port: 8792         # 보기 창(F-008 · 요구자 브라우저 탭) 정적 서버 — 렌더러 포트(8790 · 8791)와 따로 · 127.0.0.1 만
+  view_serve_min: 60      # 보기 서버를 이 분 뒤 닫음(띄워 놓고 잊지 않게)
 
 eye:                      # eye-v1 — 겹눈 기하(설계 문서 3.2)
   version: eye-v1
