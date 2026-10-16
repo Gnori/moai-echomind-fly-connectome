@@ -72,6 +72,28 @@ def echomind_headless_busy(lock: Path | None = None, fresh_s: float | None = Non
     return text if _alive(pid) else None
 
 
+def other_headless_chromes(own_profile_root: str | None = None) -> list[tuple[int, str]]:
+    """우리 것이 아닌 헤드리스 크롬 본체(도우미 `--type=` 제외) — (pid, 프로필).
+
+    echomind-world 부탁(10-16): "쓰기 전에 ps 로 확인" — 떠 있으면 겹치지 않게 띄우지 않는다.
+    """
+    own = own_profile_root or config.load("eyeworld")["render"]["profile_root"]
+    out = subprocess.run(["ps", "-A", "-o", "pid=,command="], capture_output=True, text=True).stdout
+    got = []
+    for line in out.splitlines():
+        line = line.strip()
+        if "Google Chrome" not in line or "--headless" not in line or "--type=" in line:
+            continue
+        pid, cmd = line.split(None, 1)
+        prof = next(
+            (t.split("=", 1)[1] for t in cmd.split() if t.startswith("--user-data-dir=")), ""
+        )
+        if own in prof:
+            continue
+        got.append((int(pid), prof))
+    return got
+
+
 @dataclass
 class OwnedProcess:
     """우리가 띄운 프로세스 — 제 세션(그룹)으로 띄우고 그 그룹만 내린다."""

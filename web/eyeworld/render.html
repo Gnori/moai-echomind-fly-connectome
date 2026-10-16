@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>fly eyeworld render</title>
+  <!-- R-1177 렌더러 — Babylon 9.25 는 에코월드 vendor 를 읽기 전용으로(정적 서버 /babylon/) · 바깥(CDN) 안 부름 -->
+  <script src="/babylon/babylon.js"></script>
+  <script src="/babylon/babylonjs.loaders.min.js"></script>
+  <style>html, body { margin: 0; background: #000; } canvas { width: 64px; height: 64px; }</style>
+</head>
+<body>
+  <canvas id="c" width="64" height="64"></canvas>
+  <script type="module" src="/web/render.js"></script>
+</body>
+</html>
