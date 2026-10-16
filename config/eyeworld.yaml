@@ -1,9 +1,21 @@
 # 눈으로 보는 3D 세계(R-1177 · 설계 문서 I) — 값은 선언 · 결과 전 잠금. 바꾸면 판을 올린다.
 version: eyeworld-v0     # 2026-10-16 — V0(세계 없이 · 분석식 광류 → T4/T5) 만. 렌더러 · 세계 서버 칸은 V1 에서 더한다.
 
-safety:                   # 설계 문서 2.9 — V1 부터 쓰지만 금지 목록은 지금 잠근다
+safety:                   # 설계 문서 2.9
   forbidden_ports: [9212, 9213, 8881, 9412]   # 에코월드 라이브 · 눈 워커 · 눈 정적 · 상자 월드
   echomind_headless_lock: /tmp/echomind-world-headless.lock   # 살아 있으면 우리 크롬을 띄우지 않는다(읽기만)
+  echomind_lock_fresh_s: 900       # 에코월드 headless_guard 와 같은 규칙: 첫 낱말 pid 가 살아 있고 이 초 안에 갱신된 잠금
+  readonly_roots: [../moai-echomind/moai-echomind-world-3d]   # 우리는 읽기만 — 실행 전후 표본 수정 시각 비교
+
+render:                   # V1 렌더러(설계 문서 2.1 · 2.6) — 127.0.0.1 만
+  http_port: 8790          # 정적 파일(GET 만)
+  ws_port: 8791            # 렌더러 통로
+  chrome: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+  chrome_flags: [--headless=new, --use-angle=metal, --enable-unsafe-webgpu, --enable-features=WebGPU,
+                 --no-first-run, --no-default-browser-check, --disable-extensions, --mute-audio]
+  profile_root: runs/eyeworld-chrome   # 우리 프로필 폴더(실행마다 하위 폴더)
+  world3d_root: ../moai-echomind/moai-echomind-world-3d   # 에코월드 3D 저장소(읽기 전용 마운트: vendor/babylon · assets)
+  timeout_ms: 20000        # 렌더 한 번 시간 초과 → 한 번 다시 → 렌더러 다시 띄움 → 두 번 실패면 멈춤
 
 eye:                      # eye-v1 — 겹눈 기하(설계 문서 3.2)
   version: eye-v1
