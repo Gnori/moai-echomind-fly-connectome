@@ -88,7 +88,7 @@ def render_all(v1: dict, out: Path) -> dict[str, np.ndarray]:
     try:
         ready = r.start()
         print(f"[v1] 렌더러 {ready}", flush=True)
-        r.load_scene(scene0, world0.poses())
+        print(f"[v1] 장면 {r.load_scene(scene0, world0.poses())}", flush=True)
         for cond in CONDS:
             world, _ = build_world(v1, cond, 0)
             steps = int(
@@ -228,8 +228,13 @@ def main() -> None:
     ap.add_argument("--brains", default=None)
     ap.add_argument("--no-judge", action="store_true")
     ap.add_argument("--render-only", action="store_true", help="그림만 저장(뇌 · 앞단 없이)")
+    ap.add_argument("--scene", default=None, help="그림만 그릴 때 장면(판정은 설정 그대로)")
     a = ap.parse_args()
     v1 = config.load("eyeworld")["v1"]
+    if a.scene:
+        if not a.render_only:
+            raise SystemExit("--scene 은 --render-only 와 함께만(판정 장면은 설정에 잠긴 값)")
+        v1 = {**v1, "scene": a.scene}
     seeds = [int(x) for x in a.seeds.split(",")] if a.seeds else [int(x) for x in v1["seeds"]]
     n_maps = int(v1["arms"]["shuffled_maps"]["n"]) if a.maps is None else a.maps
     brains = a.brains.split(",") if a.brains else ["real", *v1["arms"]["rewired"]]
