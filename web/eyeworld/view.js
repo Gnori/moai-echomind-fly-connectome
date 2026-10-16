@@ -35,7 +35,7 @@ const keys = new Set();
 const nodes = {};
 let meNode, meTag, flyNode, ring, collide = true, drag = null, play = null, eyeBusy = false, lastEye = 0;
 const fly = { pos: [0, 0, 0], yaw: 0 };         // 초파리 뇌 캐릭터 자세(뇌 연결이 켜지면 뇌 명령으로 움직임)
-let brain = null, dial = 1, tick = 0;
+let brain = null, dial = 1, tick = 0, hop = 0;
 const notInEye = new Set();                     // 초파리 눈 그림에서 뺄 것(제 몸 · 이름표 · 고리)
 
 async function loadContainer(url) {
@@ -61,7 +61,7 @@ function unpack(buf) {
 
 function flyRig() {                             // 세계 서버 eye_rig 와 같은 식(앞 · 뒤 · 왼 · 오 · 위 · 아래 · 왼눈 = 머리 + 왼 × 간격/2)
   const f = fwd(fly.yaw), l = lft(fly.yaw), U = [0, 1, 0], neg = (a) => a.map((x) => -x);
-  const head = [fly.pos[0], fly.pos[1] + h.body.eye_m, fly.pos[2]], k = h.body.eye_sep_m / 2;
+  const head = [fly.pos[0], h.body.eye_m, fly.pos[2]], k = h.body.eye_sep_m / 2;   // 뛰어오름은 보이게만 — 눈은 땅 기준 그대로
   const faces = [[f, U], [neg(f), U], [l, U], [neg(l), U], [U, neg(f)], [neg(U), f]]
     .map(([forward, up]) => ({ forward, up }));
   return [
@@ -232,10 +232,10 @@ function showBrain(out) {
   $('btab').innerHTML =
     `<tr><th>최근 ${h.brain.window_ms} ms 발화(왼 / 오른)</th><th>진짜 배선</th><th>섞은 배선</th></tr>` +
     row('입력 앞→뒤 a 평균 Hz', `${out.input_hz.L.toFixed(1)} / ${out.input_hz.R.toFixed(1)}`, '같음') +
-    ['DNa02', 'GF', 'LC4', 'LPLC2', 'HS', 'DNp02'].map((k) => row(k, lr(R, k), lr(C, k))).join('');
+    ['DNp09', 'MDN', 'DNa02', 'DNa01', 'GF', 'DNp02', 'LC4', 'LPLC2', 'HS'].map((k) => row(k, lr(R, k), lr(C, k))).join('');
   const c = out.cmd;
   $('bcmd').textContent = `몸 명령(진짜 배선 뇌): 돌기 ${c.turn_deg_s.toFixed(0)} °/s · 속도 ${c.speed_m_s.toFixed(1)} m/s`
-    + (c.escape ? ' · GF 도망!' : '');
+    + (c.jump ? ' · GF 뛰어오름!' : '');
   $('bspeed').textContent = `뇌 시간 ${(out.sim_ms / 1000).toFixed(1)} s · 실제의 ${(out.sim_ms / 1000 / Math.max(out.wall_s, 1e-3)).toFixed(2)} 배`
     + ` · 한 걸음 ${out.step_ms.toFixed(0)} ms(눈 그림 ${out.eyes_ms.toFixed(0)} · 앞단 ${out.ms.frontend} · 뇌 ${out.ms.brains}`
     + ` · ${Object.entries(out.ms.own).map(([k, v]) => `${k} ${v.ms} ms/${v.spikes}발`).join(' · ')})`;
@@ -244,6 +244,8 @@ function showBrain(out) {
 async function brainLoop() {                    // 눈 그림 → 뇌 서버(앞단 · 뇌 둘) → 진짜 배선 뇌 명령으로 한 걸음(10 ms)
   const dt = h.brain.dt_ms / 1000;
   while (brain?.on) {
+    stepMe(dt);                                 // 세계도 뇌 시간으로(내 캐릭터 · 시험용 사람) — 빠른 움직임이 순간 이동처럼 보이지 않게
+    if (play) stepPlay(1);
     const t0 = performance.now();
     const img = await grabEyes();
     const t1 = performance.now();
@@ -253,13 +255,25 @@ async function brainLoop() {                    // 눈 그림 → 뇌 서버(앞
     if (out) out.step_ms = performance.now() - t0;
     if (!out || out.type !== 'out') break;
     const c = out.cmd;
+    if (c.jump && hop <= 0) hop = h.brain.motor.jump.hop_ms;
     fly.yaw += ((c.turn_deg_s * Math.PI) / 180) * dt;
     const f = fwd(fly.yaw);
     fly.pos[0] += f[0] * c.speed_m_s * dt;
     fly.pos[2] += f[2] * c.speed_m_s * dt;
     pushOut(fly.pos, h.fly_radius, [...h.colliders, { x: me.pos[0], z: me.pos[2], r: h.body.radius_m }]);
+    hop = Math.max(0, hop - h.brain.dt_ms);   // 뛰어오름 높이(보이게만 · 뇌 시간 기준)
+    const T = h.brain.motor.jump.hop_ms;
+    fly.pos[1] = hop > 0 ? h.brain.motor.jump.hop_m * Math.sin((Math.PI * (T - hop)) / T) : 0;
     showBrain(out);
   }
+}
+
+function stepPlay(steps) {                      // 다가옴 시험 대본(10 ms 걸음) — steps 걸음만큼
+  play.k = (play.k ?? 0) + steps;
+  const tr = play.traj, k = Math.floor(play.k);
+  const p = tr[Math.min(k, tr.length - 1)];
+  place(nodes.person, p.pos, p.yaw);
+  if (k >= tr.length + 100) { place(nodes.person, h.person_rest.pos, h.person_rest.yaw); play = null; }
 }
 
 function flyHome() {
@@ -271,7 +285,6 @@ function setupBrain() {
   if (!h.brain) return;
   $('nobrain').style.display = 'none';
   $('brainbox').style.display = '';
-  $('bwalk').textContent = h.brain.walk_m_s;
   const dl = $('dial');
   dl.max = h.brain.dial.max; dl.value = h.brain.dial.default; dial = Number(dl.value);
   const showDial = () => { $('dialv').textContent = dial === 1 ? '×1 (잰 그대로)' : `×${dial} (손으로 올림)`; };
@@ -285,7 +298,10 @@ function setupBrain() {
     brain = { ws, on: false, wait: null };
     ws.onmessage = (ev) => { const m = unpack(ev.data); if (m.type === 'reset.ok') return; brain?.wait?.(m); };
     ws.onclose = () => { brain?.wait?.(null); };
-    ws.onopen = () => { brain.on = true; $('bon').textContent = '뇌 연결 끄기'; brainLoop(); };
+    ws.onopen = () => {                         // 켤 때마다 뇌 · 앞단을 처음 상태로(앞 연결의 흔적 없이)
+      ws.send(pack({ type: 'reset' }));
+      brain.on = true; $('bon').textContent = '뇌 연결 끄기'; brainLoop();
+    };
   };
 }
 
@@ -365,8 +381,8 @@ async function main() {
   $('m2').onclick = () => setMode(2);
   $('m3').onclick = () => setMode(3);
   $('mf').onclick = () => setMode(4);
-  $('appL').onclick = () => { play = { traj: h.approach.left, t0: performance.now() }; };
-  $('appR').onclick = () => { play = { traj: h.approach.right, t0: performance.now() }; };
+  $('appL').onclick = () => { play = { traj: h.approach.left, k: 0 }; };
+  $('appR').onclick = () => { play = { traj: h.approach.right, k: 0 }; };
   const home = () => { me.pos = [...h.me_start.pos]; me.yaw = h.me_start.yaw; me.pitch = 0; place(meNode, me.pos, me.yaw); };
   const toggleCollide = () => { collide = !collide; $('col').textContent = `부딪힘 ${collide ? '켬' : '끔'} (C)`; };
   $('home').onclick = home;
@@ -395,13 +411,9 @@ async function main() {
   $('status').textContent = `에셋 ${Object.keys(containers).length} 실림 · 빠짐 ${missing.length} · 재질 묶음 ${bound} · 물체 ${h.poses.length}`;
   engine.runRenderLoop(() => {
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000);
-    stepMe(dt);
-    if (play) {                                 // 다가옴 시험 대본(10 ms 걸음)을 실제 시간으로
-      const k = Math.floor((performance.now() - play.t0) / h.approach.dt_ms);
-      const tr = play.traj;
-      const p = tr[Math.min(k, tr.length - 1)];
-      place(nodes.person, p.pos, p.yaw);
-      if (k >= tr.length + 100) { place(nodes.person, h.person_rest.pos, h.person_rest.yaw); play = null; }
+    if (!brain?.on) {                           // 뇌가 꺼져 있으면 실제 시간으로
+      stepMe(dt);
+      if (play) stepPlay(engine.getDeltaTime() / h.approach.dt_ms);
     }
     place(flyNode, fly.pos, fly.yaw);
     ring.position.set(fly.pos[0], 0.03, fly.pos[2]);

@@ -159,7 +159,7 @@ def main() -> None:
         vb = ecfg["view_brain"]
         link = BrainLink()
         head["brain"] = {"port": int(vb["port"]), "dt_ms": float(vb["dt_ms"]),
-                         "walk_m_s": float(vb["walk_m_s"]), "dial": vb["dial"],
+                         "dial": vb["dial"], "motor": vb["motor"],
                          "brains": list(vb["brains"]), "window_ms": float(vb["window_ms"])}
     (out / f"{a.scene}.json").write_text(json.dumps(head, ensure_ascii=False), encoding="utf-8")
     port = int(rcfg["view_port"])

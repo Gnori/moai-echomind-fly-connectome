@@ -3,9 +3,10 @@
 브라우저(보기 창)가 초파리 뇌 캐릭터 두 눈 큐브맵을 걸음(10 ms)마다 보내면:
   그림 → 앞단 v3b(FrontendV3) → 발화율 × 다이얼(손으로 · 1 = 잰 그대로 · r_max 로 자름)
   → 뇌 둘(진짜 배선 · 섞은 배선 rewired-s0)을 **따로 프로세스에서 나란히** 10 ms 달림
-  → 읽기 뉴런 발화를 창(window_ms)으로 셈 → 진짜 배선 뇌만 몸 명령으로 바꿈:
-     돌기 = −k · (DNa02 오른 − 왼)(오른쪽이 많으면 오른쪽으로 · yaw 감소)
-     · 도망 = 창 안 GF(DNp01) ≥ 문턱 → 정한 시간 동안 뒤로 · 앞으로 걷기 = 선언(뇌 아님).
+  → 읽기 뉴런 발화를 창(window_ms)으로 셈
+  → 진짜 배선 뇌의 **하강 뉴런 그대로** 몸 명령(지어낸 행동 규칙 없음):
+     앞뒤 = DNp09(앞) − MDN(뒤) · 돌기 = DNa02 · DNa01 오른 − 왼(같은 쪽으로) · GF(DNp01) = 뛰어오름
+     · 발화 → 속도 환산 숫자만 선언 · 상한은 몸 규약.
 값은 config/eyeworld.yaml view_brain(선언). 섞은 배선 뇌는 같은 입력 · 값만 보여 줌(몸은 안 움직임).
 통로 = 렌더러와 같은 꼴([u32 머리 길이][머리 JSON][본문]) · 127.0.0.1 만.
 """
@@ -27,14 +28,18 @@ from ..loop.signals import side_of
 from .render import pack, unpack
 from .safety import check_port
 
-READ = {
+READ = {  # 몸을 움직이는 하강 뉴런(설정 view_brain.motor) + 보기만 하는 것
+    "DNp09": ["DNp09"],
+    "MDN": ["MDN"],
     "DNa02": ["DNa02"],
+    "DNa01": ["DNa01"],
     "GF": ["DNp01"],
+    "DNp02": ["DNp02"],
     "LC4": ["LC4"],
     "LPLC2": ["LPLC2"],
     "HS": ["HSE", "HSN", "HSS"],
-    "DNp02": ["DNp02"],
 }
+KEY = {t: k for k, v in READ.items() for t in v}  # 종류 이름 → 읽기 묶음
 
 
 def labels(g) -> tuple[np.ndarray, list[str]]:
@@ -111,17 +116,18 @@ class BrainLink:
             _, self.names = conn.recv()
         n_win = int(round(float(self.cfg["window_ms"]) / self.dt_ms))
         self.win = {b: deque(maxlen=n_win) for b in self.brains}
-        self.escape_left_ms = 0.0
+        self.body = ecfg["world"]["body"]
         self.steps = 0
         self.t_wall: float | None = None
 
     def reset(self) -> None:
+        self.t_wall = None
+        self.steps = 0
         self.fe.reset()
         for _, conn in self.brains.values():
             conn.send("reset")
         for w in self.win.values():
             w.clear()
-        self.escape_left_ms = 0.0
 
     def step(self, img: np.ndarray, dial: float) -> dict:
         """그림 [2, 6, N, N] u8 → 뇌 둘 한 걸음 → 창 합 · 몸 명령."""
@@ -140,22 +146,26 @@ class BrainLink:
             own[b] = {"ms": round(1000 * sec, 1), "spikes": int(n_spk)}
             sums[b] = dict(zip(self.names, map(int, np.sum(self.win[b], axis=0))))
         t2 = time.time()
-        c = self.cfg
-        r = sums["real"]
-        turn = -float(c["turn_deg_s_per_spike"]) * (r["DNa02_R"] - r["DNa02_L"])
-        turn = float(np.clip(turn, -float(c["turn_max_deg_s"]), float(c["turn_max_deg_s"])))
-        esc = c["escape"]
-        if r["GF_L"] + r["GF_R"] >= int(esc["gf_spikes"]) and self.escape_left_ms <= 0:
-            self.escape_left_ms = float(esc["ms"])
-        escaping = self.escape_left_ms > 0
-        self.escape_left_ms = max(0.0, self.escape_left_ms - self.dt_ms)
-        speed = float(esc["speed_m_s"]) if escaping else float(c["walk_m_s"])
+        m, r, b = self.cfg["motor"], sums["real"], self.body
+
+        def both(part: str) -> int:
+            return sum(r[f"{KEY[t]}_{s}"] for t in m[part]["types"] for s in "LR")
+
+        def diff(part: str) -> int:
+            return sum(r[f"{KEY[t]}_R"] - r[f"{KEY[t]}_L"] for t in m[part]["types"])
+
+        speed = (float(m["forward"]["m_s_per_spike"]) * both("forward")
+                 - float(m["backward"]["m_s_per_spike"]) * both("backward"))
+        speed = float(np.clip(speed, -float(b["walk_max_m_s"]), float(b["run_max_m_s"])))
+        turn = -float(m["turn"]["deg_s_per_spike"]) * diff("turn")  # 오른쪽 많으면 오른쪽으로
+        turn = float(np.clip(turn, -float(b["turn_max_deg_s"]), float(b["turn_max_deg_s"])))
+        jump = both("jump") >= int(m["jump"]["spikes"])
         n45 = len(self.fe.t45)
         self.steps += 1
         return {
             "type": "out",
             "sums": sums,
-            "cmd": {"turn_deg_s": turn, "speed_m_s": speed, "escape": escaping},
+            "cmd": {"turn_deg_s": turn, "speed_m_s": speed, "jump": bool(jump)},
             "input_hz": {s: float(rates[:n45][self.ftb[s]].mean()) for s in "LR"},
             "dial": float(dial),
             "sim_ms": self.steps * self.dt_ms,
