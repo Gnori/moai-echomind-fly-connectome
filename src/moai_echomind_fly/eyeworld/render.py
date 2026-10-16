@@ -166,12 +166,21 @@ class Renderer:
         markers: list[dict] | None = None,
         timeout_s: float = 180.0,
     ) -> dict:
-        assets = {k: f"/assets/{v['path']}" for k, v in scene.get("assets", {}).items()}
+        all_assets = scene.get("assets", {})
+        assets = {
+            k: f"/assets/{v['path']}"
+            for k, v in all_assets.items()
+            if v.get("kind", "model") == "model"
+        }
+        ground = dict(scene.get("ground") or {})
+        tex = ground.pop("texture", None)
+        if tex:  # 땅 텍스처 = 에셋 키(허가 확인을 같이 거침)
+            ground["texture_url"] = f"/assets/{all_assets[tex]['path']}"
         head = {
             "type": "scene.load",
             "assets": assets,
             "poses": poses,
-            "ground": scene.get("ground"),
+            "ground": ground,
             "sky": scene.get("sky"),
             "light": scene.get("light"),
             "markers": markers or [],
@@ -179,6 +188,11 @@ class Renderer:
         h, _ = self._call(head, timeout_s)
         if h.get("type") != "scene.ready":
             raise RenderError(f"scene.ready 대신 {h}")
+        return h
+
+    def info(self, eid: str, timeout_s: float = 10.0) -> dict:
+        """진단 — 개체 노드 아래 메시 상태."""
+        h, _ = self._call({"type": "info", "id": eid}, timeout_s)
         return h
 
     def render(

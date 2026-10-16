@@ -1,13 +1,14 @@
 # 첫 경기장(R-1177 V1 · 요구자 10-16 승인: 잔디 땅 · 바위 · 벤치 · 나무 · CC0 · 사람 MakeHuman)
 # 에셋 경로는 에코월드 3D 저장소 assets/ 기준(읽기 전용 · git 밖). 허가는 원본 기록(record)에서 확인한 값.
-version: scene-arena-a-v1
+version: scene-arena-a-v2   # v2(10-17 · V1-b 결과 전): 땅에 잔디 사진 텍스처(승인 '잔디 땅'을 마저 구현) · 둘레 나무 24 · 바위 12 · v1 = 무늬 없는 잔디색 · 물체 10
 assets:
   tree_small_02:    {path: village/foliage/tree_small_02/lod2.glb,  record: village/foliage/tree_small_02/meta.json,  license: CC0, source: polyhaven}
   island_tree_02:   {path: village/foliage/island_tree_02/lod2.glb, record: village/foliage/island_tree_02/meta.json, license: CC0, source: polyhaven}
   rock_moss_set_02: {path: village/foliage/rock_moss_set_02/lod1.glb, record: village/foliage/rock_moss_set_02/meta.json, license: CC0, source: polyhaven}
   ph_boulder_01:    {path: village/village/ph_boulder_01.glb, record: village/village/ph_boulder_01.meta.json, license: CC0, source: "polyhaven(가져온 도구 import_polyhaven · Poly Haven 은 CC0 만 배포 · 기록에 허가 칸 없음)"}
   garden_bench_teak: {path: village/furniture/garden_bench_teak/lod1.glb, record: village/furniture/garden_bench_teak/source.json, license: 우리 것, source: "에코월드 자체 제작(요구자 소유)"}
-ground: {size_m: 60.0, color: [0.30, 0.45, 0.20]}     # 잔디색 평면(텍스처는 렌더러에서 CC0 확인 뒤)
+  lawn_mowed:       {kind: texture, path: village/textures/h_lawn_mowed_albedo.jpg, license: CC0, source: "에코월드 자산 대장 docs/asset-queue.md 16:4x 'h_lawn_mowed 세트(CC0 사진 · Codex 안 씀)' · 텍스처 색인(houses_index.json)에 허가 칸 없음 · 타일 1.4 m"}
+ground: {size_m: 60.0, color: [0.30, 0.45, 0.20], texture: lawn_mowed, tile_m: 1.4}   # v2(10-17): 깎은 잔디 사진 텍스처 — v1 은 무늬 없는 색이라 돌아도 흐름이 거의 안 생김(V1-a)
 sky: {color: [0.62, 0.75, 0.92]}
 light: {sun_dir: [-0.4, -1.0, -0.3], ambient: 0.55}
 entities:
@@ -22,3 +23,40 @@ entities:
   - {id: rock3, kind: prop, asset: ph_boulder_01,  pos: [2, 0, -7],   radius: 0.95, height: 1.0, yaw: 1.2}
   - {id: bench1, kind: prop, asset: garden_bench_teak, pos: [-4, 0, 7], radius: 0.80, height: 0.85, yaw: 0.6}
   - {id: bench2, kind: prop, asset: garden_bench_teak, pos: [8, 0, 2],  radius: 0.80, height: 0.85, yaw: -1.4}
+  # v2(10-17): 둘레 무늬 — 나무 24(반지름 12~25 m) · 바위 12(9~20 m) · 씨앗 1177 로 뽑아 여기 적음(결과 전 · V1-a 에서 눈높이 무늬가 거의 없어 몸이 돌아도 흐름이 안 생김)
+  - {id: ringtree1, kind: prop, asset: tree_small_02, pos: [0.43, 0, 19.98], radius: 0.15, height: 4.6, yaw: 0.8}
+  - {id: ringtree2, kind: prop, asset: island_tree_02, pos: [1.97, 0, 22.6], radius: 0.4, height: 3.4, yaw: -1.01}
+  - {id: ringtree3, kind: prop, asset: tree_small_02, pos: [2.48, 0, 13.1], radius: 0.15, height: 4.6, yaw: 2.94}
+  - {id: ringtree4, kind: prop, asset: island_tree_02, pos: [5.12, 0, 16.16], radius: 0.4, height: 3.4, yaw: 2.21}
+  - {id: ringtree5, kind: prop, asset: tree_small_02, pos: [12.88, 0, 14.38], radius: 0.15, height: 4.6, yaw: -2.76}
+  - {id: ringtree6, kind: prop, asset: island_tree_02, pos: [14.68, 0, 14.9], radius: 0.4, height: 3.4, yaw: -0.72}
+  - {id: ringtree7, kind: prop, asset: tree_small_02, pos: [20.14, 0, 8.75], radius: 0.15, height: 4.6, yaw: 0.29}
+  - {id: ringtree8, kind: prop, asset: island_tree_02, pos: [16.35, 0, 6.75], radius: 0.4, height: 3.4, yaw: -2.68}
+  - {id: ringtree9, kind: prop, asset: tree_small_02, pos: [18.06, 0, 2.55], radius: 0.15, height: 4.6, yaw: -1.74}
+  - {id: ringtree10, kind: prop, asset: island_tree_02, pos: [12.58, 0, -0.38], radius: 0.4, height: 3.4, yaw: -0.47}
+  - {id: ringtree11, kind: prop, asset: tree_small_02, pos: [21.02, 0, -13.48], radius: 0.15, height: 4.6, yaw: -0.96}
+  - {id: ringtree12, kind: prop, asset: island_tree_02, pos: [9.68, 0, -9.72], radius: 0.4, height: 3.4, yaw: 2.71}
+  - {id: ringtree13, kind: prop, asset: tree_small_02, pos: [4.29, 0, -12.28], radius: 0.15, height: 4.6, yaw: 2.9}
+  - {id: ringtree14, kind: prop, asset: island_tree_02, pos: [4.28, 0, -14.41], radius: 0.4, height: 3.4, yaw: 2.2}
+  - {id: ringtree15, kind: prop, asset: tree_small_02, pos: [-9.16, 0, -22.72], radius: 0.15, height: 4.6, yaw: 1.07}
+  - {id: ringtree16, kind: prop, asset: island_tree_02, pos: [-5.55, 0, -12.73], radius: 0.4, height: 3.4, yaw: -0.29}
+  - {id: ringtree17, kind: prop, asset: tree_small_02, pos: [-12.56, 0, -15.82], radius: 0.15, height: 4.6, yaw: 0.83}
+  - {id: ringtree18, kind: prop, asset: island_tree_02, pos: [-9.1, 0, -10.71], radius: 0.4, height: 3.4, yaw: 1.23}
+  - {id: ringtree19, kind: prop, asset: tree_small_02, pos: [-16.29, 0, -17.74], radius: 0.15, height: 4.6, yaw: 1.45}
+  - {id: ringtree20, kind: prop, asset: island_tree_02, pos: [-14.22, 0, -0.14], radius: 0.4, height: 3.4, yaw: 0.09}
+  - {id: ringtree21, kind: prop, asset: tree_small_02, pos: [-22.94, 0, 6.09], radius: 0.15, height: 4.6, yaw: -1.67}
+  - {id: ringtree22, kind: prop, asset: island_tree_02, pos: [-16.94, 0, 10.08], radius: 0.4, height: 3.4, yaw: 2.23}
+  - {id: ringtree23, kind: prop, asset: tree_small_02, pos: [-9.82, 0, 13.19], radius: 0.15, height: 4.6, yaw: -1.03}
+  - {id: ringtree24, kind: prop, asset: island_tree_02, pos: [-8.68, 0, 14.74], radius: 0.4, height: 3.4, yaw: 1.08}
+  - {id: ringrock1, kind: prop, asset: ph_boulder_01, pos: [3.37, 0, 14.89], radius: 0.95, height: 1.0, yaw: -2.93}
+  - {id: ringrock2, kind: prop, asset: rock_moss_set_02, pos: [6.77, 0, 9.01], radius: 1.1, height: 1.3, yaw: -2.92, col_offset: [2.626, -1.123]}
+  - {id: ringrock3, kind: prop, asset: ph_boulder_01, pos: [8.89, 0, 1.55], radius: 0.95, height: 1.0, yaw: 2.64}
+  - {id: ringrock4, kind: prop, asset: rock_moss_set_02, pos: [16.8, 0, 0.23], radius: 1.1, height: 1.3, yaw: -0.88, col_offset: [2.626, -1.123]}
+  - {id: ringrock5, kind: prop, asset: ph_boulder_01, pos: [3.87, 0, -13.42], radius: 0.95, height: 1.0, yaw: 3.1}
+  - {id: ringrock6, kind: prop, asset: rock_moss_set_02, pos: [2.92, 0, -14.75], radius: 1.1, height: 1.3, yaw: 0.44, col_offset: [2.626, -1.123]}
+  - {id: ringrock7, kind: prop, asset: ph_boulder_01, pos: [-10.21, 0, -12.47], radius: 0.95, height: 1.0, yaw: 0.87}
+  - {id: ringrock8, kind: prop, asset: rock_moss_set_02, pos: [-7.96, 0, -4.35], radius: 1.1, height: 1.3, yaw: -0.87, col_offset: [2.626, -1.123]}
+  - {id: ringrock9, kind: prop, asset: ph_boulder_01, pos: [-14.17, 0, -2.38], radius: 0.95, height: 1.0, yaw: -3.13}
+  - {id: ringrock10, kind: prop, asset: rock_moss_set_02, pos: [-13.7, 0, 4.06], radius: 1.1, height: 1.3, yaw: -0.73, col_offset: [2.626, -1.123]}
+  - {id: ringrock11, kind: prop, asset: ph_boulder_01, pos: [-16.62, 0, 6.57], radius: 0.95, height: 1.0, yaw: -2.29}
+  - {id: ringrock12, kind: prop, asset: rock_moss_set_02, pos: [-16.52, 0, 6.61], radius: 1.1, height: 1.3, yaw: -0.17, col_offset: [2.626, -1.123]}

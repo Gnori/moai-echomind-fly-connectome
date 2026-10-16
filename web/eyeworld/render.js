@@ -84,6 +84,13 @@ async function loadScene(h) {
   const gc = h.ground?.color ?? [0.3, 0.45, 0.2];
   gm.diffuseColor = new B.Color3(gc[0], gc[1], gc[2]);
   gm.specularColor = new B.Color3(0, 0, 0);
+  if (h.ground?.texture_url) {               // 잔디 사진 텍스처(CC0) — 타일 크기(m)로 되풀이
+    const tex = new B.Texture(h.ground.texture_url, scene);
+    const tile = h.ground.tile_m ?? 1.4;
+    tex.uScale = gs / tile; tex.vScale = gs / tile;
+    gm.diffuseTexture = tex;
+    gm.diffuseColor = new B.Color3(1, 1, 1);
+  }
   ground.material = gm;
   const missing = [];
   for (const [key, url] of Object.entries(h.assets)) {
@@ -125,6 +132,7 @@ function applyPoses(poses) {
 async function render(h) {
   const t0 = performance.now();
   applyPoses(h.poses);
+  scene.render();      // 뼈대 · 세계 행렬 갱신(안 하면 스킨 메시가 한 점으로 오그라들어 안 보임 — V1-a 10-17)
   const N = h.face_px;
   if (!rtt || rtt.getSize().width !== N) {
     if (rtt) rtt.dispose();
@@ -157,6 +165,16 @@ async function render(h) {
     read_ms: Math.round(readMs) }, out];
 }
 
+function info(id) {                          // 진단 — 개체 노드 아래 메시들의 상태
+  const node = nodes[id];
+  const ms = node ? node.getChildMeshes(false) : [];
+  return { id, has_node: !!node, meshes: ms.length, scene_meshes: scene.meshes.length,
+    detail: ms.slice(0, 5).map((m) => ({ name: m.name, enabled: m.isEnabled(), visible: m.isVisible,
+      verts: m.getTotalVertices(), skinned: !!m.skeleton,
+      bbox: m.getBoundingInfo().boundingBox.minimumWorld.asArray().concat(m.getBoundingInfo().boundingBox.maximumWorld.asArray()) })),
+    pos: node ? node.position.asArray() : null };
+}
+
 const ws = new WebSocket(WS_URL);
 ws.binaryType = 'arraybuffer';
 ws.onopen = async () => {
@@ -171,6 +189,7 @@ ws.onmessage = async (ev) => {
   try {
     if (h.type === 'scene.load') ws.send(pack({ type: 'scene.ready', ...(await loadScene(h)) }));
     else if (h.type === 'render') { const [head, body] = await render(h); ws.send(pack(head, body)); }
+    else if (h.type === 'info') ws.send(pack({ type: 'info', ...info(h.id) }));
     else if (h.type === 'bye') ws.close();
   } catch (e) { ws.send(pack({ type: 'error', code: h.type, msg: String(e?.stack ?? e) })); }
 };
