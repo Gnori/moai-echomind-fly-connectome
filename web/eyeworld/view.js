@@ -306,19 +306,22 @@ function rowsFor(g, out) {                      // [이름 칸, 진짜, 섞은, 
   return rows;
 }
 
+let lastTab = '', lastOpts = '';                 // 10-18 요구자 "선택시 깜빡임이 심하고 선택도 잘 안됨" — 바뀔 때만 다시 쓴다
+
 function showBrain(out) {
-  const want = $('bview').value;
+  const sel = $('bview'), want = sel.value;
   const order = want === 'all' ? ['body', 'eye', 'touch', 'top'] : [want];
   let html = `<tr><th>최근 ${h.brain.window_ms} ms · 왼 / 오른</th><th>진짜 배선</th><th>섞은 배선</th></tr>`;
   for (const g of order) {
     if (want === 'all') html += `<tr class="grp"><td colspan="3">${GROUP[g]}</td></tr>`;
     for (const [cell, a, b, lit] of rowsFor(g, out)) html += `<tr class="${lit ? 'lit' : ''}">${cell}<td>${a}</td><td>${b}</td></tr>`;
   }
-  $('btab').innerHTML = html;
-  for (const o of $('bview').options) {         // 고르기 상자에 묶음마다 켜진 종류 수
-    if (o.value === 'all') continue;
-    const n = rowsFor(o.value, out).filter((r) => r[3]).length;
-    o.textContent = `${GROUP[o.value]}${n ? ` · 켜짐 ${n}` : ''}`;
+  if (html !== lastTab) { $('btab').innerHTML = html; lastTab = html; }   // 같으면 그대로(마우스 설명 · 깜빡임)
+  if (document.activeElement !== sel) {         // 고르기 상자를 열어 둔 동안에는 글을 바꾸지 않는다(닫히고 다시 열리며 깜빡임)
+    const texts = [...sel.options].map((o) => (o.value === 'all' ? '전체'
+      : `${GROUP[o.value]}${(() => { const n = rowsFor(o.value, out).filter((r) => r[3]).length; return n ? ` · 켜짐 ${n}` : ''; })()}`));
+    const key = texts.join('|');
+    if (key !== lastOpts) { [...sel.options].forEach((o, i) => { if (o.textContent !== texts[i]) o.textContent = texts[i]; }); lastOpts = key; }
   }
   const c = out.cmd, t = c.turn_deg_s;
   $('tTurn').innerHTML = `${t === 0 ? '' : t > 0 ? '← ' : '→ '}${Math.abs(t).toFixed(0)}<small>°/s</small>`;
@@ -400,7 +403,7 @@ function setupBrain() {
     brain = { ws, on: false, wait: null };
     ws.onmessage = (ev) => { const m = unpack(ev.data); if (m.type === 'reset.ok') return; brain?.wait?.(m); };
     ws.onclose = () => { brain?.wait?.(null); setLive(false); };
-  $('bview').onchange = () => canvas.focus();
+  $('bview').onchange = () => { lastTab = ''; canvas.focus(); };
     ws.onopen = () => {                         // 켤 때마다 뇌 · 앞단을 처음 상태로(앞 연결의 흔적 없이)
       ws.send(pack({ type: 'reset' }));
       brain.on = true; setLive(true); brainLoop();
