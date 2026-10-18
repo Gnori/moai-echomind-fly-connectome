@@ -119,7 +119,7 @@
 <p>2026-10-17 · 세션 <code>echomind-fly-research</code> · 조율 세션 일감(10-16 밤 · V1 막힘). <a href="17-초파리가-보게-하는-길-조사.html">노트 17</a> 의 V0 · V0b 다음 단계다.
 이 노트는 <strong>문헌 · 원문만</strong> 읽었다. 시뮬레이션 · 렌더 · 코드 고침은 하지 않았다. [측정] 은 조율 세션이 잰 기록을 <strong>읽기만</strong> 한 것이다.
 확인 수준: <strong>[P]</strong> 원문 · 원문 사본을 이 세션이 직접 열어 문구 확인 · <strong>[P*]</strong> 조사 에이전트가 원문에서 읽음(이 세션은 다시 열지 않음) · <strong>[A]</strong> 초록만 · <strong>[S]</strong> 2 차 · <strong>[측정]</strong> 조율 세션 기록 · <strong>[계산]</strong> 우리 셈 · <strong>[그림]</strong> 논문 그림에서 눈으로 읽은 값(몇 % 틀릴 수 있음) · <strong>[추론]</strong> 우리 해석.
-2026-10-18 덧붙임: <strong>§9 머리 털이 켜는 하강 뉴런의 알려진 일</strong>(조율 세션 일감 · 촉각 · 시각 앞단과는 별개 — 일감이 "노트 18 끝"을 정함) · <strong>§10 보기 창 뉴런 쉬운 이름의 근거</strong>(같은 날 · 별개 일감).</p>
+2026-10-18 덧붙임: <strong>§9 머리 털이 켜는 하강 뉴런의 알려진 일</strong>(조율 세션 일감 · 촉각 · 시각 앞단과는 별개 — 일감이 "노트 18 끝"을 정함) · <strong>§10 보기 창 뉴런 쉬운 이름의 근거</strong>(같은 날 · 별개 일감) · <strong>§11 보기 창 눈을 사실에 가깝게 — 몸 숫자 · 화면 색 무게 · 낱눈 지도</strong>(같은 날 · 별개 일감).</p>
 </blockquote>
 <hr />
 <h2 id="0-한눈에">0. 한눈에</h2>
@@ -844,6 +844,196 @@
 <li>DNge104 의 "다리 털"은 노트 18 §9 가 아니라 10-18 입구 재기 잼에서 온 말이다 — 출처를 "노트 18 §9 · 10-18 잼"으로.</li>
 </ul>
 <hr />
+<h2 id="11-덧붙임10-18--보기-창-눈을-사실에-가깝게-몸-숫자--화면-색-무게--낱눈-지도">11. 덧붙임(10-18) — 보기 창 눈을 사실에 가깝게: 몸 숫자 · 화면 색 무게 · 낱눈 지도</h2>
+<blockquote>
+<p>조율 세션 일감(R-3086 · 요구자 10-18 <em>"응 사실에 가깝게 고쳐바"</em>). 지금 보기 창은 사람 크기 몸(눈 높이 1.5 m · 눈 사이 7 cm) · 회색 밝기 0.2R + 0.7G + 0.1B · 기둥 좌표 → 각도 직선 근사(<code>config/retino.yaml</code>)다. config · 코드는 고치지 않았다.
+조사 에이전트 둘(몸 · 움직임 숫자 / 낱눈 지도)이 원문을 모으고, 이 세션이 핵심 문구를 받은 원문 파일에서 다시 확인했다(<strong>[P]</strong>). 에이전트만 읽은 것은 <strong>[P*]</strong>. 화면 색 무게는 이 세션의 셈(<strong>[계산]</strong>)이다. 출처 번호 K 는 이 노트 끝 참고 문헌에.</p>
+</blockquote>
+<h3 id="111-①-몸--움직임-숫자">11.1 ① 몸 · 움직임 숫자</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>값</th>
+<th>성별</th>
+<th>출처 · 인용</th>
+<th>확실도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>서 있을 때 땅 → 눈 중심 높이</td>
+<td><strong>문헌 수치 없음</strong> — NeuroMechFly v2 · Vaxenburg 2025 도 값을 적지 않음(<em>"approximated the body height … by a single fixed value"</em>)</td>
+<td>—</td>
+<td>[K1] · [K2] · [P*]</td>
+<td>없음 → 우리 몸(FlyGym)의 서 있는 자세에서 재면 몸과 맞는다 [추론]</td>
+</tr>
+<tr>
+<td>두 눈 중심 사이</td>
+<td><strong>문헌 측정값 없음</strong> · 모델 값 = FlyGym 눈 카메라가 머리 가운데에서 ±0.38 mm → <strong>0.76 mm</strong>(암컷 스캔으로 만든 모델)</td>
+<td>암컷(모델)</td>
+<td>FlyGym 1.x <code>config.yaml</code> <code>LEye_cam rel_pos [-0.03, 0.38, 0]</code> [S]</td>
+<td>모델 값</td>
+</tr>
+<tr>
+<td>몸 길이</td>
+<td>수컷 <strong>약 2.5 mm</strong> · 수컷(Berlin-K) <strong>약 2 mm</strong> · 암컷 약 2.5 mm · 모델 2.97 mm</td>
+<td>수컷 · 암컷</td>
+<td><em>"average male fly body length is ∼2.5 mm"</em> [K3] · <em>"The typical body length … of approximately 2 mm"</em> [K4] · <em>"The full body length of the model is 0.297 cm"</em> [K2] · [P]</td>
+<td>원문</td>
+</tr>
+<tr>
+<td>몸 폭(충돌 원기둥)</td>
+<td><strong>약 1.5 mm</strong> → 반지름 약 0.75 mm [계산]</td>
+<td>안 적힘</td>
+<td><em>"approximately 1.5 mm wide × 2.5 mm long"</em> [K5] · [P]</td>
+<td>원문(어림 값)</td>
+</tr>
+<tr>
+<td>걷기 보통</td>
+<td>가장 흔한 속도 <strong>1.9 cm/s</strong> · 곧은 통로에서 개체 평균 7.2~44.7 mm/s(대표 <strong>28 mm/s</strong>) · 34 °C 봉우리 17.5 mm/s · 수컷 약 6 몸길이/s(≈ 12 mm/s [계산])</td>
+<td>섞임</td>
+<td><em>"the mode of walking speeds (1.9cm/sec)"</em> [K6] · <em>"between 7.2 and 44.7 mm/s with 28 mm/s as the most representative speed"</em> [K7] · <em>"peaks … at 0 mm/s and ~17.5 mm/s"</em> [K8] · [K4] · [P]</td>
+<td>원문 — 장치 · 온도에 따라 1.2~2.8 cm/s</td>
+</tr>
+<tr>
+<td>걷기 최대</td>
+<td><strong>명시된 최대 없음</strong> — 개체 평균 최대 44.7 mm/s [K7] · 분포 97.5 % 30.4 mm/s [K8] → 약 3~4.5 cm/s [추론]</td>
+<td>섞임</td>
+<td>[P]</td>
+<td>범위만</td>
+</tr>
+<tr>
+<td>뒷걸음 최대</td>
+<td><strong>본문 수치 없음</strong>(그림에만 — Feng 2020 · Braun 2024 등) · 묶인 파리 더듬이 닿음 첫 500 ms 평균 −0.27 mm/s 뿐</td>
+<td>암컷</td>
+<td>Dahlhoff 2025 사전 공개 [K9] · [P*]</td>
+<td>없음</td>
+</tr>
+<tr>
+<td>걸을 때 돌기 최대</td>
+<td><strong>명시된 최대 없음</strong> — 걷기 꺾기(saccade) 문턱 200 °/s · 한 번에 약 15° 를 40~120 ms · 300~400 °/s 꺾기 1,232 개 · 돌기 구간 막대 최고 150~200 °/s → 상한 약 400 °/s 근처 [추론]</td>
+<td>수컷 · 섞임</td>
+<td><em>"changed their heading on average by about 15° … within 40 to 120 ms"</em> [K10] · <em>"saccades of 300 to 400°/s"</em> [K11] · [H4] · [P]</td>
+<td>범위만</td>
+</tr>
+<tr>
+<td>GF 도망 첫 뛰어오름</td>
+<td>첫 2 ms 몸 중심 속도 <strong>0.48 ± 0.01 m/s</strong>(스스로 뜰 때 0.28) · 다리 펴기 3.3 ms · 날개 뗀 뛰기 거리 28.6~30.2 mm · <strong>높이 측정 없음</strong> → 0.48 m/s 를 곧게 위로 쏘면 공기 저항 없이 최고 약 12 mm [계산 · 상한]</td>
+<td>암컷</td>
+<td><em>"Over the first 2 ms of flight, average COM speeds were 0.48±0.01 m s–1 and 0.28±0.02 m s–1 for escape and voluntary take-offs"</em> [K12] · [P*] · 거리 [K13] · [A]</td>
+<td>속도 원문 · 높이는 셈</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>수컷 값은 몸 길이 · 6 몸길이/s · 꺾기 300~400 °/s 뿐이다. 도망 숫자는 암컷이다.</li>
+<li>사람 크기(눈 사이 7 cm)에서 초파리 크기(0.76 mm)로 바꾸면 약 1/90 이다 — 같은 세계에서 물체가 그만큼 크게 보인다 [계산].</li>
+</ul>
+<h3 id="112-②-r1r6rh1--화면-srgb-무게--근사">11.2 ② R1–R6(Rh1) → 화면 sRGB 무게 — <strong>근사</strong></h3>
+<p><strong>문헌에 계산된 값은 찾지 못했다</strong>(Europe PMC 검색). 그래서 셈으로 냈다.</p>
+<ul>
+<li>식 [계산]: 원색 i 의 무게 w_i ∝ ∫ S(λ) P_i(λ) dλ · 합 1. P_i 는 원색 빛 분포 — sRGB 원색의 주파장(611 · 549 · 464 nm)에 가우스를 두고 반치폭 세 벌(20 · 20 · 20 / 30 · 40 · 25 / 50 · 70 · 40 nm)로 바꿔 봄 · 각 원색은 D65 흰색에서 사람 휘도 몫 0.2126 · 0.7152 · 0.0722 가 되도록 세기를 맞춤(사람 ȳ 는 Wyman 2013 근사식). 검산: S = 사람 ȳ 로 넣으면 0.2126 · 0.7152 · 0.0722 가 그대로 나온다.</li>
+<li>S(λ) 두 가지: <strong>(가) 색소만</strong> — Rh1 λmax 478 nm(<em>"opsin Rh1 confers broadband blue-green sensitivity (λ max = 478 nm)"</em> [K14] · [P])에 Govardovskii A1 틀 · <strong>(나) 붉은 눈 실측</strong> — Sharkey 2020 보조 자료의 붉은 눈 Rh1 회복 파리 ERG 응답(315~550 · 450~700 nm 두 구간을 450~550 겹침에서 최소제곱으로 이음 · 배율 0.549). 이 값은 반최대 세기(485 nm 에서 정함)의 <strong>진폭</strong>이라 감도로 바꾸려고 Naka–Rushton n = 1 로 펼침: s = r / (2 − r), r = 진폭 ÷ 485 nm 진폭 [K14] · [P] · [계산].</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>감도 곡선</th>
+<th>빨강</th>
+<th>초록</th>
+<th>파랑</th>
+<th>읽기</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>사람 휘도(지금 0.2 · 0.7 · 0.1 에 가까움)</td>
+<td>0.21</td>
+<td>0.72</td>
+<td>0.07</td>
+<td>사람 눈</td>
+</tr>
+<tr>
+<td>(가) Rh1 색소만</td>
+<td>0.00</td>
+<td>0.11~0.23</td>
+<td>0.77~0.89</td>
+<td>600 nm 위는 거의 안 봄</td>
+</tr>
+<tr>
+<td>(나) 붉은 눈 실측 · 진폭 그대로</td>
+<td>0.11</td>
+<td>0.29~0.39</td>
+<td>0.50~0.60</td>
+<td>긴 파장 몫의 <strong>상한</strong>(진폭이 눌려 있음)</td>
+</tr>
+<tr>
+<td><strong>(나) 붉은 눈 실측 · 펼침(권함)</strong></td>
+<td><strong>0.08</strong></td>
+<td><strong>0.25~0.37</strong>(가운데 0.29)</td>
+<td><strong>0.55~0.67</strong>(가운데 0.63)</td>
+<td>실제 초파리에 가장 가까움 [추론]</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>권하는 값 [추론]: <strong>0.08 R + 0.29 G + 0.63 B</strong>(가운데 반치폭). 붉은 눈 초파리는 차폐 색소로 새는 긴 파장 빛 때문에 색소만보다 빨강 · 초록을 더 본다(Sharkey: 575 nm 근처 두 번째 봉우리) — 그래서 (가)보다 (나)를 권한다.</li>
+<li><strong>무게는 감마를 푼 선형 RGB 에 곱한다</strong>(sRGB 부호값에 바로 곱하면 틀림).</li>
+<li>확실하게 말할 수 있는 것은 방향이다: 초파리 R1–R6 에는 <strong>파랑이 가장 크고 빨강이 가장 작다</strong> — 지금(초록 0.7)은 사람 쪽이다. 숫자는 화면 원색 분포 · 적응 상태 · n 에 따라 ±0.1 쯤 움직인다.</li>
+</ul>
+<h3 id="113-③-실제-낱눈-방향-지도--malecns-기둥">11.3 ③ 실제 낱눈 방향 지도 → MaleCNS 기둥</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>물음</th>
+<th>답</th>
+<th>출처</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>번호로 바로 옮기는 공개 표</td>
+<td><strong>없음</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>수컷 낱눈 방향 지도</td>
+<td><strong>없음</strong>(찾은 범위)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>있는 지도</td>
+<td>Zhao 2025 — <strong>암컷</strong> 머리를 µCT 로 찍어 낱눈 방향을 재고, <strong>암컷 FAFB</strong> 의 Mi1 기둥 779 개에 맞춤. 두 다른 파리를 적도 · 가운데 자오선으로 <em>"starting from the centre outwards"</em> 맞췄고 <em>"accurate in the eye's interior"</em> (가장자리는 덜 맞음)</td>
+<td><em>"we imaged whole heads of female flies with approximately the same number of ommatidia to match the EM dataset"</em> [K15] · [P]</td>
+</tr>
+<tr>
+<td>공개 자료 · 허가</td>
+<td>코드 · 자료 https://github.com/reiserlab/eyemap_T4 — <strong>GPL-3.0</strong>(저장소 정보 [P]) · <code>data/eyemap.RData</code> 등 · 원 µCT 는 Janelia figshare(CC BY 4.0) [P*]. 기둥 번호는 FAFB Mi1 순번과 그 논문 자체 격자이지 neuPrint hex1/hex2 가 아니다 [P*]</td>
+<td>[K15]</td>
+</tr>
+<tr>
+<td>수컷 시각엽 · MaleCNS</td>
+<td>Nern 2025 의 수컷 시각엽은 MaleCNS 와 <strong>같은 개체</strong>(<em>"The optic lobe reported here is a subset of this complete CNS reconstruction"</em>) · 기둥 좌표는 <em>"correspond one-for-one to lenses on the compound eye (except for some lenses on the edge)"</em> · <strong>적도 기둥을 정해 둠</strong>(<em>"determined by counting photoreceptors in the corresponding lamina cartridges"</em> · 그림 3a · 보충 표 3) · 좌표 892 개</td>
+<td>[K16] · [P]</td>
+</tr>
+<tr>
+<td>MaleCNS 의 assignedOlHex1/2 = Nern 좌표인가</td>
+<td>같은 개체이지만 <strong>명시 문구는 못 찾음</strong> · 간접 근거: Reiser 연구실의 MaleCNS 분석 저장소가 Nern 저장소와 같은 수질 기둥 파일을 씀 [P*]</td>
+<td>—</td>
+</tr>
+<tr>
+<td>성별 차이</td>
+<td>수컷이 낱눈이 적다(−60.2 ± 11.5 · 세 종을 함께 넣은 모형 효과) · 실험실 D. melanogaster 는 눈 하나에 700~800</td>
+<td><em>"Males had significantly fewer ommatidia than females"</em> · <em>"Lab strains of D. melanogaster generally have between 700 and 800 ommatidia in each eye"</em> [K17] · [P]</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>옮기는 길(근사) [추론]</strong>: Zhao 지도(암컷 · 적도 · 자오선 있음)를 Nern 수컷 격자(적도 기둥 있음 · 원점 [18, 19])에 <strong>Zhao 가 두 파리를 맞춘 방법 그대로</strong> 가운데에서 바깥으로 맞추면 기둥마다 방향이 나온다. 안쪽은 쓸 만하고 가장자리는 믿기 어렵다(기둥 892 대 779). 성별 · 개체가 달라 "근사"라고 적어야 한다.</li>
+<li><strong>허가가 먼저다</strong>: 자료가 GPL-3.0 이라 우리 저장소에 복사하면 GPL 이 따라온다(CLAUDE.md 는 허가 없는 저장소를 막지만 GPL 은 따로 판단 필요) — 요구자 결정. 원 µCT(CC BY 4.0)에서 다시 내면 허가 문제는 없지만 무거운 일이다.</li>
+</ul>
+<hr />
 <h2 id="참고-문헌">참고 문헌</h2>
 <ul>
 <li>[G1] Drews et al. 2020, <em>"Dynamic Signal Compression for Robust Motion Vision in Flies"</em>, Curr Biol 30:209 — https://www.cell.com/current-biology/fulltext/S0960-9822(19)31375-2 (CC BY) · 원문 사본 · 표 S1 · 본문 문구 [P] · STAR Methods 일부 · 학위 논문 판 https://web.archive.org/web/20230923075711id_/https://edoc.ub.uni-muenchen.de/26217/1/Drews_Michael.pdf [P*] · 자료 https://github.com/borstlab/normalization_paper</li>
@@ -891,6 +1081,26 @@
 <li>[J9] Wu et al. 2016, <em>"Visual projection neurons in the Drosophila lobula link feature detection to distinct behavioral programs"</em>, eLife 5:e21022 — https://pmc.ncbi.nlm.nih.gov/articles/PMC5293491/ [P]</li>
 <li>[J10] Boergens et al. 2018, <em>"Full reconstruction of large lobula plate tangential cells in Drosophila from a 3D EM dataset"</em>, PLoS ONE 13:e0207828 — https://pmc.ncbi.nlm.nih.gov/articles/PMC6261601/ [P] · 같은 이름 규칙 Cuntz et al. 2013 — https://pmc.ncbi.nlm.nih.gov/articles/PMC3747245/ [P]</li>
 <li>[J11] Pokusaeva et al. 2024, <em>"Bilateral interactions of optic-flow sensitive neurons coordinate course control in flies"</em>, Nat Commun 15:8830 — https://pmc.ncbi.nlm.nih.gov/articles/PMC11470938/ [P]</li>
+</ul>
+<p><strong>§11 (10-18 · 보기 창 눈 · 몸 숫자)</strong></p>
+<ul>
+<li>[K1] Wang-Chen et al. NeuroMechFly v2 — bioRxiv doi 10.1101/2023.09.18.556649 v4 · 학술지 판은 유료 [P*]</li>
+<li>[K2] Vaxenburg et al. 2025, <em>"Whole-body physics simulation of fruit fly locomotion"</em>, Nature 643:1312 — https://pmc.ncbi.nlm.nih.gov/articles/PMC12310536/ [P]</li>
+<li>[K3] Lim et al. 2014, <em>"How Food Controls Aggression in Drosophila"</em>, PLoS ONE 9:e105626 — https://pmc.ncbi.nlm.nih.gov/articles/PMC4146546/ [P]</li>
+<li>[K4] Godesberg et al. 2024, <em>"Natural variability and individuality of walking behavior in Drosophila"</em>, J Exp Biol 227:jeb247878 — https://pmc.ncbi.nlm.nih.gov/articles/PMC11607691/ [P]</li>
+<li>[K5] Iwasaki et al. 2025, <em>"The fruit fly, Drosophila melanogaster, as a microrobotics platform"</em>, PNAS 122:e2426180122 — https://pmc.ncbi.nlm.nih.gov/articles/PMC12012547/ [P]</li>
+<li>[K6] Katsov &amp; Clandinin 2008, <em>"Motion processing streams in Drosophila are behaviorally specialized"</em>, Neuron 59:322 — https://pmc.ncbi.nlm.nih.gov/articles/PMC3391501/ [P]</li>
+<li>[K7] Mendes et al. 2013, <em>"Quantification of gait parameters in freely walking wild type and sensory deprived Drosophila melanogaster"</em>, eLife 2:e00231 — https://pmc.ncbi.nlm.nih.gov/articles/PMC3545443/ [P]</li>
+<li>[K8] DeAngelis et al. 2019, <em>"The manifold structure of limb coordination in walking Drosophila"</em>, eLife 8:e46409 — https://pmc.ncbi.nlm.nih.gov/articles/PMC6598772/ [P]</li>
+<li>[K9] Dahlhoff et al. 2025, bioRxiv — doi 10.1101/2025.07.22.666129 [P*]</li>
+<li>[K10] Geurten et al. 2014, <em>"Saccadic body turns in walking Drosophila"</em>, Front Behav Neurosci 8:365 — https://pmc.ncbi.nlm.nih.gov/articles/PMC4205811/ [P]</li>
+<li>[K11] Cruz et al. 2021, <em>"Fast tuning of posture control by visual feedback underlies gaze stabilization in walking Drosophila"</em>, Curr Biol 31:4596 — https://pmc.ncbi.nlm.nih.gov/articles/PMC8556163/ [P]</li>
+<li>[K12] Card &amp; Dickinson 2008, <em>"Performance trade-offs in the flight initiation of Drosophila"</em>, J Exp Biol 211:341 — doi 10.1242/jeb.012682 · 초록 [A] · 0.48 m/s 문구 [P*]</li>
+<li>[K13] Zumstein et al. 2004, <em>"Distance and force production during jumping in wild-type and mutant Drosophila melanogaster"</em>, J Exp Biol 207:3515 — doi 10.1242/jeb.01181 [A]</li>
+<li>[K14] Sharkey et al. 2020, <em>"The spectral sensitivity of Drosophila photoreceptors"</em>, Sci Rep 10:18242 — https://pmc.ncbi.nlm.nih.gov/articles/PMC7588446/ · 보조 자료 41598_2020_74742_MOESM2_ESM.xlsx(ERG 응답 값) [P] · 셈에 쓴 식: Govardovskii et al. 2000 A1 틀 · Wyman, Sloan &amp; Shirley 2013 ȳ 근사(원문 안 엶 · 식만) [S]</li>
+<li>[K15] Zhao et al. 2025, <em>"Eye structure shapes neuron function in Drosophila motion vision"</em>, Nature 646:135 — https://pmc.ncbi.nlm.nih.gov/articles/PMC12488493/ [P] · 자료 https://github.com/reiserlab/eyemap_T4 (GPL-3.0)</li>
+<li>[K16] Nern et al. 2025, <em>"Connectome-driven neural inventory of a complete visual system"</em>, Nature 641:1225 — https://pmc.ncbi.nlm.nih.gov/articles/PMC12119369/ [P]</li>
+<li>[K17] Hilbrant et al. 2014, <em>"Sexual dimorphism and natural variation within and among species in the Drosophila retinal mosaic"</em>, BMC Evol Biol 14:240 — https://pmc.ncbi.nlm.nih.gov/articles/PMC4268811/ [P]</li>
 </ul>
 <div class="pager"><a href="17-초파리가-보게-하는-길-조사.html">← 17 · 초파리가 보게 하는 길 — 조사</a><span></span></div>
 <footer>이 HTML 은 <code>18-시각-앞단-대비-적응-조사.md</code> 에서 <code>build.py</code> 로 만든 읽기용 사본입니다. 고칠 때는 마크다운을 고치고 다시 변환합니다.</footer>
