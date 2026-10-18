@@ -89,7 +89,7 @@ function contacts() {                         // 초파리 뇌 캐릭터 몸 원
   for (const c of others) {
     const dx = c.x - fly.pos[0], dz = c.z - fly.pos[2];
     const gap = Math.hypot(dx, dz) - c.r - h.fly_radius;
-    if (gap > h.brain.touch.margin_m) continue;
+    if (gap > h.fly_body.touch_margin_m) continue;
     const b = (Math.atan2(dx * l[0] + dz * l[2], dx * f[0] + dz * f[2]) * 180) / Math.PI;
     out.push({ bearing_deg: b, gap_m: gap, what: c.what });
   }
@@ -171,7 +171,7 @@ function label(text, css, parent, y) {
 function setMode(m) {
   mode = m;
   $('cam').value = String(m);
-  cam.minZ = m === 4 ? 2 * h.fly_body.near_m : 0.05;   // 초파리 눈 높이(1 mm 아래)에서는 가까운 면도 작게
+  cam.minZ = m === 4 ? Math.min(0.05, 2 * h.fly_body.near_m) : 0.05;   // 초파리 크기 몸이면 가까운 면도 작게
   for (const mk of markers) mk.setEnabled(m !== 4);
   if (m === 3) {
     cam.attachControl(canvas, true);
@@ -361,7 +361,7 @@ async function brainLoop() {                    // 눈 그림 → 뇌 서버(앞
     pushOut(fly.pos, h.fly_radius, [...h.colliders, { x: me.pos[0], z: me.pos[2], r: h.body.radius_m }]);
     hop = Math.max(0, hop - h.brain.dt_ms);   // 뛰어오름 높이(보이게만 · 뇌 시간 기준)
     const T = h.brain.motor.jump.hop_ms;
-    fly.pos[1] = hop > 0 ? h.brain.motor.jump.hop_m * Math.sin((Math.PI * (T - hop)) / T) : 0;
+    fly.pos[1] = hop > 0 ? h.fly_body.hop_m * Math.sin((Math.PI * (T - hop)) / T) : 0;
     showBrain(out);
   }
 }
@@ -463,17 +463,19 @@ async function main() {
     place(node, p.pos, p.yaw, p.scale ?? 1);
   }
   const body = containers[h.avatar_asset];
-  // 초파리 뇌 캐릭터 — 10-18 초파리 크기 몸(몸 길이 약 2 × 반지름 · 빨간 겹눈) · 너무 작아 위로 솟은 표지와 바닥 고리로 찾는다 · 눈 그림에서는 모두 뺀다
-  flyNode = flyBody(h.fly_body, h.view_marker);
+  // 초파리 뇌 캐릭터 — 기본은 사람 몸(노랑 · 요구자 10-18 "초파리 뇌를 단 휴먼 케릭터") · char_body: fly 면 초파리 크기 몸 + 찾기 표지 · 눈 그림에서는 모두 뺀다
+  const small = h.fly_body.kind === 'fly';
+  flyNode = small ? flyBody(h.fly_body, h.view_marker) : avatar(body, 'flybrain', [0.95, 0.75, 0.25]);
   fly.pos = [...h.fly_pos]; fly.yaw = h.fly_yaw;
   place(flyNode, fly.pos, fly.yaw);
-  const tag = label('초파리 뇌', '#f2c14e', flyNode, h.view_marker.pole_m + 0.2);
-  ring = B.MeshBuilder.CreateTorus('flyRing', { diameter: h.view_marker.ring_m, thickness: 0.015, tessellation: 64 }, scene);
-  ring.position.set(h.fly_pos[0], 0.002, h.fly_pos[2]);
+  const tag = label('초파리 뇌', '#f2c14e', flyNode, small ? h.view_marker.pole_m + 0.2 : 2.15);
+  const ringD = small ? h.view_marker.ring_m : 2 * h.fly_radius;
+  ring = B.MeshBuilder.CreateTorus('flyRing', { diameter: ringD, thickness: small ? 0.015 : 0.04, tessellation: 64 }, scene);
+  ring.position.set(h.fly_pos[0], small ? 0.002 : 0.03, h.fly_pos[2]);
   const rm = new B.StandardMaterial('ringMat', scene);
   rm.emissiveColor = new B.Color3(0.95, 0.76, 0.3); rm.disableLighting = true;
   ring.material = rm;
-  markers.push(ring, tag);
+  if (small) markers.push(ring, tag);   // 초파리 크기면 초파리 눈 시점에서 표지가 시야를 가림
   for (const m of [...flyNode.getChildMeshes(false), tag, ring]) notInEye.add(m);
   // 내 캐릭터(파랑) — 초파리 눈에 보인다
   meNode = avatar(body, 'me', [0.35, 0.55, 0.95]);
@@ -517,7 +519,7 @@ async function main() {
       if (play) stepPlay(engine.getDeltaTime() / h.approach.dt_ms);
     }
     place(flyNode, fly.pos, fly.yaw);
-    ring.position.set(fly.pos[0], 0.03, fly.pos[2]);
+    ring.position.set(fly.pos[0], h.fly_body.kind === 'fly' ? 0.002 : 0.03, fly.pos[2]);
     stepCam();
     scene.render();
     const now = performance.now();

@@ -47,6 +47,24 @@ def read_types(motor: dict) -> list[str]:
     return out
 
 
+def char_body(ecfg: dict) -> dict:
+    """초파리 뇌 캐릭터 몸(view_brain.char_body).
+
+    human = world.body · fly = fly_body — 같은 열쇠로 돌려준다.
+    """
+    vb = ecfg["view_brain"]
+    if vb["char_body"] == "fly":
+        return {"kind": "fly", **vb["fly_body"]}
+    b, m = ecfg["world"]["body"], vb["motor"]
+    return {"kind": "human", "eye_m": float(b["height_m"]) * float(b["eye_frac"]),
+            "eye_sep_m": float(b["eye_sep_m"]), "radius_m": float(b["radius_m"]),
+            "fwd_max_m_s": float(b["run_max_m_s"]), "back_max_m_s": float(b["walk_max_m_s"]),
+            "turn_max_deg_s": float(b["turn_max_deg_s"]), "near_m": 0.05,
+            "m_s_per_spike": float(m["forward"]["m_s_per_spike"]),
+            "hop_m": float(m["jump"]["hop_m"]),
+            "touch_margin_m": float(vb["touch"]["margin_m"])}
+
+
 def labels(g, types: list[str]) -> tuple[np.ndarray, list[str]]:
     """뉴런마다 읽기 줄 번호(없으면 −1) · 줄 이름(종류_눈).
 
@@ -161,7 +179,7 @@ class BrainLink:
         self.win = {b: deque(maxlen=n_win) for b in self.brains}
         self.win_dn = {b: deque(maxlen=n_win) for b in self.brains}
         self.win_top = {b: deque(maxlen=n_win) for b in self.brains}
-        self.body = self.cfg[self.cfg["motor"]["limits"]]   # 10-18: 초파리 크기(fly_body)
+        self.body = char_body(ecfg)   # 초파리 뇌 캐릭터 몸(사람 · 초파리 크기)
         self.steps = 0
         self.t_wall: float | None = None
 
@@ -181,7 +199,7 @@ class BrainLink:
             self.t_wall = t0
         vis = np.minimum(self.fe.step(img) * float(dial), self.r_max)   # 다이얼은 눈 입력만
         touch = np.zeros(len(self.t_entry))
-        on = contact_groups(contacts or [], self.tcfg)
+        on = contact_groups(contacts or [], {**self.tcfg, "margin_m": self.body["touch_margin_m"]})
         for k in on:
             touch[self.t_pos[k]] = float(self.tcfg["rate_hz"])
         rates = np.concatenate([vis, touch])
@@ -206,8 +224,8 @@ class BrainLink:
         def diff(part: str) -> int:
             return sum(r[f"{t}_R"] - r[f"{t}_L"] for t in m[part]["types"])
 
-        speed = (float(m["forward"]["m_s_per_spike"]) * both("forward")
-                 - float(m["backward"]["m_s_per_spike"]) * both("backward"))
+        per = float(b["m_s_per_spike"])   # 몸에 맞춘 환산(사람 0.1 · 초파리 크기는 fly_body)
+        speed = per * both("forward") - per * both("backward")
         speed = float(np.clip(speed, -float(b["back_max_m_s"]), float(b["fwd_max_m_s"])))
         turn = -float(m["turn"]["deg_s_per_spike"]) * diff("turn")  # 오른쪽 많으면 오른쪽으로
         turn = float(np.clip(turn, -float(b["turn_max_deg_s"]), float(b["turn_max_deg_s"])))
