@@ -37,6 +37,11 @@ let meNode, meTag, flyNode, ring, collide = true, drag = null, play = null, eyeB
 const fly = { pos: [0, 0, 0], yaw: 0 };         // 초파리 뇌 캐릭터 자세(뇌 연결이 켜지면 뇌 명령으로 움직임)
 let brain = null, dial = 1, tick = 0, hop = 0;
 const notInEye = new Set();
+let LIN = null;                                 // sRGB 값(0~255) → 선형(0~1) 표 — eye_linear 가 거짓이면 그대로(÷255)
+function makeLin(linear) {
+  LIN = new Float32Array(256);
+  for (let v = 0; v < 256; v++) { const c = v / 255; LIN[v] = linear ? (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4) : c; }
+}
 const markers = [];                             // 찾기 표지(고리 · 기둥 · 이름표) — 초파리 눈 시점에서는 숨김                     // 초파리 눈 그림에서 뺄 것(제 몸 · 이름표 · 고리)
 
 async function loadContainer(url) {
@@ -242,8 +247,8 @@ async function grabEyes() {                     // 초파리 뇌 캐릭터 두 �
       rtt.render();
       const px = await rtt.readPixels();
       const o = (e * 6 + f) * N * N;
-      const [wr, wg, wb] = h.eye_rgb;           // 밝기 무게(config view.eye_rgb)
-      for (let i = 0; i < N * N; i++) img[o + i] = Math.round(wr * px[4 * i] + wg * px[4 * i + 1] + wb * px[4 * i + 2]);
+      const [wr, wg, wb] = h.eye_rgb, L = LIN;  // 밝기 = 광수용체 감도 무게 × 선형 RGB(config view.eye_rgb · eye_linear)
+      for (let i = 0; i < N * N; i++) img[o + i] = Math.round(255 * (wr * L[px[4 * i]] + wg * L[px[4 * i + 1]] + wb * L[px[4 * i + 2]]));
     }
   }
   const cv = $('eyecv'), ctx = cv.getContext('2d');
@@ -414,6 +419,7 @@ function setupBrain() {
 async function main() {
   h = await (await fetch(`/view/${NAME}.json`, { cache: 'no-store' })).json();
   $('name').textContent = `${NAME} · ${h.version}`;
+  makeLin(h.eye_linear);
   canvas = $('c');
   engine = new B.Engine(canvas, true, { stencil: true, preserveDrawingBuffer: true }, true);
   scene = new B.Scene(engine);

@@ -159,6 +159,7 @@ def main() -> None:
         "brain": None,
         "fly_body": char_body(ecfg),   # 초파리 뇌 캐릭터 몸(char_body: human 기본 · fly)
         "eye_rgb": [float(x) for x in vcfg["eye_rgb"]],
+        "eye_linear": bool(vcfg["eye_linear"]),
         "view_marker": {k: float(v) for k, v in vcfg["marker"].items()},
     }
     link = None
