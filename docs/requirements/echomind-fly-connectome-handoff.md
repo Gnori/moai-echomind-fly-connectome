@@ -8,7 +8,7 @@
 ## 지금 (2026-10-18 10:49 · `date`)
 
 - 무거운 실행: **보기 창 서버**(`scripts/60-eyeworld/view.sh --scene arena-b --brain --no-open` · 10:30 시작 · 11:30 쯤 스스로 닫힘 · 잠금 · 뇌 둘 약 5.5 GB) — 요구자 브라우저가 붙어 있음. 그 밖에 도는 것 없음.
-- 마지막 백업: 10-17 00:34 — 그 뒤 `runs/`(V0d · 보기 창 · 촉각) **백업 안 됨** → `uv run fly-connectome backup`.
+- 마지막 백업: 10-18 10:51 — 3,688 파일 · 9,041 MB · 대조 3688/3688 같음(`~/Backups/moai-echomind-fly-connectome`).
 
 ## 진행 중 · 기다리는 것
 
