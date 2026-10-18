@@ -278,3 +278,23 @@ v1:                       # V1 — 렌더러 그림 → 앞단 v2 → 뇌(R-1177
     r1: "에코월드 에셋으로 그린 3D 공간을 초파리 겹눈 해상도로 본 그림에서, 계산한 앞단을 거쳐 우리 배선이 몸이 도는 흐름을 좌우 조향 하강 뉴런으로 옮겼다"
     a_all: "같은 그림에서, 다가오는 사람 쪽 LC4 를 우리 배선이 자리 특이적으로 켰다(앞단은 계산)"
     never: "초파리가 본다(앞단이 계산이므로) · 사람을 알아본다"
+
+touch_entry:              # 다른 감각 ① 촉각 입구 재기(R-1177 F-011 · 요구자 10-18 "시작" · 연결 지도만 · 판정 아님)
+  # 몸 부위 = 촉각 털 뉴런이 들어오는 신경(주석 entryNerve) · 좌우 = 신경 뿌리 쪽(rootSide). 머리 털은 뇌 쪽 기계감각 털.
+  tactile_class: [mechanosensory_tactile]
+  head: {class: [mechanosensory], type_prefix: BM, exclude: [BM_Taste]}   # 머리 · 눈 사이 털(BM_InOm …) — 입 털(BM_Taste) 뺌
+  antenna: {class: [mechanosensory], subclass: [grooming]}                 # 더듬이 털(AN)
+  reference:              # 비교 기준(같은 셈) — 우리 LIF 에서 이미 하강 뉴런까지 켜진 무리(10-16 vision-path · lobula-entry)
+    눈T4a·T5a: [T4a, T5a]
+    눈LC4: [LC4]
+  parts:                  # 부위 이름 → 들어오는 신경
+    앞다리: [ProLN, ProAN]
+    가운데다리: [MesoLN]
+    뒷다리: [MetaLN]
+    날개·앞등: [ADMN]
+    뒷등: [PDMN]
+    뒷가슴등: [DMetaN]
+    앞가슴: [DProN, VProN]
+  targets: [DNp09, MDN, DNa01, DNa02, DNp01, DNp02]   # 보기 창 몸을 움직이는 하강 뉴런 + 도망 둘
+  controls: [rewired-s0, rewired-s1, rewired-s2]      # 섞은 배선(전체 · 출발 · 시냅스 수 · 부호 그대로)
+  top_dn: 6               # 부위마다 실효 입력이 큰 하강 뉴런 종류를 몇 개 보이나
