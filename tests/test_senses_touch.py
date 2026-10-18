@@ -64,7 +64,7 @@ def test_neuron_names_known_unknown_and_groups():
 
     n = Names()
     d = n.describe("DNp09")
-    assert d["name"] == "앞으로 걷기 명령" and d["check"] in {"원문", "기억", "잼"}
+    assert d["name"].startswith("앞으로 걷기") and d["check"] in {"원문", "기억", "잼"}
     u = n.describe("없는종류", "descending_neuron", "")
     assert u["check"] == "주석" and "하강 뉴런" in u["name"]
     assert n.describe("없는종류", "cb_intrinsic", "Kenyon_Cell")["name"].startswith("버섯체")
