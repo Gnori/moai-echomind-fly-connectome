@@ -488,7 +488,7 @@ uv run pytest                                  # 19 시험 (data 표시는 그�
 uv run fly-connectome bench escape --trials 40  # A 관문 — 약 3.5 분 · 가드
 uv run fly-connectome bench limits
 # 요구사항 규약 검사 (moai-echomind 루트에서)
-python3 .claude/skills/dev/scripts/dispatch.py validate
+# (10-18 뺌) /dev 스킬 · 규약 검사 — 절차는 DEV_PROCESS.md v2.0-fly(ccdbf18)
 # 메모리 여유 (무거운 실행 전 필수)
 memory_pressure | tail -1
 # Ollama 에 올라 있는 모델 (Qwen 올리기 전 필수)
