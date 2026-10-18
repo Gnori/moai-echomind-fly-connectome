@@ -31,7 +31,7 @@
 | 진행 중 | [R-1177 초파리 눈 세계](docs/requirements/20261016-203013-1177_fly-eye-world_req.md) — 그림 → 겹눈 → 앞단 → 우리 배선 → 하강 뉴런 → 몸 · 보기 창. 눈 신호만으로는 걷기 · 돌기 뉴런이 0 → 다음은 촉각 등 다른 감각 |
 | 보류 | R-5138 NPC 하나를 초파리 뇌로(10-12 · 배선 특이적인 것은 반사 촉발뿐) |
 
-날짜별 기록 · 남은 일은 **[인수인계](docs/requirements/echomind-fly-connectome-handoff.md)** 와 [남은 일 표](docs/requirements/active_development.md).
+지금 하던 일 · 기다리는 것은 **[인수인계](docs/requirements/echomind-fly-connectome-handoff.md)**(안 끝난 것만) · [남은 일 표](docs/requirements/active_development.md) · 진척 · 증거 · 왜는 각 요구사항 문서(맨 위 '지금' 칸).
 요구자 *"성공 가능성이 낮은건 하지마"* — 가능성이 낮은 것은 하지 않는다(무엇을 접었는지는 각 R 4 장).
 
 ---
