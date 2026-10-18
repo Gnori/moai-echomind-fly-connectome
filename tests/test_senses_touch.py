@@ -83,3 +83,13 @@ def test_read_types_cover_motor_and_groups():
     for m in motor.values():
         if isinstance(m, dict):
             assert set(m["types"]) <= set(types)
+
+
+def test_read_types_include_body_map():
+    from moai_echomind_fly.eyeworld.brainlink import read_types
+
+    vb = config.load("eyeworld")["view_brain"]
+    types = read_types(vb["motor"], vb["body_map"])
+    for part in vb["body_map"].values():
+        if isinstance(part, dict) and "types" in part:
+            assert set(part["types"]) <= set(types)

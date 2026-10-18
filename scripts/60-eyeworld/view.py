@@ -161,6 +161,7 @@ def main() -> None:
         "eye_rgb": [float(x) for x in vcfg["eye_rgb"]],
         "eye_linear": bool(vcfg["eye_linear"]),
         "view_marker": {k: float(v) for k, v in vcfg["marker"].items()},
+        "pose": {k: float(v) for k, v in vcfg["pose"].items()},
     }
     link = None
     guard = contextlib.ExitStack()

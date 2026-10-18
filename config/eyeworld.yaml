@@ -36,7 +36,23 @@ render:                   # V1 렌더러(설계 문서 2.1 · 2.6) — 127.0.0.1
   view_serve_min: 60      # 보기 서버를 이 분 뒤 닫음(띄워 놓고 잊지 않게)
 
 view:                     # 보기 창(F-008 · 요구자 10-17 "내 캐릭 · 뇌 연결 캐릭 따로 · 1인칭 · 3인칭 · 자유카메라") — 판정 아님
-  marker: {ring_m: 0.3, pole_m: 1.8}   # 초파리 크기 몸이 너무 작아 찾는 표지(바닥 고리 지름 · 위로 솟은 기둥 높이 · 보이게만 · 초파리 눈 그림에서는 뺌)
+  marker: {ring_m: 0.3, pole_m: 1.8}
+  pose:                            # 몸 부위 대응(R-5402)을 뼈대에 그리는 각도(보이게만 · 선언) — 축은 캐릭터 몸 기준(x 왼 · y 위 · z 앞)
+    arms_rest_deg: 45              # 쉬는 자세: 팔을 T 자에서 이만큼 내림(동작 아님)
+    walk_hip_deg: 28               # 걸음 다리 흔들기 최대(앞뒤 명령 / 앞 최대)
+    walk_knee_deg: 35
+    walk_steps_per_m: 1.4          # 걸음 빠르기 = 속도 × 이 값(걸음/s)
+    head_yaw_max_deg: 40           # body_map.head_turn.deg 와 같음
+    rub_arm_fwd_deg: 70            # 두 손 비비기: 팔 앞으로 · 안으로 · 팔꿈치
+    rub_arm_in_deg: 25
+    rub_elbow_deg: 60
+    face_arm_fwd_deg: 95           # 얼굴 닦기
+    face_elbow_deg: 120
+    ear_arm_side_deg: 120          # 귀 쓰다듬기: 같은 쪽 팔 옆으로 들고 팔꿈치
+    ear_elbow_deg: 130
+    jaw_open_deg: 18
+    wiggle_hz: 3.0                 # 비비기 · 닦기 · 쓰다듬기의 작은 되풀이(보이게만)
+    smooth_ms: 150                 # 부위 값이 바뀔 때 부드럽게   # 초파리 크기 몸이 너무 작아 찾는 표지(바닥 고리 지름 · 위로 솟은 기둥 높이 · 보이게만 · 초파리 눈 그림에서는 뺌)
   eye_rgb: [0.08, 0.29, 0.63]      # 초파리 눈 그림 밝기 = R1–R6 광수용체 감도 근사(붉은 눈 실측 · 노트 18 §11 · 67882ed · 문헌 값 아님 · 근사) — 10-18 전: 0.2 · 0.7 · 0.1(렌더러는 그대로)
   eye_linear: true                 # 무게는 감마를 푼 선형 RGB 에 곱한다(노트 18 §11)
   me_start_bearing_deg: -30.0      # 내 캐릭터 시작 = 초파리 뇌 캐릭터 몸 기준 이 방위(오른쪽 다가옴 길 · arena-b 는 ±15° 안에 물체 없음)
@@ -52,10 +68,20 @@ view_brain:               # 보기 창 닫힌 고리(요구자 10-17 "초파리 
   # 몸 = 하강 뉴런 그대로(10-17 요구자 "초파리가 지가 몸을 움직이게" — 지어낸 행동 규칙 없음). 창 안 발화 수 → 속도 환산만 선언.
   motor:
     forward: {types: [DNp09], m_s_per_spike: 0.1}     # DNp09 = P9 · 앞으로 걷기(Bidaye 2020) · 창 안 두 쪽 합 1 발 = 0.1 m/s(사람 몸 · 초파리 크기 몸은 fly_body 값)
-    backward: {types: [MDN], m_s_per_spike: 0.1}      # MDN = 뒷걸음(Bidaye 2014) · 같은 환산
+    backward: {types: [MDN, DNp42], m_s_per_spike: 0.1}   # MDN = 뒷걸음(Bidaye 2014) · DNp42 = 켜면 물러남(Braun 2024 · 노트 18 §12 · 10-18 더함) · 같은 환산
     turn: {types: [DNa02, DNa01], deg_s_per_spike: 13.5}   # 오른 − 왼(같은 쪽으로 돎 · Rayshubskiy 2020 · Yang 2023) · V0 에서 맞춘 값
     jump: {types: [DNp01], spikes: 1, hop_m: 0.25, hop_ms: 300}   # GF = 도망 뛰어오름(von Reyn 2014) — 창 안 1 발이면 제자리 뛰어오름(보이게만 · 옮기지 않음)
     limits: body                                       # 속도 · 돌기 상한 = 초파리 뇌 캐릭터 몸(char_body)
+  body_map:               # 하강 뉴런 → 사람 캐릭터 부위(R-5402 · 요구자 10-18 "양다리 · 발 · 손 · 얼굴 · 고개에 매핑" · 노트 18 §12)
+    version: body-map-v1  # 켜서 그 동작이 일어난다는 원문이 있는 종류만 · 사람 몸 대응은 같은 쓰임끼리(선언) · 날개 · 배 · 짝짓기 · 노래는 짓지 않음
+    sat_spikes: 5         # 창(window_ms) 안 두 쪽 합 발화가 이만큼이면 그 부위 움직임 최대(보이게만 · 선언)
+    freeze: {types: [DNb01], spikes: 1}            # 켜면 움찔한 뒤 얼어붙음(Cande 2018) → 앞뒤 · 돌기 명령 0
+    head_turn: {types: [DNp03], deg: 40}           # 한쪽 켜면 반대쪽으로 고개(Cande 2018 · 노트 18 §12) — 오른 − 왼 차
+    hands_rub: {types: [DNg11]}                    # 앞다리 비비기(Braun 2024) → 두 손을 앞에서 비빔
+    face_wipe: {types: [DNg07, DNg08, DNg12_a, DNg12_b, DNg12_c, DNg12_d, DNg12_e, DNg12_f, DNg12_g, DNg12_h]}   # 머리 손질(Cande 2018 · Guo 2022) → 두 손으로 얼굴 닦기
+    ear_stroke: {types: [DNge078, DNg62]}          # 더듬이 손질(Hampel 2015 · 노트 18 §12) → 같은 쪽 손으로 귀
+    mouth_open: {types: [DNge173, DNge174, aSP22]} # 주둥이 뻗기(노트 18 §12) → 입 벌림
+  baseline: {arm: 문헌값, from: autonomy_probe_b}   # 보기 창 '바탕 활동' 스위치(기본 꺼짐 — autonomy-probe-b 규칙) · 감각 종류마다 쉬는 발화
   char_body: human        # 초파리 뇌 캐릭터 몸 — human = 사람 몸(world.body · 기본 · 요구자 10-18 "초파리 뇌를 단 휴먼 케릭터 어딧어?") | fly = 아래 fly_body(초파리 크기 · R-3086)
   fly_body:               # char_body: fly 일 때만 — 초파리 크기(R-3086 · 요구자 10-18 "사실에 가깝게") · 잠근 시험(V0 · V1 · F0 · V0d)은 world.body(사람) 그대로
     version: fly-body-v1

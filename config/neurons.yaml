@@ -43,6 +43,26 @@ types:
   DNge104: {name: 머리 털 · 다리 털 하강 뉴런 · 행동 모름, note: "눈 · 머리 털 하강 뉴런 무리 · 다리 털에서도 받음(10-18 입구 재기)", source: "노트 18 §9 · 10-18 잼", check: 원문}
   DNb05: {name: 돌기와 함께 움직임(같은 쪽 · 상관), note: "같은 쪽으로 돌 때 함께 켜짐 — 켜서 돌게 한 원문 없음", source: "Yang 2024 · 노트 18 §12", check: 원문}
   pIP1: {name: 수컷 전용 하강 뉴런 · 행동 모름, note: "노래 뉴런 pIP10 과 다른 종류", source: "노트 18 §12", check: 원문}
+  # 몸 부위 대응(R-5402 · 노트 18 §12 · 켜서 일어남)
+  DNp42: {name: 물러남(뒷걸음), note: "켜면 뒤로 물러남(머리 떼면 사라짐)", source: "Braun 2024 · 노트 18 §12", check: 원문}
+  DNb01: {name: 멈춤 · 얼어붙기, note: "켜면 앞다리를 움찔한 뒤 대부분 얼어붙음 · 날다가 같은 쪽으로 꺾기에도", source: "Cande 2018 · 노트 18 §12", check: 원문}
+  DNp03: {name: 고개 돌리기(반대쪽으로), note: "한쪽 켜면 반대쪽으로 고개를 돌림 · 끄면 빠른 다가옴에 고개 돌림이 준다", source: "노트 18 §12", check: 원문}
+  DNg11: {name: 앞다리 비비기 → 두 손 비비기, note: "켜면 앞다리 비비기(머리 떼도) · 우리 그래프 부호는 억제", source: "Braun 2024 · 노트 18 §12", check: 원문}
+  DNg07: {name: 머리 손질 → 얼굴 닦기, note: "DNg07 + DNg08 을 켜는 계통에서 머리 손질 · 둘을 나눌 수 없음", source: "Cande 2018 · 노트 18 §12", check: 원문}
+  DNg08: {name: 머리 손질 → 얼굴 닦기, note: "DNg07 + DNg08 을 켜는 계통에서 머리 손질 · 둘을 나눌 수 없음", source: "Cande 2018 · 노트 18 §12", check: 원문}
+  DNge078: {name: 더듬이 손질(aDN2) → 귀 쓰다듬기, note: "켜는 동안 내내 더듬이 손질", source: "Hampel 2015 · 노트 18 §12", check: 원문}
+  DNg62: {name: 더듬이 손질(aDN1) → 귀 쓰다듬기, note: "켜면 짧게 끊기는 더듬이 손질", source: "Hampel 2015 · 노트 18 §12", check: 원문}
+  DNge173: {name: 주둥이 뻗기 → 입 벌림, note: "켜면 주둥이 뻗기 · 꺼도 설탕에 주둥이 뻗기는 그대로", source: "노트 18 §12", check: 원문}
+  DNge174: {name: 주둥이 뻗기 → 입 벌림, note: "켜면 주둥이 뻗기", source: "노트 18 §12", check: 원문}
+  aSP22: {name: 주둥이 뻗기 · 앞다리 뻗기 → 입 벌림, note: "켜면 주둥이 뻗기 · 앞다리 뻗기 · 배 움직임", source: "노트 18 §12 · McKellar 2019", check: 원문}
+  DNg12_a: {name: 머리 쓸기 · 다리 비비기 → 얼굴 닦기, note: "DNg12 무리 — 머리 쓸기와 다리 비비기를 번갈아 · 어느 아형인지는 모름", source: "Guo 2022 · 노트 18 §12", check: 원문}
+  DNg12_b: {name: 머리 쓸기 · 다리 비비기 → 얼굴 닦기, note: "DNg12 무리 — 머리 쓸기와 다리 비비기를 번갈아 · 어느 아형인지는 모름", source: "Guo 2022 · 노트 18 §12", check: 원문}
+  DNg12_c: {name: 머리 쓸기 · 다리 비비기 → 얼굴 닦기, note: "DNg12 무리 — 머리 쓸기와 다리 비비기를 번갈아 · 어느 아형인지는 모름", source: "Guo 2022 · 노트 18 §12", check: 원문}
+  DNg12_d: {name: 머리 쓸기 · 다리 비비기 → 얼굴 닦기, note: "DNg12 무리 — 머리 쓸기와 다리 비비기를 번갈아 · 어느 아형인지는 모름", source: "Guo 2022 · 노트 18 §12", check: 원문}
+  DNg12_e: {name: 머리 쓸기 · 다리 비비기 → 얼굴 닦기, note: "DNg12 무리 — 머리 쓸기와 다리 비비기를 번갈아 · 어느 아형인지는 모름", source: "Guo 2022 · 노트 18 §12", check: 원문}
+  DNg12_f: {name: 머리 쓸기 · 다리 비비기 → 얼굴 닦기, note: "DNg12 무리 — 머리 쓸기와 다리 비비기를 번갈아 · 어느 아형인지는 모름", source: "Guo 2022 · 노트 18 §12", check: 원문}
+  DNg12_g: {name: 머리 쓸기 · 다리 비비기 → 얼굴 닦기, note: "DNg12 무리 — 머리 쓸기와 다리 비비기를 번갈아 · 어느 아형인지는 모름", source: "Guo 2022 · 노트 18 §12", check: 원문}
+  DNg12_h: {name: 머리 쓸기 · 다리 비비기 → 얼굴 닦기, note: "DNg12 무리 — 머리 쓸기와 다리 비비기를 번갈아 · 어느 아형인지는 모름", source: "Guo 2022 · 노트 18 §12", check: 원문}
   # 감각 입력
   BM_InOm: {name: 눈 사이 털 감각, note: "빛으로 켜면 눈 · 머리 손질과 뒤로 물러남(감각 쪽 문헌)", source: "노트 18 §9 H9", check: 원문}
 
@@ -92,7 +112,8 @@ superclasses:
 
 # 보기 창 표 묶음(종류 하나 = 줄 하나 · 왼 / 오른)
 groups:
-  body: [DNp09, MDN, DNa02, DNa01, DNp01]
+  body: [DNp09, MDN, DNp42, DNa02, DNa01, DNb01, DNp01]
+  parts: [DNp03, DNg11, DNg07, DNg08, DNg12_a, DNg12_b, DNg12_c, DNg12_d, DNg12_e, DNg12_f, DNg12_g, DNg12_h, DNge078, DNg62, DNge173, DNge174, aSP22]
   eye: [LC4, LPLC2, HSE, HSN, HSS, DNp02]
   touch: [DNge122, DNg84, DNg15, DNg87, DNge132, DNg35, DNg83, DNg20]
 top_n: 10                  # "지금 많이 켜진 종류" — 진짜 배선에서 최근 창 발화가 많은 종류(입력으로 켠 뉴런 뺌)

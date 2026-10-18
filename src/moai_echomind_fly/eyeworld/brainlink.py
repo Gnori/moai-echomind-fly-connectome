@@ -35,14 +35,15 @@ from .render import pack, unpack
 from .safety import check_port
 
 
-def read_types(motor: dict) -> list[str]:
+def read_types(motor: dict, body_map: dict | None = None) -> list[str]:
     """표에 줄로 보일 종류(config/neurons.yaml groups) + 몸을 움직이는 종류(view_brain.motor).
 
     겹침 없이 · 순서 유지.
     """
     out: list[str] = []
-    motor_types = [m["types"] for m in motor.values() if isinstance(m, dict)]
-    for v in [*Names().groups().values(), *motor_types]:
+    motor_types = [m["types"] for m in motor.values() if isinstance(m, dict) and "types" in m]
+    map_types = [m["types"] for m in (body_map or {}).values() if isinstance(m, dict)]
+    for v in [*Names().groups().values(), *motor_types, *map_types]:
         out += [t for t in v if t not in out]
     return out
 
@@ -150,8 +151,13 @@ class BrainLink:
         self.t_entry = np.unique(np.concatenate(list(self.tgroups.values())))
         self.t_pos = {k: np.searchsorted(self.t_entry, v) for k, v in self.tgroups.items()}
         self.n_vis = len(self.fe.entry)
-        entry = np.concatenate([self.fe.entry, self.t_entry])
-        self.types = read_types(self.cfg["motor"])
+        bl = self.cfg["baseline"]   # 바탕 활동(R-5402 · 감각 쉬는 발화 · 문헌 값)
+        per = ecfg[bl["from"]]["arms"][bl["arm"]]
+        cls = base.columns["class"].astype(str)
+        self.b_entry = np.flatnonzero(np.isin(cls, list(per)))
+        self.b_rates = np.array([float(per[c]) for c in cls[self.b_entry]])
+        entry = np.concatenate([self.fe.entry, self.t_entry, self.b_entry])
+        self.types = read_types(self.cfg["motor"], self.cfg["body_map"])
         self.names_cfg = Names()
         self.top_n = int(self.names_cfg.cfg["top_n"])
         self.ts, self.type_names = type_side_ids(base)
@@ -192,17 +198,20 @@ class BrainLink:
         for w in [*self.win.values(), *self.win_dn.values(), *self.win_top.values()]:
             w.clear()
 
-    def step(self, img: np.ndarray, dial: float, contacts: list[dict] | None = None) -> dict:
+    def step(self, img: np.ndarray, dial: float, contacts: list[dict] | None = None,
+             baseline: bool = False) -> dict:
         """그림 [2, 6, N, N] u8 + 닿음 → 뇌 둘 한 걸음 → 창 합 · 몸 명령."""
         t0 = time.time()
         if self.t_wall is None:  # 벽시계는 첫 걸음부터(서버 띄운 때가 아님)
             self.t_wall = t0
+        if self.steps == 0:   # 첫 그림을 한 번 보여 둔다(빈 기억 → 첫 그림의 가짜 변화 없이)
+            self.fe.step(img)
         vis = np.minimum(self.fe.step(img) * float(dial), self.r_max)   # 다이얼은 눈 입력만
         touch = np.zeros(len(self.t_entry))
         on = contact_groups(contacts or [], {**self.tcfg, "margin_m": self.body["touch_margin_m"]})
         for k in on:
             touch[self.t_pos[k]] = float(self.tcfg["rate_hz"])
-        rates = np.concatenate([vis, touch])
+        rates = np.concatenate([vis, touch, self.b_rates if baseline else 0.0 * self.b_rates])
         t1 = time.time()
         for _, conn in self.brains.values():
             conn.send(rates)
@@ -230,16 +239,36 @@ class BrainLink:
         turn = -float(m["turn"]["deg_s_per_spike"]) * diff("turn")  # 오른쪽 많으면 오른쪽으로
         turn = float(np.clip(turn, -float(b["turn_max_deg_s"]), float(b["turn_max_deg_s"])))
         jump = both("jump") >= int(m["jump"]["spikes"])
+        bm = self.cfg["body_map"]
+        sat = float(bm["sat_spikes"])
+
+        def level(part: str, side: str = "LR") -> float:   # 0~1(보이게만 · 선언한 포화)
+            return min(1.0, sum(r[f"{t}_{s}"] for t in bm[part]["types"] for s in side) / sat)
+
+        fz = bm["freeze"]
+        frozen = sum(r[f"{t}_{s}"] for t in fz["types"] for s in "LR") >= int(fz["spikes"])
+        if frozen:   # 멈춤 하강 뉴런(DNb01)이 켜지면 얼어붙음(문헌) — 앞뒤 · 돌기 0
+            speed, turn = 0.0, 0.0
+        head = bm["head_turn"]
+        # 한쪽 켜면 반대쪽으로 → 오른쪽이 많으면 왼쪽(+)으로
+        hd = sum(r[f"{t}_R"] - r[f"{t}_L"] for t in head["types"])
+        parts = {"freeze": bool(frozen),
+                 "head_yaw_deg": float(np.clip(hd / sat, -1, 1) * float(head["deg"])),
+                 "hands_rub": level("hands_rub"), "face_wipe": level("face_wipe"),
+                 "ear_L": level("ear_stroke", "L"), "ear_R": level("ear_stroke", "R"),
+                 "mouth_open": level("mouth_open")}
         n45 = len(self.fe.t45)
         self.steps += 1
         return {
             "type": "out",
             "sums": sums,
             "cmd": {"turn_deg_s": turn, "speed_m_s": speed, "jump": bool(jump)},
+            "parts": parts,
             "input_hz": {s: float(rates[:n45][self.ftb[s]].mean()) for s in "LR"},
             "touch": {"on": on, "neurons": int((touch > 0).sum()),
                       "rate_hz": float(self.tcfg["rate_hz"])},
             "dn_all": {b: int(sum(w)) for b, w in self.win_dn.items()},
+            "baseline": {"on": bool(baseline), "neurons": int(len(self.b_entry))},
             "top": self.top(),
             "dial": float(dial),
             "sim_ms": self.steps * self.dt_ms,
@@ -294,7 +323,7 @@ class BrainLink:
                 n = int(round((self.n_px / 12) ** 0.5))
                 out = await asyncio.to_thread(
                     self.step, img.reshape(2, 6, n, n), float(head.get("dial", 1.0)),
-                    list(head.get("contacts") or []),
+                    list(head.get("contacts") or []), bool(head.get("baseline", False)),
                 )
                 out["tick"] = head.get("tick")
                 await ws.send(pack(out))

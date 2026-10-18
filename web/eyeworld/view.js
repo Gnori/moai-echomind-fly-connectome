@@ -35,7 +35,7 @@ const keys = new Set();
 const nodes = {};
 let meNode, meTag, flyNode, ring, collide = true, drag = null, play = null, eyeBusy = false, lastEye = 0;
 const fly = { pos: [0, 0, 0], yaw: 0 };         // 초파리 뇌 캐릭터 자세(뇌 연결이 켜지면 뇌 명령으로 움직임)
-let brain = null, dial = 1, tick = 0, hop = 0;
+let brain = null, dial = 1, tick = 0, hop = 0, flyRigBones = null, lastParts = null, lastSpeed = 0;
 const notInEye = new Set();
 let LIN = null;                                 // sRGB 값(0~255) → 선형(0~1) 표 — eye_linear 가 거짓이면 그대로(÷255)
 function makeLin(linear) {
@@ -117,6 +117,7 @@ function avatar(container, id, rgb) {
     r.parent = node;
     for (const mesh of r.getChildMeshes(false)) mesh.material = m;
   }
+  node.metadata = { skeleton: inst.skeletons?.[0] ?? null };   // 뼈대(몸 부위 대응 · R-5402)
   return node;
 }
 
@@ -143,6 +144,94 @@ function flyBody(fb, mk) {                      // 초파리 크기 몸(가슴 �
   pole.position.set(0, mk.pole_m / 2 + 0.01, 0); pole.parent = node; markers.push(pole);
   const pm = mat('flyPoleMat', [0.95, 0.76, 0.3], 1); pm.alpha = 0.55; pole.material = pm;
   return node;
+}
+
+// 몸 부위 대응(R-5402) — 뼈를 캐릭터 몸 기준 축(x 왼 · y 위 · z 앞)으로 돌린다. 쉬는 자세 회전 위에 덧붙임(보이게만 · 각도는 config view.pose).
+function makeRig(node) {
+  const sk = node.metadata?.skeleton;
+  if (!sk) return null;
+  node.computeWorldMatrix(true);
+  const rootInv = B.Quaternion.FromRotationMatrix(node.getWorldMatrix().getRotationMatrix()).invert();
+  const bones = {};
+  for (const name of ['upperleg01.L', 'upperleg01.R', 'lowerleg01.L', 'lowerleg01.R', 'upperarm01.L', 'upperarm01.R',
+    'lowerarm01.L', 'lowerarm01.R', 'neck01', 'head', 'jaw']) {
+    const t = sk.bones.find((b) => b.name === name)?.getTransformNode();
+    if (!t || !t.rotationQuaternion) continue;
+    t.parent.computeWorldMatrix(true);
+    const pw = B.Quaternion.FromRotationMatrix(t.parent.getWorldMatrix().getRotationMatrix());
+    const toParent = rootInv.multiply(pw).invert();          // 몸 기준 축 → 부모 쪽 축
+    bones[name] = { t, rest: t.rotationQuaternion.clone(), toParent };
+  }
+  const kid = { 'upperarm01.L': 'lowerarm01.L', 'upperarm01.R': 'lowerarm01.R', 'lowerarm01.L': 'wrist.L', 'lowerarm01.R': 'wrist.R' };
+  for (const [name, child] of Object.entries(kid)) {   // 뼈 방향(쉬는 자세 · 부모 쪽) — 팔은 '가리킬 방향'으로 돌린다
+    const b = bones[name], c = sk.bones.find((x) => x.name === child)?.getTransformNode();
+    if (!b || !c) continue;
+    c.computeWorldMatrix(true);
+    const d = c.getAbsolutePosition().subtract(b.t.getAbsolutePosition());
+    const m = new B.Matrix(); b.toParent.multiply(rootInv).toRotationMatrix(m);
+    b.aP = B.Vector3.TransformNormal(d, m).normalize();
+  }
+  return { node, bones, cur: {}, phase: 0 };
+}
+
+function axisIn(b, ax) {                         // 몸 기준 축 ax([x, y, z]) 를 그 뼈의 부모 쪽 축으로
+  const v = new B.Vector3(...ax);
+  const m = new B.Matrix(); b.toParent.toRotationMatrix(m);
+  return B.Vector3.TransformNormal(v, m).normalize();
+}
+
+function poseBone(rig, name, turns) {            // turns = [[축, 각도(도)] …] — 쉬는 자세 위에 차례로
+  const b = rig.bones[name];
+  if (!b) return;
+  let q = b.rest.clone();
+  for (const [ax, deg] of turns) if (deg) q = B.Quaternion.RotationAxis(axisIn(b, ax), (deg * Math.PI) / 180).multiply(q);
+  b.t.rotationQuaternion = q;
+}
+
+function aim(rig, name, d) {                    // 그 뼈가 몸 기준 방향 d 를 가리키게(지금 부모 자세 기준)
+  const b = rig.bones[name];
+  if (!b || !b.aP) return;
+  rig.node.computeWorldMatrix(true); b.t.parent.computeWorldMatrix(true);
+  const root = B.Quaternion.FromRotationMatrix(rig.node.getWorldMatrix().getRotationMatrix());
+  const par = B.Quaternion.FromRotationMatrix(b.t.parent.getWorldMatrix().getRotationMatrix());
+  const m = new B.Matrix(); root.invert().multiply(par).invert().toRotationMatrix(m);
+  const dp = B.Vector3.TransformNormal(new B.Vector3(...d), m).normalize();
+  const delta = new B.Quaternion(); B.Quaternion.FromUnitVectorsToRef(b.aP, dp, delta);
+  b.t.rotationQuaternion = delta.multiply(b.rest);
+  b.t.computeWorldMatrix(true);
+}
+
+function mix(list) {                             // [[가중, [x, y, z]] …] → 단위 방향
+  const v = [0, 0, 0];
+  for (const [w, d] of list) for (let i = 0; i < 3; i++) v[i] += w * d[i];
+  const n = Math.hypot(...v) || 1;
+  return v.map((x) => x / n);
+}
+
+function stepPose(rig, parts, speed, dt) {       // 부위 값(뇌 연결 · 0~1) → 뼈 각도
+  const P = h.pose, k = Math.min(1, (dt * 1000) / P.smooth_ms), c = rig.cur;
+  const goal = { walk: Math.min(1, Math.abs(speed) / Math.max(1e-6, h.fly_body.fwd_max_m_s)), dir: Math.sign(speed),
+    head: parts?.head_yaw_deg ?? 0, rub: parts?.hands_rub ?? 0, face: parts?.face_wipe ?? 0,
+    earL: parts?.ear_L ?? 0, earR: parts?.ear_R ?? 0, jaw: parts?.mouth_open ?? 0 };
+  for (const [key, v] of Object.entries(goal)) c[key] = (c[key] ?? 0) + (v - (c[key] ?? 0)) * k;
+  rig.phase += Math.abs(speed) * P.walk_steps_per_m * dt * 2 * Math.PI;
+  const t = performance.now() / 1000, wig = Math.sin(2 * Math.PI * P.wiggle_hz * t);
+  const X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1];
+  for (const [s, sg] of [['L', 1], ['R', -1]]) {   // 다리: 걸음(앞으로 = −x 축 회전)
+    const sw = Math.sin(rig.phase + (s === 'L' ? 0 : Math.PI)) * c.walk;
+    poseBone(rig, `upperleg01.${s}`, [[X, -P.walk_hip_deg * sw * (c.dir || 1)]]);
+    poseBone(rig, `lowerleg01.${s}`, [[X, P.walk_knee_deg * Math.max(0, -Math.cos(rig.phase + (s === 'L' ? 0 : Math.PI))) * c.walk]]);
+  }
+  for (const [s, sg] of [['L', 1], ['R', -1]]) {   // 팔: 쉬는 자세(내림 · 동작 아님) + 비비기 · 얼굴 닦기 · 같은 쪽 귀 — 가리킬 방향을 섞음
+    const ear = s === 'L' ? c.earL : c.earR, rest = Math.max(0, 1 - Math.min(1, c.rub + c.face + ear));
+    aim(rig, `upperarm01.${s}`, mix([[rest, [sg * 0.3, -0.95, 0.05]], [c.rub, [sg * 0.35, -0.55, 0.75]],
+      [c.face, [sg * 0.15, -0.5, 0.85]], [ear, [sg * 0.8, -0.25, 0.55]]]));
+    aim(rig, `lowerarm01.${s}`, mix([[rest, [sg * 0.25, -0.95, 0.15]], [c.rub, [-sg * 0.75, 0.12 + 0.15 * wig, 0.65]],
+      [c.face, [-sg * (0.35 + 0.12 * wig), 0.85, -0.38]], [ear, [-sg * 0.68, 0.7, -0.2 + 0.12 * wig]]]));
+  }
+  poseBone(rig, 'neck01', [[Y, c.head * 0.5]]);
+  poseBone(rig, 'head', [[Y, c.head * 0.5]]);
+  poseBone(rig, 'jaw', [[X, P.jaw_open_deg * c.jaw]]);
 }
 
 function label(text, css, parent, y) {
@@ -282,13 +371,13 @@ function touchWhere(on) {                       // ['머리털_R', '앞다리_R'
   return `${sd} ${[...where].join('·')}`;
 }
 
-const GROUP = { body: '몸을 움직이는 뉴런', eye: '눈 · 도망 뉴런', touch: '닿음', top: '지금 많이 켜진 종류' };
+const GROUP = { body: '몸을 움직이는 뉴런', parts: '고개 · 손 · 입 뉴런', eye: '눈 · 도망 뉴런', touch: '닿음', top: '지금 많이 켜진 종류' };
 const CHECK = { 원문: ['원문', 'ok'], 기억: ['기억', 'mem'], 잼: ['잼', 'meas'], 주석: ['분류', 'ann'] };
 
 function nameCell(d) {                          // 실제 이름 + 쉬운 이름 · 마우스를 올리면 설명 · 근거 · 확인 수준
   const [ck, cls] = CHECK[d.check] ?? [d.check || '', 'ann'];
   const tip = `${d.type} — ${d.name}${d.note ? `\n${d.note}` : ''}\n근거: ${d.source || '—'} · 확인: ${ck}`;
-  return `<td title="${tip.replaceAll('"', '&quot;')}"><b>${d.type}</b><span class="ez">${d.name}</span><i class="ck ${cls}">${ck}</i></td>`;
+  return `<td title="${tip.replaceAll('"', '&quot;')}"><b>${d.type || '(종류 이름 없음)'}</b><span class="ez">${d.name}</span><i class="ck ${cls}">${ck}</i></td>`;
 }
 
 function rowsFor(g, out) {                      // [이름 칸, 진짜, 섞은, 켜짐]
@@ -315,7 +404,7 @@ let lastTab = '', lastOpts = '';                 // 10-18 요구자 "선택시 �
 
 function showBrain(out) {
   const sel = $('bview'), want = sel.value;
-  const order = want === 'all' ? ['body', 'eye', 'touch', 'top'] : [want];
+  const order = want === 'all' ? ['body', 'parts', 'eye', 'touch', 'top'] : [want];
   let html = `<tr><th>최근 ${h.brain.window_ms} ms · 왼 / 오른</th><th>진짜 배선</th><th>섞은 배선</th></tr>`;
   for (const g of order) {
     if (want === 'all') html += `<tr class="grp"><td colspan="3">${GROUP[g]}</td></tr>`;
@@ -349,13 +438,13 @@ function setLive(on) {
 async function brainLoop() {                    // 눈 그림 → 뇌 서버(앞단 · 뇌 둘) → 진짜 배선 뇌 명령으로 한 걸음(10 ms)
   const dt = h.brain.dt_ms / 1000;
   while (brain?.on) {
-    stepMe(dt);                                 // 세계도 뇌 시간으로(내 캐릭터 · 시험용 사람) — 빠른 움직임이 순간 이동처럼 보이지 않게
+    // 내 캐릭터는 실제 시간(10-18 요구자 "사용자 케릭터 움직임 너무 느려") · 시험용 사람만 뇌 시간
     if (play) stepPlay(1);
     const t0 = performance.now();
     const img = await grabEyes();
     const t1 = performance.now();
     const touch = contacts();
-    brain.ws.send(pack({ type: 'step', tick: tick++, dial, contacts: touch }, img));
+    brain.ws.send(pack({ type: 'step', tick: tick++, dial, contacts: touch, baseline: $('bbase').checked }, img));
     const out = await new Promise((res) => { brain.wait = res; });
     if (out) out.eyes_ms = t1 - t0;
     if (out) out.step_ms = performance.now() - t0;
@@ -370,6 +459,7 @@ async function brainLoop() {                    // 눈 그림 → 뇌 서버(앞
     hop = Math.max(0, hop - h.brain.dt_ms);   // 뛰어오름 높이(보이게만 · 뇌 시간 기준)
     const T = h.brain.motor.jump.hop_ms;
     fly.pos[1] = hop > 0 ? h.fly_body.hop_m * Math.sin((Math.PI * (T - hop)) / T) : 0;
+    lastParts = out.parts; lastSpeed = c.speed_m_s;
     showBrain(out);
   }
 }
@@ -409,6 +499,7 @@ function setupBrain() {
     ws.onmessage = (ev) => { const m = unpack(ev.data); if (m.type === 'reset.ok') return; brain?.wait?.(m); };
     ws.onclose = () => { brain?.wait?.(null); setLive(false); };
   $('bview').onchange = () => { lastTab = ''; canvas.focus(); };
+  $('bbase').onchange = () => canvas.focus();
     ws.onopen = () => {                         // 켤 때마다 뇌 · 앞단을 처음 상태로(앞 연결의 흔적 없이)
       ws.send(pack({ type: 'reset' }));
       brain.on = true; setLive(true); brainLoop();
@@ -517,17 +608,19 @@ async function main() {
     t.yaw -= dx * 0.005;                        // 오른쪽으로 끌면 오른쪽으로 돎(yaw 증가 = 왼쪽)
     t.pitch = Math.max(-1.2, Math.min(1.2, t.pitch - dy * 0.004));
   });
+  flyRigBones = small ? null : makeRig(flyNode);
+  if (q.get('debug')) { window.__B = B; window.__fly = flyNode; window.__setMode = setMode; window.__cam = cam; window.__pose = (parts, speed = 0) => { lastParts = parts; lastSpeed = speed; window.__force = true; }; }
   setMode(2);
   setupBrain();
   await scene.whenReadyAsync();
   $('status').textContent = `에셋 ${Object.keys(containers).length} 실림 · 빠짐 ${missing.length} · 재질 묶음 ${bound} · 물체 ${h.poses.length}`;
   engine.runRenderLoop(() => {
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000);
-    if (!brain?.on) {                           // 뇌가 꺼져 있으면 실제 시간으로
-      stepMe(dt);
-      if (play) stepPlay(engine.getDeltaTime() / h.approach.dt_ms);
-    }
+    stepMe(dt);                                 // 내 캐릭터는 늘 실제 시간
+    if (!brain?.on && play) stepPlay(engine.getDeltaTime() / h.approach.dt_ms);   // 시험용 사람은 뇌가 켜지면 뇌 시간
     place(flyNode, fly.pos, fly.yaw);
+    const live = brain?.on || window.__force;
+    if (flyRigBones) stepPose(flyRigBones, live ? lastParts : null, live ? lastSpeed : 0, dt);
     ring.position.set(fly.pos[0], h.fly_body.kind === 'fly' ? 0.002 : 0.03, fly.pos[2]);
     stepCam();
     scene.render();
