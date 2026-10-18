@@ -348,3 +348,17 @@ autonomy_probe:           # 스스로 켜지나 — 가능성 작은 시험(R-54
   motor: [DNp09, MDN, DNa02, DNa01, DNp01]   # 지금 몸을 움직이는 하강 뉴런(view_brain.motor)
   top_dn: 10
   next_rule: "어느 세기에서든 ① 진짜 배선 몸 하강 뉴런(motor) 발화 합 ≥ 1 회/s 이고 ② 섞은 배선 셋의 같은 합 최대가 진짜의 1/4 미만이고 ③ 진짜 배선 뇌의 발화 뉴런 몫 < 50 %(뇌 전체가 터지지 않음) → 화면 뼈대 움직임(2.3)을 요구자께 여쭘. 아니면 '바탕 감각 발화로는 스스로 움직이지 않는다'로 적고 멈춤. 몸 규약 밖 하강 뉴런의 배선 특이적 발화는 보고만(2.2 대응 재료)."
+
+autonomy_probe_b:         # 스스로 켜지나 — 문헌 값 바탕 발화로 다시(R-5402 · 요구자 10-18 "둘 다" · 판정 아님 · 결과 전 잠금)
+  version: autonomy-probe-b
+  # 감각 종류마다 쉬는 발화(노트 18 §12 · 97ce731): 냄새 3~13 Hz → 8 · 맛 0.7~1.6 → 1.2 · 냉각 세포 92~102 → 100(온도 감각 전체 25 개에 · 더위 세포와 구분 못 함 — 근사)
+  # 털 · 더듬이 기계 감각 · 자기 몸은 문헌 수치 없음 → 두 갈래(0 · 약하게 1 Hz). 광수용체는 뺌(억제 출력).
+  arms:
+    문헌값: {olfactory: 8.0, gustatory: 1.2, thermosensory: 100.0}
+    문헌값+기계감각1Hz: {olfactory: 8.0, gustatory: 1.2, thermosensory: 100.0, mechanosensory_tactile: 1.0, mechanosensory: 1.0, mechanosensory_proprioceptive: 1.0}
+  window_ms: 1000.0
+  seed: 0
+  brains: [real, rewired-s0, rewired-s1, rewired-s2]
+  motor: [DNp09, MDN, DNp42, DNa02, DNa01, DNb01, DNp03, DNg11, DNg07, DNg08, DNg12_a, DNg12_b, DNg12_c, DNg12_d, DNg12_e, DNg12_f, DNg12_g, DNg12_h, DNge078, DNg62, DNge173, DNge174, aSP22, DNp01, DNp02]   # 몸 부위 대응 안(노트 18 §12)의 종류
+  top_dn: 10
+  next_rule: "어느 갈래에서든 진짜 배선 대응 종류(motor) 발화 합 ≥ 1 회/s 이고 섞은 셋 같은 합 최대 < 진짜의 1/4 → 보기 창 '바탕 활동' 스위치를 그 갈래로 켠 상태를 권함. 아니면 끈 상태가 기본이고 화면에 '바탕 활동으로는 대응 부위가 스스로 움직이지 않음'을 적는다."
