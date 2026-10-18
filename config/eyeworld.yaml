@@ -333,3 +333,17 @@ touch_probe:              # 촉각 ② 가능성 작은 시험(R-1177 F-011 · �
   brains: [real, rewired-s0, rewired-s1, rewired-s2]
   top_dn: 8
   next_rule: "앞다리 L · R 둘 다, 어느 세기에서든 진짜 배선 같은 쪽 DNa02 ≥ 1 이고 > 반대쪽 · 섞은 셋 같은 쪽 DNa02 가 진짜의 1/4 미만 → 본 시험 판정 기준을 잠가 요구자께 여쭘. 아니면 촉각 → 몸 길은 멈춤(가능성 낮음)."
+
+autonomy_probe:           # 스스로 켜지나 — 가능성 작은 시험(R-5402 2.1 · 요구자 10-18 "둘 다 — 시험 먼저" · 판정 아님 · 결과 전 잠금)
+  version: autonomy-probe-a
+  # 바탕 활동 = 감각 뉴런의 쉬는 발화(실제 초파리 감각 뉴런은 자극이 없어도 발화한다 · 세기는 research ③ 회신 전이라 넓게 훑음).
+  # 광수용체(class visual)는 뺀다 — 이 모형에서 억제 출력이라 퍼지지 않는다(R-1177 1.1). 엔진은 그대로(포아송 입력 뉴런).
+  sensory_superclass: [vnc_sensory, cb_sensory, sensory_ascending, sensory_descending]
+  exclude_class: [visual]
+  rates_hz: [1.0, 3.0, 10.0]
+  window_ms: 1000.0
+  seed: 0                   # 본 시험이 있으면 다른 씨앗
+  brains: [real, rewired-s0, rewired-s1, rewired-s2]
+  motor: [DNp09, MDN, DNa02, DNa01, DNp01]   # 지금 몸을 움직이는 하강 뉴런(view_brain.motor)
+  top_dn: 10
+  next_rule: "어느 세기에서든 ① 진짜 배선 몸 하강 뉴런(motor) 발화 합 ≥ 1 회/s 이고 ② 섞은 배선 셋의 같은 합 최대가 진짜의 1/4 미만이고 ③ 진짜 배선 뇌의 발화 뉴런 몫 < 50 %(뇌 전체가 터지지 않음) → 화면 뼈대 움직임(2.3)을 요구자께 여쭘. 아니면 '바탕 감각 발화로는 스스로 움직이지 않는다'로 적고 멈춤. 몸 규약 밖 하강 뉴런의 배선 특이적 발화는 보고만(2.2 대응 재료)."
