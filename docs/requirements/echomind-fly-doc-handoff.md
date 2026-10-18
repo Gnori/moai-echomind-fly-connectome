@@ -193,5 +193,5 @@ ps -axo pid,rss,command | grep "[f]ly-connectome dashboard --serve"             
 uv run fly-connectome dataset verify <묶음>                                        # 자료 체크섬 — "온전"
 shasum -a 256 <파일> | cut -c1-16                                                  # 대장용 sha256 앞 16 자
 git log --oneline <마지막 문서 커밋>..HEAD                                          # 문서가 늦은 코드 변경 찾기
-python3 .claude/skills/dev/scripts/dispatch.py validate                            # 요구사항 규약(읽기 확인)
+# (10-18 뺌) /dev 스킬 · dispatch.py validate — 절차는 DEV_PROCESS.md v2.0-fly · 틀은 docs/requirements/templates/req.md · walkthrough.md(ccdbf18)
 ```
