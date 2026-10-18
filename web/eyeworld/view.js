@@ -247,31 +247,49 @@ function touchWhere(on) {                       // ['머리털_R', '앞다리_R'
   return `${sd} ${[...where].join('·')}`;
 }
 
-const ROWS = [                                  // [묶음, 이름, 설명, 읽는 키 | 함수]
-  ['body', 'DNp09', '앞으로', 'DNp09'], ['body', 'MDN', '뒤로', 'MDN'], ['body', 'DNa02', '돌기', 'DNa02'],
-  ['body', 'DNa01', '돌기', 'DNa01'], ['body', 'GF', '뛰어오름', 'GF'],
-  ['eye', '눈 입력', '앞→뒤 Hz', (o) => [`${o.input_hz.L.toFixed(1)} / ${o.input_hz.R.toFixed(1)}`, '같음']],
-  ['eye', 'LC4', '다가옴', 'LC4'], ['eye', 'LPLC2', '다가옴', 'LPLC2'], ['eye', 'HS', '몸 돎', 'HS'], ['eye', 'DNp02', '도망', 'DNp02'],
-  ['touch', '켠 촉각 털', '', (o) => [o.touch.on.length ? `${o.touch.neurons}개` : '없음', '같음']],
-  ['touch', '촉각 하강 뉴런', '몸 규약 밖', '촉각DN'],
-  ['touch', '하강 뉴런 전체', '발화', (o) => [String(o.dn_all.real), String(o.dn_all[h.brain.brains[1]] ?? '—')]],
-];
-const GROUP = { body: '몸을 움직이는 뉴런', eye: '눈 · 도망 뉴런', touch: '닿음' };
+const GROUP = { body: '몸을 움직이는 뉴런', eye: '눈 · 도망 뉴런', touch: '닿음', top: '지금 많이 켜진 종류' };
+const CHECK = { 원문: ['원문', 'ok'], 기억: ['기억', 'mem'], 잼: ['잼', 'meas'], 주석: ['분류', 'ann'] };
+
+function nameCell(d) {                          // 실제 이름 + 쉬운 이름 · 마우스를 올리면 설명 · 근거 · 확인 수준
+  const [ck, cls] = CHECK[d.check] ?? [d.check || '', 'ann'];
+  const tip = `${d.type} — ${d.name}${d.note ? `\n${d.note}` : ''}\n근거: ${d.source || '—'} · 확인: ${ck}`;
+  return `<td title="${tip.replaceAll('"', '&quot;')}"><b>${d.type}</b><span class="ez">${d.name}</span><i class="ck ${cls}">${ck}</i></td>`;
+}
+
+function rowsFor(g, out) {                      // [이름 칸, 진짜, 섞은, 켜짐]
+  const R = out.sums.real, C = out.sums[h.brain.brains[1]] ?? {};
+  const lr = (S, t) => (S[`${t}_L`] === undefined ? ['—', 0] : [`${S[`${t}_L`]} / ${S[`${t}_R`]}`, S[`${t}_L`] + S[`${t}_R`]]);
+  const plain = (name, note, a, b, lit) => [`<td><b>${name}</b><span class="ez">${note}</span></td>`, a, b, lit];
+  if (g === 'top') {
+    if (!out.top.length) return [plain('없음', '입력으로 켠 뉴런 말고는 조용함', '', '', false)];
+    return out.top.map((d) => [nameCell(d), `${d.L} / ${d.R}`, `${d.cL} / ${d.cR}`, d.L + d.R > 0]);
+  }
+  const rows = (h.brain.neurons[g] ?? []).map((d) => {
+    const [a, n] = lr(R, d.type);
+    return [nameCell(d), a, lr(C, d.type)[0], n > 0];
+  });
+  if (g === 'eye') rows.unshift(plain('눈 입력', '앞→뒤 움직임 평균 Hz', `${out.input_hz.L.toFixed(1)} / ${out.input_hz.R.toFixed(1)}`, '같음', false));
+  if (g === 'touch') {
+    rows.unshift(plain('켠 촉각 털', touchWhere(out.touch.on), out.touch.on.length ? `${out.touch.neurons}개` : '없음', '같음', out.touch.on.length > 0));
+    rows.push(plain('하강 뉴런 전체', '발화 합', String(out.dn_all.real), String(out.dn_all[h.brain.brains[1]] ?? '—'), false));
+  }
+  return rows;
+}
 
 function showBrain(out) {
-  const R = out.sums.real, C = out.sums[h.brain.brains[1]] ?? {};
-  const lr = (S, k) => (S[`${k}_L`] === undefined ? ['—', 0] : [`${S[`${k}_L`]} / ${S[`${k}_R`]}`, S[`${k}_L`] + S[`${k}_R`]]);
   const want = $('bview').value;
-  let html = `<tr><th>최근 ${h.brain.window_ms} ms · 왼 / 오른</th><th>진짜 배선</th><th>섞은 배선</th></tr>`, last = '';
-  for (const [g, name, note, key] of ROWS) {
-    if (want !== 'all' && want !== g) continue;
-    if (want === 'all' && g !== last) { html += `<tr class="grp"><td colspan="3">${GROUP[g]}</td></tr>`; last = g; }
-    let a, b, lit;
-    if (typeof key === 'function') { [a, b] = key(out); lit = g === 'touch' ? out.touch.on.length > 0 && a !== '0' : false; }
-    else { const [ra, n] = lr(R, key); a = ra; b = lr(C, key)[0]; lit = n > 0; }
-    html += `<tr class="${lit ? 'lit' : ''}"><td>${name}${note ? `<small>${note}</small>` : ''}</td><td>${a}</td><td>${b}</td></tr>`;
+  const order = want === 'all' ? ['body', 'eye', 'touch', 'top'] : [want];
+  let html = `<tr><th>최근 ${h.brain.window_ms} ms · 왼 / 오른</th><th>진짜 배선</th><th>섞은 배선</th></tr>`;
+  for (const g of order) {
+    if (want === 'all') html += `<tr class="grp"><td colspan="3">${GROUP[g]}</td></tr>`;
+    for (const [cell, a, b, lit] of rowsFor(g, out)) html += `<tr class="${lit ? 'lit' : ''}">${cell}<td>${a}</td><td>${b}</td></tr>`;
   }
   $('btab').innerHTML = html;
+  for (const o of $('bview').options) {         // 고르기 상자에 묶음마다 켜진 종류 수
+    if (o.value === 'all') continue;
+    const n = rowsFor(o.value, out).filter((r) => r[3]).length;
+    o.textContent = `${GROUP[o.value]}${n ? ` · 켜짐 ${n}` : ''}`;
+  }
   const c = out.cmd, t = c.turn_deg_s;
   $('tTurn').innerHTML = `${t === 0 ? '' : t > 0 ? '← ' : '→ '}${Math.abs(t).toFixed(0)}<small>°/s</small>`;
   $('tTurnBox').classList.toggle('hot', t !== 0);

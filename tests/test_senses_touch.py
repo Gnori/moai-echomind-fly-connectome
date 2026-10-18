@@ -57,3 +57,29 @@ def test_groups_select_by_nerve_side_and_head_type():
     assert out["머리털_L"].tolist() == [3]
     assert out["더듬이털_R"].tolist() == [5]
     assert out["[기준]눈T4a·T5a_L"].tolist() == [6]
+
+
+def test_neuron_names_known_unknown_and_groups():
+    from moai_echomind_fly.neuron_names import Names
+
+    n = Names()
+    d = n.describe("DNp09")
+    assert d["name"] == "앞으로 걷기 명령" and d["check"] in {"원문", "기억", "잼"}
+    u = n.describe("없는종류", "descending_neuron", "")
+    assert u["check"] == "주석" and "하강 뉴런" in u["name"]
+    assert n.describe("없는종류", "cb_intrinsic", "Kenyon_Cell")["name"].startswith("버섯체")
+    g = n.groups()
+    assert {"body", "eye", "touch"} <= set(g) and "DNp09" in g["body"]
+    for ts in g.values():   # 표 묶음의 종류는 모두 쉬운 이름이 있다(분류로 떨어지지 않음)
+        assert all(n.describe(t)["check"] != "주석" for t in ts)
+
+
+def test_read_types_cover_motor_and_groups():
+    from moai_echomind_fly.eyeworld.brainlink import read_types
+
+    motor = config.load("eyeworld")["view_brain"]["motor"]
+    types = read_types(motor)
+    assert len(types) == len(set(types))
+    for m in motor.values():
+        if isinstance(m, dict):
+            assert set(m["types"]) <= set(types)

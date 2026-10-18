@@ -74,6 +74,17 @@ def me_start(world, vcfg: dict, colliders: list[dict], body_r: float) -> dict:
             "clearance_m": round(gap, 2)}
 
 
+def neuron_rows() -> dict[str, list[dict]]:
+    """표 묶음마다 줄(종류 하나 = 줄 하나).
+
+    실제 이름 + 쉬운 이름 · 설명 · 근거 · 확인 수준(config/neurons.yaml).
+    """
+    from moai_echomind_fly.neuron_names import Names
+
+    n = Names()
+    return {g: [{"type": t, **n.describe(t)} for t in ts] for g, ts in n.groups().items()}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scene", default="arena-b")
@@ -161,7 +172,8 @@ def main() -> None:
         head["brain"] = {"port": int(vb["port"]), "dt_ms": float(vb["dt_ms"]),
                          "dial": vb["dial"], "motor": vb["motor"],
                          "brains": list(vb["brains"]), "window_ms": float(vb["window_ms"]),
-                         "touch": vb["touch"]}
+                         "touch": vb["touch"],
+                         "neurons": neuron_rows()}
     (out / f"{a.scene}.json").write_text(json.dumps(head, ensure_ascii=False), encoding="utf-8")
     port = int(rcfg["view_port"])
     srv = StaticServer(port=port, table={**mounts(), "/view/": out})

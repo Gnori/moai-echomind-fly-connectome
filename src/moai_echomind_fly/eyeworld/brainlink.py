@@ -29,45 +29,55 @@ from .. import config
 from .. import graph as graph_mod
 from ..eye.frontend import FrontendV3
 from ..loop.signals import side_of
+from ..neuron_names import Names
 from ..senses.touch import contact_groups, groups
 from .render import pack, unpack
 from .safety import check_port
 
-READ = {  # 몸을 움직이는 하강 뉴런(설정 view_brain.motor) + 보기만 하는 것
-    "DNp09": ["DNp09"],
-    "MDN": ["MDN"],
-    "DNa02": ["DNa02"],
-    "DNa01": ["DNa01"],
-    "GF": ["DNp01"],
-    "DNp02": ["DNp02"],
-    "LC4": ["LC4"],
-    "LPLC2": ["LPLC2"],
-    "HS": ["HSE", "HSN", "HSS"],
-}
-KEY = {t: k for k, v in READ.items() for t in v}  # 종류 이름 → 읽기 묶음
+
+def read_types(motor: dict) -> list[str]:
+    """표에 줄로 보일 종류(config/neurons.yaml groups) + 몸을 움직이는 종류(view_brain.motor).
+
+    겹침 없이 · 순서 유지.
+    """
+    out: list[str] = []
+    motor_types = [m["types"] for m in motor.values() if isinstance(m, dict)]
+    for v in [*Names().groups().values(), *motor_types]:
+        out += [t for t in v if t not in out]
+    return out
 
 
-def labels(g, extra: dict[str, list[str]] | None = None) -> tuple[np.ndarray, list[str]]:
-    """뉴런마다 읽기 묶음 번호(없으면 −1) · 묶음 이름(종류_눈).
+def labels(g, types: list[str]) -> tuple[np.ndarray, list[str]]:
+    """뉴런마다 읽기 줄 번호(없으면 −1) · 줄 이름(종류_눈).
 
-    extra = 더 읽을 묶음(촉각 하강 뉴런).
+    종류 하나 = 줄 하나(묶어 더하지 않음).
     """
     typ = g.columns["type"].astype(str)
     side = side_of(g)
     lab = np.full(g.n, -1, np.int64)
     names = []
-    for k, v in {**READ, **(extra or {})}.items():
+    for t in types:
         for s in ("L", "R"):
-            lab[np.isin(typ, v) & (side == s)] = len(names)
-            names.append(f"{k}_{s}")
+            lab[(typ == t) & (side == s)] = len(names)
+            names.append(f"{t}_{s}")
     return lab, names
 
 
-def _worker(brain: str, seed: int, entry: np.ndarray, dt_ms: float, threads: int, extra: dict,
-            conn) -> None:
+def type_side_ids(g) -> tuple[np.ndarray, np.ndarray]:
+    """뉴런마다 (종류 번호 × 2 + 오른쪽이면 1) · 종류 이름 목록.
+
+    프로세스마다 같은 순서(np.unique).
+    """
+    names, tid = np.unique(g.columns["type"].astype(str), return_inverse=True)
+    return tid.astype(np.int64) * 2 + (side_of(g) == "R"), names
+
+
+def _worker(brain: str, seed: int, entry: np.ndarray, dt_ms: float, threads: int,
+            types: list[str], conn) -> None:
     """뇌 하나(프로세스) — 발화율을 받으면 dt 만큼 달린다.
 
-    돌려주는 것: 묶음별 발화 수 · 걸린 시간 · 전체 발화 · 하강 뉴런 전체 발화.
+    돌려주는 것: 줄별 발화 수 · 걸린 시간 · 전체 발화 · 하강 뉴런 전체 발화 ·
+    입력으로 켠 뉴런을 뺀 (종류 × 쪽) 발화(지금 많이 켜진 종류용).
     """
     import torch
 
@@ -76,8 +86,11 @@ def _worker(brain: str, seed: int, entry: np.ndarray, dt_ms: float, threads: int
     torch.set_num_threads(threads)
     base = graph_mod.load()
     g = graph_mod.brain_graph(base, brain)
-    lab, names = labels(base, extra)
+    lab, names = labels(base, types)
     dn = base.columns["superclass"].astype(str) == "descending_neuron"
+    ts, _ = type_side_ids(base)
+    own = np.zeros(base.n, bool)
+    own[entry] = True
     eng = Engine(g, LIFParams.from_config(), device="cpu", seed=seed)
     eng.set_poisson(entry, np.zeros(len(entry)))
     conn.send(("ready", names))
@@ -95,7 +108,8 @@ def _worker(brain: str, seed: int, entry: np.ndarray, dt_ms: float, threads: int
         _, nn = eng.spikes_since(s0)
         ln = lab[nn]
         cnt = np.bincount(ln[ln >= 0], minlength=len(names))
-        conn.send((cnt, time.perf_counter() - t0, len(nn), int(dn[nn].sum())))
+        keys, kc = np.unique(ts[nn[~own[nn]]], return_counts=True)
+        conn.send((cnt, time.perf_counter() - t0, len(nn), int(dn[nn].sum()), keys, kc))
 
 
 class BrainLink:
@@ -119,7 +133,14 @@ class BrainLink:
         self.t_pos = {k: np.searchsorted(self.t_entry, v) for k, v in self.tgroups.items()}
         self.n_vis = len(self.fe.entry)
         entry = np.concatenate([self.fe.entry, self.t_entry])
-        extra = {"촉각DN": list(self.tcfg["show"])}
+        self.types = read_types(self.cfg["motor"])
+        self.names_cfg = Names()
+        self.top_n = int(self.names_cfg.cfg["top_n"])
+        self.ts, self.type_names = type_side_ids(base)
+        sup = base.columns["superclass"].astype(str)
+        cls = base.columns["class"].astype(str)
+        first = np.unique(self.ts // 2, return_index=True)[1]   # 종류마다 첫 뉴런의 주석
+        self.type_meta = {int(t): (sup[i], cls[i]) for t, i in zip(self.ts[first] // 2, first)}
         per = max(1, (os.cpu_count() or 2) // len(self.cfg["brains"]))
         threads = min(int(self.cfg["threads"]), per)
         ctx = mp.get_context("spawn")
@@ -128,7 +149,7 @@ class BrainLink:
             parent, child = ctx.Pipe()
             p = ctx.Process(
                 target=_worker,
-                args=(b, int(self.cfg["seed"]), entry, self.dt_ms, threads, extra, child),
+                args=(b, int(self.cfg["seed"]), entry, self.dt_ms, threads, self.types, child),
                 daemon=True,
             )
             p.start()
@@ -139,6 +160,7 @@ class BrainLink:
         n_win = int(round(float(self.cfg["window_ms"]) / self.dt_ms))
         self.win = {b: deque(maxlen=n_win) for b in self.brains}
         self.win_dn = {b: deque(maxlen=n_win) for b in self.brains}
+        self.win_top = {b: deque(maxlen=n_win) for b in self.brains}
         self.body = ecfg["world"]["body"]
         self.steps = 0
         self.t_wall: float | None = None
@@ -149,7 +171,7 @@ class BrainLink:
         self.fe.reset()
         for _, conn in self.brains.values():
             conn.send("reset")
-        for w in [*self.win.values(), *self.win_dn.values()]:
+        for w in [*self.win.values(), *self.win_dn.values(), *self.win_top.values()]:
             w.clear()
 
     def step(self, img: np.ndarray, dial: float, contacts: list[dict] | None = None) -> dict:
@@ -169,19 +191,20 @@ class BrainLink:
         sums = {}
         own = {}
         for b, (_, conn) in self.brains.items():
-            cnt, sec, n_spk, n_dn = conn.recv()
+            cnt, sec, n_spk, n_dn, keys, kc = conn.recv()
             self.win[b].append(cnt)
             self.win_dn[b].append(n_dn)
+            self.win_top[b].append((keys, kc))
             own[b] = {"ms": round(1000 * sec, 1), "spikes": int(n_spk)}
             sums[b] = dict(zip(self.names, map(int, np.sum(self.win[b], axis=0))))
         t2 = time.time()
         m, r, b = self.cfg["motor"], sums["real"], self.body
 
         def both(part: str) -> int:
-            return sum(r[f"{KEY[t]}_{s}"] for t in m[part]["types"] for s in "LR")
+            return sum(r[f"{t}_{s}"] for t in m[part]["types"] for s in "LR")
 
         def diff(part: str) -> int:
-            return sum(r[f"{KEY[t]}_R"] - r[f"{KEY[t]}_L"] for t in m[part]["types"])
+            return sum(r[f"{t}_R"] - r[f"{t}_L"] for t in m[part]["types"])
 
         speed = (float(m["forward"]["m_s_per_spike"]) * both("forward")
                  - float(m["backward"]["m_s_per_spike"]) * both("backward"))
@@ -199,12 +222,42 @@ class BrainLink:
             "touch": {"on": on, "neurons": int((touch > 0).sum()),
                       "rate_hz": float(self.tcfg["rate_hz"])},
             "dn_all": {b: int(sum(w)) for b, w in self.win_dn.items()},
+            "top": self.top(),
             "dial": float(dial),
             "sim_ms": self.steps * self.dt_ms,
             "ms": {"frontend": round(1000 * (t1 - t0), 1), "brains": round(1000 * (t2 - t1), 1),
                    "own": own},
             "wall_s": time.time() - self.t_wall,
         }
+
+    def _window_counts(self, b: str) -> dict[int, int]:
+        out: dict[int, int] = {}
+        for keys, kc in self.win_top[b]:
+            for k, c in zip(keys.tolist(), kc.tolist()):
+                out[k] = out.get(k, 0) + c
+        return out
+
+    def top(self) -> list[dict]:
+        """진짜 배선에서 최근 창에 가장 많이 발화한 종류(입력으로 켠 뉴런 뺌).
+
+        섞은 배선의 같은 종류를 나란히.
+        """
+        real = self._window_counts("real")
+        others = [b for b in self.brains if b != "real"]
+        ctl = self._window_counts(others[0]) if others else {}
+        per: dict[int, list[int]] = {}
+        for k, c in real.items():
+            per.setdefault(k // 2, [0, 0, 0, 0])[k % 2] += c
+        for k, c in ctl.items():
+            if k // 2 in per:
+                per[k // 2][2 + k % 2] += c
+        rows = sorted(per.items(), key=lambda kv: -(kv[1][0] + kv[1][1]))[: self.top_n]
+        out = []
+        for t, (lt, rt, cl, cr) in rows:
+            sup, cls = self.type_meta.get(t, ("", ""))
+            d = self.names_cfg.describe(str(self.type_names[t]), sup, cls)
+            out.append({"type": str(self.type_names[t]), "L": lt, "R": rt, "cL": cl, "cR": cr, **d})
+        return out
 
     async def _handler(self, ws) -> None:
         from websockets.exceptions import ConnectionClosed

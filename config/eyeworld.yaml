@@ -64,7 +64,7 @@ view_brain:               # 보기 창 닫힌 고리(요구자 10-17 "초파리 
       - {name: 앞, max_deg: 45, parts: [머리털, 앞다리]}
       - {name: 옆, max_deg: 135, parts: [가운데다리, 날개·앞등]}
       - {name: 뒤, max_deg: 180, parts: [뒷다리, 뒷등]}
-    show: [DNge122, DNg84, DNg15, DNg87, DNge132, DNg35, DNg83, DNg20]   # 머리 털이 켜는 하강 뉴런(touch-probe 10-18 · 몸 규약 밖 · 보기만 · 행동은 문헌에 "모름" — 노트 18 §9)
+    # (10-18 R-2719: 보일 하강 뉴런 목록 show 는 config/neurons.yaml groups.touch 로 옮김 · 쉬운 이름과 함께)
   threads: 2              # 뇌 하나의 CPU 실 수 — 10-17 재기(10 ms 걸음 · 입구 8 Hz): 1 실 51 · 2 실 47 · 4 실 67 · 9 실 66 · 18 실 109 ms
 
 eye:                      # eye-v1 — 겹눈 기하(설계 문서 3.2)

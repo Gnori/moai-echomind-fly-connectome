@@ -1,0 +1,96 @@
+# 뉴런 쉬운 이름(R-2719 · 요구자 10-18 "실제 뉴런(이름) 종류별로 · 사람들이 이해할 수 있는 명칭도 함께")
+# 역할을 지어내지 않는다 — 문헌에 알려진 종류만 이름을 붙이고, 모르면 "모름". 목록에 없는 종류는 연결 지도 주석
+# (superclass · class)의 쉬운 이름으로 보인다. 확인 수준(check):
+#   원문 = research 세션이 문헌 원문으로 확인(연구 노트) · 기억 = 문헌 기억으로 적음(원문 확인 전) · 잼 = 이 저장소에서 잰 것
+version: neuron-names-v1
+
+types:
+  # 몸을 움직이는 하강 뉴런(보기 창 몸 = 이 발화 그대로 · config/eyeworld.yaml view_brain.motor)
+  DNp09: {name: 앞으로 걷기 명령, note: "P9 — 켜면 앞으로 걷는다", source: "Bidaye 2020", check: 기억}
+  MDN: {name: 뒷걸음 명령, note: "문워커 — 켜면 뒤로 걷는다", source: "Bidaye 2014", check: 기억}
+  DNa02: {name: 돌기 명령, note: "한쪽이 세면 그쪽으로 돈다 · 여기서 눈 움직임 감지(T4a · T5a)를 켜면 같은 쪽이 켜짐", source: "Rayshubskiy 2020 · 10-16 잼", check: 기억}
+  DNa01: {name: 돌기 명령, note: "한쪽이 세면 그쪽으로 돈다", source: "Rayshubskiy 2020 · Yang 2023", check: 기억}
+  DNp01: {name: 도망 뛰어오름(거대 섬유 GF), note: "다가오는 것에 날아오르는 도망", source: "von Reyn 2014", check: 기억}
+  DNp02: {name: 다가옴 도망 하강 뉴런, note: "다가옴 감지(LC4)에서 많이 받음 — 여기 연결 몫 잼 · 행동은 원문 확인 전", source: "10-18 잼(touch-entry 기준 무리)", check: 잼}
+  # 눈 · 도망
+  LC4: {name: 다가옴 감지(소엽 기둥 투사), note: "커지며 다가오는 물체에 반응 · 도망(GF)으로 이어짐", source: "von Reyn 2017 · 10-16 잼", check: 기억}
+  LPLC2: {name: 다가옴 감지(사방으로 퍼지는 움직임), note: "입력의 38.5 % 가 움직임 감지 T4/T5", source: "Klapoetke 2017 · 노트 17", check: 원문}
+  HSE: {name: 수평 몸 돎 감지(가운데 시야), note: "입력의 86 % 가 앞→뒤 움직임 감지(T5a + T4a)", source: "노트 17 V20", check: 원문}
+  HSN: {name: 수평 몸 돎 감지(위 시야), note: "소엽판 수평 세포", source: "노트 17", check: 기억}
+  HSS: {name: 수평 몸 돎 감지(아래 시야), note: "소엽판 수평 세포", source: "노트 17", check: 기억}
+  VS: {name: 세로 움직임 감지, note: "입력은 아래쪽 움직임 층(T5d · T4d)", source: "노트 17 V20", check: 원문}
+  T4a: {name: 움직임 감지 · 밝아지는 가장자리 · 앞→뒤, note: "눈 입력(앞단이 계산해 넣음)", source: "노트 17 §6.1", check: 원문}
+  T4b: {name: 움직임 감지 · 밝아지는 가장자리 · 뒤→앞, note: "눈 입력", source: "노트 17 §6.1", check: 원문}
+  T4c: {name: 움직임 감지 · 밝아지는 가장자리 · 위로, note: "눈 입력", source: "노트 17 §6.1", check: 원문}
+  T4d: {name: 움직임 감지 · 밝아지는 가장자리 · 아래로, note: "눈 입력", source: "노트 17 §6.1", check: 원문}
+  T5a: {name: 움직임 감지 · 어두워지는 가장자리 · 앞→뒤, note: "눈 입력", source: "노트 17 §6.1", check: 원문}
+  T5b: {name: 움직임 감지 · 어두워지는 가장자리 · 뒤→앞, note: "눈 입력", source: "노트 17 §6.1", check: 원문}
+  T5c: {name: 움직임 감지 · 어두워지는 가장자리 · 위로, note: "눈 입력", source: "노트 17 §6.1", check: 원문}
+  T5d: {name: 움직임 감지 · 어두워지는 가장자리 · 아래로, note: "눈 입력", source: "노트 17 §6.1", check: 원문}
+  Tm2: {name: 어두워짐 감지(시각 중간), note: "눈 입력 · LC4 쪽", source: "노트 17 §10", check: 원문}
+  Tm4: {name: 어두워짐 감지(시각 중간), note: "눈 입력 · LC4 쪽", source: "노트 17 §10", check: 원문}
+  T2: {name: 밝아짐 · 어두워짐 감지(시각 중간), note: "눈 입력 · LC4 쪽", source: "노트 17 §10", check: 원문}
+  Tm3: {name: 밝아짐 감지(시각 중간), note: "눈 입력", source: "노트 17 §10", check: 원문}
+  # 머리 털이 켜는 하강 뉴런(촉각 R-6031 · 노트 18 §9 — 행동은 문헌에 없음)
+  DNge122: {name: 머리 털 하강 뉴런 · 행동 모름, note: "머리 털 감각으로 되돌아가는 억제(GABA) 짝", source: "노트 18 §9 · Calle-Schuler 2026", check: 원문}
+  DNg20: {name: 머리 털 하강 뉴런 · 행동 모름, note: "머리 털 감각으로 되돌아가는 억제(GABA) 짝 · 다리 신경절 감각 중추로", source: "노트 18 §9", check: 원문}
+  DNg83: {name: 머리 털 하강 뉴런 · 행동 모름, note: "억제(GABA) · 앞다리 신경절로", source: "노트 18 §9", check: 원문}
+  DNg84: {name: 머리 털 하강 뉴런 · 행동 모름, note: "반대쪽 앞다리 신경절로", source: "노트 18 §9", check: 원문}
+  DNg15: {name: 머리 털 하강 뉴런 · 행동 모름, note: "더듬이 기계 감각 중추에서 받음(AMMC-Db5 · nagini)", source: "노트 18 §9", check: 원문}
+  DNg87: {name: 머리 털 하강 뉴런 · 행동 모름, note: "여러 다리 신경절로", source: "노트 18 §9", check: 원문}
+  DNge132: {name: 머리 털 하강 뉴런 · 행동 모름, note: "눈 · 머리 털 하강 뉴런 무리", source: "노트 18 §9", check: 원문}
+  DNg35: {name: 머리 털 하강 뉴런 · 행동 모름, note: "가슴 근육 운동 뉴런을 겨눔(연결 지도)", source: "노트 18 §9", check: 원문}
+  DNge104: {name: 머리 털 · 다리 털 하강 뉴런 · 행동 모름, note: "눈 · 머리 털 하강 뉴런 무리", source: "노트 18 §9", check: 원문}
+  # 감각 입력
+  BM_InOm: {name: 눈 사이 털 감각, note: "빛으로 켜면 눈 · 머리 손질과 뒤로 물러남(감각 쪽 문헌)", source: "노트 18 §9 H9", check: 원문}
+
+# 목록에 없는 종류 — 주석 class 가 있으면 그것, 없으면 superclass
+classes:
+  Kenyon_Cell: 버섯체 기억 뉴런(KC)
+  CX: 중심 복합체 뉴런(방향 · 길찾기)
+  ALPN: 냄새 투사 뉴런
+  ALLN: 냄새엽 국소 뉴런
+  ALIN: 냄새엽 안쪽 뉴런
+  ALON: 냄새엽 출력 뉴런
+  DAN: 도파민 뉴런(보상 · 처벌 신호)
+  MBON: 버섯체 출력 뉴런
+  SEZPN: 식도 아래 투사 뉴런
+  olfactory: 냄새 수용 뉴런
+  gustatory: 맛 감각 뉴런
+  hygrosensory: 습도 감각 뉴런
+  thermosensory: 온도 감각 뉴런
+  chemosensory: 화학 감각 뉴런
+  visual: 광수용체(눈 감각)
+  mechanosensory_tactile: 촉각 털 감각 뉴런
+  mechanosensory_proprioceptive: 자기 몸 감각 뉴런
+  mechanosensory: 기계 감각 뉴런(더듬이 · 털)
+  unknown_sensory: 감각 뉴런(종류 모름)
+  ol_bilateral: 두 시각엽을 잇는 뉴런
+
+superclasses:
+  ol_intrinsic: 시각엽 안 뉴런
+  cb_intrinsic: 중심뇌 안 뉴런
+  vnc_intrinsic: 가슴 신경절 안 뉴런
+  visual_projection: 시각 투사 뉴런(시각엽 → 중심뇌)
+  visual_centrifugal: 시각엽으로 되돌아가는 뉴런
+  descending_neuron: 하강 뉴런(뇌 → 몸)
+  ascending_neuron: 오름 뉴런(몸 → 뇌)
+  vnc_sensory: 몸 감각 뉴런
+  cb_sensory: 머리 감각 뉴런
+  ol_sensory: 눈 감각 뉴런
+  sensory_ascending: 감각 오름 뉴런
+  sensory_descending: 감각 하강 뉴런
+  vnc_motor: 운동 뉴런(다리 · 날개)
+  cb_motor: 운동 뉴런(머리)
+  vnc_efferent: 가슴 내보냄 뉴런
+  cb_efferent: 머리 내보냄 뉴런
+  cb_endocrine: 내분비 뉴런(머리)
+  vnc_endocrine: 내분비 뉴런(가슴)
+  ENS: 내장 신경 뉴런
+
+# 보기 창 표 묶음(종류 하나 = 줄 하나 · 왼 / 오른)
+groups:
+  body: [DNp09, MDN, DNa02, DNa01, DNp01]
+  eye: [LC4, LPLC2, HSE, HSN, HSS, DNp02]
+  touch: [DNge122, DNg84, DNg15, DNg87, DNge132, DNg35, DNg83, DNg20]
+top_n: 10                  # "지금 많이 켜진 종류" — 진짜 배선에서 최근 창 발화가 많은 종류(입력으로 켠 뉴런 뺌)
