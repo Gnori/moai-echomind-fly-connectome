@@ -148,7 +148,7 @@ def main() -> None:
         "eye_every_ms": float(vcfg["eye_every_ms"]),
         "fly_pos": fly.pos.tolist(),
         "fly_yaw": float(fly.yaw),
-        "fly_radius": float(fly.radius),
+        "fly_radius": float(ecfg["view_brain"]["fly_body"]["radius_m"]),
         "colliders": colliders,
         "me_start": me_start(world, vcfg, colliders, float(b["radius_m"])),
         "body": {"walk_m_s": float(b["walk_max_m_s"]), "run_m_s": float(b["run_max_m_s"]),
@@ -156,6 +156,9 @@ def main() -> None:
                  "turn_max_deg_s": float(b["turn_max_deg_s"]),
                  "eye_m": float(b["height_m"]) * float(b["eye_frac"])},
         "brain": None,
+        "fly_body": ecfg["view_brain"]["fly_body"],   # 10-18 초파리 크기(보기 창만)
+        "eye_rgb": [float(x) for x in vcfg["eye_rgb"]],
+        "view_marker": {k: float(v) for k, v in vcfg["marker"].items()},
     }
     link = None
     guard = contextlib.ExitStack()

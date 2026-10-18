@@ -36,6 +36,8 @@ render:                   # V1 렌더러(설계 문서 2.1 · 2.6) — 127.0.0.1
   view_serve_min: 60      # 보기 서버를 이 분 뒤 닫음(띄워 놓고 잊지 않게)
 
 view:                     # 보기 창(F-008 · 요구자 10-17 "내 캐릭 · 뇌 연결 캐릭 따로 · 1인칭 · 3인칭 · 자유카메라") — 판정 아님
+  marker: {ring_m: 0.3, pole_m: 1.8}   # 초파리 크기 몸이 너무 작아 찾는 표지(바닥 고리 지름 · 위로 솟은 기둥 높이 · 보이게만 · 초파리 눈 그림에서는 뺌)
+  eye_rgb: [0.2, 0.7, 0.1]         # 초파리 눈 그림 밝기 = 빨강 · 초록 · 파랑 무게(선언 · 렌더러와 같음) — R-3086 2.2 에서 광수용체 감도로 바꿀 자리
   me_start_bearing_deg: -30.0      # 내 캐릭터 시작 = 초파리 뇌 캐릭터 몸 기준 이 방위(오른쪽 다가옴 길 · arena-b 는 ±15° 안에 물체 없음)
   me_start_dist_m: 4.0             # 그 거리 · 초파리 뇌 캐릭터를 바라봄(10-17: 고정 자리 [2.5, 0, −3] 은 덤불에 갇힘 — 요구자)
   eye_every_ms: 150                # 초파리 눈 그림(실시간 패널)을 이 간격으로 다시 그림 — 큐브맵 12 면 × 32 px
@@ -48,17 +50,27 @@ view_brain:               # 보기 창 닫힌 고리(요구자 10-17 "초파리 
   window_ms: 100          # 발화를 이 창으로 셈
   # 몸 = 하강 뉴런 그대로(10-17 요구자 "초파리가 지가 몸을 움직이게" — 지어낸 행동 규칙 없음). 창 안 발화 수 → 속도 환산만 선언.
   motor:
-    forward: {types: [DNp09], m_s_per_spike: 0.1}     # DNp09 = P9 · 앞으로 걷기(Bidaye 2020) · 창 안 두 쪽 합 1 발 = 0.1 m/s
-    backward: {types: [MDN], m_s_per_spike: 0.1}      # MDN = 뒷걸음(Bidaye 2014) · 같은 환산
+    forward: {types: [DNp09], m_s_per_spike: 0.0025}  # DNp09 = P9 · 앞으로 걷기(Bidaye 2020) · 10-18 초파리 크기: 사람 몸 0.1 m/s × (초파리 앞 최대 / 사람 걷기 1.3) — 같은 발화 = 같은 몫의 최대 속도
+    backward: {types: [MDN], m_s_per_spike: 0.0025}   # MDN = 뒷걸음(Bidaye 2014) · 같은 환산
     turn: {types: [DNa02, DNa01], deg_s_per_spike: 13.5}   # 오른 − 왼(같은 쪽으로 돎 · Rayshubskiy 2020 · Yang 2023) · V0 에서 맞춘 값
-    jump: {types: [DNp01], spikes: 1, hop_m: 0.25, hop_ms: 300}   # GF = 도망 뛰어오름(von Reyn 2014) — 창 안 1 발이면 제자리 뛰어오름(보이게만 · 옮기지 않음)
-    limits: body                                       # 속도 · 돌기 상한 = 몸 규약(world.body walk/run/turn max)
+    jump: {types: [DNp01], spikes: 1, hop_m: 0.005, hop_ms: 300}  # GF = 도망 뛰어오름(von Reyn 2014) — 창 안 1 발이면 제자리 뛰어오름(보이게만 · 옮기지 않음 · 높이는 fly_body 와 같은 근거)
+    limits: fly_body                                   # 속도 · 돌기 상한 = 아래 fly_body(10-18 · 전에는 world.body 사람 몸)
+  fly_body:               # 보기 창 초파리 뇌 캐릭터 몸 — 초파리 크기(R-3086 · 요구자 10-18 "사실에 가깝게") · 잠근 시험(V0 · V1 · F0 · V0d)은 world.body(사람) 그대로
+    version: fly-body-v1
+    check: "기억 · research 확인 전(10-18 일감)"   # 숫자마다 확인되면 이 칸과 값을 고친다
+    eye_m: 0.0008           # 땅에서 눈 중심까지
+    eye_sep_m: 0.0006       # 두 눈 중심 사이
+    radius_m: 0.0013        # 몸 원기둥(몸 길이 약 2.5 mm 의 반)
+    fwd_max_m_s: 0.03       # 앞으로 걷기 최대
+    back_max_m_s: 0.01      # 뒷걸음 최대
+    turn_max_deg_s: 300.0   # 걸을 때 돌기 최대
+    near_m: 0.0002          # 눈 카메라 가까운 면(눈 높이보다 작게)
   # (지운 것 · 10-17: walk_m_s 0.6 → 0 · escape → 0.5 s 뒤로 · rest 1 s — 모두 손으로 지어낸 규칙이었음)
   dial: {default: 1.0, max: 16.0}   # 앞단 발화율 × 다이얼(손으로 · 1 = 잰 그대로 · r_max 150 Hz 로 자름)
   extra_gb: 8.0           # 가드 — 뇌 둘(프로세스마다 그래프 · LIF) + 앞단 · 실측(10-17): 본 프로세스 2.3 GB · 뇌마다 1.6 GB
   touch:                  # 닿음 신호(요구자 10-18 "머리 털 반응을 보기 창에") — 감각기 모형(선언) · 몸 행동 규칙 아님(몸은 하강 뉴런 그대로)
     rate_hz: 100.0         # 닿아 있는 동안 그 무리 발화율 = 몸 촉각 인코더 최대(config/task.yaml touch.rate_max_hz) · 다이얼 안 받음
-    margin_m: 0.05         # 몸 원기둥 사이 틈이 이보다 작으면 닿음(보기 창 밀어내기 뒤에는 틈 0)
+    margin_m: 0.0003       # 몸 원기둥 사이 틈이 이보다 작으면 닿음(10-18 초파리 크기: 사람 몸 0.05 × 몸 반지름 비 · 밀어내기 뒤에는 틈 0)
     center_deg: 10         # 방위가 정면 · 정뒤 ± 이 안이면 좌우 둘 다
     sectors:               # 몸 기준 방위 |b| ≤ max_deg 인 첫 구역 → 부위(touch_entry 무리 이름 · 닿은 쪽)
       - {name: 앞, max_deg: 45, parts: [머리털, 앞다리]}

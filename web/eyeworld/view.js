@@ -36,7 +36,8 @@ const nodes = {};
 let meNode, meTag, flyNode, ring, collide = true, drag = null, play = null, eyeBusy = false, lastEye = 0;
 const fly = { pos: [0, 0, 0], yaw: 0 };         // 초파리 뇌 캐릭터 자세(뇌 연결이 켜지면 뇌 명령으로 움직임)
 let brain = null, dial = 1, tick = 0, hop = 0;
-const notInEye = new Set();                     // 초파리 눈 그림에서 뺄 것(제 몸 · 이름표 · 고리)
+const notInEye = new Set();
+const markers = [];                             // 찾기 표지(고리 · 기둥 · 이름표) — 초파리 눈 시점에서는 숨김                     // 초파리 눈 그림에서 뺄 것(제 몸 · 이름표 · 고리)
 
 async function loadContainer(url) {
   if (B.LoadAssetContainerAsync) return await B.LoadAssetContainerAsync(url, scene);
@@ -61,7 +62,8 @@ function unpack(buf) {
 
 function flyRig() {                             // 세계 서버 eye_rig 와 같은 식(앞 · 뒤 · 왼 · 오 · 위 · 아래 · 왼눈 = 머리 + 왼 × 간격/2)
   const f = fwd(fly.yaw), l = lft(fly.yaw), U = [0, 1, 0], neg = (a) => a.map((x) => -x);
-  const head = [fly.pos[0], h.body.eye_m, fly.pos[2]], k = h.body.eye_sep_m / 2;   // 뛰어오름은 보이게만 — 눈은 땅 기준 그대로
+  const fb = h.fly_body;                         // 10-18 초파리 크기 몸(눈 높이 · 눈 사이 — config view_brain.fly_body)
+  const head = [fly.pos[0], fb.eye_m, fly.pos[2]], k = fb.eye_sep_m / 2;   // 뛰어오름은 보이게만 — 눈은 땅 기준 그대로
   const faces = [[f, U], [neg(f), U], [l, U], [neg(l), U], [U, neg(f)], [neg(U), f]]
     .map(([forward, up]) => ({ forward, up }));
   return [
@@ -113,6 +115,31 @@ function avatar(container, id, rgb) {
   return node;
 }
 
+function flyBody(fb, mk) {                      // 초파리 크기 몸(가슴 · 배 · 머리 · 빨간 겹눈 둘) + 표지 기둥 — 앞 = +z(yaw 0)
+  const node = new B.TransformNode('ava:flybrain', scene);
+  const L = 2 * fb.radius_m, y = fb.eye_m * 0.75;
+  const mat = (name, rgb, glow = 0) => {
+    const m = new B.StandardMaterial(name, scene);
+    m.diffuseColor = new B.Color3(...rgb); m.specularColor = new B.Color3(0.15, 0.15, 0.15);
+    if (glow) m.emissiveColor = new B.Color3(...rgb.map((c) => c * glow));
+    return m;
+  };
+  const part = (name, dims, pos, m) => {
+    const p = B.MeshBuilder.CreateSphere(name, { diameterX: dims[0], diameterY: dims[1], diameterZ: dims[2], segments: 12 }, scene);
+    p.position.set(...pos); p.material = m; p.parent = node; return p;
+  };
+  const body = mat('flyBodyMat', [0.55, 0.42, 0.25]);
+  part('flyThorax', [0.42 * L, 0.36 * L, 0.38 * L], [0, y, -0.3 * L], body);   // 머리(눈)가 몸 자리 가운데 — 눈 자리(flyRig)와 맞춤
+  part('flyAbdomen', [0.40 * L, 0.32 * L, 0.55 * L], [0, y * 0.9, -0.72 * L], mat('flyAbdMat', [0.35, 0.27, 0.17]));
+  part('flyHead', [0.34 * L, 0.28 * L, 0.24 * L], [0, fb.eye_m, 0], body);
+  const eye = mat('flyEyeMat', [0.75, 0.08, 0.06], 0.25);
+  for (const sx of [1, -1]) part('flyEye', [0.14 * L, 0.24 * L, 0.18 * L], [sx * fb.eye_sep_m / 2, fb.eye_m, 0.02 * L], eye);
+  const pole = B.MeshBuilder.CreateCylinder('flyPole', { height: mk.pole_m, diameter: 0.006, tessellation: 8 }, scene);
+  pole.position.set(0, mk.pole_m / 2 + 0.01, 0); pole.parent = node; markers.push(pole);
+  const pm = mat('flyPoleMat', [0.95, 0.76, 0.3], 1); pm.alpha = 0.55; pole.material = pm;
+  return node;
+}
+
 function label(text, css, parent, y) {
   const W = 512, H = 128;
   const plane = B.MeshBuilder.CreatePlane(`lbl:${text}`, { width: 1.4, height: 0.35 }, scene);
@@ -144,6 +171,8 @@ function label(text, css, parent, y) {
 function setMode(m) {
   mode = m;
   $('cam').value = String(m);
+  cam.minZ = m === 4 ? 2 * h.fly_body.near_m : 0.05;   // 초파리 눈 높이(1 mm 아래)에서는 가까운 면도 작게
+  for (const mk of markers) mk.setEnabled(m !== 4);
   if (m === 3) {
     cam.attachControl(canvas, true);
   } else {
@@ -213,7 +242,8 @@ async function grabEyes() {                     // 초파리 뇌 캐릭터 두 �
       rtt.render();
       const px = await rtt.readPixels();
       const o = (e * 6 + f) * N * N;
-      for (let i = 0; i < N * N; i++) img[o + i] = Math.round(0.2 * px[4 * i] + 0.7 * px[4 * i + 1] + 0.1 * px[4 * i + 2]);
+      const [wr, wg, wb] = h.eye_rgb;           // 밝기 무게(config view.eye_rgb)
+      for (let i = 0; i < N * N; i++) img[o + i] = Math.round(wr * px[4 * i] + wg * px[4 * i + 1] + wb * px[4 * i + 2]);
     }
   }
   const cv = $('eyecv'), ctx = cv.getContext('2d');
@@ -394,7 +424,7 @@ async function main() {
   scene.activeCamera = cam;
   eyeCam = new B.UniversalCamera('flyEye', B.Vector3.Zero(), scene);   // 장면 카메라와 따로(렌더러 10-17 고침과 같은 까닭)
   eyeCam.fovMode = B.Camera.FOVMODE_VERTICAL_FIXED;
-  eyeCam.fov = Math.PI / 2; eyeCam.minZ = 0.05; eyeCam.maxZ = 1000;
+  eyeCam.fov = Math.PI / 2; eyeCam.minZ = h.fly_body.near_m; eyeCam.maxZ = 300;
   rtt = new B.RenderTargetTexture('flyEyeRT', { width: h.face_px, height: h.face_px }, scene, false, true,
     B.Constants.TEXTURETYPE_UNSIGNED_BYTE);
   rtt.activeCamera = eyeCam;
@@ -433,16 +463,17 @@ async function main() {
     place(node, p.pos, p.yaw, p.scale ?? 1);
   }
   const body = containers[h.avatar_asset];
-  // 초파리 뇌 캐릭터(노랑 · 서 있음) — 눈 그림에서 제 몸은 뺀다
-  flyNode = avatar(body, 'flybrain', [0.95, 0.75, 0.25]);
+  // 초파리 뇌 캐릭터 — 10-18 초파리 크기 몸(몸 길이 약 2 × 반지름 · 빨간 겹눈) · 너무 작아 위로 솟은 표지와 바닥 고리로 찾는다 · 눈 그림에서는 모두 뺀다
+  flyNode = flyBody(h.fly_body, h.view_marker);
   fly.pos = [...h.fly_pos]; fly.yaw = h.fly_yaw;
   place(flyNode, fly.pos, fly.yaw);
-  const tag = label('초파리 뇌', '#f2c14e', flyNode, 2.15);
-  ring = B.MeshBuilder.CreateTorus('flyRing', { diameter: 2 * h.fly_radius, thickness: 0.04, tessellation: 48 }, scene);
-  ring.position.set(h.fly_pos[0], 0.03, h.fly_pos[2]);
+  const tag = label('초파리 뇌', '#f2c14e', flyNode, h.view_marker.pole_m + 0.2);
+  ring = B.MeshBuilder.CreateTorus('flyRing', { diameter: h.view_marker.ring_m, thickness: 0.015, tessellation: 64 }, scene);
+  ring.position.set(h.fly_pos[0], 0.002, h.fly_pos[2]);
   const rm = new B.StandardMaterial('ringMat', scene);
   rm.emissiveColor = new B.Color3(0.95, 0.76, 0.3); rm.disableLighting = true;
   ring.material = rm;
+  markers.push(ring, tag);
   for (const m of [...flyNode.getChildMeshes(false), tag, ring]) notInEye.add(m);
   // 내 캐릭터(파랑) — 초파리 눈에 보인다
   meNode = avatar(body, 'me', [0.35, 0.55, 0.95]);

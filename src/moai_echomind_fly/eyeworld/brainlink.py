@@ -161,7 +161,7 @@ class BrainLink:
         self.win = {b: deque(maxlen=n_win) for b in self.brains}
         self.win_dn = {b: deque(maxlen=n_win) for b in self.brains}
         self.win_top = {b: deque(maxlen=n_win) for b in self.brains}
-        self.body = ecfg["world"]["body"]
+        self.body = self.cfg[self.cfg["motor"]["limits"]]   # 10-18: 초파리 크기(fly_body)
         self.steps = 0
         self.t_wall: float | None = None
 
@@ -208,7 +208,7 @@ class BrainLink:
 
         speed = (float(m["forward"]["m_s_per_spike"]) * both("forward")
                  - float(m["backward"]["m_s_per_spike"]) * both("backward"))
-        speed = float(np.clip(speed, -float(b["walk_max_m_s"]), float(b["run_max_m_s"])))
+        speed = float(np.clip(speed, -float(b["back_max_m_s"]), float(b["fwd_max_m_s"])))
         turn = -float(m["turn"]["deg_s_per_spike"]) * diff("turn")  # 오른쪽 많으면 오른쪽으로
         turn = float(np.clip(turn, -float(b["turn_max_deg_s"]), float(b["turn_max_deg_s"])))
         jump = both("jump") >= int(m["jump"]["spikes"])
