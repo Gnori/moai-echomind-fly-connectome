@@ -22,31 +22,7 @@ import numpy as np
 from moai_echomind_fly import config, paths
 from moai_echomind_fly import graph as graph_mod
 from moai_echomind_fly.loop.signals import side_of
-
-
-def groups(g, cfg: dict) -> dict[str, np.ndarray]:
-    """부위 × 좌우 → 뉴런 인덱스."""
-    cls = g.columns["class"].astype(str)
-    sub = g.columns["subclass"].astype(str)
-    nerve = g.columns["entryNerve"].astype(str)
-    side = side_of(g).astype(str)
-    tact = np.isin(cls, cfg["tactile_class"])
-    out = {}
-    for part, nerves in cfg["parts"].items():
-        for s in "LR":
-            out[f"{part}_{s}"] = np.flatnonzero(tact & np.isin(nerve, nerves) & (side == s))
-    typ = g.columns["type"].astype(str)
-    hc = cfg["head"]
-    head = (np.isin(cls, hc["class"]) & np.char.startswith(typ, hc["type_prefix"])
-            & ~np.isin(typ, hc["exclude"]))
-    ant = np.isin(cls, cfg["antenna"]["class"]) & np.isin(sub, cfg["antenna"]["subclass"])
-    for s in "LR":
-        out[f"머리털_{s}"] = np.flatnonzero(head & (side == s))
-        out[f"더듬이털_{s}"] = np.flatnonzero(ant & (side == s))
-    for name, types in cfg["reference"].items():   # 비교 기준(감각 아님)
-        for s in "LR":
-            out[f"[기준]{name}_{s}"] = np.flatnonzero(np.isin(typ, types) & (side == s))
-    return out
+from moai_echomind_fly.senses.touch import groups
 
 
 class Flow:

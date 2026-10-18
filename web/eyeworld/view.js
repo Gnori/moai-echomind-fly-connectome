@@ -80,6 +80,20 @@ function pushOut(p, r, others) {                // 원기둥끼리 겹치면 p �
   p[2] = Math.max(-lim, Math.min(lim, p[2]));
 }
 
+function contacts() {                         // 초파리 뇌 캐릭터 몸 원기둥에 닿은 것 → 몸 기준 방위(+ 왼쪽) · 틈(뇌 서버가 부위 × 좌우로)
+  const f = fwd(fly.yaw), l = lft(fly.yaw), out = [];
+  const others = [...h.colliders.map((c) => ({ ...c, what: 'prop' })),
+    { x: me.pos[0], z: me.pos[2], r: h.body.radius_m, what: 'me' }];
+  for (const c of others) {
+    const dx = c.x - fly.pos[0], dz = c.z - fly.pos[2];
+    const gap = Math.hypot(dx, dz) - c.r - h.fly_radius;
+    if (gap > h.brain.touch.margin_m) continue;
+    const b = (Math.atan2(dx * l[0] + dz * l[2], dx * f[0] + dz * f[2]) * 180) / Math.PI;
+    out.push({ bearing_deg: b, gap_m: gap, what: c.what });
+  }
+  return out;
+}
+
 function place(node, pos, yaw, s = 1) {
   node.position.set(pos[0], pos[1], pos[2]);
   node.rotation.set(0, yaw, 0);
@@ -232,7 +246,10 @@ function showBrain(out) {
   $('btab').innerHTML =
     `<tr><th>최근 ${h.brain.window_ms} ms 발화(왼 / 오른)</th><th>진짜 배선</th><th>섞은 배선</th></tr>` +
     row('입력 앞→뒤 a 평균 Hz', `${out.input_hz.L.toFixed(1)} / ${out.input_hz.R.toFixed(1)}`, '같음') +
-    ['DNp09', 'MDN', 'DNa02', 'DNa01', 'GF', 'DNp02', 'LC4', 'LPLC2', 'HS'].map((k) => row(k, lr(R, k), lr(C, k))).join('');
+    ['DNp09', 'MDN', 'DNa02', 'DNa01', 'GF', 'DNp02', 'LC4', 'LPLC2', 'HS'].map((k) => row(k, lr(R, k), lr(C, k))).join('') +
+    row(`닿음 → 켠 촉각 털(${out.touch.rate_hz} Hz)`, out.touch.on.length ? `${out.touch.on.join(' · ')} · ${out.touch.neurons}개` : '없음', '같음') +
+    row('머리 털이 켜는 하강 뉴런(몸 규약 밖 · 보기만)', lr(R, '촉각DN'), lr(C, '촉각DN')) +
+    row('하강 뉴런 전체 발화', out.dn_all.real, out.dn_all[h.brain.brains[1]] ?? '—');
   const c = out.cmd;
   $('bcmd').textContent = `몸 명령(진짜 배선 뇌): 돌기 ${c.turn_deg_s.toFixed(0)} °/s · 속도 ${c.speed_m_s.toFixed(1)} m/s`
     + (c.jump ? ' · GF 뛰어오름!' : '');
@@ -249,7 +266,8 @@ async function brainLoop() {                    // 눈 그림 → 뇌 서버(앞
     const t0 = performance.now();
     const img = await grabEyes();
     const t1 = performance.now();
-    brain.ws.send(pack({ type: 'step', tick: tick++, dial }, img));
+    const touch = contacts();
+    brain.ws.send(pack({ type: 'step', tick: tick++, dial, contacts: touch }, img));
     const out = await new Promise((res) => { brain.wait = res; });
     if (out) out.eyes_ms = t1 - t0;
     if (out) out.step_ms = performance.now() - t0;

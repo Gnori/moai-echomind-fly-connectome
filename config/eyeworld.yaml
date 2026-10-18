@@ -56,6 +56,15 @@ view_brain:               # 보기 창 닫힌 고리(요구자 10-17 "초파리 
   # (지운 것 · 10-17: walk_m_s 0.6 → 0 · escape → 0.5 s 뒤로 · rest 1 s — 모두 손으로 지어낸 규칙이었음)
   dial: {default: 1.0, max: 16.0}   # 앞단 발화율 × 다이얼(손으로 · 1 = 잰 그대로 · r_max 150 Hz 로 자름)
   extra_gb: 8.0           # 가드 — 뇌 둘(프로세스마다 그래프 · LIF) + 앞단 · 실측(10-17): 본 프로세스 2.3 GB · 뇌마다 1.6 GB
+  touch:                  # 닿음 신호(요구자 10-18 "머리 털 반응을 보기 창에") — 감각기 모형(선언) · 몸 행동 규칙 아님(몸은 하강 뉴런 그대로)
+    rate_hz: 100.0         # 닿아 있는 동안 그 무리 발화율 = 몸 촉각 인코더 최대(config/task.yaml touch.rate_max_hz) · 다이얼 안 받음
+    margin_m: 0.05         # 몸 원기둥 사이 틈이 이보다 작으면 닿음(보기 창 밀어내기 뒤에는 틈 0)
+    center_deg: 10         # 방위가 정면 · 정뒤 ± 이 안이면 좌우 둘 다
+    sectors:               # 몸 기준 방위 |b| ≤ max_deg 인 첫 구역 → 부위(touch_entry 무리 이름 · 닿은 쪽)
+      - {name: 앞, max_deg: 45, parts: [머리털, 앞다리]}
+      - {name: 옆, max_deg: 135, parts: [가운데다리, 날개·앞등]}
+      - {name: 뒤, max_deg: 180, parts: [뒷다리, 뒷등]}
+    show: [DNge122, DNg84, DNg15, DNg87, DNge132, DNg35, DNg83, DNg20]   # 머리 털이 켜는 하강 뉴런(touch-probe 10-18 · 몸 규약 밖 · 보기만)
   threads: 2              # 뇌 하나의 CPU 실 수 — 10-17 재기(10 ms 걸음 · 입구 8 Hz): 1 실 51 · 2 실 47 · 4 실 67 · 9 실 66 · 18 실 109 ms
 
 eye:                      # eye-v1 — 겹눈 기하(설계 문서 3.2)

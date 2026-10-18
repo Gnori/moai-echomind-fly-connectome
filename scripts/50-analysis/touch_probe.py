@@ -11,9 +11,7 @@ from __future__ import annotations
 
 import collections
 import json
-import sys
 import time
-from pathlib import Path
 
 import numpy as np
 
@@ -21,10 +19,8 @@ from moai_echomind_fly import config, paths
 from moai_echomind_fly import graph as graph_mod
 from moai_echomind_fly.guard import heavy
 from moai_echomind_fly.loop.signals import side_of
+from moai_echomind_fly.senses.touch import groups
 from moai_echomind_fly.sim import Engine, LIFParams
-
-sys.path.insert(0, str(Path(__file__).parent))
-from touch_entry import groups  # noqa: E402
 
 
 def main() -> None:

@@ -160,7 +160,8 @@ def main() -> None:
         link = BrainLink()
         head["brain"] = {"port": int(vb["port"]), "dt_ms": float(vb["dt_ms"]),
                          "dial": vb["dial"], "motor": vb["motor"],
-                         "brains": list(vb["brains"]), "window_ms": float(vb["window_ms"])}
+                         "brains": list(vb["brains"]), "window_ms": float(vb["window_ms"]),
+                         "touch": vb["touch"]}
     (out / f"{a.scene}.json").write_text(json.dumps(head, ensure_ascii=False), encoding="utf-8")
     port = int(rcfg["view_port"])
     srv = StaticServer(port=port, table={**mounts(), "/view/": out})

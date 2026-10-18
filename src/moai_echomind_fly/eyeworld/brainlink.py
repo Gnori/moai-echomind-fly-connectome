@@ -7,6 +7,10 @@
   → 진짜 배선 뇌의 **하강 뉴런 그대로** 몸 명령(지어낸 행동 규칙 없음):
      앞뒤 = DNp09(앞) − MDN(뒤) · 돌기 = DNa02 · DNa01 오른 − 왼(같은 쪽으로) · GF(DNp01) = 뛰어오름
      · 발화 → 속도 환산 숫자만 선언 · 상한은 몸 규약.
+닿음(10-18 요구자 "머리 털 반응을 보기 창에"): 브라우저가 보낸 닿음(몸 기준 방위 · 틈)
+  → 부위 × 좌우 촉각 털 무리(senses.touch · 연결 지도 주석) → 닿아 있는 동안 rate_hz 로 같은 뇌 둘에
+  · 머리 털이 켜는 하강 뉴런(몸 규약 밖)은 보기만
+  · 몸은 그대로 하강 뉴런 명령(닿음으로 몸을 움직이는 규칙 없음).
 값은 config/eyeworld.yaml view_brain(선언). 섞은 배선 뇌는 같은 입력 · 값만 보여 줌(몸은 안 움직임).
 통로 = 렌더러와 같은 꼴([u32 머리 길이][머리 JSON][본문]) · 127.0.0.1 만.
 """
@@ -25,6 +29,7 @@ from .. import config
 from .. import graph as graph_mod
 from ..eye.frontend import FrontendV3
 from ..loop.signals import side_of
+from ..senses.touch import contact_groups, groups
 from .render import pack, unpack
 from .safety import check_port
 
@@ -42,21 +47,28 @@ READ = {  # 몸을 움직이는 하강 뉴런(설정 view_brain.motor) + 보기�
 KEY = {t: k for k, v in READ.items() for t in v}  # 종류 이름 → 읽기 묶음
 
 
-def labels(g) -> tuple[np.ndarray, list[str]]:
-    """뉴런마다 읽기 묶음 번호(없으면 −1) · 묶음 이름(종류_눈)."""
+def labels(g, extra: dict[str, list[str]] | None = None) -> tuple[np.ndarray, list[str]]:
+    """뉴런마다 읽기 묶음 번호(없으면 −1) · 묶음 이름(종류_눈).
+
+    extra = 더 읽을 묶음(촉각 하강 뉴런).
+    """
     typ = g.columns["type"].astype(str)
     side = side_of(g)
     lab = np.full(g.n, -1, np.int64)
     names = []
-    for k, v in READ.items():
+    for k, v in {**READ, **(extra or {})}.items():
         for s in ("L", "R"):
             lab[np.isin(typ, v) & (side == s)] = len(names)
             names.append(f"{k}_{s}")
     return lab, names
 
 
-def _worker(brain: str, seed: int, entry: np.ndarray, dt_ms: float, threads: int, conn) -> None:
-    """뇌 하나(프로세스) — 발화율을 받으면 dt 만큼 달리고 묶음별 발화 수를 돌려준다."""
+def _worker(brain: str, seed: int, entry: np.ndarray, dt_ms: float, threads: int, extra: dict,
+            conn) -> None:
+    """뇌 하나(프로세스) — 발화율을 받으면 dt 만큼 달린다.
+
+    돌려주는 것: 묶음별 발화 수 · 걸린 시간 · 전체 발화 · 하강 뉴런 전체 발화.
+    """
     import torch
 
     from ..sim import Engine, LIFParams
@@ -64,7 +76,8 @@ def _worker(brain: str, seed: int, entry: np.ndarray, dt_ms: float, threads: int
     torch.set_num_threads(threads)
     base = graph_mod.load()
     g = graph_mod.brain_graph(base, brain)
-    lab, names = labels(base)
+    lab, names = labels(base, extra)
+    dn = base.columns["superclass"].astype(str) == "descending_neuron"
     eng = Engine(g, LIFParams.from_config(), device="cpu", seed=seed)
     eng.set_poisson(entry, np.zeros(len(entry)))
     conn.send(("ready", names))
@@ -82,7 +95,7 @@ def _worker(brain: str, seed: int, entry: np.ndarray, dt_ms: float, threads: int
         _, nn = eng.spikes_since(s0)
         ln = lab[nn]
         cnt = np.bincount(ln[ln >= 0], minlength=len(names))
-        conn.send((cnt, time.perf_counter() - t0, len(nn)))
+        conn.send((cnt, time.perf_counter() - t0, len(nn), int(dn[nn].sum())))
 
 
 class BrainLink:
@@ -98,6 +111,15 @@ class BrainLink:
         self.n_px = 2 * 6 * int(ecfg["v1"]["face_px"]) ** 2
         t = self.fe.t45
         self.ftb = {s: (t.side == s) & (t.sub == "a") for s in "LR"}
+        self.tcfg = self.cfg["touch"]
+        tg = groups(base, ecfg["touch_entry"])
+        want = {p for sec in self.tcfg["sectors"] for p in sec["parts"]}
+        self.tgroups = {k: v for k, v in tg.items() if k.rsplit("_", 1)[0] in want}
+        self.t_entry = np.unique(np.concatenate(list(self.tgroups.values())))
+        self.t_pos = {k: np.searchsorted(self.t_entry, v) for k, v in self.tgroups.items()}
+        self.n_vis = len(self.fe.entry)
+        entry = np.concatenate([self.fe.entry, self.t_entry])
+        extra = {"촉각DN": list(self.tcfg["show"])}
         per = max(1, (os.cpu_count() or 2) // len(self.cfg["brains"]))
         threads = min(int(self.cfg["threads"]), per)
         ctx = mp.get_context("spawn")
@@ -106,7 +128,7 @@ class BrainLink:
             parent, child = ctx.Pipe()
             p = ctx.Process(
                 target=_worker,
-                args=(b, int(self.cfg["seed"]), self.fe.entry, self.dt_ms, threads, child),
+                args=(b, int(self.cfg["seed"]), entry, self.dt_ms, threads, extra, child),
                 daemon=True,
             )
             p.start()
@@ -116,6 +138,7 @@ class BrainLink:
             _, self.names = conn.recv()
         n_win = int(round(float(self.cfg["window_ms"]) / self.dt_ms))
         self.win = {b: deque(maxlen=n_win) for b in self.brains}
+        self.win_dn = {b: deque(maxlen=n_win) for b in self.brains}
         self.body = ecfg["world"]["body"]
         self.steps = 0
         self.t_wall: float | None = None
@@ -126,23 +149,29 @@ class BrainLink:
         self.fe.reset()
         for _, conn in self.brains.values():
             conn.send("reset")
-        for w in self.win.values():
+        for w in [*self.win.values(), *self.win_dn.values()]:
             w.clear()
 
-    def step(self, img: np.ndarray, dial: float) -> dict:
-        """그림 [2, 6, N, N] u8 → 뇌 둘 한 걸음 → 창 합 · 몸 명령."""
+    def step(self, img: np.ndarray, dial: float, contacts: list[dict] | None = None) -> dict:
+        """그림 [2, 6, N, N] u8 + 닿음 → 뇌 둘 한 걸음 → 창 합 · 몸 명령."""
         t0 = time.time()
         if self.t_wall is None:  # 벽시계는 첫 걸음부터(서버 띄운 때가 아님)
             self.t_wall = t0
-        rates = np.minimum(self.fe.step(img) * float(dial), self.r_max)
+        vis = np.minimum(self.fe.step(img) * float(dial), self.r_max)   # 다이얼은 눈 입력만
+        touch = np.zeros(len(self.t_entry))
+        on = contact_groups(contacts or [], self.tcfg)
+        for k in on:
+            touch[self.t_pos[k]] = float(self.tcfg["rate_hz"])
+        rates = np.concatenate([vis, touch])
         t1 = time.time()
         for _, conn in self.brains.values():
             conn.send(rates)
         sums = {}
         own = {}
         for b, (_, conn) in self.brains.items():
-            cnt, sec, n_spk = conn.recv()
+            cnt, sec, n_spk, n_dn = conn.recv()
             self.win[b].append(cnt)
+            self.win_dn[b].append(n_dn)
             own[b] = {"ms": round(1000 * sec, 1), "spikes": int(n_spk)}
             sums[b] = dict(zip(self.names, map(int, np.sum(self.win[b], axis=0))))
         t2 = time.time()
@@ -167,6 +196,9 @@ class BrainLink:
             "sums": sums,
             "cmd": {"turn_deg_s": turn, "speed_m_s": speed, "jump": bool(jump)},
             "input_hz": {s: float(rates[:n45][self.ftb[s]].mean()) for s in "LR"},
+            "touch": {"on": on, "neurons": int((touch > 0).sum()),
+                      "rate_hz": float(self.tcfg["rate_hz"])},
+            "dn_all": {b: int(sum(w)) for b, w in self.win_dn.items()},
             "dial": float(dial),
             "sim_ms": self.steps * self.dt_ms,
             "ms": {"frontend": round(1000 * (t1 - t0), 1), "brains": round(1000 * (t2 - t1), 1),
@@ -190,7 +222,8 @@ class BrainLink:
                     continue
                 n = int(round((self.n_px / 12) ** 0.5))
                 out = await asyncio.to_thread(
-                    self.step, img.reshape(2, 6, n, n), float(head.get("dial", 1.0))
+                    self.step, img.reshape(2, 6, n, n), float(head.get("dial", 1.0)),
+                    list(head.get("contacts") or []),
                 )
                 out["tick"] = head.get("tick")
                 await ws.send(pack(out))
