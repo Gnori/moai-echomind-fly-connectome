@@ -298,3 +298,13 @@ touch_entry:              # 다른 감각 ① 촉각 입구 재기(R-1177 F-011 
   targets: [DNp09, MDN, DNa01, DNa02, DNp01, DNp02]   # 보기 창 몸을 움직이는 하강 뉴런 + 도망 둘
   controls: [rewired-s0, rewired-s1, rewired-s2]      # 섞은 배선(전체 · 출발 · 시냅스 수 · 부호 그대로)
   top_dn: 6               # 부위마다 실효 입력이 큰 하강 뉴런 종류를 몇 개 보이나
+
+touch_probe:              # 촉각 ② 가능성 작은 시험(R-1177 F-011 · 요구자 10-18 "가능성 작은 시험 먼저" · 판정 아님 · 결과 전 잠금)
+  version: touch-probe-a
+  groups: [앞다리, 머리털]   # touch_entry 무리 이름(좌우 따로) — 연결 몫이 섞은 배선보다 뚜렷했던 둘
+  rates_hz: [100.0, 150.0]   # 100 = 몸 촉각 인코더 최대(config/task.yaml touch.rate_max_hz) · 150 = 눈 입구 재기와 같은 세기
+  window_ms: 300.0
+  seed: 0                    # 본 시험은 다른 씨앗(1~10)으로
+  brains: [real, rewired-s0, rewired-s1, rewired-s2]
+  top_dn: 8
+  next_rule: "앞다리 L · R 둘 다, 어느 세기에서든 진짜 배선 같은 쪽 DNa02 ≥ 1 이고 > 반대쪽 · 섞은 셋 같은 쪽 DNa02 가 진짜의 1/4 미만 → 본 시험 판정 기준을 잠가 요구자께 여쭘. 아니면 촉각 → 몸 길은 멈춤(가능성 낮음)."
