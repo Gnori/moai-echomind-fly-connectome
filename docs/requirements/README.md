@@ -1,100 +1,10 @@
-# 요구사항 관리 가이드
+# 요구사항
 
-이 디렉토리는 프로젝트의 요구사항과 그 산출물(R/I/P/W)을 **동일 프리픽스 평면 파일 세트**로 관리하는 공간입니다.
-정본 계약: [/DEV_PROCESS.md](../../DEV_PROCESS.md) (v1.1, 2026-07-07 산출물 통합)
+진행 중인 요구사항 문서가 모이는 곳이다. 절차는 [/DEV_PROCESS.md](../../DEV_PROCESS.md) 하나뿐이다(2026-10-18 `/dev` 스킬은 뺐다).
 
----
-
-## 📁 디렉토리 구조
-
-```
-requirements/
-├── README.md                          # 이 문서
-├── active_development.md              # 진행 대시보드 (D) — R 메타에서 집계
-├── templates/                         # 템플릿 (R 규모별 3종 + 산출물 I/P/W 3종)
-│   ├── simple|standard|complex.md.template
-│   └── interface-design|dev-plan|walkthrough.md.template
-├── [YYYYMMDD-HHMMSS-코드]_요구사항명_req.md                 # ★ 요구사항 (R)
-├── [YYYYMMDD-HHMMSS-코드]_요구사항명_interface-design.md     # 인터페이스 계약 (I, 다중 모듈 시)
-├── [YYYYMMDD-HHMMSS-코드]_요구사항명-<모듈>_dev-plan.md      # 모듈별 구현 플랜 (P, 모듈당 1)
-├── [YYYYMMDD-HHMMSS-코드]_요구사항명-<모듈>_walkthrough.md   # 검증 보고 (W, P당 1 — 완료의 유일한 증거)
-│                                      # ↑ 동일 프리픽스 = 한 요구사항의 산출물 세트
-├── sql/, wireframes/                  # 공용 부속물 (파일명에 요구사항 프리픽스 권장)
-└── archive/                           # 완료(G5) 시 프리픽스 세트째 이동 — W 없이 이동 금지
-```
-
-> 舊 `.claude/requirements/`(구 체계)는 2026-07-24부로 **동결(레거시 아카이브)** — 신규 작성 금지.
-> 과거 유사 기능 이력 참조용으로만 사용하십시오.
-
----
-
-## 📝 요구사항 생성
-
-### 명령어로 생성 (권장)
-
-```bash
-/dev req 사용자인증기능 --scale=standard --type=feature --id=1026
-```
-
-- **규모 `--scale`** (프로세스 게이팅 축): simple(~50줄, 게이트 축약) / standard(~150줄) / complex(~400줄+리스크·롤백)
-- **유형 `--type`** (내용 가이드 축): feature(신규기능) / enhance(기능개선 — As-Is/To-Be·영향범위) / perf(성능개선 — 수치 지표 필수) / bug(버그 — 재현·근본원인·회귀)
-- 둘 다 생략 시 이름 키워드로 자동 추천. **도메인코드 `--id`**: 1xxx=에이전트·핵심 기능, 2xxx=도구·연동(MCP), 3xxx=인증·권한·인프라
-
-### 산출물 생성 (같은 디렉토리·동일 프리픽스)
-
-```bash
-/dev artifact i                          # I — 다중 모듈 시, 승인(G2) 후 P 진행
-/dev artifact p --module=<모듈명>        # P — 모듈당 1건
-/dev artifact w --module=<모듈명>        # W — P당 1건, 테스트 로그 원문이 증거
-```
-
----
-
-## 🔄 상태·게이트 (요약)
-
-**상태 enum (자유 서술 금지)**: `접수 → 작성 → 상세화 → 확정 → 구현중 → 구현완료(검증대기) → 검증완료 → 아카이브` (+`보류`)
-
-- **G1**: R 2장(기능 정의) 사용자 승인 → 상태=확정
-- **G2**: I 상태=승인 (다중 모듈)
-- **G3**: 모듈 테스트 통과 → 각 P의 W 작성
-- **G4**: 모든 P의 W + 통합 E2E(R 5장 기록) → 검증완료. **W 없이 검증완료 금지**
-- **G5**: 정본 문서(모듈 README·CLAUDE.md) 동기화 확인 → 프리픽스 세트째 `archive/` 이동
-
-진행 상태의 정본은 R(_req.md 파일)의 상태 필드 + `active_development.md`(D). 중단 전 이 둘을 최신화하면 어느 도구에서든 이어서 작업할 수 있습니다.
-
-```bash
-/dev status        # 진행 상황 + 산출물(I/P/W) 현황 리포트
-```
-
----
-
-## 📦 완료·아카이빙
-
-```bash
-# 완료(G5) 시 프리픽스 세트째 이동 — R/I/P/W가 함께 보존됨
-mv docs/requirements/20260707-100000-1026_* docs/requirements/archive/
-```
-
-**완료 기준**: 모든 P의 W 통과 + 통합 E2E가 R 5장에 기록 + 정본 문서 동기화 완료.
-
-**아카이브 시 D 정리**: `active_development.md`에서 해당 행을 **제거**한다 — D는 활성 전용이며 완료 이력을 누적하지 않는다 (이력의 정본은 archive/의 문서 자체).
-
----
-
-## 💡 베스트 프랙티스
-
-1. **측정 가능한 인수 기준**: ❌ "좋은 성능" → ✅ "p95 응답 500ms 이내"
-2. **작은 단위 분할**: 요구사항 하나는 1~2주 내 완료 가능한 크기로
-3. **증거 기반 완료**: 서술("테스트했음")은 증거가 아니다 — W에 실행 로그 원문
-4. **정본은 정본대로**: 모듈 README·CLAUDE.md 등 정본 문서는 W 작성 시점에 본문 보완, 갱신 목록은 W에 단방향 기록 (정본에 이력 링크 금지)
-
----
-
-## 📚 참고 문서
-
-- [/DEV_PROCESS.md](../../DEV_PROCESS.md) — 표준 프로세스·산출물 계약 정본
-- [docs/architecture/](../architecture/overview.md) — 아키텍처 정본 (시작점 overview.md)
-
----
-
-**생성일**: 2026-09-23 08:44:32
+- 새 세션은 자기 인수인계부터 — 조율 [`echomind-fly-connectome-handoff.md`](./echomind-fly-connectome-handoff.md)(프로젝트 지도) ·
+  문서 [`echomind-fly-doc-handoff.md`](./echomind-fly-doc-handoff.md) · 조사 [`echomind-fly-research-handoff.md`](./echomind-fly-research-handoff.md).
+- 남은 일 표: [`active_development.md`](./active_development.md)(조율 세션이 손으로 고침).
+- 문서 틀: [`templates/req.md`](./templates/req.md) · [`templates/walkthrough.md`](./templates/walkthrough.md) — 참고하되 매이지 않는다.
+- 닫은 묶음: `archive/<YYYY>/<MM>/W<N>/`(머리말 날짜의 주차 · `git mv`).
+- 이 폴더는 조율 세션 `echomind-fly` 만 고친다. 다른 세션은 읽기만.
