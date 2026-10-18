@@ -143,7 +143,7 @@ function label(text, css, parent, y) {
 
 function setMode(m) {
   mode = m;
-  for (const [i, id] of [[1, 'm1'], [2, 'm2'], [3, 'm3'], [4, 'mf']]) $(id).classList.toggle('on', i === m);
+  $('cam').value = String(m);
   if (m === 3) {
     cam.attachControl(canvas, true);
   } else {
@@ -152,10 +152,10 @@ function setMode(m) {
   meNode.setEnabled(m !== 1);                   // 1인칭에서는 내 몸을 숨김(머리 안에 카메라)
   if (meTag) meTag.setEnabled(m === 3 || m === 4);   // 1 · 3인칭에서는 내 이름표가 시야를 가림
   $('mode').textContent = {
-    1: '1인칭 — 내 캐릭터 눈높이 · W A S D 로 걷기 · 마우스 끌기로 둘러보기',
-    2: '3인칭 — 내 캐릭터 뒤에서 · W A S D 로 걷기 · 마우스 끌기로 방향 돌리기',
-    3: '자유 — 카메라만 날아다님(내 캐릭터는 제자리) · W A S D · 마우스 끌기',
-    4: '초파리 눈으로 — 초파리 뇌 캐릭터 눈 자리(사람 해상도) · 마우스 끌기로 둘러보기',
+    1: '내 눈높이에서 걷기',
+    2: '내 뒤에서 따라가기',
+    3: '카메라만 날기(나는 제자리)',
+    4: '초파리 눈 자리 · 사람 해상도',
   }[m];
   canvas.focus();
 }
@@ -239,23 +239,55 @@ async function updateEye() {
   try { await grabEyes(); } finally { eyeBusy = false; }
 }
 
+const PART = { 머리털: '앞', 앞다리: '앞', 가운데다리: '옆', '날개·앞등': '옆', 뒷다리: '뒤', 뒷등: '뒤' };
+function touchWhere(on) {                       // ['머리털_R', '앞다리_R'] → '오른 앞'
+  if (!on.length) return '—';
+  const sides = new Set(on.map((k) => k.slice(-1))), where = new Set(on.map((k) => PART[k.slice(0, -2)] ?? '?'));
+  const sd = sides.size > 1 ? '양쪽' : sides.has('L') ? '왼' : '오른';
+  return `${sd} ${[...where].join('·')}`;
+}
+
+const ROWS = [                                  // [묶음, 이름, 설명, 읽는 키 | 함수]
+  ['body', 'DNp09', '앞으로', 'DNp09'], ['body', 'MDN', '뒤로', 'MDN'], ['body', 'DNa02', '돌기', 'DNa02'],
+  ['body', 'DNa01', '돌기', 'DNa01'], ['body', 'GF', '뛰어오름', 'GF'],
+  ['eye', '눈 입력', '앞→뒤 Hz', (o) => [`${o.input_hz.L.toFixed(1)} / ${o.input_hz.R.toFixed(1)}`, '같음']],
+  ['eye', 'LC4', '다가옴', 'LC4'], ['eye', 'LPLC2', '다가옴', 'LPLC2'], ['eye', 'HS', '몸 돎', 'HS'], ['eye', 'DNp02', '도망', 'DNp02'],
+  ['touch', '켠 촉각 털', '', (o) => [o.touch.on.length ? `${o.touch.neurons}개` : '없음', '같음']],
+  ['touch', '촉각 하강 뉴런', '몸 규약 밖', '촉각DN'],
+  ['touch', '하강 뉴런 전체', '발화', (o) => [String(o.dn_all.real), String(o.dn_all[h.brain.brains[1]] ?? '—')]],
+];
+const GROUP = { body: '몸을 움직이는 뉴런', eye: '눈 · 도망 뉴런', touch: '닿음' };
+
 function showBrain(out) {
   const R = out.sums.real, C = out.sums[h.brain.brains[1]] ?? {};
-  const row = (name, a, b) => `<tr><td>${name}</td><td>${a}</td><td>${b}</td></tr>`;
-  const lr = (S, k) => (S[`${k}_L`] === undefined ? '—' : `${S[`${k}_L`]} / ${S[`${k}_R`]}`);
-  $('btab').innerHTML =
-    `<tr><th>최근 ${h.brain.window_ms} ms 발화(왼 / 오른)</th><th>진짜 배선</th><th>섞은 배선</th></tr>` +
-    row('입력 앞→뒤 a 평균 Hz', `${out.input_hz.L.toFixed(1)} / ${out.input_hz.R.toFixed(1)}`, '같음') +
-    ['DNp09', 'MDN', 'DNa02', 'DNa01', 'GF', 'DNp02', 'LC4', 'LPLC2', 'HS'].map((k) => row(k, lr(R, k), lr(C, k))).join('') +
-    row(`닿음 → 켠 촉각 털(${out.touch.rate_hz} Hz)`, out.touch.on.length ? `${out.touch.on.join(' · ')} · ${out.touch.neurons}개` : '없음', '같음') +
-    row('머리 털이 켜는 하강 뉴런(몸 규약 밖 · 보기만)', lr(R, '촉각DN'), lr(C, '촉각DN')) +
-    row('하강 뉴런 전체 발화', out.dn_all.real, out.dn_all[h.brain.brains[1]] ?? '—');
-  const c = out.cmd;
-  $('bcmd').textContent = `몸 명령(진짜 배선 뇌): 돌기 ${c.turn_deg_s.toFixed(0)} °/s · 속도 ${c.speed_m_s.toFixed(1)} m/s`
-    + (c.jump ? ' · GF 뛰어오름!' : '');
+  const lr = (S, k) => (S[`${k}_L`] === undefined ? ['—', 0] : [`${S[`${k}_L`]} / ${S[`${k}_R`]}`, S[`${k}_L`] + S[`${k}_R`]]);
+  const want = $('bview').value;
+  let html = `<tr><th>최근 ${h.brain.window_ms} ms · 왼 / 오른</th><th>진짜 배선</th><th>섞은 배선</th></tr>`, last = '';
+  for (const [g, name, note, key] of ROWS) {
+    if (want !== 'all' && want !== g) continue;
+    if (want === 'all' && g !== last) { html += `<tr class="grp"><td colspan="3">${GROUP[g]}</td></tr>`; last = g; }
+    let a, b, lit;
+    if (typeof key === 'function') { [a, b] = key(out); lit = g === 'touch' ? out.touch.on.length > 0 && a !== '0' : false; }
+    else { const [ra, n] = lr(R, key); a = ra; b = lr(C, key)[0]; lit = n > 0; }
+    html += `<tr class="${lit ? 'lit' : ''}"><td>${name}${note ? `<small>${note}</small>` : ''}</td><td>${a}</td><td>${b}</td></tr>`;
+  }
+  $('btab').innerHTML = html;
+  const c = out.cmd, t = c.turn_deg_s;
+  $('tTurn').innerHTML = `${t === 0 ? '' : t > 0 ? '← ' : '→ '}${Math.abs(t).toFixed(0)}<small>°/s</small>`;
+  $('tTurnBox').classList.toggle('hot', t !== 0);
+  $('tSpeed').innerHTML = c.jump ? '뛰어오름!' : `${c.speed_m_s.toFixed(1)}<small>m/s</small>`;
+  $('tSpeedBox').classList.toggle('hot', c.jump || c.speed_m_s !== 0);
+  $('tTouch').textContent = touchWhere(out.touch.on);
+  $('tTouchBox').classList.toggle('hot', out.touch.on.length > 0);
   $('bspeed').textContent = `뇌 시간 ${(out.sim_ms / 1000).toFixed(1)} s · 실제의 ${(out.sim_ms / 1000 / Math.max(out.wall_s, 1e-3)).toFixed(2)} 배`
-    + ` · 한 걸음 ${out.step_ms.toFixed(0)} ms(눈 그림 ${out.eyes_ms.toFixed(0)} · 앞단 ${out.ms.frontend} · 뇌 ${out.ms.brains}`
-    + ` · ${Object.entries(out.ms.own).map(([k, v]) => `${k} ${v.ms} ms/${v.spikes}발`).join(' · ')})`;
+    + ` · 한 걸음 ${out.step_ms.toFixed(0)} ms(눈 그림 ${out.eyes_ms.toFixed(0)} · 앞단 ${out.ms.frontend} · 뇌 ${out.ms.brains})`;
+}
+
+function setLive(on) {
+  $('blive').classList.toggle('on', on);
+  $('blivet').textContent = on ? '연결됨' : '꺼짐';
+  $('bon').classList.toggle('on', on);
+  $('bon').textContent = on ? '뇌 연결 끄기' : '뇌 연결 켜기';
 }
 
 async function brainLoop() {                    // 눈 그림 → 뇌 서버(앞단 · 뇌 둘) → 진짜 배선 뇌 명령으로 한 걸음(10 ms)
@@ -305,20 +337,25 @@ function setupBrain() {
   $('brainbox').style.display = '';
   const dl = $('dial');
   dl.max = h.brain.dial.max; dl.value = h.brain.dial.default; dial = Number(dl.value);
-  const showDial = () => { $('dialv').textContent = dial === 1 ? '×1 (잰 그대로)' : `×${dial} (손으로 올림)`; };
+  const showDial = () => {
+    $('dialv').textContent = dial === 1 ? '×1 잰 그대로' : `×${dial} 손으로 올림`;
+    $('dialv').classList.toggle('hand', dial !== 1);
+  };
   showDial();
   dl.oninput = () => { dial = Number(dl.value); showDial(); };
+  dl.onchange = () => canvas.focus();
   $('breset').onclick = flyHome;
   $('bon').onclick = () => {
-    if (brain?.on) { brain.on = false; brain.ws.close(); brain = null; $('bon').textContent = '뇌 연결 켜기'; return; }
+    if (brain?.on) { brain.on = false; brain.ws.close(); brain = null; setLive(false); return; }
     const ws = new WebSocket(`ws://127.0.0.1:${h.brain.port}`);
     ws.binaryType = 'arraybuffer';
     brain = { ws, on: false, wait: null };
     ws.onmessage = (ev) => { const m = unpack(ev.data); if (m.type === 'reset.ok') return; brain?.wait?.(m); };
-    ws.onclose = () => { brain?.wait?.(null); };
+    ws.onclose = () => { brain?.wait?.(null); setLive(false); };
+  $('bview').onchange = () => canvas.focus();
     ws.onopen = () => {                         // 켤 때마다 뇌 · 앞단을 처음 상태로(앞 연결의 흔적 없이)
       ws.send(pack({ type: 'reset' }));
-      brain.on = true; $('bon').textContent = '뇌 연결 끄기'; brainLoop();
+      brain.on = true; setLive(true); brainLoop();
     };
   };
 }
@@ -395,20 +432,17 @@ async function main() {
   me.pos = [...h.me_start.pos]; me.yaw = h.me_start.yaw;
   place(meNode, me.pos, me.yaw);
 
-  $('m1').onclick = () => setMode(1);
-  $('m2').onclick = () => setMode(2);
-  $('m3').onclick = () => setMode(3);
-  $('mf').onclick = () => setMode(4);
-  $('appL').onclick = () => { play = { traj: h.approach.left, k: 0 }; };
-  $('appR').onclick = () => { play = { traj: h.approach.right, k: 0 }; };
+  $('cam').onchange = () => setMode(Number($('cam').value));
+  $('appPlay').onclick = () => { play = { traj: h.approach[$('appSide').value], k: 0 }; canvas.focus(); };
   const home = () => { me.pos = [...h.me_start.pos]; me.yaw = h.me_start.yaw; me.pitch = 0; place(meNode, me.pos, me.yaw); };
-  const toggleCollide = () => { collide = !collide; $('col').textContent = `부딪힘 ${collide ? '켬' : '끔'} (C)`; };
-  $('home').onclick = home;
-  $('col').onclick = toggleCollide;
+  const setCollide = (on) => { collide = on; $('col').checked = on; };
+  $('home').onclick = () => { home(); canvas.focus(); };
+  $('col').onchange = () => { setCollide($('col').checked); canvas.focus(); };
   window.addEventListener('keydown', (e) => {
+    if (e.target instanceof HTMLSelectElement || e.target instanceof HTMLInputElement) return;   // 고르기 상자 · 다이얼 조작 중에는 몸 키를 받지 않음
     if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) setMode(Number(e.code.slice(-1)));
     if (e.code === 'KeyR') home();
-    if (e.code === 'KeyC') toggleCollide();
+    if (e.code === 'KeyC') setCollide(!collide);
     keys.add(e.code);
   });
   window.addEventListener('keyup', (e) => keys.delete(e.code));
